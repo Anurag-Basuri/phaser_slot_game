@@ -1,0 +1,40 @@
+{
+  "name": "phaser-slot-machine-demo",
+  "description": "Phaser slot machine demo",
+  "scripts": {
+    "build": "npm run clean && vite build",
+    "bundle": "scripts/bundle.sh",
+    "clean": "rm -rf dist",
+    "lint": "eslint .",
+    "lint:fix": "npm run lint -- --fix",
+    "lint:tsc": "tsc --noEmit",
+    "prepare": "husky",
+    "preview": "vite preview",
+    "start": "vite --open"
+  },
+  "dependencies": {
+    "phaser": "3.90.0",
+    "phaser-jsx": "0.13.7"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "20.4.2",
+    "@commitlint/config-conventional": "20.4.2",
+    "@eslint/compat": "2.0.2",
+    "@eslint/eslintrc": "3.3.4",
+    "@eslint/js": "10.0.1",
+    "@types/react": "19.2.14",
+    "@typescript-eslint/eslint-plugin": "8.56.1",
+    "@typescript-eslint/parser": "8.56.1",
+    "eslint": "10.0.2",
+    "eslint-plugin-prettier": "5.5.5",
+    "eslint-plugin-simple-import-sort": "12.1.1",
+    "globals": "17.4.0",
+    "husky": "9.1.7",
+    "lint-staged": "16.3.1",
+    "prettier": "3.8.1",
+    "typescript": "5.9.3",
+    "vite": "7.3.1"
+  },
+  "private": true,
+  "license": "MIT"
+}
