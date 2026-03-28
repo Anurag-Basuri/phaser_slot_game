@@ -1,16 +1,21 @@
 {
-  "name": "phaser-slot-machine-demo",
-  "description": "Phaser slot machine demo",
+  "name": "sweet-cluster-1000",
+  "description": "Sweet Cluster 1000 — 7x7 Cascading Cluster Pays Slot Game for Stake Engine",
+  "version": "1.0.0",
   "scripts": {
-    "build": "npm run clean && vite build",
-    "bundle": "scripts/bundle.sh",
-    "clean": "rm -rf dist",
+    "dev": "vite --open",
+    "start": "vite --open",
+    "build": "vite build",
+    "bundle": "powershell -ExecutionPolicy Bypass -File scripts/bundle.ps1",
+    "preview": "vite preview",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "lint": "eslint .",
     "lint:fix": "npm run lint -- --fix",
     "lint:tsc": "tsc --noEmit",
-    "prepare": "husky",
-    "preview": "vite preview",
-    "start": "vite --open"
+    "typecheck": "tsc --noEmit",
+    "math:sim": "python math-engine/run.py --sims 1000000 --export",
+    "math:quick": "python math-engine/run.py --sims 100000",
+    "prepare": "husky"
   },
   "dependencies": {
     "phaser": "3.90.0",

@@ -1,70 +1,151 @@
-<p align="center">
-  <img src="https://github.com/remarkablegames/phaser-slot-machine-demo/blob/master/public/favicon.png" alt="Phaser Slot Machine Demo">
-</p>
+# 🍬 Sweet Cluster 1000
 
-# Phaser Slot Machine Demo
+A premium **7×7 cascading cluster pays** slot game built for the [Stake Engine](https://stake-engine.com) platform.
 
-[![build](https://github.com/remarkablegames/phaser-slot-machine-demo/actions/workflows/build.yml/badge.svg)](https://github.com/remarkablegames/phaser-slot-machine-demo/actions/workflows/build.yml)
+![Game Type](https://img.shields.io/badge/Type-Cluster%20Pays-purple)
+![RTP](https://img.shields.io/badge/RTP-96.00%25-green)
+![Max Win](https://img.shields.io/badge/Max%20Win-25%2C000x-gold)
+![Volatility](https://img.shields.io/badge/Volatility-High-red)
 
-🎰 Phaser Slot Machine Demo.
+---
 
-Play the game on:
+## 🎮 Game Features
 
-- [remarkablegames](https://remarkablegames.org/phaser-slot-machine-demo/)
+- **7×7 Grid** with cluster pays mechanics (5+ adjacent symbols win)
+- **Cascading Reels** — winning symbols explode and new ones drop in
+- **Persistent Multipliers** — positions gain multipliers that double on wins (up to 1024×)
+- **Free Spins** — triggered by 3+ scatter symbols (10-30 spins)
+- **Buy Features** — Buy Free Spins (100× bet) or Super Free Spins (500× bet)
+- **Tiered Win Celebrations** — Nice/Big/Mega/Epic/Ultra win tiers
+- **Responsive Design** — Portrait & landscape layouts
+- **Stake Engine Integration** — Full RGS API support with demo mode fallback
 
-## Credits
+## 🛠 Tech Stack
 
-Forked from [luanit96/Slots-Machine-Phaser3](https://github.com/luanit96/Slots-Machine-Phaser3)
+| Component | Technology |
+|-----------|-----------|
+| Game Engine | Phaser 3.90.0 |
+| Language | TypeScript 5.9 |
+| Build Tool | Vite 7.3 |
+| Math Engine | Python 3 |
+| Platform Target | Stake Engine RGS |
 
-## Prerequisites
+## 📦 Project Structure
 
-- [nvm](https://github.com/nvm-sh/nvm#readme)
-
-## Install
-
-Clone the repository:
-
-```sh
-git clone https://github.com/remarkablegames/phaser-slot-machine-demo.git
-cd phaser-slot-machine-demo
+```
+phaser_slot_game/
+├── src/                    # Frontend game source
+│   ├── components/         # Game components (Grid, Audio, Paytable, etc.)
+│   ├── engine/             # Stake Engine RGS client
+│   ├── scenes/             # Phaser scenes (Preload, Boot, Game)
+│   ├── helpers/            # Cluster evaluator
+│   ├── constants/          # Local storage keys
+│   ├── config.ts           # Phaser configuration
+│   ├── options.ts          # Game options & paytable
+│   └── index.ts            # Entry point
+├── public/                 # Static assets
+│   ├── images/candies/     # Symbol art (7 candies + scatter)
+│   ├── audio/              # Sound effects & music
+│   ├── css/                # Stylesheet
+│   └── fonts/              # Custom fonts
+├── math-engine/            # Python RTP simulation
+│   ├── game_config.py      # Game math configuration
+│   ├── cluster_evaluator.py# Cluster detection logic
+│   ├── run.py              # Monte Carlo RTP simulator
+│   └── output/             # Simulation results (JSON, CSV)
+├── scripts/                # Build & deployment scripts
+├── dist/                   # Production build output
+├── GDD.md                  # Game Design Document
+└── package.json            # Project config & scripts
 ```
 
-Use the Node.js version:
+## 🚀 Quick Start
 
-```sh
-nvm use
-```
+### Prerequisites
+- Node.js 20+
+- Python 3.10+ (for math engine)
 
-Install the dependencies:
-
-```sh
+### Development
+```bash
 npm install
+npm run dev         # Start dev server at http://localhost:5173
 ```
 
-## Available Scripts
+### Production Build
+```bash
+npm run build       # Build to dist/
+npm run preview     # Preview production build
+```
 
-In the project directory, you can run:
+### Math Simulation
+```bash
+npm run math:quick  # Quick RTP check (100K simulations)
+npm run math:sim    # Full RTP validation (1M simulations + export)
+```
 
-### `npm start`
+### Bundle for Stake Engine
+```bash
+npm run bundle      # Build + package into sweet_cluster_1000.zip
+```
 
-Runs the game in the development mode.
+## 📊 Math Engine
 
-Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
+The Python math engine (`math-engine/`) validates the game's mathematical model:
 
-The page will reload if you make edits.
+- **Target RTP:** 96.00%
+- **Validated RTP:** ~96.56% (200K simulations)
+- **Hit Rate:** ~37.33%
+- **Max Win:** 25,000× bet
 
-You will also see any errors in the console.
+### Output Files
 
-### `npm run build`
+| File | Purpose |
+|------|---------|
+| `game_config.json` | Static game config for Stake Engine RGS |
+| `simulation_results.csv` | Per-simulation outcome data |
+| `rtp_report.txt` | Human-readable RTP validation report |
 
-Builds the game for production to the `dist` folder.
+## 🔗 Stake Engine Integration
 
-It correctly bundles in production mode and optimizes the build for the best performance.
+The game integrates with Stake Engine's RGS API via `src/engine/StakeEngineClient.ts`:
 
-The build is minified and the filenames include the hashes.
+### API Endpoints Used
+| Endpoint | Purpose |
+|----------|---------|
+| `/wallet/authenticate` | Session validation (called on game load) |
+| `/wallet/play` | Execute a game round |
+| `/wallet/balance` | Get player balance |
+| `/wallet/end-round` | Complete round after animations |
 
-Your game is ready to be deployed!
+### URL Parameters
+The game reads these from the launcher URL:
+- `sessionID` — Player session token
+- `lang` — Language code (default: `en`)
+- `device` — Device type (`desktop` / `mobile`)
+- `rgs_url` — RGS API base URL (never hardcoded)
 
-## License
+### Demo Mode
+When no `sessionID` or `rgs_url` is provided, the game runs in **demo mode** with client-side random outcomes. A "DEMO MODE" label appears in the top-left corner.
 
-[MIT](LICENSE)
+## 📋 Deployment Checklist
+
+- [x] Game Design Document (GDD.md)
+- [x] Production art assets (8 symbols + backgrounds)
+- [x] Sound effects & music (7 audio tracks)
+- [x] Paytable & multiplier system
+- [x] Free Spins with scatter trigger
+- [x] Buy Feature (100× and 500× bet)
+- [x] RTP validated at ~96% via Monte Carlo simulation
+- [x] Stake Engine API integration
+- [x] Responsive layout (portrait + landscape)
+- [x] Win celebration tiers
+- [x] In-game paytable overlay
+- [x] Settings overlay
+- [x] Production build configured
+- [x] Deployment bundle script
+- [ ] Upload to Stake Engine ACP
+- [ ] Stake review & approval
+
+## 📄 License
+
+MIT
