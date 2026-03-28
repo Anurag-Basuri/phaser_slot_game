@@ -44,7 +44,9 @@ export class Preload extends Phaser.Scene {
     this.load.image('candy_4', 'images/candies/pink_heart_candy_1774634904495.png');
     this.load.image('candy_5', 'images/candies/orange_slice_candy_1774634928914.png');
     this.load.image('candy_6', 'images/candies/blue_gumdrop_1774634952667.png');
-    this.load.image('scatter', 'images/candies/rainbow_lollipop_scatter_1774634977631.png');
+    this.load.image('candyland_bg', 'images/candyland_bg.png');
+    this.load.image('gumball_rocket_btn', 'images/gumball_rocket_btn.png');
+    this.load.image('scatter', 'images/gumball_scatter.png');
 
     this.load.atlas('line', 'images/lines/line.png', 'images/lines/line.json');
 

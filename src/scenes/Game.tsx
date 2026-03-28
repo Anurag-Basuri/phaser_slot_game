@@ -10,14 +10,16 @@ export class Game extends Phaser.Scene {
   
   txtMoney!: Phaser.GameObjects.Text;
   txtBet!: Phaser.GameObjects.Text;
+  txtFSRemaining!: Phaser.GameObjects.Text;
   
   valueMoney = Number(localStorage.getItem(LocalStorageKey.Money) ?? options.money);
-  currentBetMultiplier = 1;
+  currentBetMultiplier = 1; // Used over 'lines' conceptually
   baseBet = 10;
   
-  spinButton!: Phaser.GameObjects.Image | Phaser.GameObjects.Shape;
+  spinBtn!: Phaser.GameObjects.Image;
   autoSpinActive = false;
   autoSpinTimer: Phaser.Time.TimerEvent | null = null;
+  fsActive = false;
 
   constructor() {
     super({ key: 'Game' });
@@ -30,133 +32,178 @@ export class Game extends Phaser.Scene {
     const h = this.scale.height;
 
     // 1. Background
-    this.add.rectangle(0, 0, w, h, 0x1a0f2e).setOrigin(0,0);
+    this.add.image(w/2, h/2, 'candyland_bg').setDisplaySize(w, h); // Fully stretch/fit to background
+
+    // 2. Buy Feature Buttons Area (Left-Middle panel next to grid)
+    this.add.rectangle(w/2 - 800, h/2 - 200, 260, 160, 0x00d2ff, 0.8)
+        .setInteractive({ useHandCursor: true }).setStrokeStyle(6, 0xffffff)
+        .on('pointerdown', () => this.purchaseFeature(2, 500));
+    this.add.text(w/2 - 800, h/2 - 230, 'SUPER RNG SPINS', { fontSize: '24px', color: '#fff', align: 'center', fontStyle: 'bold', stroke: '#0055ff', strokeThickness: 6 }).setOrigin(0.5);
+    this.add.text(w/2 - 800, h/2 - 180, '500x BET', { fontSize: '28px', color: '#ffea00', fontStyle: 'bold', stroke: '#000', strokeThickness: 4 }).setOrigin(0.5);
+
+    this.add.rectangle(w/2 - 800, h/2, 260, 160, 0xff006a, 0.8)
+        .setInteractive({ useHandCursor: true }).setStrokeStyle(6, 0xffffff)
+        .on('pointerdown', () => this.purchaseFeature(1, 100));
+    this.add.text(w/2 - 800, h/2 - 30, 'BUY\nFREE SPINS', { fontSize: '24px', color: '#fff', align: 'center', fontStyle: 'bold', stroke: '#ff00aa', strokeThickness: 6 }).setOrigin(0.5);
+    this.add.text(w/2 - 800, h/2 + 30, '100x BET', { fontSize: '28px', color: '#ffbd00', fontStyle: 'bold', stroke: '#000', strokeThickness: 4 }).setOrigin(0.5);
+
+    // 3. Main Grid Background Frame (Slightly left of center for widescreen)
+    const gridX = w/2 - 450;
+    const gridY = h/2 - 350;
     this.add.graphics()
-        .fillGradientStyle(0x3a1f4e, 0x3a1f4e, 0x1a0f2e, 0x1a0f2e, 1)
-        .fillRect(0, 0, w, h);
-
-    // 2. Buy Feature Buttons Area (Top)
-    this.add.graphics().fillStyle(0x000000, 0.4).fillRect(0, 50, w, 150);
-    
-    // Super Free Spins button
-    const btnSuperFS = this.add.rectangle(w/2 - 160, 125, 300, 100, 0x00d2ff, 0.8)
-        .setInteractive({ useHandCursor: true }).setStrokeStyle(4, 0xffffff);
-    this.add.text(w/2 - 160, 105, 'BUY SUPER\nFREE SPINS', { fontSize: '24px', color: '#fff', align: 'center', fontStyle: 'bold' }).setOrigin(0.5);
-    this.add.text(w/2 - 160, 150, '500,000.00', { fontSize: '20px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
-    
-    // Normal Free Spins button
-    const btnFS = this.add.rectangle(w/2 + 160, 125, 300, 100, 0xff006a, 0.8)
-        .setInteractive({ useHandCursor: true }).setStrokeStyle(4, 0xffffff);
-    this.add.text(w/2 + 160, 105, 'BUY\nFREE SPINS', { fontSize: '24px', color: '#fff', align: 'center', fontStyle: 'bold' }).setOrigin(0.5);
-    this.add.text(w/2 + 160, 150, '100,000.00', { fontSize: '20px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
-
-    // 3. Grid Background Frame
-    this.add.rectangle(w/2, 580, 580, 580, 0x000000, 0.5).setStrokeStyle(6, 0xffffff);
+      .fillStyle(0x0a102e, 0.7)
+      .fillRoundedRect(gridX - 25, gridY - 25, options.symbolSize * 7 + 50, options.symbolSize * 7 + 50, 16)
+      .lineStyle(10, 0x00d2ff, 1)
+      .strokeRoundedRect(gridX - 25, gridY - 25, options.symbolSize * 7 + 50, options.symbolSize * 7 + 50, 16);
 
     // 4. Initialize Grid
-    this.grid = new Grid(this);
+    this.grid = new Grid(this, gridX, gridY);
     this.grid.onWinCallback = (winAmount) => {
         const actualWin = winAmount * this.currentBetMultiplier;
-        this.valueMoney += actualWin;
-        this.updateMoneyDisplay();
+        if (!this.fsActive) {
+            this.valueMoney += actualWin;
+            this.updateMoneyDisplay();
+        }
         this.audio.audioWin.play();
         
         // Float win text
-        const winText = this.add.text(w/2, 580, `+${actualWin.toLocaleString()}`, { fontSize: '60px', color: '#ffe600', fontStyle: 'bold', stroke: '#000', strokeThickness: 6 }).setOrigin(0.5).setDepth(20);
-        this.tweens.add({ targets: winText, y: 480, alpha: 0, duration: 1500, onComplete: () => winText.destroy() });
+        const winText = this.add.text(gridX + 350, gridY + 350, `+${actualWin.toLocaleString()}`, { fontSize: '80px', color: '#ffe600', fontStyle: 'bold', stroke: '#000', strokeThickness: 10 }).setOrigin(0.5).setDepth(20);
+        this.tweens.add({ targets: winText, y: gridY + 150, alpha: 0, duration: 2000, ease: 'Power1', onComplete: () => winText.destroy() });
     };
-    
-    this.grid.onCompleteCallback = () => {
-        options.checkClick = false;
+
+    // Tracker for Free spins
+    this.txtFSRemaining = this.add.text(w/2 + 450, h/2 - 250, `0\nFREE SPINS`, { fontSize: '40px', color: '#fff', align: 'center', fontStyle: 'bold', stroke: '#ea00ff', strokeThickness: 6 }).setOrigin(0.5).setVisible(false);
+
+    this.grid.onFreeSpinsStart = (count) => {
+        this.fsActive = true;
+        this.txtFSRemaining.setText(`${count}\nFREE SPINS`).setVisible(true);
+    };
+
+    this.grid.onFreeSpinsEnd = (totalWin) => {
+        this.fsActive = false;
+        this.txtFSRemaining.setVisible(false);
+        const actualTotalWin = totalWin * this.currentBetMultiplier;
+        this.valueMoney += actualTotalWin;
+        this.updateMoneyDisplay();
         
+        const endText = this.add.text(w/2, h/2, `TOTAL FS WIN:\n${actualTotalWin.toLocaleString()}`, { fontSize: '100px', color: '#ffe600', align: 'center', fontStyle: 'bold', stroke: '#000', strokeThickness: 16 }).setOrigin(0.5).setDepth(30).setScale(0);
+        this.tweens.add({ targets: endText, scale: 1, duration: 600, yoyo: true, hold: 3000, ease: 'Back.easeOut', 
+            onComplete: () => {
+                endText.destroy();
+                // Resume loop if auto
+                options.checkClick = false;
+                if (this.autoSpinActive) this.attemptSpin(0);
+            }
+        });
+    };
+
+    this.grid.onCompleteCallback = () => {
+        if (this.fsActive) return; // Grid handles internal looping during FS
+        
+        options.checkClick = false;
         if (this.autoSpinActive) {
-            this.autoSpinTimer = this.time.delayedCall(1500, () => {
-                if (this.autoSpinActive) this.attemptSpin();
+            this.autoSpinTimer = this.time.delayedCall(1200, () => {
+                if (this.autoSpinActive && !this.fsActive) this.attemptSpin(0);
             });
         }
     };
 
-    // 5. Bottom Stake UI Bar
-    this.add.graphics().fillStyle(0x0a0a0f, 1).fillRect(0, h - 350, w, 350);
+    // 5. Gumball Rocket Spin UI (Right Side)
+    this.spinBtn = this.add.image(w/2 + 450, h/2 + 100, 'gumball_rocket_btn')
+        .setInteractive({ useHandCursor: true })
+        .setScale(0.85);
+
+    // Auto Play Button
+    const btnAuto = this.add.rectangle(w/2 + 450, h/2 + 350, 240, 60, 0x000000, 0.8).setInteractive({ useHandCursor: true }).setStrokeStyle(4, 0xffffff);
+    const txtAuto = this.add.text(w/2 + 450, h/2 + 350, 'AUTO PLAY', { fontSize: '26px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
+
+    // 6. Stake Bottom Betting Bar
+    const barHeight = 80;
+    this.add.graphics().fillStyle(0x0a0f1c, 0.95).fillRect(0, h - barHeight, w, barHeight);
     
-    // Spin Button (Giant Circular)
-    const spinCircle = this.add.circle(w/2, h - 180, 80, 0x222222).setInteractive({ useHandCursor: true }).setStrokeStyle(4, 0xffffff);
-    const spinIcon = this.add.text(w/2, h - 180, '↻', { fontSize: '100px', color: '#ffffff' }).setOrigin(0.5);
-    
-    // Auto Spin Text/Button
-    const btnAuto = this.add.rectangle(w/2, h - 250, 200, 40, 0x333333, 1).setInteractive({ useHandCursor: true }).setStrokeStyle(2, 0xffffff);
-    const txtAuto = this.add.text(w/2, h - 250, 'AUTO PLAY', { fontSize: '18px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
+    const btnMinus = this.add.circle(w/2 - 200, h - barHeight/2, 25, 0x333333).setInteractive({ useHandCursor: true }).setStrokeStyle(2, 0xffffff);
+    this.add.text(w/2 - 200, h - barHeight/2, '-', { fontSize: '36px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5, 0.55);
 
-    // Minus Bet Button
-    const btnMinus = this.add.circle(w/2 - 150, h - 180, 30, 0x333333).setInteractive({ useHandCursor: true });
-    this.add.text(w/2 - 150, h - 180, '-', { fontSize: '40px', color: '#fff' }).setOrigin(0.5);
+    const btnPlus = this.add.circle(w/2 + 200, h - barHeight/2, 25, 0x333333).setInteractive({ useHandCursor: true }).setStrokeStyle(2, 0xffffff);
+    this.add.text(w/2 + 200, h - barHeight/2, '+', { fontSize: '30px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5, 0.55);
 
-    // Plus Bet Button
-    const btnPlus = this.add.circle(w/2 + 150, h - 180, 30, 0x333333).setInteractive({ useHandCursor: true });
-    this.add.text(w/2 + 150, h - 180, '+', { fontSize: '30px', color: '#fff' }).setOrigin(0.5);
-
-    // Credit and Bet Display (Bottom)
-    this.txtMoney = this.add.text(w/2 - 100, h - 60, `CREDIT d${this.valueMoney.toLocaleString()}`, { fontSize: '28px', color: '#ffb300', fontFamily: '"Courier New", Courier, monospace', fontStyle: 'bold' }).setOrigin(1, 0.5);
-    this.txtBet = this.add.text(w/2 + 100, h - 60, `BET d${(this.baseBet * this.currentBetMultiplier).toLocaleString()}`, { fontSize: '28px', color: '#cecece', fontFamily: '"Courier New", Courier, monospace', fontStyle: 'bold' }).setOrigin(0, 0.5);
+    this.txtMoney = this.add.text(100, h - barHeight/2, `CREDIT d ${this.valueMoney.toLocaleString()}`, { fontSize: '32px', color: '#ffb300', fontFamily: 'monospace', fontStyle: 'bold' }).setOrigin(0, 0.5);
+    this.txtBet = this.add.text(w/2, h - barHeight/2, `BET d ${(this.baseBet * this.currentBetMultiplier).toLocaleString()}`, { fontSize: '32px', color: '#ffffff', fontFamily: 'monospace', fontStyle: 'bold' }).setOrigin(0.5, 0.5);
 
     // Interactions
     btnMinus.on('pointerdown', () => this.changeBet(-1));
     btnPlus.on('pointerdown', () => this.changeBet(1));
 
     btnAuto.on('pointerdown', () => {
+        if (this.fsActive) return;
         this.autoSpinActive = !this.autoSpinActive;
         txtAuto.setText(this.autoSpinActive ? 'STOP AUTO' : 'AUTO PLAY');
-        btnAuto.setFillStyle(this.autoSpinActive ? 0xff006a : 0x333333);
+        btnAuto.setFillStyle(this.autoSpinActive ? 0xff006a : 0x000000);
         if (this.autoSpinActive && !options.checkClick) {
-            this.attemptSpin();
+            this.attemptSpin(0);
         }
     });
 
-    spinCircle.on('pointerdown', () => {
-        spinCircle.setScale(0.9);
-        this.time.delayedCall(100, () => spinCircle.setScale(1));
+    this.spinBtn.on('pointerdown', () => {
+        if (this.fsActive) return;
+        
+        this.spinBtn.setScale(0.80);
+        this.time.delayedCall(150, () => this.spinBtn.setScale(0.85));
         
         if (this.autoSpinActive) {
             this.autoSpinActive = false;
             txtAuto.setText('AUTO PLAY');
-            btnAuto.setFillStyle(0x333333);
+            btnAuto.setFillStyle(0x000000);
             if (this.autoSpinTimer) this.autoSpinTimer.remove();
         } else {
-            this.attemptSpin();
+            this.attemptSpin(0);
         }
     });
   }
 
   updateMoneyDisplay() {
-      this.txtMoney.setText(`CREDIT d${this.valueMoney.toLocaleString()}`);
+      this.txtMoney.setText(`CREDIT d ${this.valueMoney.toLocaleString()}`);
       localStorage.setItem(LocalStorageKey.Money, String(this.valueMoney));
   }
 
-  attemptSpin() {
-      if (!options.checkClick && this.valueMoney >= this.baseBet * this.currentBetMultiplier) {
+  purchaseFeature(triggerType: number, betMultiplierCost: number) {
+      if (options.checkClick || this.fsActive) return;
+      
+      const cost = (this.baseBet * this.currentBetMultiplier) * betMultiplierCost;
+      if (this.valueMoney >= cost) {
           options.checkClick = true;
-          this.audio.musicDefault.play();
-          
-          this.valueMoney -= this.baseBet * this.currentBetMultiplier;
+          this.valueMoney -= cost;
           this.updateMoneyDisplay();
-          
-          this.grid.startSpin();
-      } else if (this.valueMoney < this.baseBet * this.currentBetMultiplier) {
-          // Can't spin, stop auto
-          this.autoSpinActive = false;
+          this.grid.startSpin(triggerType);
+      }
+  }
+
+  attemptSpin(triggerType: number) {
+      if (!options.checkClick && !this.fsActive) {
+          const cost = this.baseBet * this.currentBetMultiplier;
+          if (this.valueMoney >= cost) {
+              options.checkClick = true;
+              this.audio.musicDefault.play();
+              
+              this.valueMoney -= cost;
+              this.updateMoneyDisplay();
+              
+              this.grid.startSpin(triggerType);
+          } else {
+              this.autoSpinActive = false; // Stop auto if broke
+          }
       }
   }
 
   changeBet(amount: number) {
-      if (!options.checkClick) {
+      if (!options.checkClick && !this.fsActive) {
           const newMult = this.currentBetMultiplier + amount;
           if (newMult >= 1 && newMult <= 100) {
               this.currentBetMultiplier = newMult;
               
               options.coin = this.baseBet;
               options.line = this.currentBetMultiplier;
-
-              this.txtBet.setText(`BET d${(this.baseBet * this.currentBetMultiplier).toLocaleString()}`);
+              this.txtBet.setText(`BET d ${(this.baseBet * this.currentBetMultiplier).toLocaleString()}`);
           }
       }
   }

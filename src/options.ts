@@ -16,25 +16,22 @@ export default {
   txtInfo: 'INFO',
   win: 0,
   // Sugar Rush uses 7 basic candy symbols.
-  // Cluster payvalues: nested array where index corresponds to symbol ID (0 to 6)
-  // Inner array index corresponds to cluster size minus 5 (since min cluster is 5).
-  // e.g. payvalues[0][0] is payout for 5 of symbol 0.
-  // We'll define payouts for sizes: [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15+] (11 values)
+  // 11 tiers (5 symbols ... 15+)
   payvalues: [
-    [20, 25, 30, 40, 50, 75, 100, 150, 200, 300, 500],   // Pink Heart (Highest)
-    [15, 20, 25, 30, 40, 50, 75, 100, 150, 200, 300],    // Yellow Star
-    [10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200],     // Purple Bean
-    [8, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150],       // Green Square
-    [5, 8, 10, 15, 20, 25, 30, 40, 50, 75, 100],         // Red Bear
-    [4, 6, 8, 10, 15, 20, 25, 30, 40, 50, 75],           // Orange Slice
-    [3, 5, 6, 8, 10, 15, 20, 25, 30, 40, 50],            // Blue Gumdrop
+    [0.2, 0.25, 0.3, 0.4, 0.5, 1, 1.5, 2.5, 5, 10, 20],      // ID 0: Lowest
+    [0.25, 0.3, 0.4, 0.5, 0.75, 1.25, 2, 3, 6, 12, 25],      // ID 1
+    [0.3, 0.4, 0.5, 0.75, 1, 1.5, 2.5, 3.5, 8, 15, 30],      // ID 2
+    [0.4, 0.5, 0.75, 1, 1.25, 2, 3, 5, 10, 20, 40],          // ID 3
+    [0.5, 0.75, 1, 1.25, 1.5, 3, 4.5, 10, 20, 40, 60],       // ID 4
+    [0.75, 1, 1.25, 1.5, 2, 4, 6, 12.5, 30, 60, 100],        // ID 5
+    [1, 1.5, 1.75, 2, 2.5, 5, 7.5, 15, 35, 70, 150],         // ID 6: Highest (Pink Candy eq)
   ],
 
   gridSize: 7, // 7x7 Grid
   checkClick: false,
-  symbolSize: 80, // Size of each candy symbol in the grid
-  cascadeDelay: 150, // ms delay before tumbling
-  clusterExplodeDuration: 300, // ms
+  symbolSize: 100, // HD size grid
+  cascadeDelay: 150, 
+  clusterExplodeDuration: 300, 
   
   i: 0,
   hsv: Phaser.Display.Color.HSVColorWheel(),
