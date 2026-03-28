@@ -17,7 +17,7 @@ export class Audio {
 
     this.audioReels = scene.sound.add('reels');
     this.audioReelStop = scene.sound.add('reelStop');
-    this.audioWin = scene.sound.add('win', { loop: true });
+    this.audioWin = scene.sound.add('win', { loop: false });
     this.audioButton = scene.sound.add('button');
     this.audioLose = scene.sound.add('lose', { volume: 2.5 });
 
@@ -25,5 +25,11 @@ export class Audio {
       loop: true,
       volume: 2,
     });
+  }
+
+  stopAll() {
+    this.audioWin.stop();
+    this.audioReels.stop();
+    this.musicDefault.stop();
   }
 }
