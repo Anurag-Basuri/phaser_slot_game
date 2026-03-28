@@ -89,7 +89,9 @@ export class Game extends Phaser.Scene {
           this.handlePendingRound();
         }
       } catch (err) {
-        console.error('[Game] Auth failed, falling back to demo:', err);
+        console.error('[Game] Auth failed:', err);
+        this.showFatalError('SESSION EXPIRED\nPlease relaunch the game.');
+        return; // Halt boot sequence immediately
       }
     }
 
@@ -135,6 +137,36 @@ export class Game extends Phaser.Scene {
       if (!options.checkClick && !this.fsActive) {
         this.attemptSpin(0);
       }
+    });
+
+    // Check for network errors handler
+    this.events.on('networkError', (msg: string) => this.showTransientError(msg));
+  }
+
+  private showFatalError(msg: string) {
+    // Locks entire game behind a dark overlay
+    options.checkClick = true; // Hard lock
+    const w = this.scale.width;
+    const h = this.scale.height;
+    
+    const bg = this.add.graphics().setDepth(100);
+    bg.fillStyle(0x000000, 0.95);
+    bg.fillRect(0, 0, w, h);
+    bg.setInteractive(new Phaser.Geom.Rectangle(0, 0, w, h), Phaser.Geom.Rectangle.Contains);
+
+    this.add.text(w / 2, h / 2, msg, {
+      fontSize: '24px', color: '#ff4444', fontStyle: 'bold', align: 'center', stroke: '#000', strokeThickness: 4
+    }).setOrigin(0.5).setDepth(101);
+  }
+
+  private showTransientError(msg: string) {
+    const errorText = this.add.text(this.scale.width / 2, this.scale.height / 2, msg, {
+      fontSize: '32px', color: '#ffea00', fontStyle: 'bold', stroke: '#000', strokeThickness: 6
+    }).setOrigin(0.5).setDepth(99);
+
+    this.tweens.add({
+      targets: errorText, y: '-=50', alpha: 0, duration: 2500, ease: 'Power2',
+      onComplete: () => errorText.destroy()
     });
   }
 
@@ -738,7 +770,7 @@ export class Game extends Phaser.Scene {
     const label = triggerType === 2 ? 'Super Free Spins' : 'Free Spins';
 
     if (this.valueMoney < cost) {
-      this.showInsufficientBalance();
+      this.showTransientError('INSUFFICIENT FUNDS');
       return;
     }
 
@@ -771,7 +803,11 @@ export class Game extends Phaser.Scene {
       });
     } catch (err) {
       console.error('[Game] Buy feature error:', err);
-      this.grid.startSpin(triggerType);
+      // Refund balance and unlock UI
+      this.valueMoney += cost;
+      this.updateMoneyDisplay();
+      options.checkClick = false;
+      this.showTransientError('NETWORK ERROR');
     }
   }
 
@@ -803,24 +839,20 @@ export class Game extends Phaser.Scene {
         this.grid.startSpin(triggerType, serverGrid);
       } catch (err) {
         console.error('[Game] Play error:', err);
-        this.grid.startSpin(triggerType); // Fallback to demo
+        // Refund and unlock UI
+        this.valueMoney += cost;
+        this.updateMoneyDisplay();
+        options.checkClick = false;
+        this.stopAutoSpin();
+        this.showTransientError('NETWORK ERROR');
+        return;
       }
     } else {
       this.stopAutoSpin();
-      this.showInsufficientBalance();
+      this.showTransientError('INSUFFICIENT FUNDS');
     }
   }
 
-  private showInsufficientBalance() {
-    const noFunds = this.add.text(this.scale.width / 2, this.scale.height / 2, 'INSUFFICIENT BALANCE', {
-      fontSize: '28px', color: '#ff4466', fontStyle: 'bold',
-      stroke: '#000', strokeThickness: 5
-    }).setOrigin(0.5).setDepth(30);
-    this.tweens.add({
-      targets: noFunds, alpha: 0, y: noFunds.y - 60, duration: 1500,
-      onComplete: () => noFunds.destroy()
-    });
-  }
 
   changeBet(direction: number) {
     if (options.checkClick || this.fsActive) return;
