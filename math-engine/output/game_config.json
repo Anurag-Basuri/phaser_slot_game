@@ -1,0 +1,183 @@
+{
+  "gameName": "Sweet Cluster 1000",
+  "gameId": "sweet_cluster_1000",
+  "gridSize": 7,
+  "minClusterSize": 5,
+  "symbolCount": 8,
+  "symbols": {
+    "0": {
+      "name": "Red Gummy Bear",
+      "isScatter": false
+    },
+    "1": {
+      "name": "Yellow Star Candy",
+      "isScatter": false
+    },
+    "2": {
+      "name": "Purple Jelly Bean",
+      "isScatter": false
+    },
+    "3": {
+      "name": "Green Square Candy",
+      "isScatter": false
+    },
+    "4": {
+      "name": "Pink Heart Candy",
+      "isScatter": false
+    },
+    "5": {
+      "name": "Orange Slice Candy",
+      "isScatter": false
+    },
+    "6": {
+      "name": "Blue Gumdrop",
+      "isScatter": false
+    },
+    "7": {
+      "name": "Scatter Lollipop",
+      "isScatter": true
+    }
+  },
+  "symbolWeights": [
+    18,
+    17,
+    16,
+    14,
+    13,
+    12,
+    10
+  ],
+  "scatterChance": 0.02,
+  "paytable": [
+    [
+      0.38,
+      0.48,
+      0.57,
+      0.76,
+      0.95,
+      1.9,
+      2.85,
+      4.75,
+      9.5,
+      19.0,
+      38.0
+    ],
+    [
+      0.48,
+      0.57,
+      0.76,
+      0.95,
+      1.43,
+      2.38,
+      3.8,
+      5.7,
+      11.4,
+      22.8,
+      47.5
+    ],
+    [
+      0.57,
+      0.76,
+      0.95,
+      1.43,
+      1.9,
+      2.85,
+      4.75,
+      6.65,
+      15.2,
+      28.5,
+      57.0
+    ],
+    [
+      0.76,
+      0.95,
+      1.43,
+      1.9,
+      2.38,
+      3.8,
+      5.7,
+      9.5,
+      19.0,
+      38.0,
+      76.0
+    ],
+    [
+      0.95,
+      1.43,
+      1.9,
+      2.38,
+      2.85,
+      5.7,
+      8.55,
+      19.0,
+      38.0,
+      76.0,
+      114.0
+    ],
+    [
+      1.43,
+      1.9,
+      2.38,
+      2.85,
+      3.8,
+      7.6,
+      11.4,
+      23.75,
+      57.0,
+      114.0,
+      190.0
+    ],
+    [
+      1.9,
+      2.85,
+      3.33,
+      3.8,
+      4.75,
+      9.5,
+      14.25,
+      28.5,
+      66.5,
+      133.0,
+      285.0
+    ]
+  ],
+  "freeSpinsByScatter": {
+    "3": 10,
+    "4": 15,
+    "5": 20,
+    "6": 25,
+    "7": 30
+  },
+  "multiplierProgression": [
+    1,
+    2,
+    4,
+    8,
+    16,
+    32,
+    64,
+    128,
+    256,
+    512,
+    1024
+  ],
+  "maxMultiplier": 1024,
+  "maxWin": 25000,
+  "rtp": {
+    "target": 0.96,
+    "simulated": 0.965629,
+    "simulations": 200000,
+    "hitRate": 0.3408
+  },
+  "buyFeatures": {
+    "regular": {
+      "cost": 100,
+      "spins": 10
+    },
+    "super": {
+      "cost": 500,
+      "spins": 10
+    }
+  },
+  "version": "1.0.0"
+}

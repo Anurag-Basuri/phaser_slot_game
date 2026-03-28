@@ -1,6 +1,6 @@
 {
-  "short_name": "Phaser Slot Machine Demo",
-  "name": "Phaser Slot Machine Demo",
+  "short_name": "Sweet Cluster 1000",
+  "name": "Sweet Cluster 1000 — Cascading Cluster Pays Slot",
   "icons": [
     {
       "src": "favicon.png",
@@ -9,7 +9,8 @@
     }
   ],
   "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "display": "fullscreen",
+  "orientation": "any",
+  "theme_color": "#050a14",
+  "background_color": "#050a14"
 }
