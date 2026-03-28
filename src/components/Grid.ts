@@ -2,6 +2,17 @@ import Phaser from 'phaser';
 import options from '../options';
 import { ClusterEvaluator } from '../helpers';
 
+/**
+ * Grid — 7×7 cascading cluster pays grid engine.
+ *
+ * Supports:
+ * - Server-provided grids (production RGS mode)
+ * - Client-side random grids (demo mode fallback)
+ * - Persistent multiplier system (up to 1024×)
+ * - Max win cap enforcement (25,000×)
+ * - Turbo mode (reduced animation timings)
+ * - Ante Bet (increased scatter chance)
+ */
 export class Grid {
   private scene: Phaser.Scene;
   private sprites: (Phaser.GameObjects.Sprite | null)[][];
@@ -14,11 +25,21 @@ export class Grid {
   public freeSpinsRemaining = 0;
   public totalFreeSpinsWin = 0;
   public isSuperFreeSpins = false;
+  public turboMode = false;
 
+  // Max win tracking
+  private cumulativeRoundWin = 0;
+  private maxWinReached = false;
+
+  // Server-provided grid for RGS mode
+  private pendingServerGrid: number[][] | null = null;
+
+  // Callbacks
   public onWinCallback: ((winAmount: number) => void) | null = null;
   public onFreeSpinsStart: ((count: number) => void) | null = null;
   public onFreeSpinsEnd: ((totalWin: number) => void) | null = null;
   public onCompleteCallback: (() => void) | null = null;
+  public onMaxWinCallback: ((totalWin: number) => void) | null = null;
 
   private symbolKeys = [
     'candy_0', 'candy_1', 'candy_2', 'candy_3',
@@ -29,6 +50,13 @@ export class Grid {
   public offsetX = 0;
   public offsetY = 0;
   public cellSize = 100;
+
+  // Dynamic timing based on turbo mode
+  private get cascadeDelay() { return this.turboMode ? 60 : 150; }
+  private get explodeDuration() { return this.turboMode ? 120 : 300; }
+  private get dropDuration() { return this.turboMode ? 140 : 350; }
+  private get postDropDelay() { return this.turboMode ? 200 : 500; }
+  private get sweepDuration() { return this.turboMode ? 140 : 280; }
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -41,7 +69,6 @@ export class Grid {
 
   /** Call this after setting offsetX/offsetY/cellSize, then populate the board. */
   public init() {
-    // Create a rectangular mask so symbols don't render outside the grid area
     this.gridMask = this.scene.add.graphics().setDepth(0);
     this.gridMask.fillStyle(0x000000, 0);
     this.gridMask.fillRect(
@@ -50,7 +77,6 @@ export class Grid {
       this.cellSize * options.gridSize + 10,
       this.cellSize * options.gridSize + 10
     );
-
     this.fillEmpty();
   }
 
@@ -64,7 +90,11 @@ export class Grid {
 
   /** Pick a weighted random symbol ID (0-6) or scatter (7). */
   private pickSymbol(): number {
-    if (Math.random() < options.scatterChance) return 7;
+    const scatterRate = options.anteBetEnabled
+      ? options.scatterChanceAnte
+      : options.scatterChance;
+
+    if (Math.random() < scatterRate) return 7;
 
     const weights = options.symbolWeights;
     const total = weights.reduce((a, b) => a + b, 0);
@@ -76,6 +106,7 @@ export class Grid {
     return weights.length - 1;
   }
 
+  /** Fill empty cells with server-provided or random symbols. */
   public fillEmpty() {
     const size = options.gridSize;
     const dropCounts = Array(size).fill(0);
@@ -91,9 +122,16 @@ export class Grid {
       for (let r = size - 1; r >= 0; r--) {
         if (!this.sprites[r][c]) {
           currentDropIndex++;
-          const symId = this.pickSymbol();
-          const startY = this.getY(r) - (dropCounts[c] + 1) * this.cellSize;
 
+          // Use server grid if available, otherwise pick random
+          let symId: number;
+          if (this.pendingServerGrid) {
+            symId = this.pendingServerGrid[r][c];
+          } else {
+            symId = this.pickSymbol();
+          }
+
+          const startY = this.getY(r) - (dropCounts[c] + 1) * this.cellSize;
           const sprite = this.scene.add.sprite(this.getX(c), startY, this.symbolKeys[symId]);
           sprite.setData('symId', symId);
 
@@ -106,21 +144,41 @@ export class Grid {
           this.scene.tweens.add({
             targets: sprite,
             y: this.getY(r),
-            duration: 350 + (dropCounts[c] - currentDropIndex) * 80,
+            duration: this.dropDuration + (dropCounts[c] - currentDropIndex) * 80,
             ease: 'Bounce.easeOut'
           });
         }
       }
     }
+
+    // Play reel stop sound after drop
+    this.scene.time.delayedCall(this.dropDuration + 100, () => {
+      this.scene.sound.play('reelStop', { volume: 0.25 });
+    });
+
+    // Consume server grid after first fill
+    if (this.pendingServerGrid) {
+      this.pendingServerGrid = null;
+    }
   }
 
-  public startSpin(triggerType: number = 0) {
+  /**
+   * Start a new spin round.
+   * @param triggerType 0=normal, 1=buy FS, 2=buy super FS
+   * @param serverGrid Optional server-provided grid (RGS mode)
+   */
+  public startSpin(triggerType: number = 0, serverGrid?: number[][]) {
     if (this.isProcessing) return;
     this.isProcessing = true;
 
-    // Reset multipliers only if NOT in free spins
+    // Store server grid for use in fillEmpty()
+    this.pendingServerGrid = serverGrid || null;
+
+    // Reset multipliers & win tracking only if NOT in free spins
     if (this.freeSpinsRemaining === 0) {
       this.totalFreeSpinsWin = 0;
+      this.cumulativeRoundWin = 0;
+      this.maxWinReached = false;
       for (let r = 0; r < options.gridSize; r++) {
         for (let c = 0; c < options.gridSize; c++) {
           this.multipliers[r][c] = 1;
@@ -159,7 +217,7 @@ export class Grid {
               targets: s,
               y: s.y + this.cellSize * 8,
               alpha: 0,
-              duration: 280,
+              duration: this.sweepDuration,
               onComplete: () => { s.destroy(); }
             });
             this.sprites[r][c] = null;
@@ -167,13 +225,44 @@ export class Grid {
         }
       }
 
-      this.scene.time.delayedCall(300, () => {
+      this.scene.time.delayedCall(this.sweepDuration + 20, () => {
         this.fillEmpty();
-        this.scene.time.delayedCall(800, () => {
+        this.scene.time.delayedCall(this.dropDuration + 300, () => {
           this.evaluateAndCascade();
         });
       });
     });
+  }
+
+  /** Reposition all existing sprites to current cell positions (for resize). */
+  public repositionSprites() {
+    const size = options.gridSize;
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const sprite = this.sprites[r][c];
+        if (sprite) {
+          sprite.setPosition(this.getX(c), this.getY(r));
+          const scale = (this.cellSize * 0.85) / Math.max(sprite.width, sprite.height);
+          sprite.setScale(Math.min(scale, 1));
+        }
+        // Redraw multiplier UI
+        this.clearMultiplierUI(r, c);
+        if (this.multipliers[r][c] > 1) {
+          this.drawMultiplierUI(r, c);
+        }
+      }
+    }
+    // Redraw grid mask
+    if (this.gridMask) {
+      this.gridMask.clear();
+      this.gridMask.fillStyle(0x000000, 0);
+      this.gridMask.fillRect(
+        this.offsetX - 5,
+        this.offsetY - 5,
+        this.cellSize * size + 10,
+        this.cellSize * size + 10
+      );
+    }
   }
 
   private clearMultiplierUI(r: number, c: number) {
@@ -189,10 +278,8 @@ export class Grid {
 
   private drawMultiplierUI(r: number, c: number) {
     const mult = this.multipliers[r][c];
-    // mult=2 is "wrapper" state (visible highlight, displays "x1")
     const displayMult = mult === 2 ? 1 : mult === 4 ? 2 : mult;
 
-    // Draw or update the golden highlight box
     if (!this.multiplierGraphics[r][c]) {
       const gfx = this.scene.add.graphics().setDepth(1);
       const pad = 3;
@@ -213,7 +300,6 @@ export class Grid {
       this.multiplierGraphics[r][c] = gfx;
     }
 
-    // Draw or update the text label
     const fontSize = Math.max(14, Math.floor(this.cellSize * 0.28));
     if (!this.multiplierTexts[r][c]) {
       this.multiplierTexts[r][c] = this.scene.add.text(
@@ -228,6 +314,11 @@ export class Grid {
   }
 
   private evaluateAndCascade() {
+    if (this.maxWinReached) {
+      this.finishRound();
+      return;
+    }
+
     const size = options.gridSize;
     const idGrid: number[][] = Array.from({ length: size }, () => Array(size).fill(-1));
     for (let r = 0; r < size; r++) {
@@ -249,30 +340,27 @@ export class Grid {
     // Process wins
     let totalWin = 0;
     clusters.forEach(cluster => {
-      let sizeIndex = Math.min(cluster.positions.length - 5, 10);
-
+      const sizeIndex = Math.min(cluster.positions.length - 5, 10);
       let clusterWin = options.payvalues[cluster.symbolId][sizeIndex];
 
-      // Sum multipliers from all positions in the cluster
+      // Sum multipliers
       let totalMult = 0;
       cluster.positions.forEach(pos => {
         const m = this.multipliers[pos.row][pos.col];
         if (m >= 4) {
           totalMult += m === 4 ? 2 : m;
-        } else if (m === 2) {
-          // Wrapper — contributes x1 (no additional mult)
         }
       });
       if (totalMult > 0) clusterWin *= totalMult;
 
       totalWin += clusterWin * options.betAmount;
 
-      // Explode symbols and advance multipliers
+      // Explode and advance multipliers
       cluster.positions.forEach(pos => {
         const r = pos.row;
         const c = pos.col;
         if (this.sprites[r][c]) {
-          // Explosion particles — create and auto-destroy
+          // Explosion particles
           const emitter = this.scene.add.particles(this.getX(c), this.getY(r), this.symbolKeys[cluster.symbolId], {
             speed: { min: 80, max: 350 },
             angle: { min: 0, max: 360 },
@@ -282,21 +370,20 @@ export class Grid {
             blendMode: 'ADD'
           });
           emitter.explode(4);
-          // Auto-destroy emitter after particles die
           this.scene.time.delayedCall(600, () => { emitter.destroy(); });
 
           // Animate symbol destruction
           this.scene.tweens.add({
             targets: this.sprites[r][c],
             scale: 0, alpha: 0, angle: 90,
-            duration: options.clusterExplodeDuration,
+            duration: this.explodeDuration,
             onComplete: () => {
               this.sprites[r][c]?.destroy();
               this.sprites[r][c] = null;
             }
           });
 
-          // Advance multiplier: 1→2(wrapper), 2→4(x2), 4→8(x4), ... up to 1024
+          // Advance multiplier
           if (this.multipliers[r][c] === 1) {
             this.multipliers[r][c] = 2;
           } else {
@@ -307,12 +394,30 @@ export class Grid {
       });
     });
 
+    // Enforce max win cap
     if (totalWin > 0) {
+      const maxWin = options.maxWinMultiplier * options.betAmount;
+      this.cumulativeRoundWin += totalWin;
+
+      if (this.cumulativeRoundWin >= maxWin) {
+        totalWin -= (this.cumulativeRoundWin - maxWin); // Clamp
+        this.cumulativeRoundWin = maxWin;
+        this.maxWinReached = true;
+      }
+
       if (this.freeSpinsRemaining > 0) this.totalFreeSpinsWin += totalWin;
       if (this.onWinCallback) this.onWinCallback(totalWin);
+
+      if (this.maxWinReached) {
+        if (this.onMaxWinCallback) this.onMaxWinCallback(this.cumulativeRoundWin);
+        this.scene.time.delayedCall(this.explodeDuration + 200, () => {
+          this.finishRound();
+        });
+        return;
+      }
     }
 
-    this.scene.time.delayedCall(options.clusterExplodeDuration + 80, () => {
+    this.scene.time.delayedCall(this.explodeDuration + 80, () => {
       this.cascadeSymbols();
     });
   }
@@ -342,21 +447,14 @@ export class Grid {
         }
       });
 
-      // Correct free spin tiers
       const fsAwarded = options.freeSpinsByScatter[Math.min(scatters, 7)] || 10;
       this.freeSpinsRemaining += fsAwarded;
 
-      const fsText = this.scene.add.text(
-        this.scene.scale.width / 2, this.scene.scale.height / 2,
-        `${fsAwarded} FREE SPINS\nTRIGGERED!`,
-        { fontSize: '72px', color: '#ff00cc', fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 10, align: 'center' }
-      ).setOrigin(0.5).setDepth(30).setScale(0);
-
       if (this.onFreeSpinsStart) this.onFreeSpinsStart(this.freeSpinsRemaining);
 
-      this.scene.tweens.add({
-        targets: fsText, scale: 1, duration: 500, ease: 'Back.easeOut', yoyo: true, hold: 1500,
-        onComplete: () => { fsText.destroy(); this.cascadeSymbols(); }
+      // Delay for scatter animation, then cascade
+      this.scene.time.delayedCall(1200, () => {
+        this.cascadeSymbols();
       });
       return;
     }
@@ -366,18 +464,33 @@ export class Grid {
       this.freeSpinsRemaining--;
       if (this.freeSpinsRemaining > 0) {
         if (this.onFreeSpinsStart) this.onFreeSpinsStart(this.freeSpinsRemaining);
-        this.scene.time.delayedCall(1000, () => {
+        this.scene.time.delayedCall(this.turboMode ? 400 : 1000, () => {
           this.isProcessing = false;
           this.startSpin();
         });
       } else {
-        if (this.onFreeSpinsEnd) this.onFreeSpinsEnd(this.totalFreeSpinsWin);
-        this.isSuperFreeSpins = false;
-        this.isProcessing = false;
-        if (this.onCompleteCallback) this.onCompleteCallback();
+        this.finishFreeSpins();
       }
     } else {
-      this.isProcessing = false;
+      this.finishRound();
+    }
+  }
+
+  private finishFreeSpins() {
+    if (this.onFreeSpinsEnd) this.onFreeSpinsEnd(this.totalFreeSpinsWin);
+    this.isSuperFreeSpins = false;
+    this.isProcessing = false;
+    if (this.onCompleteCallback) this.onCompleteCallback();
+  }
+
+  private finishRound() {
+    this.isProcessing = false;
+    if (this.freeSpinsRemaining > 0 && !this.maxWinReached) {
+      // Still in FS
+    } else if (this.freeSpinsRemaining > 0 && this.maxWinReached) {
+      this.freeSpinsRemaining = 0;
+      this.finishFreeSpins();
+    } else {
       if (this.onCompleteCallback) this.onCompleteCallback();
     }
   }
@@ -406,7 +519,7 @@ export class Grid {
 
     this.scene.time.delayedCall(220, () => {
       this.fillEmpty();
-      this.scene.time.delayedCall(500, () => {
+      this.scene.time.delayedCall(this.postDropDelay, () => {
         this.evaluateAndCascade();
       });
     });
