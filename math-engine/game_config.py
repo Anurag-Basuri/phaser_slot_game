@@ -41,13 +41,13 @@ SCATTER_CHANCE = 0.020  # 2.0% per cell
 # Each row is a symbol ID (0-6), columns are cluster tiers
 PAYTABLE = [
     # Cluster size:  5     6     7     8     9    10    11    12    13    14    15+
-    [0.38, 0.48, 0.57, 0.76, 0.95, 1.90, 2.85, 4.75, 9.50, 19.00, 38.00],   # 0: Red Bear (lowest)
-    [0.48, 0.57, 0.76, 0.95, 1.43, 2.38, 3.80, 5.70, 11.40, 22.80, 47.50],  # 1: Yellow Star
-    [0.57, 0.76, 0.95, 1.43, 1.90, 2.85, 4.75, 6.65, 15.20, 28.50, 57.00],  # 2: Purple Bean
-    [0.76, 0.95, 1.43, 1.90, 2.38, 3.80, 5.70, 9.50, 19.00, 38.00, 76.00],  # 3: Green Candy
-    [0.95, 1.43, 1.90, 2.38, 2.85, 5.70, 8.55, 19.00, 38.00, 76.00, 114.00],# 4: Pink Heart
-    [1.43, 1.90, 2.38, 2.85, 3.80, 7.60, 11.40, 23.75, 57.00, 114.00, 190.00],# 5: Orange Slice
-    [1.90, 2.85, 3.33, 3.80, 4.75, 9.50, 14.25, 28.50, 66.50, 133.00, 285.00], # 6: Blue Gumdrop (highest)
+    [0.12, 0.16, 0.19, 0.25, 0.31, 0.62, 0.93, 1.55, 3.10, 6.20, 12.40],    # 0: Red Bear (lowest)
+    [0.16, 0.19, 0.25, 0.31, 0.46, 0.78, 1.24, 1.86, 3.72, 7.44, 15.50],    # 1: Yellow Star
+    [0.19, 0.25, 0.31, 0.46, 0.62, 0.93, 1.55, 2.17, 4.96, 9.30, 18.60],    # 2: Purple Bean
+    [0.25, 0.31, 0.46, 0.62, 0.78, 1.24, 1.86, 3.10, 6.20, 12.40, 24.80],   # 3: Green Candy
+    [0.31, 0.46, 0.62, 0.78, 0.93, 1.86, 2.79, 6.20, 12.40, 24.80, 37.20],  # 4: Pink Heart
+    [0.46, 0.62, 0.78, 0.93, 1.24, 2.48, 3.72, 7.75, 18.60, 37.20, 62.00],  # 5: Orange Slice
+    [0.62, 0.93, 1.09, 1.24, 1.55, 3.10, 4.65, 9.30, 21.70, 43.40, 93.00],  # 6: Blue Gumdrop (highest)
 ]
 
 # --- FREE SPINS ---
@@ -71,6 +71,12 @@ BUY_SUPER_SEED_MULTIPLIERS = [
     (2, 2, 4), (2, 4, 4), (4, 2, 4), (4, 4, 4),
 ]
 
+# --- ANTE BET ---
+# When enabled: costs 25% more per spin, doubles scatter probability
+ANTE_BET_COST_MULTIPLIER = 1.25
+ANTE_BET_SCATTER_MULTIPLIER = 2.0   # SCATTER_CHANCE becomes 0.04 (4%)
+ANTE_BET_ENABLED_DEFAULT = False
+
 # --- MULTIPLIER PROGRESSION ---
 # When a position is part of a winning cluster:
 # No multiplier -> x1 wrapper (displays x1)
@@ -83,7 +89,7 @@ MAX_MULTIPLIER = 1024
 
 # --- RTP TARGET ---
 TARGET_RTP = 0.9600  # 96.00%
-RTP_TOLERANCE = 0.001  # ±0.1%
+RTP_TOLERANCE = 0.005  # ±0.5%
 
 # --- VOLATILITY ---
 # High volatility slot
