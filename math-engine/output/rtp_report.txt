@@ -1,0 +1,23 @@
+SWEET CLUSTER 1000 — RTP Report
+==================================================
+Date: 2026-03-28 13:07:20
+Simulations: 200,000
+RTP: 95.2978%
+Target: 96.00%
+Hit Rate: 34.34%
+Max Win: 1067.59x
+Status: PASS
+
+Feature Triggers:
+  free_spins_10: 11,690 (5.8450%)
+  free_spins_15: 2,728 (1.3640%)
+  free_spins_20: 541 (0.2705%)
+  free_spins_25: 84 (0.0420%)
+  free_spins_30: 6 (0.0030%)
+  retrigger_5: 20,456 (10.2280%)
+  scatter_3: 11,690 (5.8450%)
+  scatter_4: 2,728 (1.3640%)
+  scatter_5: 541 (0.2705%)
+  scatter_6: 84 (0.0420%)
+  scatter_7: 5 (0.0025%)
+  scatter_8: 1 (0.0005%)

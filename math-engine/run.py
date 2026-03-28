@@ -90,16 +90,16 @@ def simulate_spin(
     grid = generate_grid()
     total_win = 0.0
     cascade_count = 0
-    max_scatters = 0
+
+    # Count scatters on the INITIAL grid only (before cascades)
+    scatter_positions = count_scatters(grid)
+    initial_scatters = len(scatter_positions)
 
     while True:
         # Find clusters
         clusters = find_clusters(grid, MIN_CLUSTER_SIZE)
 
         if not clusters:
-            # Check scatters on final board
-            scatter_positions = count_scatters(grid)
-            max_scatters = max(max_scatters, len(scatter_positions))
             break
 
         cascade_count += 1
@@ -151,7 +151,7 @@ def simulate_spin(
             for r in range(GRID_ROWS):
                 grid[r][c] = full_col[r]
 
-    return total_win, multipliers, max_scatters, cascade_count
+    return total_win, multipliers, initial_scatters, cascade_count
 
 
 # ──────────────────────────── ROUND SIMULATION ────────────────────────────
@@ -197,19 +197,22 @@ def simulate_round(feature_type: int = 0) -> Dict:
             free_spins = FREE_SPINS_BY_SCATTER.get(min(scatter_count, 7), 10)
             features_triggered.append(f'scatter_{scatter_count}')
 
-    # Free spins
+    # Free spins — use while loop so retriggers properly extend the count
     if free_spins > 0:
         features_triggered.append(f'free_spins_{free_spins}')
-        for _ in range(free_spins):
+        max_total_spins = 50  # Hard cap to prevent runaway
+        spins_played = 0
+        while spins_played < free_spins and spins_played < max_total_spins:
+            spins_played += 1
             win, multipliers, retrigger_scatters, cascades = simulate_spin(
                 multipliers, is_free_spin=True
             )
             total_win += win
 
-            # Retrigger check
+            # Retrigger: awards +5 spins per retrigger (capped at max_total_spins)
             if retrigger_scatters >= 3:
-                extra = FREE_SPINS_BY_SCATTER.get(min(retrigger_scatters, 7), 10)
-                free_spins += extra  # Note: this affects the loop range via enumerate
+                extra = 5
+                free_spins = min(free_spins + extra, max_total_spins)
                 features_triggered.append(f'retrigger_{extra}')
 
     # Apply max win cap
