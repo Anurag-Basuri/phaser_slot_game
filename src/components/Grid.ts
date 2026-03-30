@@ -57,6 +57,7 @@ export class Grid {
   private get dropDuration() { return this.turboMode ? 140 : 350; }
   private get postDropDelay() { return this.turboMode ? 200 : 500; }
   private get sweepDuration() { return this.turboMode ? 140 : 280; }
+  private cellBackgrounds!: Phaser.GameObjects.Graphics;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -77,7 +78,27 @@ export class Grid {
       this.cellSize * options.gridSize + 10,
       this.cellSize * options.gridSize + 10
     );
+    this.cellBackgrounds = this.scene.add.graphics().setDepth(1);
+    this.drawCellBackgrounds();
     this.fillEmpty();
+  }
+
+  /** Draw subtle rounded-rect backgrounds behind each grid cell. */
+  public drawCellBackgrounds() {
+    this.cellBackgrounds.clear();
+    const size = options.gridSize;
+    const gap = 2;
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const x = this.offsetX + c * this.cellSize + gap;
+        const y = this.offsetY + r * this.cellSize + gap;
+        const s = this.cellSize - gap * 2;
+        // Fully opaque dark blue backgrounds — eliminates checkerboard from PNG transparency
+        const tint = (r + c) % 2 === 0 ? 0x0c1528 : 0x101d38;
+        this.cellBackgrounds.fillStyle(tint, 1.0);
+        this.cellBackgrounds.fillRoundedRect(x, y, s, s, 5);
+      }
+    }
   }
 
   private getX(col: number) {
@@ -263,6 +284,8 @@ export class Grid {
         this.cellSize * size + 10
       );
     }
+    // Redraw cell backgrounds
+    this.drawCellBackgrounds();
   }
 
   private clearMultiplierUI(r: number, c: number) {

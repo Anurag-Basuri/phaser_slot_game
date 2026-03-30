@@ -27,8 +27,10 @@ export class Game extends Phaser.Scene {
   private bgImage!: Phaser.GameObjects.Image;
   private gridFrame!: Phaser.GameObjects.Graphics;
   private gridGlow!: Phaser.GameObjects.Graphics;
-  private spinBtn!: Phaser.GameObjects.Image;
-  private spinBtnBaseScale = 0.5;
+  private spinBtnGfx!: Phaser.GameObjects.Graphics;
+  private spinBtnHit!: Phaser.GameObjects.Rectangle;
+  private spinBtnLabel!: Phaser.GameObjects.Text;
+  private spinBtnRadius = 50;
   private btnAuto!: Phaser.GameObjects.Rectangle;
   private txtAuto!: Phaser.GameObjects.Text;
   private btnBetMinus!: Phaser.GameObjects.Graphics;
@@ -187,10 +189,14 @@ export class Game extends Phaser.Scene {
     this.grid = new Grid(this);
     this.wireGridCallbacks();
 
-    // === SPIN BUTTON ===
-    this.spinBtn = this.add.image(0, 0, 'gumball_rocket_btn')
+    // === SPIN BUTTON (drawn, not the giant gumball image) ===
+    this.spinBtnGfx = this.add.graphics().setDepth(15);
+    this.spinBtnHit = this.add.rectangle(0, 0, 120, 120)
       .setInteractive({ useHandCursor: true })
-      .setDepth(15);
+      .setAlpha(0.001).setDepth(17);
+    this.spinBtnLabel = this.add.text(0, 0, 'SPIN', {
+      fontSize: '20px', color: '#ffffff', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(17);
 
     // === AUTO PLAY ===
     this.btnAuto = this.add.rectangle(0, 0, 1, 1, 0x0d1530, 0.9)
@@ -310,17 +316,15 @@ export class Game extends Phaser.Scene {
 
     this.bgImage.setPosition(w / 2, h / 2).setDisplaySize(w, h);
 
-    const barH = Math.max(55, h * 0.065);
-    let gridArea: number;
-    let gridX: number;
-    let gridY: number;
+    const barH = Math.max(60, h * 0.08);
 
     if (isPortrait) {
       // --- PORTRAIT LAYOUT ---
-      gridArea = w * 0.92;
+      const gridArea = Math.min(w * 0.96, (h - barH) * 0.56);
       const cellSize = Math.floor(gridArea / options.gridSize);
-      gridX = (w - cellSize * options.gridSize) / 2;
-      gridY = h * 0.04;
+      const gridTotalW = cellSize * options.gridSize;
+      const gridX = (w - gridTotalW) / 2;
+      const gridY = 12;
 
       this.grid.cellSize = cellSize;
       this.grid.offsetX = gridX;
@@ -328,142 +332,172 @@ export class Game extends Phaser.Scene {
 
       const gridBottom = gridY + cellSize * 7;
 
-      // Buy buttons: horizontal row
-      const buyW = w * 0.42;
-      const buyH = Math.min(h * 0.07, 65);
-      const buyY = gridBottom + buyH / 2 + 12;
+      // Buy buttons — horizontal row below grid
+      const buyW = w * 0.44;
+      const buyH = Math.max(50, h * 0.06);
+      const buyY = gridBottom + buyH / 2 + 10;
       this.drawBuyButton(this.buySuper, w * 0.26, buyY, buyW, buyH, 0x00d2ff);
       this.buySuperHit.setPosition(w * 0.26, buyY).setSize(buyW, buyH).setDisplaySize(buyW, buyH);
-      this.buySuperTxt1.setPosition(w * 0.26, buyY - 10).setFontSize(11);
-      this.buySuperTxt2.setPosition(w * 0.26, buyY + 14).setFontSize(16);
+      this.buySuperTxt1.setPosition(w * 0.26, buyY - 10).setFontSize(Math.max(10, buyH * 0.18));
+      this.buySuperTxt2.setPosition(w * 0.26, buyY + 12).setFontSize(Math.max(14, buyH * 0.26));
 
       this.drawBuyButton(this.buyRegular, w * 0.74, buyY, buyW, buyH, 0xff006a);
       this.buyRegularHit.setPosition(w * 0.74, buyY).setSize(buyW, buyH).setDisplaySize(buyW, buyH);
-      this.buyRegularTxt1.setPosition(w * 0.74, buyY - 10).setFontSize(11);
-      this.buyRegularTxt2.setPosition(w * 0.74, buyY + 14).setFontSize(16);
+      this.buyRegularTxt1.setPosition(w * 0.74, buyY - 10).setFontSize(Math.max(10, buyH * 0.18));
+      this.buyRegularTxt2.setPosition(w * 0.74, buyY + 12).setFontSize(Math.max(14, buyH * 0.26));
 
       // Ante Bet toggle
-      const anteY = buyY + buyH / 2 + 30;
-      this.drawAnteBetButton(w / 2, anteY, w * 0.5, 36);
-      this.anteBetHit.setPosition(w / 2, anteY).setSize(w * 0.5, 36).setDisplaySize(w * 0.5, 36);
-      this.anteBetIcon.setPosition(w / 2 - 55, anteY);
+      const anteY = buyY + buyH / 2 + 28;
+      const anteW = w * 0.50;
+      this.drawAnteBetButton(w / 2, anteY, anteW, 34);
+      this.anteBetHit.setPosition(w / 2, anteY).setSize(anteW, 34).setDisplaySize(anteW, 34);
+      this.anteBetIcon.setPosition(w / 2 - anteW * 0.3, anteY);
       this.anteBetTxt.setPosition(w / 2 + 10, anteY);
 
-      // Spin button
-      const spinY = anteY + 55 + h * 0.06;
-      const spinScale = Math.min(0.30, (h * 0.14) / 500);
-      this.spinBtn.setPosition(w / 2, spinY).setScale(spinScale);
-      this.spinBtnBaseScale = spinScale;
+      // Spin button — centered below ante bet
+      const spinRadius = Math.min(42, w * 0.1);
+      const spinY = anteY + 34 + spinRadius + 16;
+      this.drawSpinButton(w / 2, spinY, spinRadius);
+      this.spinBtnHit.setPosition(w / 2, spinY).setSize(spinRadius * 2.2, spinRadius * 2.2).setDisplaySize(spinRadius * 2.2, spinRadius * 2.2);
+      this.spinBtnLabel.setPosition(w / 2, spinY).setFontSize(Math.max(14, spinRadius * 0.44));
+      this.spinBtnRadius = spinRadius;
 
       // Auto play
-      this.btnAuto.setPosition(w / 2, spinY + h * 0.09).setSize(130, 36).setDisplaySize(130, 36);
-      this.txtAuto.setPosition(w / 2, spinY + h * 0.09).setFontSize(15);
+      const autoY = spinY + spinRadius + 24;
+      this.btnAuto.setPosition(w / 2, autoY).setSize(120, 32).setDisplaySize(120, 32);
+      this.txtAuto.setPosition(w / 2, autoY).setFontSize(14);
 
       // FS counter
-      this.txtFSRemaining.setPosition(w / 2, gridY - 25).setFontSize(24);
+      this.txtFSRemaining.setPosition(w / 2, gridY - 20).setFontSize(20);
 
     } else {
       // --- LANDSCAPE LAYOUT ---
-      gridArea = Math.min(h * 0.82, w * 0.46);
+      const gridArea = Math.min((h - barH) * 0.92, w * 0.42);
       const cellSize = Math.floor(gridArea / options.gridSize);
-      gridX = w * 0.28 - (cellSize * options.gridSize) / 2;
-      gridY = (h - barH - cellSize * options.gridSize) / 2;
+      const gridTotalW = cellSize * options.gridSize;
+
+      // Center grid horizontally in the middle area
+      const gridX = (w - gridTotalW) / 2;
+      const gridY = Math.max(8, ((h - barH) - cellSize * options.gridSize) / 2);
 
       this.grid.cellSize = cellSize;
       this.grid.offsetX = gridX;
       this.grid.offsetY = gridY;
 
-      const gridRight = gridX + cellSize * 7;
+      const gridRight = gridX + gridTotalW;
+      const gridLeft = gridX;
       const gridCenterY = gridY + cellSize * 3.5;
 
-      // Buy buttons: left column
-      const buyW = Math.min(w * 0.10, 130);
-      const buyH = h * 0.13;
-      const buyX = gridX - buyW / 2 - 20;
-      this.drawBuyButton(this.buySuper, buyX, gridCenterY - buyH - 8, buyW, buyH, 0x00d2ff);
-      this.buySuperHit.setPosition(buyX, gridCenterY - buyH - 8).setSize(buyW, buyH).setDisplaySize(buyW, buyH);
-      this.buySuperTxt1.setPosition(buyX, gridCenterY - buyH - 20).setFontSize(11);
-      this.buySuperTxt2.setPosition(buyX, gridCenterY - buyH + 4).setFontSize(16);
+      // Buy buttons — left panel
+      const leftPanel = gridLeft;
+      const buyW = Math.max(90, leftPanel * 0.65);
+      const buyH = Math.max(55, (h - barH) * 0.14);
+      const buyX = leftPanel / 2;
 
-      this.drawBuyButton(this.buyRegular, buyX, gridCenterY + 8, buyW, buyH, 0xff006a);
-      this.buyRegularHit.setPosition(buyX, gridCenterY + 8).setSize(buyW, buyH).setDisplaySize(buyW, buyH);
-      this.buyRegularTxt1.setPosition(buyX, gridCenterY - 4).setFontSize(11);
-      this.buyRegularTxt2.setPosition(buyX, gridCenterY + 20).setFontSize(16);
+      this.drawBuyButton(this.buySuper, buyX, gridCenterY - buyH * 0.6 - 6, buyW, buyH, 0x00d2ff);
+      this.buySuperHit.setPosition(buyX, gridCenterY - buyH * 0.6 - 6).setSize(buyW, buyH).setDisplaySize(buyW, buyH);
+      this.buySuperTxt1.setPosition(buyX, gridCenterY - buyH * 0.6 - 18).setFontSize(Math.max(10, buyH * 0.16));
+      this.buySuperTxt2.setPosition(buyX, gridCenterY - buyH * 0.6 + 6).setFontSize(Math.max(14, buyH * 0.26));
 
-      // Ante Bet toggle below buy buttons
-      const anteY = gridCenterY + buyH + 35;
-      this.drawAnteBetButton(buyX, anteY, buyW, 32);
-      this.anteBetHit.setPosition(buyX, anteY).setSize(buyW, 32).setDisplaySize(buyW, 32);
-      this.anteBetIcon.setPosition(buyX - buyW * 0.3, anteY).setFontSize(16);
-      this.anteBetTxt.setPosition(buyX + 10, anteY).setFontSize(10);
+      this.drawBuyButton(this.buyRegular, buyX, gridCenterY + buyH * 0.6 + 6, buyW, buyH, 0xff006a);
+      this.buyRegularHit.setPosition(buyX, gridCenterY + buyH * 0.6 + 6).setSize(buyW, buyH).setDisplaySize(buyW, buyH);
+      this.buyRegularTxt1.setPosition(buyX, gridCenterY + buyH * 0.6 - 6).setFontSize(Math.max(10, buyH * 0.16));
+      this.buyRegularTxt2.setPosition(buyX, gridCenterY + buyH * 0.6 + 18).setFontSize(Math.max(14, buyH * 0.26));
 
-      // Spin button
-      const spinX = gridRight + (w - gridRight) / 2;
-      const spinScale = Math.min(0.5, (w - gridRight - 40) / 500);
-      this.spinBtn.setPosition(spinX, gridCenterY - h * 0.05).setScale(spinScale);
-      this.spinBtnBaseScale = spinScale;
+      // Ante Bet toggle — under buy buttons
+      const anteY = gridCenterY + buyH * 1.5 + 20;
+      this.drawAnteBetButton(buyX, anteY, buyW, 30);
+      this.anteBetHit.setPosition(buyX, anteY).setSize(buyW, 30).setDisplaySize(buyW, 30);
+      this.anteBetIcon.setPosition(buyX - buyW * 0.3, anteY).setFontSize(14);
+      this.anteBetTxt.setPosition(buyX + 10, anteY).setFontSize(9);
 
-      // Auto play
-      this.btnAuto.setPosition(spinX, gridCenterY + h * 0.22).setSize(150, 38).setDisplaySize(150, 38);
-      this.txtAuto.setPosition(spinX, gridCenterY + h * 0.22).setFontSize(16);
+      // Spin button — right panel
+      const rightPanelCenter = gridRight + (w - gridRight) / 2;
+      const spinRadius = Math.min(50, (w - gridRight) * 0.22);
+      this.drawSpinButton(rightPanelCenter, gridCenterY, spinRadius);
+      this.spinBtnHit.setPosition(rightPanelCenter, gridCenterY).setSize(spinRadius * 2.2, spinRadius * 2.2).setDisplaySize(spinRadius * 2.2, spinRadius * 2.2);
+      this.spinBtnLabel.setPosition(rightPanelCenter, gridCenterY).setFontSize(Math.max(16, spinRadius * 0.44));
+      this.spinBtnRadius = spinRadius;
 
-      // FS counter
-      this.txtFSRemaining.setPosition(spinX, gridCenterY - h * 0.3).setFontSize(32);
+      // Auto play — under spin
+      this.btnAuto.setPosition(rightPanelCenter, gridCenterY + spinRadius + 40).setSize(130, 36).setDisplaySize(130, 36);
+      this.txtAuto.setPosition(rightPanelCenter, gridCenterY + spinRadius + 40).setFontSize(15);
+
+      // FS counter — above grid
+      this.txtFSRemaining.setPosition(w / 2, gridY - 20).setFontSize(28);
     }
 
     // Draw grid frame & glow
-    const gPad = 12;
+    const gPad = 10;
     const gW = this.grid.cellSize * 7 + gPad * 2;
     const gH = gW;
     const gX = this.grid.offsetX - gPad;
     const gY = this.grid.offsetY - gPad;
 
     this.gridGlow.clear();
-    this.gridGlow.fillStyle(0x00d2ff, 0.12);
-    this.gridGlow.fillRoundedRect(gX - 6, gY - 6, gW + 12, gH + 12, 18);
+    this.gridGlow.fillStyle(0x00d2ff, 0.10);
+    this.gridGlow.fillRoundedRect(gX - 4, gY - 4, gW + 8, gH + 8, 16);
 
     this.gridFrame.clear();
-    this.gridFrame.fillStyle(0x080e22, 0.80);
-    this.gridFrame.fillRoundedRect(gX, gY, gW, gH, 14);
-    this.gridFrame.lineStyle(3, 0x1a3366, 0.9);
-    this.gridFrame.strokeRoundedRect(gX, gY, gW, gH, 14);
-    this.gridFrame.lineStyle(1, 0x00d2ff, 0.25);
-    this.gridFrame.strokeRoundedRect(gX + 3, gY + 3, gW - 6, gH - 6, 12);
+    this.gridFrame.fillStyle(0x080e22, 0.85);
+    this.gridFrame.fillRoundedRect(gX, gY, gW, gH, 12);
+    this.gridFrame.lineStyle(2, 0x1a3366, 0.9);
+    this.gridFrame.strokeRoundedRect(gX, gY, gW, gH, 12);
+    this.gridFrame.lineStyle(1, 0x00d2ff, 0.20);
+    this.gridFrame.strokeRoundedRect(gX + 2, gY + 2, gW - 4, gH - 4, 10);
 
     // Bottom bar
     this.bottomBar.clear();
     this.bottomBar.fillStyle(0x060b18, 0.97);
     this.bottomBar.fillRect(0, h - barH, w, barH);
-    this.bottomBar.lineStyle(1, 0x1a2244, 0.7);
+    this.bottomBar.lineStyle(1, 0x1a2244, 0.8);
     this.bottomBar.lineBetween(0, h - barH, w, h - barH);
 
     const barCY = h - barH / 2;
-    const fs = Math.max(13, Math.floor(barH * 0.30));
-    const fsLabel = Math.max(8, Math.floor(barH * 0.18));
+    const fs = Math.max(16, Math.floor(barH * 0.32));
+    const fsLabel = Math.max(10, Math.floor(barH * 0.20));
 
-    // Balance section (left)
-    this.txtMoneyLabel.setPosition(w * 0.02, barCY - fs * 0.55).setFontSize(fsLabel);
-    this.txtMoney.setPosition(w * 0.02, barCY + fs * 0.25).setFontSize(fs);
+    // Balance section (left 30%)
+    this.txtMoneyLabel.setPosition(w * 0.04, barCY - fs * 0.50).setFontSize(fsLabel);
+    this.txtMoney.setPosition(w * 0.04, barCY + fs * 0.30).setFontSize(fs);
 
     // Bet section (center)
-    this.drawBetButton(this.btnBetMinus, w * 0.33, barCY, 36, false);
-    this.btnBetMinusHit.setPosition(w * 0.33, barCY).setSize(44, 44).setDisplaySize(44, 44);
-    this.drawBetButton(this.btnBetPlus, w * 0.57, barCY, 36, true);
-    this.btnBetPlusHit.setPosition(w * 0.57, barCY).setSize(44, 44).setDisplaySize(44, 44);
+    const betBtnSize = Math.max(34, barH * 0.55);
+    this.drawBetButton(this.btnBetMinus, w * 0.35, barCY, betBtnSize, false);
+    this.btnBetMinusHit.setPosition(w * 0.35, barCY).setSize(betBtnSize + 8, betBtnSize + 8).setDisplaySize(betBtnSize + 8, betBtnSize + 8);
+    this.drawBetButton(this.btnBetPlus, w * 0.58, barCY, betBtnSize, true);
+    this.btnBetPlusHit.setPosition(w * 0.58, barCY).setSize(betBtnSize + 8, betBtnSize + 8).setDisplaySize(betBtnSize + 8, betBtnSize + 8);
 
-    this.txtBetLabel.setPosition(w * 0.45, barCY - fs * 0.55).setFontSize(fsLabel);
-    this.txtBet.setPosition(w * 0.45, barCY + fs * 0.25).setFontSize(fs);
+    this.txtBetLabel.setPosition(w * 0.465, barCY - fs * 0.50).setFontSize(fsLabel);
+    this.txtBet.setPosition(w * 0.465, barCY + fs * 0.30).setFontSize(fs);
 
-    // Win section (right)
-    this.txtLastWinLabel.setPosition(w * 0.98, barCY - fs * 0.55).setFontSize(fsLabel);
-    this.txtLastWin.setPosition(w * 0.98, barCY + fs * 0.25).setFontSize(fs);
+    // Win section (right 30%)
+    this.txtLastWinLabel.setPosition(w * 0.96, barCY - fs * 0.50).setFontSize(fsLabel);
+    this.txtLastWin.setPosition(w * 0.96, barCY + fs * 0.30).setFontSize(fs);
 
     // Toolbar (top-right)
-    const tbY = 22;
-    this.soundToggle.setPosition(w - 28, tbY);
-    this.btnPaytable.setPosition(w - 62, tbY);
-    this.btnSettings.setPosition(w - 96, tbY);
-    this.btnFullscreen.setPosition(w - 130, tbY);
+    const tbY = 18;
+    const tbGap = Math.max(32, w * 0.028);
+    this.soundToggle.setPosition(w - tbGap * 0.5, tbY).setFontSize(Math.max(18, w * 0.016));
+    this.btnPaytable.setPosition(w - tbGap * 1.5, tbY).setFontSize(Math.max(18, w * 0.016));
+    this.btnSettings.setPosition(w - tbGap * 2.5, tbY).setFontSize(Math.max(18, w * 0.016));
+    this.btnFullscreen.setPosition(w - tbGap * 3.5, tbY).setFontSize(Math.max(18, w * 0.016));
+  }
+
+  private drawSpinButton(cx: number, cy: number, radius: number) {
+    this.spinBtnGfx.clear();
+    // Outer glow
+    this.spinBtnGfx.fillStyle(0x00ff88, 0.15);
+    this.spinBtnGfx.fillCircle(cx, cy, radius + 6);
+    // Main circle
+    this.spinBtnGfx.fillStyle(0x00cc66, 1);
+    this.spinBtnGfx.fillCircle(cx, cy, radius);
+    // Inner highlight
+    this.spinBtnGfx.fillStyle(0x00ff88, 0.35);
+    this.spinBtnGfx.fillCircle(cx, cy - radius * 0.15, radius * 0.75);
+    // Stroke
+    this.spinBtnGfx.lineStyle(3, 0x00ff99, 0.8);
+    this.spinBtnGfx.strokeCircle(cx, cy, radius);
   }
 
   private drawBuyButton(gfx: Phaser.GameObjects.Graphics, cx: number, cy: number, bw: number, bh: number, color: number) {
@@ -511,18 +545,13 @@ export class Game extends Phaser.Scene {
 
   private wireInteractions() {
     // Spin button
-    this.spinBtn.on('pointerdown', () => {
+    this.spinBtnHit.on('pointerdown', () => {
       if (this.anyOverlayOpen()) return;
       if (this.fsActive) return;
 
-      // Click press effect
-      this.tweens.add({
-        targets: this.spinBtn,
-        scaleX: this.spinBtnBaseScale * 0.9,
-        scaleY: this.spinBtnBaseScale * 0.9,
-        duration: 80,
-        yoyo: true,
-      });
+      // Click press effect — flash the label
+      this.spinBtnLabel.setColor('#aaffcc');
+      this.time.delayedCall(120, () => this.spinBtnLabel.setColor('#ffffff'));
 
       if (this.autoSpinActive) {
         this.stopAutoSpin();
@@ -531,21 +560,11 @@ export class Game extends Phaser.Scene {
       }
     });
 
-    this.spinBtn.on('pointerover', () => {
-      this.tweens.add({
-        targets: this.spinBtn,
-        scaleX: this.spinBtnBaseScale * 1.06,
-        scaleY: this.spinBtnBaseScale * 1.06,
-        duration: 150,
-      });
+    this.spinBtnHit.on('pointerover', () => {
+      this.spinBtnLabel.setColor('#ccffdd');
     });
-    this.spinBtn.on('pointerout', () => {
-      this.tweens.add({
-        targets: this.spinBtn,
-        scaleX: this.spinBtnBaseScale,
-        scaleY: this.spinBtnBaseScale,
-        duration: 150,
-      });
+    this.spinBtnHit.on('pointerout', () => {
+      this.spinBtnLabel.setColor('#ffffff');
     });
 
     // Auto play
