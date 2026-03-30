@@ -396,12 +396,26 @@ export class Grid {
           this.scene.time.delayedCall(600, () => { emitter.destroy(); });
 
           // Animate symbol destruction
+          // Debris particle pop
+          const sprite = this.sprites[r][c]!;
+          const symId = sprite.getData('symId') ?? 0;
+          const debrisEmitter = this.scene.add.particles(sprite.x, sprite.y, `candy_${symId}`, {
+            speed: { min: 80, max: 200 },
+            angle: { min: 0, max: 360 },
+            scale: { start: 0.15, end: 0 },
+            lifespan: 600,
+            quantity: 4,
+            gravityY: 300,
+          }).setDepth(15);
+          debrisEmitter.explode();
+          this.scene.time.delayedCall(700, () => debrisEmitter.destroy());
+
           this.scene.tweens.add({
-            targets: this.sprites[r][c],
-            scale: 0, alpha: 0, angle: 90,
+            targets: sprite,
+            scale: 0, alpha: 0, angle: Phaser.Math.Between(-180, 180),
             duration: this.explodeDuration,
             onComplete: () => {
-              this.sprites[r][c]?.destroy();
+              sprite.destroy();
               this.sprites[r][c] = null;
             }
           });

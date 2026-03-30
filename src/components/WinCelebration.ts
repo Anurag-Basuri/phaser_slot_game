@@ -119,35 +119,50 @@ export class WinCelebration {
         const eased = 1 - Math.pow(1 - progress, 3); // ease out cubic
         const currentAmount = winAmount * eased;
         amountText.setText(currentAmount.toFixed(2));
+        
+        if (progress === 1) {
+          this.scene.tweens.add({
+            targets: amountText,
+            scale: { from: 1.4, to: 1 },
+            duration: 500,
+            ease: 'Bounce.easeOut'
+          });
+        }
       },
     });
 
-    // Particle shower for big wins
+    // Particle fountain for big wins
     if (multiplier >= 10) {
-      for (let i = 0; i < Math.min(12, Math.floor(multiplier / 5)); i++) {
-        const px = Phaser.Math.Between(Math.floor(w * 0.05), Math.floor(w * 0.95));
-        const emitter = this.scene.add.particles(px, -20, `candy_${Phaser.Math.Between(0, 6)}`, {
-          speed: { min: 80, max: 350 },
-          angle: { min: 60, max: 120 },
-          scale: { start: 0.35, end: 0.05 },
-          lifespan: 3000,
-          quantity: 1,
-          gravityY: 180,
-          frequency: 200,
+      const colors = [0, 1, 2, 3, 4, 5, 6];
+      const quantityStr = Math.min(4, Math.max(1, Math.floor(multiplier / 20)));
+      
+      colors.forEach(c => {
+        const emitter = this.scene.add.particles(w / 2, h + 50, `candy_${c}`, {
+          speed: { min: 400, max: 1100 },
+          angle: { min: 230, max: 310 },
+          scale: { start: 0.6, end: 0.1 },
+          lifespan: 4000,
+          quantity: quantityStr,
+          gravityY: 700,
+          frequency: 80,
+          blendMode: 'ADD'
         });
-        this.container.add(emitter);
-        this.scene.time.delayedCall(3500, () => emitter.stop());
-      }
+        // Put particles behind text in the container
+        this.container.addAt(emitter, 1);
+        
+        // Stop emitting slightly before dismissal
+        this.scene.time.delayedCall(countDuration, () => emitter.stop());
+      });
     }
 
     // Glow pulse on tier text
     this.scene.tweens.add({
       targets: tierText,
-      scale: { from: 1, to: 1.1 },
+      scale: { from: 1, to: 1.15 },
       yoyo: true,
-      repeat: 3,
-      duration: 400,
-      delay: 700,
+      repeat: -1,
+      duration: 350,
+      ease: 'Sine.easeInOut'
     });
 
     // Auto dismiss

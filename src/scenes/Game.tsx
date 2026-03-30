@@ -195,47 +195,47 @@ export class Game extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .setAlpha(0.001).setDepth(17);
     this.spinBtnLabel = this.add.text(0, 0, 'SPIN', {
-      fontSize: '20px', color: '#ffffff', fontStyle: 'bold',
+      fontSize: '22px', color: '#ffffff', fontStyle: 'bold', stroke: '#005522', strokeThickness: 5
     }).setOrigin(0.5).setDepth(17);
 
     // === AUTO PLAY ===
-    this.btnAuto = this.add.rectangle(0, 0, 1, 1, 0x0d1530, 0.9)
+    this.btnAuto = this.add.rectangle(0, 0, 1, 1, 0x0d1530, 1) // fully opaque
       .setInteractive({ useHandCursor: true })
-      .setStrokeStyle(2, 0x3344aa, 0.8)
+      .setStrokeStyle(3, 0xffffff, 1) // thick white border
       .setDepth(15);
     this.txtAuto = this.add.text(0, 0, 'AUTO', {
-      fontSize: '18px', color: '#8899cc', fontStyle: 'bold'
+      fontSize: '18px', color: '#ffffff', fontStyle: 'bold', stroke: '#000000', strokeThickness: 3
     }).setOrigin(0.5).setDepth(16);
 
     // === ANTE BET ===
     this.anteBetBtn = this.add.graphics().setDepth(14);
     this.anteBetHit = this.add.rectangle(0, 0, 1, 1).setInteractive({ useHandCursor: true }).setAlpha(0.001).setDepth(16);
-    this.anteBetIcon = this.add.text(0, 0, '⚡', { fontSize: '20px' }).setOrigin(0.5).setDepth(16);
+    this.anteBetIcon = this.add.text(0, 0, '⚡', { fontSize: '20px', stroke: '#000000', strokeThickness: 4 }).setOrigin(0.5).setDepth(16);
     this.anteBetTxt = this.add.text(0, 0, 'ANTE BET', {
-      fontSize: '11px', color: '#888', fontStyle: 'bold'
+      fontSize: '12px', color: '#ffffff', fontStyle: 'bold', stroke: '#000000', strokeThickness: 4
     }).setOrigin(0.5).setDepth(16);
 
     // === BUY BUTTONS ===
     this.buySuper = this.add.graphics().setDepth(14);
     this.buySuperHit = this.add.rectangle(0, 0, 1, 1).setInteractive({ useHandCursor: true }).setAlpha(0.001).setDepth(16);
     this.buySuperTxt1 = this.add.text(0, 0, 'SUPER\nFREE SPINS', {
-      fontSize: '13px', color: '#fff', fontStyle: 'bold', align: 'center',
-      stroke: '#0044cc', strokeThickness: 3, lineSpacing: 2,
+      fontSize: '14px', color: '#ffffff', fontStyle: 'bold', align: 'center',
+      stroke: '#000000', strokeThickness: 5, lineSpacing: 2,
     }).setOrigin(0.5).setDepth(16);
     this.buySuperTxt2 = this.add.text(0, 0, '500×', {
-      fontSize: '20px', color: '#ffe600', fontStyle: 'bold',
-      stroke: '#000', strokeThickness: 3
+      fontSize: '22px', color: '#ffe600', fontStyle: 'bold',
+      stroke: '#000000', strokeThickness: 5
     }).setOrigin(0.5).setDepth(16);
 
     this.buyRegular = this.add.graphics().setDepth(14);
     this.buyRegularHit = this.add.rectangle(0, 0, 1, 1).setInteractive({ useHandCursor: true }).setAlpha(0.001).setDepth(16);
     this.buyRegularTxt1 = this.add.text(0, 0, 'BUY\nFREE SPINS', {
-      fontSize: '13px', color: '#fff', fontStyle: 'bold', align: 'center',
-      stroke: '#aa0055', strokeThickness: 3, lineSpacing: 2,
+      fontSize: '14px', color: '#ffffff', fontStyle: 'bold', align: 'center',
+      stroke: '#000000', strokeThickness: 5, lineSpacing: 2,
     }).setOrigin(0.5).setDepth(16);
     this.buyRegularTxt2 = this.add.text(0, 0, '100×', {
-      fontSize: '20px', color: '#ffe600', fontStyle: 'bold',
-      stroke: '#000', strokeThickness: 3
+      fontSize: '22px', color: '#ffe600', fontStyle: 'bold',
+      stroke: '#000000', strokeThickness: 5
     }).setOrigin(0.5).setDepth(16);
 
     // === BOTTOM BAR ===
@@ -276,20 +276,20 @@ export class Game extends Phaser.Scene {
     }).setOrigin(0.5).setVisible(false).setDepth(20);
 
     // === TOOLBAR ===
-    this.soundToggle = this.add.text(0, 0, '🔊', { fontSize: '22px' })
+    this.soundToggle = this.add.text(0, 0, '🔊', { fontSize: '28px', color: '#ffffff', stroke: '#000000', strokeThickness: 5 })
       .setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(16);
-    this.btnPaytable = this.add.text(0, 0, 'ℹ', { fontSize: '22px', color: '#00d2ff' })
+    this.btnPaytable = this.add.text(0, 0, 'ℹ', { fontSize: '28px', color: '#ffffff', stroke: '#000000', strokeThickness: 5 })
       .setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(16);
-    this.btnSettings = this.add.text(0, 0, '⚙', { fontSize: '22px', color: '#aaaacc' })
+    this.btnSettings = this.add.text(0, 0, '⚙', { fontSize: '28px', color: '#ffffff', stroke: '#000000', strokeThickness: 5 })
       .setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(16);
-    this.btnFullscreen = this.add.text(0, 0, '⛶', { fontSize: '22px', color: '#778899' })
+    this.btnFullscreen = this.add.text(0, 0, '⛶', { fontSize: '28px', color: '#ffffff', stroke: '#000000', strokeThickness: 5 })
       .setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(16);
 
     // === DEMO MODE LABEL ===
     this.demoLabel = this.add.text(10, 10, '', {
-      fontSize: '12px', color: '#ff4466', fontStyle: 'bold',
-      backgroundColor: '#0a0f1c90', padding: { x: 6, y: 3 },
-    }).setDepth(50).setAlpha(0.7);
+      fontSize: '18px', color: '#ff2244', fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 3,
+      backgroundColor: '#000000', padding: { x: 8, y: 4 },
+    }).setDepth(50).setAlpha(1);
 
     if (this.stakeEngine.isDemoMode()) {
       this.demoLabel.setText('DEMO');
@@ -479,17 +479,20 @@ export class Game extends Phaser.Scene {
 
   private drawSpinButton(cx: number, cy: number, radius: number) {
     this.spinBtnGfx.clear();
-    // Outer glow
-    this.spinBtnGfx.fillStyle(0x00ff88, 0.15);
-    this.spinBtnGfx.fillCircle(cx, cy, radius + 6);
+    // Dark Drop shadow
+    this.spinBtnGfx.fillStyle(0x000000, 0.5);
+    this.spinBtnGfx.fillCircle(cx, cy + 4, radius);
+
     // Main circle
-    this.spinBtnGfx.fillStyle(0x00cc66, 1);
+    this.spinBtnGfx.fillStyle(0x00e676, 1);
     this.spinBtnGfx.fillCircle(cx, cy, radius);
+
     // Inner highlight
-    this.spinBtnGfx.fillStyle(0x00ff88, 0.35);
-    this.spinBtnGfx.fillCircle(cx, cy - radius * 0.15, radius * 0.75);
-    // Stroke
-    this.spinBtnGfx.lineStyle(3, 0x00ff99, 0.8);
+    this.spinBtnGfx.fillStyle(0x66ffa6, 0.5);
+    this.spinBtnGfx.fillCircle(cx, cy - radius * 0.2, radius * 0.7);
+
+    // Thick Stroke
+    this.spinBtnGfx.lineStyle(4, 0xffffff, 1);
     this.spinBtnGfx.strokeCircle(cx, cy, radius);
   }
 
@@ -497,9 +500,21 @@ export class Game extends Phaser.Scene {
     gfx.clear();
     const x = cx - bw / 2;
     const y = cy - bh / 2;
-    gfx.fillStyle(color, 0.15);
+
+    // Drop shadow
+    gfx.fillStyle(0x000000, 0.5);
+    gfx.fillRoundedRect(x, y + 4, bw, bh, 12);
+
+    // Fully opaque fill
+    gfx.fillStyle(color, 1);
     gfx.fillRoundedRect(x, y, bw, bh, 12);
-    gfx.lineStyle(2, color, 0.8);
+    
+    // Gloss highlight (top half)
+    gfx.fillStyle(0xffffff, 0.2);
+    gfx.fillRoundedRect(x, y, bw, bh * 0.4, 12);
+
+    // Thick white stroke
+    gfx.lineStyle(3, 0xffffff, 1);
     gfx.strokeRoundedRect(x, y, bw, bh, 12);
   }
 
@@ -507,18 +522,31 @@ export class Game extends Phaser.Scene {
     this.anteBetBtn.clear();
     const x = cx - bw / 2;
     const y = cy - bh / 2;
+
+    // Drop shadow
+    this.anteBetBtn.fillStyle(0x000000, 0.5);
+    this.anteBetBtn.fillRoundedRect(x, y + 4, bw, bh, 8);
+
     if (options.anteBetEnabled) {
-      this.anteBetBtn.fillStyle(0xffaa00, 0.25);
+      this.anteBetBtn.fillStyle(0xff9900, 1);
       this.anteBetBtn.fillRoundedRect(x, y, bw, bh, 8);
-      this.anteBetBtn.lineStyle(2, 0xffaa00, 0.9);
+      
+      this.anteBetBtn.fillStyle(0xffffff, 0.2);
+      this.anteBetBtn.fillRoundedRect(x, y, bw, bh * 0.4, 8);
+
+      this.anteBetBtn.lineStyle(3, 0xffffff, 1);
       this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, 8);
-      this.anteBetTxt.setColor('#ffaa00');
+      
+      this.anteBetTxt.setColor('#ffffff');
+      this.anteBetIcon.setStroke('#000000', 4);
     } else {
-      this.anteBetBtn.fillStyle(0x222244, 0.5);
+      this.anteBetBtn.fillStyle(0x334466, 1);
       this.anteBetBtn.fillRoundedRect(x, y, bw, bh, 8);
-      this.anteBetBtn.lineStyle(1, 0x444466, 0.5);
+      this.anteBetBtn.lineStyle(3, 0x8899aa, 1);
       this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, 8);
-      this.anteBetTxt.setColor('#666688');
+      
+      this.anteBetTxt.setColor('#ffffff');
+      this.anteBetIcon.setStroke('#000000', 4);
     }
   }
 
@@ -565,8 +593,8 @@ export class Game extends Phaser.Scene {
       if (this.fsActive) return;
       this.autoSpinActive = !this.autoSpinActive;
       this.txtAuto.setText(this.autoSpinActive ? 'STOP' : 'AUTO');
-      this.txtAuto.setColor(this.autoSpinActive ? '#ff4466' : '#8899cc');
-      this.btnAuto.setStrokeStyle(2, this.autoSpinActive ? 0xff4466 : 0x3344aa, 0.8);
+      this.txtAuto.setColor(this.autoSpinActive ? '#ff4466' : '#ffffff');
+      this.btnAuto.setStrokeStyle(3, this.autoSpinActive ? 0xff4466 : 0xffffff, 1);
       if (this.autoSpinActive && !options.checkClick) {
         this.attemptSpin(0);
       }
@@ -875,8 +903,8 @@ export class Game extends Phaser.Scene {
   stopAutoSpin() {
     this.autoSpinActive = false;
     this.txtAuto.setText('AUTO');
-    this.txtAuto.setColor('#8899cc');
-    this.btnAuto.setStrokeStyle(2, 0x3344aa, 0.8);
+    this.txtAuto.setColor('#ffffff');
+    this.btnAuto.setStrokeStyle(3, 0xffffff, 1);
     if (this.autoSpinTimer) this.autoSpinTimer.remove();
   }
 
