@@ -13,6 +13,11 @@ import Phaser from 'phaser';
 export class WinCelebration {
   private scene: Phaser.Scene;
   private container!: Phaser.GameObjects.Container;
+  private _isVisible = false;
+
+  public get isVisible(): boolean {
+    return this._isVisible;
+  }
 
   private tierConfig = [
     { name: 'NICE WIN!',  threshold: 2,   color: '#44ff88', stroke: '#006622', fontSize: 64 },
@@ -30,9 +35,11 @@ export class WinCelebration {
    * Show a win celebration if the amount qualifies.
    * @param winAmount Actual win amount
    * @param betAmount Current bet amount
-   * @returns Duration of the celebration in ms (0 if no celebration shown)
+   * @param onComplete Callback invoked when celebration finishes or is skipped
    */
-  public show(winAmount: number, betAmount: number): number {
+  public show(winAmount: number, betAmount: number, onComplete: () => void): void {
+    if (this._isVisible) return;
+
     const multiplier = winAmount / betAmount;
 
     // Find appropriate tier
@@ -44,7 +51,12 @@ export class WinCelebration {
       }
     }
 
-    if (!tier) return 0;
+    if (!tier) {
+      onComplete();
+      return;
+    }
+
+    this._isVisible = true;
 
     const w = this.scene.scale.width;
     const h = this.scene.scale.height;
@@ -55,6 +67,7 @@ export class WinCelebration {
     const overlay = this.scene.add.graphics();
     overlay.fillStyle(0x000000, 0.6);
     overlay.fillRect(0, 0, w, h);
+    overlay.setInteractive(new Phaser.Geom.Rectangle(0, 0, w, h), Phaser.Geom.Rectangle.Contains);
     this.container.add(overlay);
 
     // Tier text
@@ -139,18 +152,31 @@ export class WinCelebration {
 
     // Auto dismiss
     const totalDuration = Math.max(2500, countDuration + 1500);
-    this.scene.time.delayedCall(totalDuration, () => {
+    let isFinished = false;
+
+    const finish = () => {
+      if (isFinished) return;
+      isFinished = true;
+      countTimer.remove();
+      this.scene.tweens.killTweensOf(this.container);
+      this.container.destroy();
+      this._isVisible = false;
+      onComplete();
+    };
+
+    const dismissTimer = this.scene.time.delayedCall(totalDuration, () => {
       this.scene.tweens.add({
         targets: this.container,
         alpha: 0,
         duration: 400,
-        onComplete: () => {
-          countTimer.remove();
-          this.container.destroy();
-        },
+        onComplete: finish,
       });
     });
 
-    return totalDuration + 400;
+    // Tap to skip
+    overlay.on('pointerdown', () => {
+      dismissTimer.remove();
+      finish();
+    });
   }
 }

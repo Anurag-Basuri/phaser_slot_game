@@ -6,9 +6,14 @@ import Phaser from 'phaser';
  */
 export class FreeSpinsIntro {
   private scene: Phaser.Scene;
+  private _isVisible = false;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
+  }
+
+  public get isVisible(): boolean {
+    return this._isVisible;
   }
 
   /**
@@ -17,6 +22,9 @@ export class FreeSpinsIntro {
    * @param onComplete Callback when the intro finishes
    */
   public play(spinsAwarded: number, onComplete: () => void) {
+    if (this._isVisible) return;
+    this._isVisible = true;
+
     const w = this.scene.scale.width;
     const h = this.scene.scale.height;
 
@@ -155,6 +163,7 @@ export class FreeSpinsIntro {
         duration: 400,
         onComplete: () => {
           container.destroy();
+          this._isVisible = false;
           onComplete();
         },
       });
