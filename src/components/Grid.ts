@@ -33,6 +33,8 @@ export class Grid {
 
   // Server-provided grid for RGS mode
   private pendingServerGrid: number[][] | null = null;
+  private sweepComplete = false;
+  private waitingPulseTween?: Phaser.Tweens.Tween;
 
   // Callbacks
   public onWinCallback: ((winAmount: number) => void) | null = null;
@@ -184,16 +186,14 @@ export class Grid {
   }
 
   /**
-   * Start a new spin round.
+   * Sweeps out old symbols instantly, putting the board into a waiting state
    * @param triggerType 0=normal, 1=buy FS, 2=buy super FS
-   * @param serverGrid Optional server-provided grid (RGS mode)
    */
-  public startSpin(triggerType: number = 0, serverGrid?: number[][]) {
+  public prepareSpin(triggerType: number = 0) {
     if (this.isProcessing) return;
     this.isProcessing = true;
-
-    // Store server grid for use in fillEmpty()
-    this.pendingServerGrid = serverGrid || null;
+    this.sweepComplete = false;
+    this.pendingServerGrid = null;
 
     // Reset multipliers & win tracking only if NOT in free spins
     if (this.freeSpinsRemaining === 0) {
@@ -228,30 +228,71 @@ export class Grid {
       });
     }
 
-    // Sweep old symbols off screen
-    this.scene.time.delayedCall(100, () => {
-      for (let r = 0; r < options.gridSize; r++) {
-        for (let c = 0; c < options.gridSize; c++) {
-          if (this.sprites[r][c]) {
-            const s = this.sprites[r][c]!;
-            this.scene.tweens.add({
-              targets: s,
-              y: s.y + this.cellSize * 8,
-              alpha: 0,
-              duration: this.sweepDuration,
-              onComplete: () => { s.destroy(); }
-            });
-            this.sprites[r][c] = null;
-          }
+    // Sweep old symbols off screen immediately
+    for (let r = 0; r < options.gridSize; r++) {
+      for (let c = 0; c < options.gridSize; c++) {
+        if (this.sprites[r][c]) {
+          const s = this.sprites[r][c]!;
+          this.scene.tweens.add({
+            targets: s,
+            y: s.y + this.cellSize * 8,
+            alpha: 0,
+            duration: this.sweepDuration,
+            onComplete: () => { s.destroy(); }
+          });
+          this.sprites[r][c] = null;
         }
       }
+    }
 
-      this.scene.time.delayedCall(this.sweepDuration + 20, () => {
-        this.fillEmpty();
-        this.scene.time.delayedCall(this.dropDuration + 300, () => {
-          this.evaluateAndCascade();
+    this.scene.time.delayedCall(this.sweepDuration + 20, () => {
+      this.sweepComplete = true;
+      if (this.pendingServerGrid) {
+        this.executeDrop();
+      } else {
+        // Enact waiting pulse
+        this.waitingPulseTween = this.scene.tweens.add({
+          targets: this.cellBackgrounds,
+          alpha: 0.3,
+          duration: 400,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut'
         });
-      });
+      }
+    });
+  }
+
+  /** Called when the API responds with the outcome */
+  public injectServerResult(serverGrid?: number[][]) {
+    this.pendingServerGrid = serverGrid || null;
+    if (this.sweepComplete) {
+      this.executeDrop();
+    }
+  }
+
+  /** Aborts the spin gracefully if the API fatally failed */
+  public abortSpin() {
+    this.isProcessing = false;
+    this.sweepComplete = false;
+    if (this.waitingPulseTween) {
+      this.waitingPulseTween.stop();
+      this.waitingPulseTween = undefined;
+      this.cellBackgrounds.setAlpha(1);
+    }
+  }
+
+  private executeDrop() {
+    if (this.waitingPulseTween) {
+      this.waitingPulseTween.stop();
+      this.waitingPulseTween = undefined;
+      this.cellBackgrounds.setAlpha(1);
+    }
+    
+    this.sweepComplete = false;
+    this.fillEmpty();
+    this.scene.time.delayedCall(this.dropDuration + 300, () => {
+      this.evaluateAndCascade();
     });
   }
 
@@ -503,7 +544,8 @@ export class Grid {
         if (this.onFreeSpinsStart) this.onFreeSpinsStart(this.freeSpinsRemaining);
         this.scene.time.delayedCall(this.turboMode ? 400 : 1000, () => {
           this.isProcessing = false;
-          this.startSpin();
+          this.prepareSpin();
+          this.injectServerResult();
         });
       } else {
         this.finishFreeSpins();

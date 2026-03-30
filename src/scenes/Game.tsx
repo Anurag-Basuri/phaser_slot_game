@@ -145,33 +145,6 @@ export class Game extends Phaser.Scene {
     this.events.on('networkError', (msg: string) => this.showTransientError(msg));
   }
 
-  private showFatalError(msg: string) {
-    // Locks entire game behind a dark overlay
-    options.checkClick = true; // Hard lock
-    const w = this.scale.width;
-    const h = this.scale.height;
-    
-    const bg = this.add.graphics().setDepth(100);
-    bg.fillStyle(0x000000, 0.95);
-    bg.fillRect(0, 0, w, h);
-    bg.setInteractive(new Phaser.Geom.Rectangle(0, 0, w, h), Phaser.Geom.Rectangle.Contains);
-
-    this.add.text(w / 2, h / 2, msg, {
-      fontSize: '24px', color: '#ff4444', fontStyle: 'bold', align: 'center', stroke: '#000', strokeThickness: 4
-    }).setOrigin(0.5).setDepth(101);
-  }
-
-  private showTransientError(msg: string) {
-    const errorText = this.add.text(this.scale.width / 2, this.scale.height / 2, msg, {
-      fontSize: '32px', color: '#ffea00', fontStyle: 'bold', stroke: '#000', strokeThickness: 6
-    }).setOrigin(0.5).setDepth(99);
-
-    this.tweens.add({
-      targets: errorText, y: '-=50', alpha: 0, duration: 2500, ease: 'Power2',
-      onComplete: () => errorText.destroy()
-    });
-  }
-
   private buildUI() {
     const w = this.scale.width;
     const h = this.scale.height;
@@ -827,6 +800,8 @@ export class Game extends Phaser.Scene {
 
     if (this.soundEnabled) this.audio.audioButton.play();
 
+    this.grid.prepareSpin(triggerType);
+
     try {
       const result = await this.stakeEngine.play(cost, triggerType);
       const spinEvent = result.events?.find(e => e.type === 'spin');
@@ -834,15 +809,16 @@ export class Game extends Phaser.Scene {
 
       // Show free spins intro then start
       this.freeSpinsIntro.play(10, () => {
-        this.grid.startSpin(triggerType, serverGrid);
+        this.grid.injectServerResult(serverGrid);
       });
     } catch (err) {
       console.error('[Game] Buy feature error:', err);
       // Refund balance and unlock UI
+      this.grid.abortSpin();
       this.valueMoney += cost;
       this.updateMoneyDisplay();
       options.checkClick = false;
-      this.showTransientError('NETWORK ERROR');
+      this.showFatalError('CONNECTION LOST');
     }
   }
 
@@ -862,6 +838,8 @@ export class Game extends Phaser.Scene {
         this.audio.audioReels.play();
       }
 
+      this.grid.prepareSpin(triggerType);
+
       // Store pending round for disconnect recovery
       localStorage.setItem('pending_bet', String(cost));
 
@@ -871,15 +849,16 @@ export class Game extends Phaser.Scene {
 
         const spinEvent = result.events?.find(e => e.type === 'spin');
         const serverGrid = spinEvent ? (spinEvent.data as SpinEventData).grid : undefined;
-        this.grid.startSpin(triggerType, serverGrid);
+        this.grid.injectServerResult(serverGrid);
       } catch (err) {
         console.error('[Game] Play error:', err);
         // Refund and unlock UI
+        this.grid.abortSpin();
         this.valueMoney += cost;
         this.updateMoneyDisplay();
         options.checkClick = false;
         this.stopAutoSpin();
-        this.showTransientError('NETWORK ERROR');
+        this.showFatalError('CONNECTION LOST');
         return;
       }
     } else {
@@ -952,5 +931,56 @@ export class Game extends Phaser.Scene {
       if (history.length > 50) history.length = 50;
       localStorage.setItem('game_history', JSON.stringify(history));
     } catch { /* ignore */ }
+  }
+
+  private showTransientError(message: string) {
+    const errorText = this.add.text(
+      this.scale.width / 2, this.scale.height / 2,
+      message,
+      { fontSize: '48px', color: '#ff4466', fontStyle: 'bold', stroke: '#000', strokeThickness: 8 }
+    ).setOrigin(0.5).setDepth(100);
+
+    this.tweens.add({
+      targets: errorText,
+      y: errorText.y - 100,
+      alpha: 0,
+      duration: 2000,
+      ease: 'Power1',
+      onComplete: () => errorText.destroy()
+    });
+  }
+
+  private showFatalError(message: string) {
+    if (this.anyOverlayOpen()) return; // Prevent multiple
+    
+    // Add blocking overlay
+    const overlay = this.add.graphics();
+    overlay.fillStyle(0x000000, 0.95);
+    overlay.fillRect(0, 0, this.scale.width, this.scale.height);
+    overlay.setInteractive(new Phaser.Geom.Rectangle(0, 0, this.scale.width, this.scale.height), Phaser.Geom.Rectangle.Contains);
+    overlay.setDepth(200);
+
+    const title = this.add.text(
+      this.scale.width / 2, this.scale.height / 2 - 80,
+      message,
+      { fontSize: '48px', color: '#ff4466', fontStyle: 'bold', stroke: '#000', strokeThickness: 8 }
+    ).setOrigin(0.5).setDepth(201);
+
+    const subtitle = this.add.text(
+      this.scale.width / 2, this.scale.height / 2,
+      'Please check your internet connection\nand reload the game.',
+      { fontSize: '24px', color: '#ffffff', align: 'center', stroke: '#000', strokeThickness: 4 }
+    ).setOrigin(0.5).setDepth(201);
+
+    // Refresh button
+    const btnRefresh = this.add.text(
+      this.scale.width / 2, this.scale.height / 2 + 100,
+      'RELOAD',
+      { fontSize: '32px', color: '#ffffff', backgroundColor: '#e62244', padding: { x: 20, y: 10 } }
+    ).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(201);
+    
+    btnRefresh.on('pointerdown', () => {
+      window.location.reload();
+    });
   }
 }

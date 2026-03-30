@@ -141,6 +141,25 @@ export class StakeEngineClient {
     return Math.round(displayAmount * PRECISION);
   }
 
+  /** Wrapper for fetch that automatically retries 3 times on transient network errors */
+  private async fetchWithRetry(url: string, options: RequestInit, retries: number = 3): Promise<Response> {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const response = await fetch(url, options);
+        // Retry on 5xx server errors or rate limits, but NOT 4xx client errors (except 429)
+        if (!response.ok && response.status >= 500 || response.status === 429) {
+          throw new Error(`Server returned ${response.status}`);
+        }
+        return response; // Return on success or 4xx client errors
+      } catch (err: any) {
+        if (i === retries - 1) throw err; // Throw on final attempt
+        // Wait exponentially: 500ms, 1500ms, 3500ms
+        await new Promise((res) => setTimeout(res, 500 + i * 1000));
+      }
+    }
+    throw new Error('Connection failed after multiple retries.');
+  }
+
   /**
    * Authenticate the player session. Must be called before any other API call.
    * Returns the player's balance and any pending round state for recovery.
@@ -154,14 +173,10 @@ export class StakeEngineClient {
     }
 
     try {
-      const response = await fetch(`${this.rgsUrl}/wallet/authenticate`, {
+      const response = await this.fetchWithRetry(`${this.rgsUrl}/wallet/authenticate`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sessionID: this.sessionID,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionID: this.sessionID }),
       });
 
       if (!response.ok) {
@@ -202,11 +217,9 @@ export class StakeEngineClient {
     }
 
     try {
-      const response = await fetch(`${this.rgsUrl}/wallet/play`, {
+      const response = await this.fetchWithRetry(`${this.rgsUrl}/wallet/play`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionID: this.sessionID,
           amount: StakeEngineClient.toStakeAmount(betAmount),
@@ -238,7 +251,7 @@ export class StakeEngineClient {
     }
 
     try {
-      const response = await fetch(`${this.rgsUrl}/wallet/balance`, {
+      const response = await this.fetchWithRetry(`${this.rgsUrl}/wallet/balance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionID: this.sessionID }),
@@ -261,7 +274,7 @@ export class StakeEngineClient {
     if (this.isDemo || !this.currentRoundId) return;
 
     try {
-      await fetch(`${this.rgsUrl}/wallet/end-round`, {
+      await this.fetchWithRetry(`${this.rgsUrl}/wallet/end-round`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
