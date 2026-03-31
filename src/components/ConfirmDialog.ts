@@ -132,7 +132,7 @@ export class ConfirmDialog {
     });
   }
 
-  private dismiss() {
+  public dismiss() {
     this.scene.tweens.add({
       targets: this.container, alpha: 0, duration: 150,
       onComplete: () => {

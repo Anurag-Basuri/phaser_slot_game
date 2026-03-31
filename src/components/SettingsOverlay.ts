@@ -16,6 +16,19 @@ export class SettingsOverlay {
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.build();
+
+    // Rebuild on resize so the panel stays centered
+    this.scene.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
+      const wasVisible = this.visible;
+      this.container.removeAll(true);
+      this.container.destroy();
+      this.build();
+      if (wasVisible) {
+        this.container.setVisible(true);
+        this.container.setAlpha(1);
+        this.visible = true;
+      }
+    });
   }
 
   private build() {

@@ -135,14 +135,11 @@ export class Game extends Phaser.Scene {
 
     // Keyboard support
     this.input.keyboard?.on('keydown-SPACE', () => {
-      if (this.paytable.isVisible() || this.settings.isVisible() || this.confirmDialog.isVisible()) return;
+      if (this.anyOverlayOpen()) return;
       if (!options.checkClick && !this.fsActive) {
         this.attemptSpin(0);
       }
     });
-
-    // Check for network errors handler
-    this.events.on('networkError', (msg: string) => this.showTransientError(msg));
   }
 
   private buildUI() {
@@ -563,7 +560,15 @@ export class Game extends Phaser.Scene {
 
     // Auto play
     this.btnAuto.on('pointerdown', () => {
-      if (this.fsActive) return;
+      if (this.fsActive || this.anyOverlayOpen()) return;
+      if (!this.autoSpinActive) {
+        // Check balance before starting auto-spin
+        const cost = this.getEffectiveBet();
+        if (this.valueMoney < cost) {
+          this.showTransientError('INSUFFICIENT FUNDS');
+          return;
+        }
+      }
       this.autoSpinActive = !this.autoSpinActive;
       this.txtAuto.setText(this.autoSpinActive ? 'STOP' : 'AUTO');
       this.txtAuto.setColor(this.autoSpinActive ? '#ff4466' : '#ffffff');
@@ -573,9 +578,15 @@ export class Game extends Phaser.Scene {
       }
     });
 
-    // Bet controls
-    this.btnBetMinusHit.on('pointerdown', () => this.changeBet(-1));
-    this.btnBetPlusHit.on('pointerdown', () => this.changeBet(1));
+    // Bet controls — guard with overlay check so bet can't change during confirm dialog
+    this.btnBetMinusHit.on('pointerdown', () => {
+      if (this.anyOverlayOpen()) return;
+      this.changeBet(-1);
+    });
+    this.btnBetPlusHit.on('pointerdown', () => {
+      if (this.anyOverlayOpen()) return;
+      this.changeBet(1);
+    });
 
     // Buy features (with confirmation)
     this.buySuperHit.on('pointerdown', () => this.requestPurchase(2, 500));
@@ -626,9 +637,11 @@ export class Game extends Phaser.Scene {
       if (!this.fsActive) {
         this.valueMoney += actualWin;
         this.updateMoneyDisplay();
+        this.lastWin += actualWin;
+        this.updateLastWinDisplay();
       }
-      this.lastWin += actualWin;
-      this.updateLastWinDisplay();
+      // During free spins, don't track lastWin per cascade — 
+      // the Grid's totalFreeSpinsWin is authoritative
 
       if (this.soundEnabled) this.audio.audioWin.play();
 
@@ -711,6 +724,13 @@ export class Game extends Phaser.Scene {
         yoyo: true, hold: 3000,
         onComplete: () => maxText.destroy(),
       });
+    };
+
+    // Wire free spin next-spin callback (Bug 7: Game drives free spin flow)
+    this.grid.onNextFreeSpinNeeded = () => {
+      // In demo mode, just do a local spin
+      this.grid.prepareSpin();
+      this.grid.injectServerResult();
     };
 
     this.grid.onCompleteCallback = () => {
@@ -800,15 +820,37 @@ export class Game extends Phaser.Scene {
 
     if (this.soundEnabled) this.audio.audioButton.play();
 
-    this.grid.prepareSpin(triggerType);
+    // Bug 6: Don't pass triggerType to prepareSpin — sweep now, configure FS after intro
+    this.grid.prepareSpin();
 
     try {
       const result = await this.stakeEngine.play(cost, triggerType);
       const spinEvent = result.events?.find(e => e.type === 'spin');
       const serverGrid = spinEvent ? (spinEvent.data as SpinEventData).grid : undefined;
 
-      // Show free spins intro then start
+      // Show free spins intro, then configure FS state and inject grid
       this.freeSpinsIntro.play(10, () => {
+        // Set up free spins state AFTER the intro finishes
+        this.grid.freeSpinsRemaining = 10;
+        if (triggerType === 2) {
+          this.grid.isSuperFreeSpins = true;
+          // Super: pre-seed center multipliers
+          const seedPoints = [
+            { r: 3, c: 3, m: 16 }, { r: 2, c: 3, m: 8 }, { r: 4, c: 3, m: 8 },
+            { r: 3, c: 2, m: 8 }, { r: 3, c: 4, m: 8 },
+            { r: 2, c: 2, m: 4 }, { r: 2, c: 4, m: 4 }, { r: 4, c: 2, m: 4 }, { r: 4, c: 4, m: 4 }
+          ];
+          seedPoints.forEach(p => {
+            (this.grid as any).multipliers[p.r][p.c] = p.m;
+            (this.grid as any).drawMultiplierUI(p.r, p.c);
+          });
+        }
+        this.fsActive = true;
+        this.txtFSRemaining.setText(`${this.grid.freeSpinsRemaining} FREE SPINS`).setVisible(true);
+        if (this.soundEnabled) {
+          this.audio.musicBackgroundDefault.stop();
+          this.audio.musicDefault.play();
+        }
         this.grid.injectServerResult(serverGrid);
       });
     } catch (err) {
@@ -830,7 +872,8 @@ export class Game extends Phaser.Scene {
       options.checkClick = true;
       this.valueMoney -= cost;
       this.lastWin = 0;
-      options.betAmount = cost; // Set active bet for paytable calculations
+      // Bug 8: Store the BASE bet, not the ante-adjusted cost, for payout calculation
+      options.betAmount = BET_PRESETS[this.betPresetIndex];
       this.updateMoneyDisplay();
       this.updateLastWinDisplay();
 
@@ -838,7 +881,7 @@ export class Game extends Phaser.Scene {
         this.audio.audioReels.play();
       }
 
-      this.grid.prepareSpin(triggerType);
+      this.grid.prepareSpin();
 
       // Store pending round for disconnect recovery
       localStorage.setItem('pending_bet', String(cost));
@@ -951,7 +994,13 @@ export class Game extends Phaser.Scene {
   }
 
   private showFatalError(message: string) {
-    if (this.anyOverlayOpen()) return; // Prevent multiple
+    // Bug 5: Force-close all overlays instead of returning
+    if (this.paytable.isVisible()) this.paytable.hide();
+    if (this.settings.isVisible()) this.settings.hide();
+    if (this.confirmDialog.isVisible()) this.confirmDialog.dismiss();
+    
+    // Hard-lock all input
+    options.checkClick = true;
     
     // Add blocking overlay
     const overlay = this.add.graphics();

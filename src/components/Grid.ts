@@ -42,6 +42,7 @@ export class Grid {
   public onFreeSpinsEnd: ((totalWin: number) => void) | null = null;
   public onCompleteCallback: (() => void) | null = null;
   public onMaxWinCallback: ((totalWin: number) => void) | null = null;
+  public onNextFreeSpinNeeded: (() => void) | null = null;
 
   private symbolKeys = [
     'candy_0', 'candy_1', 'candy_2', 'candy_3',
@@ -186,11 +187,12 @@ export class Grid {
   }
 
   /**
-   * Sweeps out old symbols instantly, putting the board into a waiting state
-   * @param triggerType 0=normal, 1=buy FS, 2=buy super FS
+   * Sweeps out old symbols instantly, putting the board into a waiting state.
+   * Free spin setup for buy features is handled by Game.tsx.
    */
-  public prepareSpin(triggerType: number = 0) {
-    if (this.isProcessing) return;
+  public prepareSpin() {
+    // Note: caller (Game.tsx) is responsible for guarding via options.checkClick.
+    // We do NOT guard on isProcessing here because money is already deducted.
     this.isProcessing = true;
     this.sweepComplete = false;
     this.pendingServerGrid = null;
@@ -206,26 +208,6 @@ export class Grid {
           this.clearMultiplierUI(r, c);
         }
       }
-    }
-
-    // Handle Buy Features
-    if (triggerType === 1) {
-      this.freeSpinsRemaining = 10;
-      if (this.onFreeSpinsStart) this.onFreeSpinsStart(this.freeSpinsRemaining);
-    } else if (triggerType === 2) {
-      this.isSuperFreeSpins = true;
-      this.freeSpinsRemaining = 10;
-      if (this.onFreeSpinsStart) this.onFreeSpinsStart(this.freeSpinsRemaining);
-      // Super: pre-seed center multipliers
-      const seedPoints = [
-        { r: 3, c: 3, m: 16 }, { r: 2, c: 3, m: 8 }, { r: 4, c: 3, m: 8 },
-        { r: 3, c: 2, m: 8 }, { r: 3, c: 4, m: 8 },
-        { r: 2, c: 2, m: 4 }, { r: 2, c: 4, m: 4 }, { r: 4, c: 2, m: 4 }, { r: 4, c: 4, m: 4 }
-      ];
-      seedPoints.forEach(p => {
-        this.multipliers[p.r][p.c] = p.m;
-        this.drawMultiplierUI(p.r, p.c);
-      });
     }
 
     // Sweep old symbols off screen immediately
@@ -280,6 +262,9 @@ export class Grid {
       this.waitingPulseTween = undefined;
       this.cellBackgrounds.setAlpha(1);
     }
+    // Repopulate the grid so the board isn't blank
+    this.pendingServerGrid = null;
+    this.fillEmpty();
   }
 
   private executeDrop() {
@@ -342,7 +327,8 @@ export class Grid {
 
   private drawMultiplierUI(r: number, c: number) {
     const mult = this.multipliers[r][c];
-    const displayMult = mult === 2 ? 1 : mult === 4 ? 2 : mult;
+    // Display exactly what we apply — no remapping
+    if (mult <= 1) return; // Don't show UI for base multiplier
 
     if (!this.multiplierGraphics[r][c]) {
       const gfx = this.scene.add.graphics().setDepth(1);
@@ -368,11 +354,11 @@ export class Grid {
     if (!this.multiplierTexts[r][c]) {
       this.multiplierTexts[r][c] = this.scene.add.text(
         this.getX(c), this.getY(r),
-        `x${displayMult}`,
+        `x${mult}`,
         { fontSize: `${fontSize}px`, color: '#ffea00', fontStyle: 'bold', stroke: '#0044cc', strokeThickness: 5 }
       ).setOrigin(0.5).setDepth(5).setAlpha(0.95);
     } else {
-      this.multiplierTexts[r][c]!.setText(`x${displayMult}`);
+      this.multiplierTexts[r][c]!.setText(`x${mult}`);
       this.scene.tweens.add({ targets: this.multiplierTexts[r][c], scale: 1.5, yoyo: true, duration: 180 });
     }
   }
@@ -407,12 +393,12 @@ export class Grid {
       const sizeIndex = Math.min(cluster.positions.length - 5, 10);
       let clusterWin = options.payvalues[cluster.symbolId][sizeIndex];
 
-      // Sum multipliers
+      // Sum multipliers — all values ≥2 apply directly
       let totalMult = 0;
       cluster.positions.forEach(pos => {
         const m = this.multipliers[pos.row][pos.col];
-        if (m >= 4) {
-          totalMult += m === 4 ? 2 : m;
+        if (m >= 2) {
+          totalMult += m;
         }
       });
       if (totalMult > 0) clusterWin *= totalMult;
@@ -542,10 +528,12 @@ export class Grid {
       this.freeSpinsRemaining--;
       if (this.freeSpinsRemaining > 0) {
         if (this.onFreeSpinsStart) this.onFreeSpinsStart(this.freeSpinsRemaining);
+        // Let Game.tsx drive the next free spin so it can provide server grids
         this.scene.time.delayedCall(this.turboMode ? 400 : 1000, () => {
           this.isProcessing = false;
-          this.prepareSpin();
-          this.injectServerResult();
+          if (this.onNextFreeSpinNeeded) {
+            this.onNextFreeSpinNeeded();
+          }
         });
       } else {
         this.finishFreeSpins();
