@@ -68,6 +68,7 @@ export class Game extends Phaser.Scene {
   valueMoney = Number(localStorage.getItem(LocalStorageKey.Money) ?? options.money);
   betPresetIndex = options.defaultBetIndex;
   autoSpinActive = false;
+  autoSpinRemaining = 0; // 0 = infinite when autoSpinActive
   autoSpinTimer: Phaser.Time.TimerEvent | null = null;
   fsActive = false;
   soundEnabled = true;
@@ -135,10 +136,7 @@ export class Game extends Phaser.Scene {
 
     // Keyboard support
     this.input.keyboard?.on('keydown-SPACE', () => {
-      if (this.anyOverlayOpen()) return;
-      if (!options.checkClick && !this.fsActive) {
-        this.attemptSpin(0);
-      }
+      this.handleUniversalAction();
     });
   }
 
@@ -535,27 +533,16 @@ export class Game extends Phaser.Scene {
   }
 
   private wireInteractions() {
-    // Spin button
+    // Spin button — universal action button
     this.spinBtnHit.on('pointerdown', () => {
-      if (this.anyOverlayOpen()) return;
-      if (this.fsActive) return;
-
-      // Click press effect — flash the label
-      this.spinBtnLabel.setColor('#aaffcc');
-      this.time.delayedCall(120, () => this.spinBtnLabel.setColor('#ffffff'));
-
-      if (this.autoSpinActive) {
-        this.stopAutoSpin();
-      } else {
-        this.attemptSpin(0);
-      }
+      this.handleUniversalAction();
     });
 
     this.spinBtnHit.on('pointerover', () => {
-      this.spinBtnLabel.setColor('#ccffdd');
+      if (!options.checkClick) this.spinBtnLabel.setColor('#ccffdd');
     });
     this.spinBtnHit.on('pointerout', () => {
-      this.spinBtnLabel.setColor('#ffffff');
+      this.updateSpinButtonState();
     });
 
     // Auto play
@@ -568,13 +555,14 @@ export class Game extends Phaser.Scene {
           this.showTransientError('INSUFFICIENT FUNDS');
           return;
         }
-      }
-      this.autoSpinActive = !this.autoSpinActive;
-      this.txtAuto.setText(this.autoSpinActive ? 'STOP' : 'AUTO');
-      this.txtAuto.setColor(this.autoSpinActive ? '#ff4466' : '#ffffff');
-      this.btnAuto.setStrokeStyle(3, this.autoSpinActive ? 0xff4466 : 0xffffff, 1);
-      if (this.autoSpinActive && !options.checkClick) {
-        this.attemptSpin(0);
+        this.autoSpinActive = true;
+        this.autoSpinRemaining = 0; // infinite
+        this.updateAutoSpinDisplay();
+        if (!options.checkClick) {
+          this.attemptSpin(0);
+        }
+      } else {
+        this.stopAutoSpin();
       }
     });
 
@@ -588,13 +576,19 @@ export class Game extends Phaser.Scene {
       this.changeBet(1);
     });
 
-    // Buy features (with confirmation)
-    this.buySuperHit.on('pointerdown', () => this.requestPurchase(2, 500));
-    this.buyRegularHit.on('pointerdown', () => this.requestPurchase(1, 100));
+    // Buy features (with confirmation) — also guard overlays
+    this.buySuperHit.on('pointerdown', () => {
+      if (this.anyOverlayOpen()) return;
+      this.requestPurchase(2, 500);
+    });
+    this.buyRegularHit.on('pointerdown', () => {
+      if (this.anyOverlayOpen()) return;
+      this.requestPurchase(1, 100);
+    });
 
     // Ante Bet toggle
     this.anteBetHit.on('pointerdown', () => {
-      if (options.checkClick || this.fsActive) return;
+      if (options.checkClick || this.fsActive || this.anyOverlayOpen()) return;
       options.anteBetEnabled = !options.anteBetEnabled;
       this.drawAnteBetButton(
         this.anteBetHit.x, this.anteBetHit.y,
@@ -629,6 +623,69 @@ export class Game extends Phaser.Scene {
         this.scale.startFullscreen();
       }
     });
+  }
+
+  /**
+   * Universal action handler — spin button and spacebar both route here.
+   * Priority: skip overlays > stop auto > spin
+   */
+  private handleUniversalAction() {
+    // 1. Skip win celebration
+    if (this.winCelebration.isVisible) {
+      this.winCelebration.skip();
+      return;
+    }
+    // 2. Skip free spins intro
+    if (this.freeSpinsIntro.isVisible) {
+      this.freeSpinsIntro.skip();
+      return;
+    }
+    // 3. Close any overlay (paytable, settings)
+    if (this.paytable.isVisible()) { this.paytable.hide(); return; }
+    if (this.settings.isVisible()) { this.settings.hide(); return; }
+    if (this.confirmDialog.isVisible()) return; // Don't dismiss confirm with space
+
+    // 4. During free spins, don't allow manual action
+    if (this.fsActive) return;
+
+    // 5. Stop auto-spin
+    if (this.autoSpinActive) {
+      this.stopAutoSpin();
+      return;
+    }
+
+    // 6. Normal spin
+    if (!options.checkClick) {
+      this.attemptSpin(0);
+    }
+  }
+
+  /** Update spin button visual to reflect current state */
+  private updateSpinButtonState() {
+    if (this.autoSpinActive) {
+      this.spinBtnLabel.setText('STOP');
+      this.spinBtnLabel.setColor('#ff4466');
+    } else if (options.checkClick) {
+      this.spinBtnLabel.setText('⋯');
+      this.spinBtnLabel.setColor('#556688');
+    } else {
+      this.spinBtnLabel.setText('SPIN');
+      this.spinBtnLabel.setColor('#ffffff');
+    }
+  }
+
+  /** Update auto-spin button display */
+  private updateAutoSpinDisplay() {
+    if (this.autoSpinActive) {
+      const label = this.autoSpinRemaining > 0 ? `${this.autoSpinRemaining}` : '∞';
+      this.txtAuto.setText(label);
+      this.txtAuto.setColor('#ff4466');
+      this.btnAuto.setStrokeStyle(3, 0xff4466, 1);
+    } else {
+      this.txtAuto.setText('AUTO');
+      this.txtAuto.setColor('#ffffff');
+      this.btnAuto.setStrokeStyle(3, 0xffffff, 1);
+    }
   }
 
   private wireGridCallbacks() {
@@ -706,7 +763,28 @@ export class Game extends Phaser.Scene {
             options.checkClick = false;
             this.stakeEngine.endRound();
             this.saveSpinRecord(totalWin, 'free_spins');
-            if (this.autoSpinActive) this.attemptSpin(0);
+            this.updateSpinButtonState();
+
+            // Auto-spin continuation after FS
+            if (this.autoSpinActive) {
+              if (this.autoSpinRemaining > 0) {
+                this.autoSpinRemaining--;
+                this.updateAutoSpinDisplay();
+                if (this.autoSpinRemaining === 0) {
+                  this.stopAutoSpin();
+                  return;
+                }
+              }
+              const cost = this.getEffectiveBet();
+              if (this.valueMoney < cost) {
+                this.stopAutoSpin();
+                this.showTransientError('INSUFFICIENT FUNDS');
+                return;
+              }
+              this.autoSpinTimer = this.time.delayedCall(600, () => {
+                if (this.autoSpinActive && !this.fsActive) this.attemptSpin(0);
+              });
+            }
           }
         });
       });
@@ -736,27 +814,41 @@ export class Game extends Phaser.Scene {
     this.grid.onCompleteCallback = () => {
       if (this.fsActive) return;
 
-      if (this.lastWin > 0) {
-        const betAmount = this.getEffectiveBet();
-        this.winCelebration.show(this.lastWin, betAmount, () => {
-          options.checkClick = false;
-          this.stakeEngine.endRound();
-          this.saveSpinRecord(this.lastWin, 'base');
-          if (this.autoSpinActive) {
-            this.autoSpinTimer = this.time.delayedCall(600, () => {
-              if (this.autoSpinActive && !this.fsActive) this.attemptSpin(0);
-            });
-          }
-        });
-      } else {
+      const finishUp = () => {
         options.checkClick = false;
         this.stakeEngine.endRound();
-        this.saveSpinRecord(0, 'base');
+        this.saveSpinRecord(this.lastWin, 'base');
+        this.updateSpinButtonState();
+
+        // Auto-spin continuation
         if (this.autoSpinActive) {
+          // Decrement count if not infinite
+          if (this.autoSpinRemaining > 0) {
+            this.autoSpinRemaining--;
+            this.updateAutoSpinDisplay();
+            if (this.autoSpinRemaining === 0) {
+              this.stopAutoSpin();
+              return;
+            }
+          }
+          // Check balance before continuing
+          const cost = this.getEffectiveBet();
+          if (this.valueMoney < cost) {
+            this.stopAutoSpin();
+            this.showTransientError('INSUFFICIENT FUNDS');
+            return;
+          }
           this.autoSpinTimer = this.time.delayedCall(600, () => {
             if (this.autoSpinActive && !this.fsActive) this.attemptSpin(0);
           });
         }
+      };
+
+      if (this.lastWin > 0) {
+        const betAmount = this.getEffectiveBet();
+        this.winCelebration.show(this.lastWin, betAmount, finishUp);
+      } else {
+        finishUp();
       }
     };
   }
@@ -882,6 +974,7 @@ export class Game extends Phaser.Scene {
       }
 
       this.grid.prepareSpin();
+      this.updateSpinButtonState();
 
       // Store pending round for disconnect recovery
       localStorage.setItem('pending_bet', String(cost));
@@ -924,9 +1017,9 @@ export class Game extends Phaser.Scene {
 
   stopAutoSpin() {
     this.autoSpinActive = false;
-    this.txtAuto.setText('AUTO');
-    this.txtAuto.setColor('#ffffff');
-    this.btnAuto.setStrokeStyle(3, 0xffffff, 1);
+    this.autoSpinRemaining = 0;
+    this.updateAutoSpinDisplay();
+    this.updateSpinButtonState();
     if (this.autoSpinTimer) this.autoSpinTimer.remove();
   }
 
@@ -1001,6 +1094,8 @@ export class Game extends Phaser.Scene {
     
     // Hard-lock all input
     options.checkClick = true;
+    this.stopAutoSpin();
+    this.updateSpinButtonState();
     
     // Add blocking overlay
     const overlay = this.add.graphics();

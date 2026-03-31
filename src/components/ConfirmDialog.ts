@@ -133,11 +133,14 @@ export class ConfirmDialog {
   }
 
   public dismiss() {
+    if (!this.visible) return;
+    this.visible = false;
     this.scene.tweens.add({
       targets: this.container, alpha: 0, duration: 150,
       onComplete: () => {
-        this.container.destroy();
-        this.visible = false;
+        if (this.container && this.container.scene) {
+          this.container.destroy();
+        }
       },
     });
   }

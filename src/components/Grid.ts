@@ -176,9 +176,9 @@ export class Grid {
       }
     }
 
-    // Play reel stop sound after drop
+    // Play reel stop sound after drop (safe — scene might be gone during abort)
     this.scene.time.delayedCall(this.dropDuration + 100, () => {
-      this.scene.sound.play('reelStop', { volume: 0.25 });
+      try { this.scene.sound.play('reelStop', { volume: 0.25 }); } catch { /* ignore */ }
     });
 
     // Consume server grid after first fill
@@ -265,6 +265,7 @@ export class Grid {
   public abortSpin() {
     this.isProcessing = false;
     this.sweepComplete = false;
+    this._dropWhenReady = false;
     if (this.waitingPulseTween) {
       this.waitingPulseTween.stop();
       this.waitingPulseTween = undefined;

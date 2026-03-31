@@ -9,11 +9,17 @@ import Phaser from 'phaser';
  *   Mega Win:   25x  - 50x
  *   Epic Win:   50x  - 100x
  *   Ultra Win:  100x+
+ * 
+ * Supports:
+ *   - Tap-to-skip (instant dismiss)
+ *   - External skip() call from Game scene (spacebar, spin button)
+ *   - Safe double-finish guard
  */
 export class WinCelebration {
   private scene: Phaser.Scene;
   private container!: Phaser.GameObjects.Container;
   private _isVisible = false;
+  private _finishFn: (() => void) | null = null;
 
   public get isVisible(): boolean {
     return this._isVisible;
@@ -29,6 +35,11 @@ export class WinCelebration {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
+  }
+
+  /** External skip — call from Game scene to instantly dismiss */
+  public skip(): void {
+    if (this._finishFn) this._finishFn();
   }
 
   /**
@@ -63,6 +74,10 @@ export class WinCelebration {
 
     this.container = this.scene.add.container(0, 0).setDepth(40);
 
+    // Track all tweens and timers for clean teardown
+    const activeTweens: Phaser.Tweens.Tween[] = [];
+    const activeTimers: Phaser.Time.TimerEvent[] = [];
+
     // Dark overlay
     const overlay = this.scene.add.graphics();
     overlay.fillStyle(0x000000, 0.6);
@@ -93,20 +108,20 @@ export class WinCelebration {
     this.container.add(amountText);
 
     // Animate tier text entrance
-    this.scene.tweens.add({
+    activeTweens.push(this.scene.tweens.add({
       targets: tierText,
       scale: 1,
       duration: 600,
       ease: 'Back.easeOut',
-    });
+    }));
 
     // Count up animation
-    this.scene.tweens.add({
+    activeTweens.push(this.scene.tweens.add({
       targets: amountText,
       alpha: 1,
       duration: 300,
       delay: 400,
-    });
+    }));
 
     const countDuration = Math.min(2000, multiplier * 30);
     let elapsed = 0;
@@ -116,25 +131,27 @@ export class WinCelebration {
       callback: () => {
         elapsed += 16;
         const progress = Math.min(elapsed / countDuration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3); // ease out cubic
+        const eased = 1 - Math.pow(1 - progress, 3);
         const currentAmount = winAmount * eased;
         amountText.setText(currentAmount.toFixed(2));
         
         if (progress === 1) {
-          this.scene.tweens.add({
+          activeTweens.push(this.scene.tweens.add({
             targets: amountText,
             scale: { from: 1.4, to: 1 },
             duration: 500,
             ease: 'Bounce.easeOut'
-          });
+          }));
         }
       },
     });
+    activeTimers.push(countTimer);
 
     // Particle fountain for big wins
+    const emitters: Phaser.GameObjects.Particles.ParticleEmitter[] = [];
     if (multiplier >= 10) {
       const colors = [0, 1, 2, 3, 4, 5, 6];
-      const quantityStr = Math.min(4, Math.max(1, Math.floor(multiplier / 20)));
+      const qty = Math.min(4, Math.max(1, Math.floor(multiplier / 20)));
       
       colors.forEach(c => {
         const emitter = this.scene.add.particles(w / 2, h + 50, `candy_${c}`, {
@@ -142,28 +159,28 @@ export class WinCelebration {
           angle: { min: 230, max: 310 },
           scale: { start: 0.6, end: 0.1 },
           lifespan: 4000,
-          quantity: quantityStr,
+          quantity: qty,
           gravityY: 700,
           frequency: 80,
           blendMode: 'ADD'
         });
-        // Put particles behind text in the container
         this.container.addAt(emitter, 1);
+        emitters.push(emitter);
         
-        // Stop emitting slightly before dismissal
-        this.scene.time.delayedCall(countDuration, () => emitter.stop());
+        const stopTimer = this.scene.time.delayedCall(countDuration, () => emitter.stop());
+        activeTimers.push(stopTimer);
       });
     }
 
     // Glow pulse on tier text
-    this.scene.tweens.add({
+    activeTweens.push(this.scene.tweens.add({
       targets: tierText,
       scale: { from: 1, to: 1.15 },
       yoyo: true,
       repeat: -1,
       duration: 350,
       ease: 'Sine.easeInOut'
-    });
+    }));
 
     // Auto dismiss
     const totalDuration = Math.max(2500, countDuration + 1500);
@@ -172,25 +189,37 @@ export class WinCelebration {
     const finish = () => {
       if (isFinished) return;
       isFinished = true;
-      countTimer.remove();
-      this.scene.tweens.killTweensOf(this.container);
-      this.container.destroy();
+      this._finishFn = null;
+
+      // Kill ALL tracked tweens (prevents orphan tweens on tierText, amountText, etc.)
+      activeTweens.forEach(t => { if (t.isPlaying()) t.stop(); });
+      activeTimers.forEach(t => t.remove());
+      emitters.forEach(e => { e.stop(); e.destroy(); });
+
+      // Safe container destroy
+      if (this.container && this.container.scene) {
+        this.scene.tweens.killTweensOf(this.container);
+        this.container.destroy();
+      }
       this._isVisible = false;
       onComplete();
     };
 
+    // Store for external skip
+    this._finishFn = finish;
+
     const dismissTimer = this.scene.time.delayedCall(totalDuration, () => {
-      this.scene.tweens.add({
+      activeTweens.push(this.scene.tweens.add({
         targets: this.container,
         alpha: 0,
         duration: 400,
         onComplete: finish,
-      });
+      }));
     });
+    activeTimers.push(dismissTimer);
 
     // Tap to skip
     overlay.on('pointerdown', () => {
-      dismissTimer.remove();
       finish();
     });
   }
