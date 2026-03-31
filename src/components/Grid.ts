@@ -35,6 +35,7 @@ export class Grid {
   private pendingServerGrid: number[][] | null = null;
   private sweepComplete = false;
   private waitingPulseTween?: Phaser.Tweens.Tween;
+  private _dropWhenReady = false;
 
   // Callbacks
   public onWinCallback: ((winAmount: number) => void) | null = null;
@@ -196,6 +197,7 @@ export class Grid {
     this.isProcessing = true;
     this.sweepComplete = false;
     this.pendingServerGrid = null;
+    this._dropWhenReady = false;
 
     // Reset multipliers & win tracking only if NOT in free spins
     if (this.freeSpinsRemaining === 0) {
@@ -229,7 +231,8 @@ export class Grid {
 
     this.scene.time.delayedCall(this.sweepDuration + 20, () => {
       this.sweepComplete = true;
-      if (this.pendingServerGrid) {
+      if (this.pendingServerGrid || this._dropWhenReady) {
+        this._dropWhenReady = false;
         this.executeDrop();
       } else {
         // Enact waiting pulse
@@ -250,6 +253,11 @@ export class Grid {
     this.pendingServerGrid = serverGrid || null;
     if (this.sweepComplete) {
       this.executeDrop();
+    } else {
+      // If sweep hasn't finished yet but we have no server grid (demo mode),
+      // we still need the delayed call to trigger executeDrop when sweep completes.
+      // Mark a flag so the sweep-complete handler knows to drop immediately.
+      this._dropWhenReady = true;
     }
   }
 
@@ -547,7 +555,8 @@ export class Grid {
     if (this.onFreeSpinsEnd) this.onFreeSpinsEnd(this.totalFreeSpinsWin);
     this.isSuperFreeSpins = false;
     this.isProcessing = false;
-    if (this.onCompleteCallback) this.onCompleteCallback();
+    // Do NOT call onCompleteCallback here — the FS end celebration
+    // handles unlocking the game via its own completion flow.
   }
 
   private finishRound() {

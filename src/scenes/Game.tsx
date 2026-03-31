@@ -814,7 +814,7 @@ export class Game extends Phaser.Scene {
     options.checkClick = true;
     this.valueMoney -= cost;
     this.lastWin = 0;
-    options.betAmount = this.getEffectiveBet();
+    options.betAmount = BET_PRESETS[this.betPresetIndex];
     this.updateMoneyDisplay();
     this.updateLastWinDisplay();
 
