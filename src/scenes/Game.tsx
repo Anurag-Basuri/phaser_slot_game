@@ -74,6 +74,10 @@ export class Game extends Phaser.Scene {
   soundEnabled = true;
   lastWin = 0;
 
+  // Spin lock — prevents double-trigger across pointer + keyboard
+  private _spinLock = false;
+  private _resizeTimer: ReturnType<typeof setTimeout> | null = null;
+
   constructor() {
     super({ key: 'Game' });
   }
@@ -128,10 +132,13 @@ export class Game extends Phaser.Scene {
     // Enforce initial mute state
     this.sound.mute = !this.soundEnabled;
 
-    // Resize handler
+    // Resize handler — debounced to prevent frame spikes during drag
     this.scale.on('resize', () => {
-      this.layoutAll();
-      this.grid.repositionSprites();
+      if (this._resizeTimer) clearTimeout(this._resizeTimer);
+      this._resizeTimer = setTimeout(() => {
+        this.layoutAll();
+        this.grid.repositionSprites();
+      }, 80);
     });
 
     // Keyboard support
@@ -539,7 +546,7 @@ export class Game extends Phaser.Scene {
     });
 
     this.spinBtnHit.on('pointerover', () => {
-      if (!options.checkClick) this.spinBtnLabel.setColor('#ccffdd');
+      if (!this._spinLock) this.spinBtnLabel.setColor('#ccffdd');
     });
     this.spinBtnHit.on('pointerout', () => {
       this.updateSpinButtonState();
@@ -558,8 +565,11 @@ export class Game extends Phaser.Scene {
         this.autoSpinActive = true;
         this.autoSpinRemaining = 0; // infinite
         this.updateAutoSpinDisplay();
-        if (!options.checkClick) {
-          this.attemptSpin(0);
+        // Decouple from click event to prevent double-fire if spin already in flight
+        if (!this._spinLock) {
+          this.time.delayedCall(50, () => {
+            if (this.autoSpinActive && !this._spinLock) this.attemptSpin(0);
+          });
         }
       } else {
         this.stopAutoSpin();
@@ -588,7 +598,7 @@ export class Game extends Phaser.Scene {
 
     // Ante Bet toggle
     this.anteBetHit.on('pointerdown', () => {
-      if (options.checkClick || this.fsActive || this.anyOverlayOpen()) return;
+      if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
       options.anteBetEnabled = !options.anteBetEnabled;
       this.drawAnteBetButton(
         this.anteBetHit.x, this.anteBetHit.y,
@@ -655,7 +665,7 @@ export class Game extends Phaser.Scene {
     }
 
     // 6. Normal spin
-    if (!options.checkClick) {
+    if (!this._spinLock) {
       this.attemptSpin(0);
     }
   }
@@ -665,7 +675,7 @@ export class Game extends Phaser.Scene {
     if (this.autoSpinActive) {
       this.spinBtnLabel.setText('STOP');
       this.spinBtnLabel.setColor('#ff4466');
-    } else if (options.checkClick) {
+    } else if (this._spinLock) {
       this.spinBtnLabel.setText('⋯');
       this.spinBtnLabel.setColor('#556688');
     } else {
@@ -754,8 +764,8 @@ export class Game extends Phaser.Scene {
           targets: endText, scale: 1, duration: 500, yoyo: true, hold: 2000, ease: 'Back.easeOut',
           onComplete: () => {
             endText.destroy();
-            options.checkClick = false;
-            this.stakeEngine.endRound();
+            this._spinLock = false;
+            this.stakeEngine.endRound().catch(e => console.warn('[Game] endRound error:', e));
             this.saveSpinRecord(totalWin, 'free_spins');
             this.updateSpinButtonState();
 
@@ -809,8 +819,8 @@ export class Game extends Phaser.Scene {
       if (this.fsActive) return;
 
       const finishUp = () => {
-        options.checkClick = false;
-        this.stakeEngine.endRound();
+        this._spinLock = false;
+        this.stakeEngine.endRound().catch(e => console.warn('[Game] endRound error:', e));
         this.saveSpinRecord(this.lastWin, 'base');
         this.updateSpinButtonState();
 
@@ -878,7 +888,7 @@ export class Game extends Phaser.Scene {
   }
 
   private requestPurchase(triggerType: number, betMultCost: number) {
-    if (options.checkClick || this.fsActive || this.anyOverlayOpen()) return;
+    if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
 
     const cost = this.getEffectiveBet() * betMultCost;
     const label = triggerType === 2 ? 'Super Free Spins' : 'Free Spins';
@@ -897,7 +907,7 @@ export class Game extends Phaser.Scene {
   }
 
   private async executePurchase(triggerType: number, cost: number) {
-    options.checkClick = true;
+    this._spinLock = true;
     this.valueMoney -= cost;
     this.lastWin = 0;
     options.betAmount = BET_PRESETS[this.betPresetIndex];
@@ -942,17 +952,17 @@ export class Game extends Phaser.Scene {
       this.grid.abortSpin();
       this.valueMoney += cost;
       this.updateMoneyDisplay();
-      options.checkClick = false;
+      this._spinLock = false;
       this.showFatalError('CONNECTION LOST');
     }
   }
 
   async attemptSpin(triggerType: number) {
-    if (options.checkClick || this.fsActive || this.anyOverlayOpen()) return;
+    if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
 
     const cost = this.getEffectiveBet();
     if (this.valueMoney >= cost) {
-      options.checkClick = true;
+      this._spinLock = true;
       this.valueMoney -= cost;
       this.lastWin = 0;
       // Bug 8: Store the BASE bet, not the ante-adjusted cost, for payout calculation
@@ -981,7 +991,7 @@ export class Game extends Phaser.Scene {
         this.grid.abortSpin();
         this.valueMoney += cost;
         this.updateMoneyDisplay();
-        options.checkClick = false;
+        this._spinLock = false;
         this.stopAutoSpin();
         this.showFatalError('CONNECTION LOST');
         return;
@@ -994,7 +1004,7 @@ export class Game extends Phaser.Scene {
 
 
   changeBet(direction: number) {
-    if (options.checkClick || this.fsActive) return;
+    if (this._spinLock || this.fsActive) return;
     const newIndex = this.betPresetIndex + direction;
     if (newIndex >= 0 && newIndex < BET_PRESETS.length) {
       this.betPresetIndex = newIndex;
@@ -1033,7 +1043,7 @@ export class Game extends Phaser.Scene {
       } catch { /* ignore parse error */ }
       localStorage.removeItem('pending_round');
       localStorage.removeItem('pending_bet');
-      this.stakeEngine.endRound();
+      this.stakeEngine.endRound().catch(e => console.warn('[Game] endRound error:', e));
     }
   }
 
@@ -1082,7 +1092,7 @@ export class Game extends Phaser.Scene {
     if (this.confirmDialog.isVisible()) this.confirmDialog.dismiss();
     
     // Hard-lock all input
-    options.checkClick = true;
+    this._spinLock = true;
     this.stopAutoSpin();
     this.updateSpinButtonState();
     

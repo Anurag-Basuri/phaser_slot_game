@@ -141,19 +141,32 @@ export class StakeEngineClient {
     return Math.round(displayAmount * PRECISION);
   }
 
-  /** Wrapper for fetch that automatically retries 3 times on transient network errors */
+  /** Wrapper for fetch with retry + timeout. Retries 3× on transient 5xx/429 errors. */
   private async fetchWithRetry(url: string, options: RequestInit, retries: number = 3): Promise<Response> {
     for (let i = 0; i < retries; i++) {
+      // AbortController with 15s timeout — prevents infinite hang on TCP stall
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15_000);
+
       try {
-        const response = await fetch(url, options);
-        // Retry on 5xx server errors or rate limits, but NOT 4xx client errors (except 429)
-        if (!response.ok && response.status >= 500 || response.status === 429) {
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        // Retry on 5xx server errors or 429 rate limits, but NOT other 4xx client errors
+        if (!response.ok && (response.status >= 500 || response.status === 429)) {
           throw new Error(`Server returned ${response.status}`);
         }
-        return response; // Return on success or 4xx client errors
+        return response; // Return on success or non-retryable 4xx errors
       } catch (err: any) {
+        clearTimeout(timeoutId);
+
+        // Distinguish timeout vs other errors for better logging
+        if (err?.name === 'AbortError') {
+          console.warn(`[StakeEngine] Request timeout (attempt ${i + 1}/${retries})`);
+        }
+
         if (i === retries - 1) throw err; // Throw on final attempt
-        // Wait exponentially: 500ms, 1500ms, 3500ms
+        // Exponential backoff: 500ms, 1500ms, 3500ms
         await new Promise((res) => setTimeout(res, 500 + i * 1000));
       }
     }

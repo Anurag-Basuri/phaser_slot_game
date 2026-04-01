@@ -154,11 +154,11 @@ export class WinCelebration {
     });
     activeTimers.push(countTimer);
 
-    // Particle fountain for big wins
+    // Particle fountain for big wins — capped emitters for GPU safety
     const emitters: Phaser.GameObjects.Particles.ParticleEmitter[] = [];
     if (multiplier >= 10) {
-      const colors = [0, 1, 2, 3, 4, 5, 6];
-      const qty = Math.min(4, Math.max(1, Math.floor(multiplier / 20)));
+      const colors = [0, 2, 5]; // 3 emitters max instead of 7
+      const qty = Math.min(3, Math.max(1, Math.floor(multiplier / 25)));
       
       colors.forEach(c => {
         const emitter = this.scene.add.particles(w / 2, h + 50, `candy_${c}`, {
@@ -168,7 +168,7 @@ export class WinCelebration {
           lifespan: 4000,
           quantity: qty,
           gravityY: 700,
-          frequency: 80,
+          frequency: 200, // Reduced from 80 to 200
           blendMode: 'ADD'
         });
         this.container.addAt(emitter, 1);
