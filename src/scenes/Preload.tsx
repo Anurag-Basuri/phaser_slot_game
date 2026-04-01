@@ -25,7 +25,6 @@ export class Preload extends Phaser.Scene {
 
     // Scene assets
     this.load.image('candyland_bg', 'images/candyland_bg.png');
-    this.load.image('gumball_rocket_btn', 'images/gumball_rocket_btn.png');
 
     // Audio
     this.load.audio('backgroundDefault', 'audio/background-default.mp3');
@@ -33,7 +32,6 @@ export class Preload extends Phaser.Scene {
     this.load.audio('reelStop', 'audio/reel_stop.mp3');
     this.load.audio('win', 'audio/win.mp3');
     this.load.audio('button', 'audio/button.mp3');
-    this.load.audio('lose', 'audio/lose.mp3');
     this.load.audio('musicDefault', 'audio/music_default.mp3');
   }
 

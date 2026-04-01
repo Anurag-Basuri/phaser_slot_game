@@ -810,6 +810,8 @@ export class Game extends Phaser.Scene {
 
     // Wire free spin next-spin callback (Bug 7: Game drives free spin flow)
     this.grid.onNextFreeSpinNeeded = () => {
+      // Update FS counter display
+      this.txtFSRemaining.setText(`${this.grid.freeSpinsRemaining} FREE SPINS`);
       // In demo mode, just do a local spin
       this.grid.prepareSpin();
       this.grid.injectServerResult();

@@ -119,6 +119,8 @@ export class Boot extends Phaser.Scene {
     });
 
     playBtn.on('pointerdown', () => {
+      // Stop all infinite tweens before transition to prevent leaks
+      this.tweens.killAll();
       // Transition animation
       this.tweens.add({
         targets: [titleMain, title1000, subtitle, playBtn, playText, btnBg, btnGlow],

@@ -12,22 +12,28 @@ export class SettingsOverlay {
   private onQualityChange: ((quality: string) => void) | null = null;
   private soundEnabled = true;
   private turboMode = false;
+  private _resizeTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.build();
 
-    // Rebuild on resize so the panel stays centered
-    this.scene.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
-      const wasVisible = this.visible;
-      this.container.removeAll(true);
-      this.container.destroy();
-      this.build();
-      if (wasVisible) {
-        this.container.setVisible(true);
-        this.container.setAlpha(1);
-        this.visible = true;
-      }
+    // Debounced rebuild on resize so the panel stays centered
+    this.scene.scale.on('resize', () => {
+      if (this._resizeTimer) clearTimeout(this._resizeTimer);
+      this._resizeTimer = setTimeout(() => {
+        const wasVisible = this.visible;
+        if (this.container?.scene) {
+          this.container.removeAll(true);
+          this.container.destroy();
+        }
+        this.build();
+        if (wasVisible) {
+          this.container.setVisible(true);
+          this.container.setAlpha(1);
+          this.visible = true;
+        }
+      }, 100);
     });
   }
 
