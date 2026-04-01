@@ -36,6 +36,7 @@ export class Grid {
   private sweepComplete = false;
   private waitingPulseTween?: Phaser.Tweens.Tween;
   private _dropWhenReady = false;
+  private cascadeDepth = 0;
 
   // Callbacks
   public onWinCallback: ((winAmount: number) => void) | null = null;
@@ -178,7 +179,12 @@ export class Grid {
 
     // Play reel stop sound after drop (safe — scene might be gone during abort)
     this.scene.time.delayedCall(this.dropDuration + 100, () => {
-      try { this.scene.sound.play('reelStop', { volume: 0.25 }); } catch { /* ignore */ }
+      try { 
+        const audio = (this.scene as any).audio;
+        if (audio && audio.playCascadeDrop) {
+          audio.playCascadeDrop(this.cascadeDepth);
+        }
+      } catch { /* ignore */ }
     });
 
     // Consume server grid after first fill
@@ -198,6 +204,7 @@ export class Grid {
     this.sweepComplete = false;
     this.pendingServerGrid = null;
     this._dropWhenReady = false;
+    this.cascadeDepth = 0;
 
     // Reset multipliers & win tracking only if NOT in free spins
     if (this.freeSpinsRemaining === 0) {
@@ -271,6 +278,10 @@ export class Grid {
       this.waitingPulseTween = undefined;
       this.cellBackgrounds.setAlpha(1);
     }
+    try {
+      const audio = (this.scene as any).audio;
+      if (audio && audio.stopReels) audio.stopReels();
+    } catch { /* ignore */ }
     // Repopulate the grid so the board isn't blank
     this.pendingServerGrid = null;
     this.fillEmpty();
@@ -282,6 +293,10 @@ export class Grid {
       this.waitingPulseTween = undefined;
       this.cellBackgrounds.setAlpha(1);
     }
+    try {
+      const audio = (this.scene as any).audio;
+      if (audio && audio.stopReels) audio.stopReels();
+    } catch { /* ignore */ }
     
     this.sweepComplete = false;
     this.fillEmpty();
@@ -574,6 +589,7 @@ export class Grid {
 
   private cascadeSymbols() {
     const size = options.gridSize;
+    this.cascadeDepth++;
     for (let c = 0; c < size; c++) {
       for (let r = size - 1; r >= 0; r--) {
         if (this.sprites[r][c] === null) {

@@ -126,16 +126,23 @@ export class WinCelebration {
     const countDuration = Math.min(2000, multiplier * 30);
     let elapsed = 0;
     const countTimer = this.scene.time.addEvent({
-      delay: 16,
-      repeat: Math.floor(countDuration / 16),
+      delay: 32,
+      repeat: Math.floor(countDuration / 32),
       callback: () => {
-        elapsed += 16;
+        elapsed += 32;
         const progress = Math.min(elapsed / countDuration, 1);
         const eased = 1 - Math.pow(1 - progress, 3);
         const currentAmount = winAmount * eased;
         amountText.setText(currentAmount.toFixed(2));
         
-        if (progress === 1) {
+        try {
+          const audio = (this.scene as any).audio;
+          if (audio && audio.playWinTick && progress < 1) {
+            audio.playWinTick(progress, multiplier);
+          }
+        } catch { /* ignore */ }
+        
+        if (progress >= 1) {
           activeTweens.push(this.scene.tweens.add({
             targets: amountText,
             scale: { from: 1.4, to: 1 },

@@ -124,9 +124,9 @@ export class Game extends Phaser.Scene {
     this.grid.init();
 
     // Start background music
-    if (this.soundEnabled) {
-      this.audio.musicBackgroundDefault.play();
-    }
+    this.audio.playMusic('backgroundDefault');
+    // Enforce initial mute state
+    this.sound.mute = !this.soundEnabled;
 
     // Resize handler
     this.scale.on('resize', () => {
@@ -595,7 +595,7 @@ export class Game extends Phaser.Scene {
         this.anteBetHit.width, this.anteBetHit.height
       );
       this.updateBetDisplay();
-      if (this.soundEnabled) this.audio.audioButton.play();
+      this.audio.playSound('button');
     });
 
     // Sound toggle
@@ -700,7 +700,7 @@ export class Game extends Phaser.Scene {
       // During free spins, don't track lastWin per cascade — 
       // the Grid's totalFreeSpinsWin is authoritative
 
-      if (this.soundEnabled) this.audio.audioWin.play();
+      this.audio.playWin(actualWin / this.getEffectiveBet());
 
       // Floating win text
       const cx = this.grid.offsetX + this.grid.cellSize * 3.5;
@@ -722,10 +722,7 @@ export class Game extends Phaser.Scene {
       this.txtFSRemaining.setText(`${count} FREE SPINS`).setVisible(true);
 
       // Switch to FS music
-      if (this.soundEnabled) {
-        this.audio.musicBackgroundDefault.stop();
-        this.audio.musicDefault.play();
-      }
+      this.audio.playMusic('musicDefault', 800);
 
       this.tweens.add({
         targets: this.txtFSRemaining,
@@ -743,10 +740,7 @@ export class Game extends Phaser.Scene {
       this.updateLastWinDisplay();
 
       // Switch back to normal music
-      if (this.soundEnabled) {
-        this.audio.musicDefault.stop();
-        this.audio.musicBackgroundDefault.play();
-      }
+      this.audio.playMusic('backgroundDefault', 1000);
 
       const betAmount = this.getEffectiveBet();
       this.winCelebration.show(totalWin, betAmount, () => {
@@ -910,7 +904,7 @@ export class Game extends Phaser.Scene {
     this.updateMoneyDisplay();
     this.updateLastWinDisplay();
 
-    if (this.soundEnabled) this.audio.audioButton.play();
+    this.audio.playSound('button');
 
     // Bug 6: Don't pass triggerType to prepareSpin — sweep now, configure FS after intro
     this.grid.prepareSpin();
@@ -939,10 +933,7 @@ export class Game extends Phaser.Scene {
         }
         this.fsActive = true;
         this.txtFSRemaining.setText(`${this.grid.freeSpinsRemaining} FREE SPINS`).setVisible(true);
-        if (this.soundEnabled) {
-          this.audio.musicBackgroundDefault.stop();
-          this.audio.musicDefault.play();
-        }
+        this.audio.playMusic('musicDefault', 800);
         this.grid.injectServerResult(serverGrid);
       });
     } catch (err) {
@@ -969,9 +960,7 @@ export class Game extends Phaser.Scene {
       this.updateMoneyDisplay();
       this.updateLastWinDisplay();
 
-      if (this.soundEnabled) {
-        this.audio.audioReels.play();
-      }
+      this.audio.playReels();
 
       this.grid.prepareSpin();
       this.updateSpinButtonState();
@@ -1011,7 +1000,7 @@ export class Game extends Phaser.Scene {
       this.betPresetIndex = newIndex;
       options.betAmount = BET_PRESETS[this.betPresetIndex];
       this.updateBetDisplay();
-      if (this.soundEnabled) this.audio.audioButton.play();
+      this.audio.playSound('button');
     }
   }
 
