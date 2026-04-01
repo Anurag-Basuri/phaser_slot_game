@@ -37,6 +37,8 @@ export class Grid {
   private waitingPulseTween?: Phaser.Tweens.Tween;
   private _dropWhenReady = false;
   private cascadeDepth = 0;
+  private _activeEmitterCount = 0;
+  private static readonly MAX_EMITTERS = 30;
 
   // Callbacks
   public onWinCallback: ((winAmount: number) => void) | null = null;
@@ -152,7 +154,8 @@ export class Grid {
           // Use server grid if available, otherwise pick random
           let symId: number;
           if (this.pendingServerGrid) {
-            symId = this.pendingServerGrid[r][c];
+            const raw = this.pendingServerGrid[r]?.[c];
+            symId = (typeof raw === 'number' && raw >= 0 && raw < this.symbolKeys.length) ? raw : this.pickSymbol();
           } else {
             symId = this.pickSymbol();
           }
@@ -198,7 +201,7 @@ export class Grid {
    * Free spin setup for buy features is handled by Game.tsx.
    */
   public prepareSpin() {
-    // Note: caller (Game.tsx) is responsible for guarding via options.checkClick.
+    // Note: caller (Game.tsx) is responsible for guarding via _spinLock.
     // We do NOT guard on isProcessing here because money is already deducted.
     this.isProcessing = true;
     this.sweepComplete = false;
@@ -257,7 +260,7 @@ export class Grid {
 
   /** Called when the API responds with the outcome */
   public injectServerResult(serverGrid?: number[][]) {
-    this.pendingServerGrid = serverGrid || null;
+    this.pendingServerGrid = this.validateServerGrid(serverGrid) ? serverGrid! : null;
     if (this.sweepComplete) {
       this.executeDrop();
     } else {
@@ -398,7 +401,7 @@ export class Grid {
     for (let r = 0; r < size; r++) {
       for (let c = 0; c < size; c++) {
         if (this.sprites[r][c]) {
-          idGrid[r][c] = this.sprites[r][c]!.getData('symId');
+          idGrid[r][c] = this.sprites[r][c]!.getData('symId') ?? 0;
         }
       }
     }
@@ -433,33 +436,38 @@ export class Grid {
       cluster.positions.forEach(pos => {
         const r = pos.row;
         const c = pos.col;
-        if (this.sprites[r][c]) {
-          // Explosion particles
-          const emitter = this.scene.add.particles(this.getX(c), this.getY(r), this.symbolKeys[cluster.symbolId], {
-            speed: { min: 80, max: 350 },
-            angle: { min: 0, max: 360 },
-            scale: { start: 0.35, end: 0 },
-            lifespan: 500,
-            quantity: 4,
-            blendMode: 'ADD'
-          });
-          emitter.explode(4);
-          this.scene.time.delayedCall(600, () => { emitter.destroy(); });
+       if (this.sprites[r][c]) {
+          // Explosion particles — capped to prevent GPU overload
+          if (this._activeEmitterCount < Grid.MAX_EMITTERS) {
+            const emitter = this.scene.add.particles(this.getX(c), this.getY(r), this.symbolKeys[cluster.symbolId], {
+              speed: { min: 80, max: 350 },
+              angle: { min: 0, max: 360 },
+              scale: { start: 0.35, end: 0 },
+              lifespan: 500,
+              quantity: 4,
+              blendMode: 'ADD'
+            });
+            emitter.explode(4);
+            this._activeEmitterCount++;
+            this.scene.time.delayedCall(600, () => { emitter.destroy(); this._activeEmitterCount--; });
+          }
 
           // Animate symbol destruction
-          // Debris particle pop
           const sprite = this.sprites[r][c]!;
           const symId = sprite.getData('symId') ?? 0;
-          const debrisEmitter = this.scene.add.particles(sprite.x, sprite.y, `candy_${symId}`, {
-            speed: { min: 80, max: 200 },
-            angle: { min: 0, max: 360 },
-            scale: { start: 0.15, end: 0 },
-            lifespan: 600,
-            quantity: 4,
-            gravityY: 300,
-          }).setDepth(15);
-          debrisEmitter.explode();
-          this.scene.time.delayedCall(700, () => debrisEmitter.destroy());
+          if (this._activeEmitterCount < Grid.MAX_EMITTERS) {
+            const debrisEmitter = this.scene.add.particles(sprite.x, sprite.y, `candy_${symId}`, {
+              speed: { min: 80, max: 200 },
+              angle: { min: 0, max: 360 },
+              scale: { start: 0.15, end: 0 },
+              lifespan: 600,
+              quantity: 4,
+              gravityY: 300,
+            }).setDepth(15);
+            debrisEmitter.explode();
+            this._activeEmitterCount++;
+            this.scene.time.delayedCall(700, () => { debrisEmitter.destroy(); this._activeEmitterCount--; });
+          }
 
           this.scene.tweens.add({
             targets: sprite,
@@ -616,5 +624,29 @@ export class Grid {
         this.evaluateAndCascade();
       });
     });
+  }
+
+  /** Validate server grid dimensions and symbol IDs */
+  private validateServerGrid(grid?: number[][]): boolean {
+    if (!grid) return false;
+    const size = options.gridSize;
+    if (!Array.isArray(grid) || grid.length !== size) {
+      console.warn('[Grid] Invalid server grid rows:', grid?.length, 'expected:', size);
+      return false;
+    }
+    for (let r = 0; r < size; r++) {
+      if (!Array.isArray(grid[r]) || grid[r].length !== size) {
+        console.warn('[Grid] Invalid server grid cols at row', r);
+        return false;
+      }
+      for (let c = 0; c < size; c++) {
+        const v = grid[r][c];
+        if (typeof v !== 'number' || v < 0 || v >= this.symbolKeys.length) {
+          console.warn('[Grid] Invalid symbol ID at', r, c, ':', v);
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }

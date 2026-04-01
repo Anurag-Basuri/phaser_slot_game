@@ -54,7 +54,6 @@ export default {
   freeSpinsByScatter: { 3: 10, 4: 15, 5: 20, 6: 25, 7: 30 } as Record<number, number>,
 
   gridSize: 7,
-  checkClick: false,
   symbolSize: 100,
   cascadeDelay: 150,
   clusterExplodeDuration: 300,
