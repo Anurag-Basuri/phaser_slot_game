@@ -84,6 +84,28 @@ export interface URLParams {
   rgs_url: string;
 }
 
+/**
+ * Strongly typed error class for Stake API failures.
+ * Allows the Game scene to distinguish between recoverable
+ * network/timeout errors and unrecoverable server rejections.
+ */
+export type StakeErrorCode = 'TIMEOUT' | 'NETWORK' | 'SERVER' | 'AUTH' | 'REJECTED' | 'UNKNOWN';
+
+export class StakeError extends Error {
+  public readonly code: StakeErrorCode;
+  public readonly httpStatus?: number;
+  public readonly retryable: boolean;
+
+  constructor(code: StakeErrorCode, message: string, httpStatus?: number) {
+    super(message);
+    this.name = 'StakeError';
+    this.code = code;
+    this.httpStatus = httpStatus;
+    // Timeouts and transient server errors are retryable; auth/rejected are not
+    this.retryable = code === 'TIMEOUT' || code === 'NETWORK' || code === 'SERVER';
+  }
+}
+
 const PRECISION = 1_000_000; // 6 decimal places
 
 export class StakeEngineClient {
@@ -141,10 +163,15 @@ export class StakeEngineClient {
     return Math.round(displayAmount * PRECISION);
   }
 
-  /** Wrapper for fetch with retry + timeout. Retries 3× on transient 5xx/429 errors. */
+  /**
+   * Wrapper for fetch with retry + timeout.
+   * Retries up to `retries` times on transient 5xx/429 errors.
+   * Throws StakeError with a typed code on final failure.
+   */
   private async fetchWithRetry(url: string, options: RequestInit, retries: number = 3): Promise<Response> {
+    let lastError: Error | null = null;
+
     for (let i = 0; i < retries; i++) {
-      // AbortController with 15s timeout — prevents infinite hang on TCP stall
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15_000);
 
@@ -152,25 +179,40 @@ export class StakeEngineClient {
         const response = await fetch(url, { ...options, signal: controller.signal });
         clearTimeout(timeoutId);
 
-        // Retry on 5xx server errors or 429 rate limits, but NOT other 4xx client errors
-        if (!response.ok && (response.status >= 500 || response.status === 429)) {
-          throw new Error(`Server returned ${response.status}`);
+        if (response.ok) return response;
+
+        // Non-retryable client errors (4xx except 429)
+        if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+          if (response.status === 401 || response.status === 403) {
+            throw new StakeError('AUTH', `Authentication rejected (${response.status})`, response.status);
+          }
+          throw new StakeError('REJECTED', `Request rejected (${response.status})`, response.status);
         }
-        return response; // Return on success or non-retryable 4xx errors
+
+        // Retryable server errors (5xx, 429)
+        lastError = new StakeError('SERVER', `Server error (${response.status})`, response.status);
       } catch (err: any) {
         clearTimeout(timeoutId);
 
-        // Distinguish timeout vs other errors for better logging
-        if (err?.name === 'AbortError') {
-          console.warn(`[StakeEngine] Request timeout (attempt ${i + 1}/${retries})`);
-        }
+        // If it's already a StakeError (AUTH/REJECTED), don't retry
+        if (err instanceof StakeError && !err.retryable) throw err;
 
-        if (i === retries - 1) throw err; // Throw on final attempt
-        // Exponential backoff: 500ms, 1500ms, 3500ms
+        if (err?.name === 'AbortError') {
+          console.warn(`[StakeEngine] Timeout (attempt ${i + 1}/${retries})`);
+          lastError = new StakeError('TIMEOUT', `Request timed out (attempt ${i + 1})`);
+        } else if (err instanceof StakeError) {
+          lastError = err;
+        } else {
+          lastError = new StakeError('NETWORK', err?.message || 'Network error');
+        }
+      }
+
+      if (i < retries - 1) {
         await new Promise((res) => setTimeout(res, 500 + i * 1000));
       }
     }
-    throw new Error('Connection failed after multiple retries.');
+
+    throw lastError || new StakeError('UNKNOWN', 'Connection failed after multiple retries.');
   }
 
   /**
@@ -299,6 +341,33 @@ export class StakeEngineClient {
       this.currentRoundId = null;
     } catch (error) {
       console.error('[StakeEngine] End round error:', error);
+      // endRound failures are non-critical — the server will auto-close stale rounds
+    }
+  }
+
+  /**
+   * Resync: Re-authenticate to fetch the authoritative wallet balance.
+   * Used after a network failure to recover the true state instead of
+   * trusting local refund math.
+   *
+   * Returns the display-amount balance, or throws StakeError on failure.
+   */
+  public async resync(): Promise<{ balance: number; pendingRound?: { roundId: string; event: string } }> {
+    if (this.isDemo) {
+      // In demo mode, localStorage is the source of truth
+      const stored = localStorage.getItem('balance');
+      return { balance: stored ? parseFloat(stored) : 100_000 };
+    }
+
+    try {
+      const auth = await this.authenticate();
+      return {
+        balance: StakeEngineClient.toDisplayAmount(auth.balance),
+        pendingRound: auth.round ? { roundId: auth.round.roundId, event: auth.round.event } : undefined,
+      };
+    } catch (err) {
+      console.error('[StakeEngine] Resync failed:', err);
+      throw err;
     }
   }
 
