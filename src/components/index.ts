@@ -1,5 +1,6 @@
 export { Audio } from './Audio';
 export { ConfirmDialog } from './ConfirmDialog';
+export { ErrorManager } from './ErrorManager';
 export { FreeSpinsIntro } from './FreeSpinsIntro';
 export { Grid } from './Grid';
 export { PaytableOverlay } from './PaytableOverlay';

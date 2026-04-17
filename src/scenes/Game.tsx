@@ -2,11 +2,12 @@ import Phaser from 'phaser';
 
 import {
   Grid, Audio, PaytableOverlay, SettingsOverlay,
-  WinCelebration, ConfirmDialog, FreeSpinsIntro
+  WinCelebration, ConfirmDialog, FreeSpinsIntro, ErrorManager
 } from '../components';
 import { LocalStorageKey } from '../constants';
 import { getStakeEngine, StakeEngineClient } from '../engine';
 import type { SpinEventData } from '../engine/StakeEngineClient';
+import { StakeError } from '../engine/StakeEngineClient';
 import options, { BET_PRESETS } from '../options';
 
 /**
@@ -20,6 +21,7 @@ export class Game extends Phaser.Scene {
   winCelebration!: WinCelebration;
   confirmDialog!: ConfirmDialog;
   freeSpinsIntro!: FreeSpinsIntro;
+  errorManager!: ErrorManager;
 
   private stakeEngine!: StakeEngineClient;
 
@@ -79,6 +81,7 @@ export class Game extends Phaser.Scene {
 
   // Spin lock — prevents double-trigger across pointer + keyboard
   private _spinLock = false;
+  private _recovering = false; // True while resync is in progress
   private _resizeTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
@@ -88,6 +91,9 @@ export class Game extends Phaser.Scene {
   async create() {
     // Initialize Stake Engine
     this.stakeEngine = getStakeEngine();
+
+    // ErrorManager must be created before auth so showBlockingError is available
+    this.errorManager = new ErrorManager(this);
 
     if (!this.stakeEngine.isDemoMode()) {
       try {
@@ -100,8 +106,22 @@ export class Game extends Phaser.Scene {
         }
       } catch (err) {
         console.error('[Game] Auth failed:', err);
-        this.showFatalError('SESSION EXPIRED\nPlease relaunch the game.');
-        return; // Halt boot sequence immediately
+        const isAuthError = err instanceof StakeError && err.code === 'AUTH';
+        if (isAuthError) {
+          // Unrecoverable — session is invalid, must relaunch
+          this.errorManager.showBlockingError(
+            'SESSION EXPIRED',
+            async () => { throw new Error('Session expired — cannot retry'); },
+            () => window.location.reload(),
+          );
+        } else {
+          // Network error — allow retry
+          this.errorManager.showBlockingError(
+            'CONNECTION FAILED',
+            () => this.resyncAfterError(),
+          );
+        }
+        return; // Halt boot sequence
       }
     }
 
@@ -640,7 +660,7 @@ export class Game extends Phaser.Scene {
         // Check balance before starting auto-spin
         const cost = this.getEffectiveBet();
         if (this.valueMoney < cost) {
-          this.showTransientError('INSUFFICIENT FUNDS');
+          this.errorManager.showToast('INSUFFICIENT FUNDS', '#ff4466');
           return;
         }
         this.autoSpinActive = true;
@@ -863,7 +883,7 @@ export class Game extends Phaser.Scene {
               const cost = this.getEffectiveBet();
               if (this.valueMoney < cost) {
                 this.stopAutoSpin();
-                this.showTransientError('INSUFFICIENT FUNDS');
+                this.errorManager.showToast('INSUFFICIENT FUNDS', '#ff4466');
                 return;
               }
               this.autoSpinTimer = this.time.delayedCall(600, () => {
@@ -922,7 +942,7 @@ export class Game extends Phaser.Scene {
           const cost = this.getEffectiveBet();
           if (this.valueMoney < cost) {
             this.stopAutoSpin();
-            this.showTransientError('INSUFFICIENT FUNDS');
+            this.errorManager.showToast('INSUFFICIENT FUNDS', '#ff4466');
             return;
           }
           this.autoSpinTimer = this.time.delayedCall(600, () => {
@@ -941,7 +961,7 @@ export class Game extends Phaser.Scene {
   }
 
   private anyOverlayOpen(): boolean {
-    return this.paytable.isVisible() || this.settings.isVisible() || this.confirmDialog.isVisible() || this.winCelebration.isVisible || this.freeSpinsIntro.isVisible;
+    return this.paytable.isVisible() || this.settings.isVisible() || this.confirmDialog.isVisible() || this.winCelebration.isVisible || this.freeSpinsIntro.isVisible || this.errorManager.isBlocking;
   }
 
   private getEffectiveBet(): number {
@@ -1006,7 +1026,7 @@ export class Game extends Phaser.Scene {
     const label = triggerType === 2 ? 'Super Free Spins' : 'Free Spins';
 
     if (this.valueMoney < cost) {
-      this.showTransientError('INSUFFICIENT FUNDS');
+      this.errorManager.showToast('INSUFFICIENT FUNDS', '#ff4466');
       return;
     }
 
@@ -1060,17 +1080,17 @@ export class Game extends Phaser.Scene {
       });
     } catch (err) {
       console.error('[Game] Buy feature error:', err);
-      // Refund balance and unlock UI
       this.grid.abortSpin();
-      this.valueMoney += cost;
-      this.updateMoneyDisplay();
       this._spinLock = false;
-      this.showFatalError('CONNECTION LOST');
+      this.stopAutoSpin();
+
+      // Do NOT blindly refund balance — resync with server
+      this.handleSpinFailure(err);
     }
   }
 
   async attemptSpin(triggerType: number) {
-    if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
+    if (this._spinLock || this._recovering || this.fsActive || this.anyOverlayOpen()) return;
 
     const cost = this.getEffectiveBet();
     if (this.valueMoney >= cost) {
@@ -1099,18 +1119,17 @@ export class Game extends Phaser.Scene {
         this.grid.injectServerResult(serverGrid);
       } catch (err) {
         console.error('[Game] Play error:', err);
-        // Refund and unlock UI
         this.grid.abortSpin();
-        this.valueMoney += cost;
-        this.updateMoneyDisplay();
         this._spinLock = false;
         this.stopAutoSpin();
-        this.showFatalError('CONNECTION LOST');
+
+        // Do NOT blindly refund balance — resync with server
+        this.handleSpinFailure(err);
         return;
       }
     } else {
       this.stopAutoSpin();
-      this.showTransientError('INSUFFICIENT FUNDS');
+      this.errorManager.showToast('INSUFFICIENT FUNDS', '#ff4466');
     }
   }
 
@@ -1180,62 +1199,73 @@ export class Game extends Phaser.Scene {
     } catch { /* ignore */ }
   }
 
-  private showTransientError(message: string) {
-    const errorText = this.add.text(
-      this.scale.width / 2, this.scale.height / 2,
-      message,
-      { fontSize: '48px', color: '#ff4466', fontStyle: 'bold', stroke: '#000', strokeThickness: 8 }
-    ).setOrigin(0.5).setDepth(100);
-
-    this.tweens.add({
-      targets: errorText,
-      y: errorText.y - 100,
-      alpha: 0,
-      duration: 2000,
-      ease: 'Power1',
-      onComplete: () => errorText.destroy()
-    });
-  }
-
-  private showFatalError(message: string) {
-    // Bug 5: Force-close all overlays instead of returning
+  /**
+   * Handle a spin/purchase failure.
+   * Instead of blindly refunding the local balance, show a blocking error
+   * and attempt to resync with the server to get the authoritative balance.
+   */
+  private handleSpinFailure(err: unknown): void {
+    // Close any overlays that might be open
     if (this.paytable.isVisible()) this.paytable.hide();
     if (this.settings.isVisible()) this.settings.hide();
     if (this.confirmDialog.isVisible()) this.confirmDialog.dismiss();
-    
-    // Hard-lock all input
-    this._spinLock = true;
-    this.stopAutoSpin();
-    this.updateSpinButtonState();
-    
-    // Add blocking overlay
-    const overlay = this.add.graphics();
-    overlay.fillStyle(0x000000, 0.95);
-    overlay.fillRect(0, 0, this.scale.width, this.scale.height);
-    overlay.setInteractive(new Phaser.Geom.Rectangle(0, 0, this.scale.width, this.scale.height), Phaser.Geom.Rectangle.Contains);
-    overlay.setDepth(200);
 
-    const title = this.add.text(
-      this.scale.width / 2, this.scale.height / 2 - 80,
-      message,
-      { fontSize: '48px', color: '#ff4466', fontStyle: 'bold', stroke: '#000', strokeThickness: 8 }
-    ).setOrigin(0.5).setDepth(201);
+    const isAuth = err instanceof StakeError && err.code === 'AUTH';
+    const headline = isAuth ? 'SESSION EXPIRED' : 'CONNECTION LOST';
 
-    const subtitle = this.add.text(
-      this.scale.width / 2, this.scale.height / 2,
-      'Please check your internet connection\nand reload the game.',
-      { fontSize: '24px', color: '#ffffff', align: 'center', stroke: '#000', strokeThickness: 4 }
-    ).setOrigin(0.5).setDepth(201);
+    if (isAuth) {
+      // Unrecoverable — session is dead
+      this.errorManager.showBlockingError(
+        headline,
+        async () => { throw new Error('Session expired'); },
+        () => window.location.reload(),
+      );
+    } else {
+      // Recoverable — show retry modal that resyncs balance
+      this.errorManager.showBlockingError(
+        headline,
+        () => this.resyncAfterError(),
+      );
+    }
+  }
 
-    // Refresh button
-    const btnRefresh = this.add.text(
-      this.scale.width / 2, this.scale.height / 2 + 100,
-      'RELOAD',
-      { fontSize: '32px', color: '#ffffff', backgroundColor: '#e62244', padding: { x: 20, y: 10 } }
-    ).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(201);
-    
-    btnRefresh.on('pointerdown', () => {
-      window.location.reload();
-    });
+  /**
+   * Resync with the RGS after a network failure.
+   * Fetches the authoritative wallet balance and updates the local state.
+   * On success, unlocks the game. On failure, the error modal stays visible.
+   */
+  private async resyncAfterError(): Promise<void> {
+    this._recovering = true;
+    console.log('[Game] Attempting resync with server...');
+
+    try {
+      const state = await this.stakeEngine.resync();
+
+      // Server provided the true balance — overwrite local state
+      this.valueMoney = state.balance;
+      this.updateMoneyDisplay();
+
+      // If there's a pending round the server knows about, end it
+      if (state.pendingRound) {
+        console.log('[Game] Server reports pending round:', state.pendingRound.roundId);
+        this.stakeEngine.endRound().catch(e => console.warn('[Game] endRound error:', e));
+      }
+
+      // Clean up local pending state
+      localStorage.removeItem('pending_round');
+      localStorage.removeItem('pending_bet');
+
+      // Unlock the game
+      this._spinLock = false;
+      this._recovering = false;
+      this.updateSpinButtonState();
+
+      this.errorManager.showToast('Connection restored', '#44ff88');
+      console.log('[Game] Resync successful. Balance:', this.valueMoney.toFixed(2));
+    } catch (resyncErr) {
+      this._recovering = false;
+      console.error('[Game] Resync failed:', resyncErr);
+      throw resyncErr; // Re-throw so the ErrorManager modal stays visible
+    }
   }
 }
