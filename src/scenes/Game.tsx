@@ -198,85 +198,93 @@ export class Game extends Phaser.Scene {
     this.grid = new Grid(this);
     this.wireGridCallbacks();
 
-    // === SPIN BUTTON (drawn, not the giant gumball image) ===
-    this.spinBtnGfx = this.add.graphics().setDepth(15);
-    this.spinBtnHit = this.add.rectangle(0, 0, 120, 120)
-      .setInteractive({ useHandCursor: true })
-      .setAlpha(0.001).setDepth(17);
-    this.spinBtnLabel = this.add.text(0, 0, 'SPIN', {
-      fontSize: '22px', color: '#ffffff', fontStyle: 'bold', stroke: '#005522', strokeThickness: 5
-    }).setOrigin(0.5).setDepth(17);
+    // Buy buttons setup
+    const btnStyle = { fontFamily: 'Impact', fontStyle: 'bold', align: 'center', strokeThickness: 1 };
+    
+    // Super Buy
+    this.buySuper = this.add.graphics().setDepth(20);
+    this.buySuperHit = this.add.rectangle(0, 0, 100, 50, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true }).setDepth(21)
+      .on('pointerdown', () => this.requestPurchase(2, 500));
+    this.buySuperTxt1 = this.add.text(0, 0, 'SUPER', { ...btnStyle, color: '#ffffff' }).setOrigin(0.5).setDepth(21);
+    this.buySuperTxt2 = this.add.text(0, 0, '500x', { ...btnStyle, color: '#ffe600', stroke: '#000', strokeThickness: 2 }).setOrigin(0.5).setDepth(21);
 
-    // === AUTO PLAY ===
-    this.btnAuto = this.add.rectangle(0, 0, 1, 1, 0x0d1530, 1) // fully opaque
-      .setInteractive({ useHandCursor: true })
-      .setStrokeStyle(3, 0xffffff, 1) // thick white border
-      .setDepth(15);
-    this.txtAuto = this.add.text(0, 0, 'AUTO', {
-      fontSize: '18px', color: '#ffffff', fontStyle: 'bold', stroke: '#000000', strokeThickness: 3
-    }).setOrigin(0.5).setDepth(16);
+    // Regular Buy
+    this.buyRegular = this.add.graphics().setDepth(20);
+    this.buyRegularHit = this.add.rectangle(0, 0, 100, 50, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true }).setDepth(21)
+      .on('pointerdown', () => this.requestPurchase(1, 100));
+    this.buyRegularTxt1 = this.add.text(0, 0, 'BUY', { ...btnStyle, color: '#ffffff' }).setOrigin(0.5).setDepth(21);
+    this.buyRegularTxt2 = this.add.text(0, 0, '100x', { ...btnStyle, color: '#ffe600', stroke: '#000', strokeThickness: 2 }).setOrigin(0.5).setDepth(21);
 
-    // === ANTE BET ===
-    this.anteBetBtn = this.add.graphics().setDepth(14);
-    this.anteBetHit = this.add.rectangle(0, 0, 1, 1).setInteractive({ useHandCursor: true }).setAlpha(0.001).setDepth(16);
-    this.anteBetIcon = this.add.text(0, 0, '⚡', { fontSize: '20px', stroke: '#000000', strokeThickness: 4 }).setOrigin(0.5).setDepth(16);
-    this.anteBetTxt = this.add.text(0, 0, 'ANTE BET', {
-      fontSize: '12px', color: '#ffffff', fontStyle: 'bold', stroke: '#000000', strokeThickness: 4
-    }).setOrigin(0.5).setDepth(16);
+    // Ante bet setup
+    this.anteBetBtn = this.add.graphics().setDepth(20);
+    this.anteBetHit = this.add.rectangle(0, 0, 100, 30, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true }).setDepth(21)
+      .on('pointerdown', () => {
+        options.anteBetEnabled = !options.anteBetEnabled;
+        this.updateBetDisplay();
+        this.audio.playSound('button');
+      });
+    this.anteBetIcon = this.add.text(0, 0, '⚡', { fontFamily: 'Arial' }).setOrigin(0.5).setDepth(21);
+    this.anteBetTxt = this.add.text(0, 0, 'ANTE BET', { fontFamily: 'Impact', color: '#ffffff' }).setOrigin(0, 0.5).setDepth(21);
 
-    // === BUY BUTTONS ===
-    this.buySuper = this.add.graphics().setDepth(14);
-    this.buySuperHit = this.add.rectangle(0, 0, 1, 1).setInteractive({ useHandCursor: true }).setAlpha(0.001).setDepth(16);
-    this.buySuperTxt1 = this.add.text(0, 0, 'SUPER\nFREE SPINS', {
-      fontSize: '14px', color: '#ffffff', fontStyle: 'bold', align: 'center',
-      stroke: '#000000', strokeThickness: 5, lineSpacing: 2,
-    }).setOrigin(0.5).setDepth(16);
-    this.buySuperTxt2 = this.add.text(0, 0, '500×', {
-      fontSize: '22px', color: '#ffe600', fontStyle: 'bold',
-      stroke: '#000000', strokeThickness: 5
-    }).setOrigin(0.5).setDepth(16);
+    // Spin button setup
+    this.spinBtnGfx = this.add.graphics().setDepth(20);
+    this.spinGlowRing = this.add.graphics().setDepth(19);
+    this.spinBtnHit = this.add.rectangle(0, 0, 100, 100, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true }).setDepth(21)
+      .on('pointerdown', () => this.handleUniversalAction());
+    this.spinBtnLabel = this.add.text(0, 0, 'SPIN', { fontFamily: 'Impact', color: '#ffffff', stroke: '#003300', strokeThickness: 3 }).setOrigin(0.5).setDepth(21);
 
-    this.buyRegular = this.add.graphics().setDepth(14);
-    this.buyRegularHit = this.add.rectangle(0, 0, 1, 1).setInteractive({ useHandCursor: true }).setAlpha(0.001).setDepth(16);
-    this.buyRegularTxt1 = this.add.text(0, 0, 'BUY\nFREE SPINS', {
-      fontSize: '14px', color: '#ffffff', fontStyle: 'bold', align: 'center',
-      stroke: '#000000', strokeThickness: 5, lineSpacing: 2,
-    }).setOrigin(0.5).setDepth(16);
-    this.buyRegularTxt2 = this.add.text(0, 0, '100×', {
-      fontSize: '22px', color: '#ffe600', fontStyle: 'bold',
-      stroke: '#000000', strokeThickness: 5
-    }).setOrigin(0.5).setDepth(16);
+    // Auto Play setup
+    this.btnAuto = this.add.rectangle(0, 0, 100, 30, 0x0a1426)
+      .setStrokeStyle(1, 0x00d2ff, 0.5)
+      .setInteractive({ useHandCursor: true }).setDepth(21)
+      .on('pointerdown', () => {
+        if (this.fsActive || this.anyOverlayOpen()) return;
+        if (!this.autoSpinActive) {
+          const cost = this.getEffectiveBet();
+          if (this.valueMoney < cost) { this.errorManager.showToast('INSUFFICIENT FUNDS', '#ff4466'); return; }
+          this.autoSpinActive = true;
+          this.autoSpinRemaining = 0;
+          this.updateAutoSpinDisplay();
+          if (!this._spinLock) this.time.delayedCall(50, () => { if (this.autoSpinActive && !this._spinLock) this.attemptSpin(0); });
+        } else {
+          this.stopAutoSpin();
+        }
+      });
+    this.txtAuto = this.add.text(0, 0, 'AUTO', { fontFamily: 'Arial', fontStyle: 'bold', color: '#ffffff' }).setOrigin(0.5).setDepth(21);
 
     // === BOTTOM BAR ===
-    this.bottomBar = this.add.graphics().setDepth(14);
+    const tLabelStyle = { fontFamily: 'Arial', fontStyle: 'bold', color: '#7788aa' };
+    const tValStyle = { fontFamily: 'Verdana', fontStyle: 'bold', color: '#ffffff' };
+    
+    // Bottom Bar Structural Graphic
+    this.bottomBar = this.add.graphics().setDepth(45);
+    
+    this.txtMoneyLabel = this.add.text(0, 0, 'BALANCE', tLabelStyle).setDepth(50);
+    this.txtMoney = this.add.text(0, 0, '', tValStyle).setDepth(50);
+    
+    this.txtBetLabel = this.add.text(0, 0, 'BET', tLabelStyle).setOrigin(0.5).setDepth(50);
+    this.txtBet = this.add.text(0, 0, '', tValStyle).setOrigin(0.5).setDepth(50);
+    
+    this.txtLastWinLabel = this.add.text(0, 0, 'WIN', tLabelStyle).setOrigin(1, 0.5).setDepth(50);
+    this.txtLastWin = this.add.text(0, 0, '', { ...tValStyle, color: '#ffe600' }).setOrigin(1, 0.5).setDepth(50);
+    
+    this.demoLabel = this.add.text(0, 0, '', {
+      fontFamily: 'Impact', color: '#ff4466'
+    }).setOrigin(1, 0.5).setDepth(50).setAlpha(0.8);
 
-    // Bet -/+ buttons (graphics-based for rounded look)
-    this.btnBetMinus = this.add.graphics().setDepth(15);
-    this.btnBetMinusHit = this.add.rectangle(0, 0, 44, 44).setInteractive({ useHandCursor: true }).setAlpha(0.001).setDepth(17);
-    this.btnBetPlus = this.add.graphics().setDepth(15);
-    this.btnBetPlusHit = this.add.rectangle(0, 0, 44, 44).setInteractive({ useHandCursor: true }).setAlpha(0.001).setDepth(17);
+    if (this.stakeEngine.isDemoMode()) {
+      this.demoLabel.setText('DEMO');
+    }
 
-    // Text labels
-    this.txtMoneyLabel = this.add.text(0, 0, 'BALANCE', {
-      fontSize: '10px', color: '#556688', fontStyle: 'bold'
-    }).setOrigin(0, 0.5).setDepth(16);
-    this.txtMoney = this.add.text(0, 0, '', {
-      fontSize: '22px', color: '#ffffff', fontFamily: 'monospace', fontStyle: 'bold'
-    }).setOrigin(0, 0.5).setDepth(16);
-
-    this.txtBetLabel = this.add.text(0, 0, 'BET', {
-      fontSize: '10px', color: '#556688', fontStyle: 'bold'
-    }).setOrigin(0.5, 0.5).setDepth(16);
-    this.txtBet = this.add.text(0, 0, '', {
-      fontSize: '22px', color: '#ffffff', fontFamily: 'monospace', fontStyle: 'bold'
-    }).setOrigin(0.5, 0.5).setDepth(16);
-
-    this.txtLastWinLabel = this.add.text(0, 0, 'WIN', {
-      fontSize: '10px', color: '#556688', fontStyle: 'bold'
-    }).setOrigin(1, 0.5).setDepth(16);
-    this.txtLastWin = this.add.text(0, 0, '', {
-      fontSize: '22px', color: '#44ff88', fontFamily: 'monospace', fontStyle: 'bold'
-    }).setOrigin(1, 0.5).setDepth(16);
+    // Bet -/+ buttons
+    this.btnBetMinus = this.add.graphics().setDepth(50);
+    this.btnBetMinusHit = this.add.rectangle(0, 0, 44, 44).setInteractive({ useHandCursor: true }).setAlpha(0.001).setDepth(51);
+    this.btnBetPlus = this.add.graphics().setDepth(50);
+    this.btnBetPlusHit = this.add.rectangle(0, 0, 44, 44).setInteractive({ useHandCursor: true }).setAlpha(0.001).setDepth(51);
 
     // === FREE SPINS COUNTER ===
     this.txtFSRemaining = this.add.text(0, 0, '', {
@@ -294,16 +302,6 @@ export class Game extends Phaser.Scene {
     this.btnFullscreen = this.add.text(0, 0, '⛶', { fontSize: '28px', color: '#ffffff', stroke: '#000000', strokeThickness: 5 })
       .setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(16);
 
-    // === DEMO MODE LABEL ===
-    this.demoLabel = this.add.text(10, 10, '', {
-      fontSize: '18px', color: '#ff2244', fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 3,
-      backgroundColor: '#000000', padding: { x: 8, y: 4 },
-    }).setDepth(50).setAlpha(1);
-
-    if (this.stakeEngine.isDemoMode()) {
-      this.demoLabel.setText('DEMO');
-    }
-
     // === OVERLAYS ===
     this.paytable = new PaytableOverlay(this);
     this.settings = new SettingsOverlay(this);
@@ -317,131 +315,160 @@ export class Game extends Phaser.Scene {
     });
   }
 
-  /** Proportional layout engine — handles portrait and landscape */
+  /** Proportional layout engine — handles three responsive modes */
   private layoutAll() {
     const w = this.scale.width;
     const h = this.scale.height;
-    const isPortrait = h > w * 1.1;
+    
+    // Determine screen mode
+    const isPortrait = h > w;
+    const isMobile = w < 768; // Roughly tablet/mobile breakpoint
+    const isMobilePortrait = isPortrait && isMobile;
 
     this.bgImage.setPosition(w / 2, h / 2).setDisplaySize(w, h);
 
+    // Height of the bottom glassmorphism bar
     const barH = Math.max(50, h * 0.07);
 
-    if (isPortrait) {
-      // --- PORTRAIT LAYOUT ---
-      const gridMaxH = (h - barH) * 0.56;
+    // Toolbar top-right background plate (Glassy capsule)
+    const topBarW = Math.max(160, w * 0.18 + 40);
+    const topBarH = Math.max(36, h * 0.05);
+    const tbY = Math.max(15, h * 0.02) + topBarH / 2;
+    const tbX = w - Math.max(15, w * 0.02) - topBarW / 2;
+    
+    // We draw the capsule inside gridGlow or bottomBar so it's behind the texts
+    this.bottomBar.clear();
+    this.bottomBar.fillStyle(0x060d1f, 0.6);
+    this.bottomBar.fillRoundedRect(tbX - topBarW/2, tbY - topBarH/2, topBarW, topBarH, topBarH / 2);
+    this.bottomBar.lineStyle(1, 0x1a2855, 0.8);
+    this.bottomBar.strokeRoundedRect(tbX - topBarW/2, tbY - topBarH/2, topBarW, topBarH, topBarH / 2);
+
+    const tbIconSize = Math.max(16, topBarH * 0.45);
+    const tbGap = topBarW / 4;
+
+    this.soundToggle.setPosition(tbX + tbGap * 1.5, tbY).setFontSize(tbIconSize).setOrigin(0.5);
+    this.btnPaytable.setPosition(tbX + tbGap * 0.5, tbY).setFontSize(tbIconSize).setOrigin(0.5);
+    this.btnSettings.setPosition(tbX - tbGap * 0.5, tbY).setFontSize(tbIconSize).setOrigin(0.5);
+    this.btnFullscreen.setPosition(tbX - tbGap * 1.5, tbY).setFontSize(tbIconSize).setOrigin(0.5);
+
+    if (isMobilePortrait) {
+      // ==========================================
+      // PORTRAIT (MOBILE) LAYOUT
+      // ==========================================
+      // Grid goes at top half. Controls at bottom half.
       const gridMaxW = w * 0.96;
+      const gridMaxH = (h - barH) * 0.55;
       const cellSize = Math.floor(Math.min(gridMaxW, gridMaxH) / options.gridSize);
-      const gridTotalW = cellSize * options.gridSize;
-      const gridTotalH = cellSize * options.gridSize;
+      const gridTotalSize = cellSize * options.gridSize;
       
-      const gridX = (w - gridTotalW) / 2;
-      const gridY = Math.max(40, h * 0.08);
+      const gridX = (w - gridTotalSize) / 2;
+      const gridY = Math.max(tbY + 30, h * 0.06);
 
       this.grid.cellSize = cellSize;
       this.grid.offsetX = gridX;
       this.grid.offsetY = gridY;
 
-      const bottomSpaceStart = gridY + gridTotalH;
-      const bottomSpaceHeight = (h - barH) - bottomSpaceStart;
+      // Rest of the space for controls
+      const controlStartY = gridY + gridTotalSize;
+      const controlSpaceH = (h - barH) - controlStartY;
+
+      // Buy Buttons - stack vertically on the left
+      const buyW = Math.min(160, w * 0.40);
+      const buyH = Math.min(50, controlSpaceH * 0.22);
       
-      const buyW = w * 0.44;
-      const buyH = Math.min(50, Math.max(30, bottomSpaceHeight * 0.12));
-      const buyY = bottomSpaceStart + buyH / 2 + Math.max(5, bottomSpaceHeight * 0.04);
+      const buyX = Math.max(10, w * 0.05) + buyW / 2;
+      const buyGap = Math.min(10, controlSpaceH * 0.05);
       
-      const fBuy1 = Math.min(12, buyW * 0.12);
-      const fBuy2 = Math.min(18, buyW * 0.20);
+      const buySuperY = controlStartY + controlSpaceH * 0.2;
+      const buyRegularY = buySuperY + buyH + buyGap;
+
+      this.layoutBuyButton(this.buySuper, this.buySuperHit, this.buySuperTxt1, this.buySuperTxt2, buyX, buySuperY, buyW, buyH, 0x00d2ff, 'SUPER');
+      this.layoutBuyButton(this.buyRegular, this.buyRegularHit, this.buyRegularTxt1, this.buyRegularTxt2, buyX, buyRegularY, buyW, buyH, 0xff006a, 'BUY');
+
+      // Ante Bet - bottom left
+      const anteW = buyW;
+      const anteH = Math.min(40, controlSpaceH * 0.15);
+      const anteY = buyRegularY + buyH / 2 + buyGap * 2 + anteH / 2;
       
-      this.drawBuyButton(this.buySuper, w * 0.26, buyY, buyW, buyH, 0x00d2ff);
-      this.buySuperHit.setPosition(w * 0.26, buyY).setSize(buyW, buyH).setDisplaySize(buyW, buyH);
-      this.buySuperTxt1.setPosition(w * 0.26, buyY - buyH*0.15).setFontSize(fBuy1);
-      this.buySuperTxt2.setPosition(w * 0.26, buyY + buyH*0.25).setFontSize(fBuy2);
+      this.layoutAnteBet(buyX, anteY, anteW, anteH);
 
-      this.drawBuyButton(this.buyRegular, w * 0.74, buyY, buyW, buyH, 0xff006a);
-      this.buyRegularHit.setPosition(w * 0.74, buyY).setSize(buyW, buyH).setDisplaySize(buyW, buyH);
-      this.buyRegularTxt1.setPosition(w * 0.74, buyY - buyH*0.15).setFontSize(fBuy1);
-      this.buyRegularTxt2.setPosition(w * 0.74, buyY + buyH*0.25).setFontSize(fBuy2);
+      // Spin Button - large on the right
+      const maxSpinR = controlSpaceH * 0.26;
+      const absoluteMaxSpinR = Math.min(75, w * 0.22);
+      const spinRadius = Math.max(40, Math.min(absoluteMaxSpinR, maxSpinR));
+      const spinX = w - Math.max(15, w * 0.05) - spinRadius;
+      const spinY = controlStartY + controlSpaceH / 2 - 10;
 
-      const anteH = Math.min(36, bottomSpaceHeight * 0.09);
-      const anteW = w * 0.50;
-      const anteY = buyY + buyH / 2 + anteH / 2 + Math.max(10, bottomSpaceHeight * 0.03);
-      
-      this.drawAnteBetButton(w / 2, anteY, anteW, anteH);
-      this.anteBetHit.setPosition(w / 2, anteY).setSize(anteW, anteH).setDisplaySize(anteW, anteH);
-      this.anteBetIcon.setPosition(w / 2 - anteW * 0.35, anteY).setFontSize(Math.min(16, anteH * 0.6));
-      this.anteBetTxt.setPosition(w / 2 + 10, anteY).setFontSize(Math.min(13, anteW * 0.10));
+      this.layoutSpinButton(spinX, spinY, spinRadius);
 
-      const maxSpinR = bottomSpaceHeight * 0.22;
-      const absoluteMaxSpinR = Math.min(65, w * 0.18);
-      const spinRadius = Math.max(30, Math.min(absoluteMaxSpinR, maxSpinR));
-      const spinY = anteY + anteH/2 + spinRadius + Math.max(10, bottomSpaceHeight * 0.06);
+      // Auto play - under spin button
+      const autoW = Math.min(100, spinRadius * 2);
+      const autoH = Math.min(36, controlSpaceH * 0.15);
+      const autoY = spinY + spinRadius + autoH / 2 + buyGap;
 
-      this.drawSpinButton(w / 2, spinY, spinRadius);
-      this.drawSpinGlow(w / 2, spinY, spinRadius);
-      this.spinBtnHit.setPosition(w / 2, spinY).setSize(spinRadius * 2.2, spinRadius * 2.2).setDisplaySize(spinRadius * 2.2, spinRadius * 2.2);
-      this.spinBtnLabel.setPosition(w / 2, spinY).setFontSize(Math.min(22, spinRadius * 0.45));
-      this.spinBtnRadius = spinRadius;
+      this.btnAuto.setPosition(spinX, autoY).setSize(autoW, autoH).setDisplaySize(autoW, autoH);
+      this.txtAuto.setPosition(spinX, autoY).setFontSize(Math.min(15, autoH * 0.5));
 
-      const autoY = h - barH - Math.max(15, bottomSpaceHeight * 0.05);
-      const autoW = Math.min(120, w * 0.3);
-      const autoH = Math.min(32, bottomSpaceHeight * 0.08);
-      this.btnAuto.setPosition(w / 2, autoY).setSize(autoW, autoH).setDisplaySize(autoW, autoH);
-      this.txtAuto.setPosition(w / 2, autoY).setFontSize(Math.min(14, autoH * 0.5));
-
-      this.txtFSRemaining.setPosition(w / 2, Math.max(15, gridY - 20)).setFontSize(Math.min(26, h * 0.035));
+      // Free Spins Label - above grid
+      this.txtFSRemaining.setPosition(w / 2, Math.max(10, gridY - 25)).setFontSize(Math.min(22, w * 0.06));
 
     } else {
-      // --- LANDSCAPE LAYOUT ---
-      const gridMaxW = w * 0.50;
-      const gridMaxH = (h - barH) * 0.90;
+      // ==========================================
+      // LANDSCAPE / DESKTOP LAYOUT
+      // ==========================================
+      const gridMaxW = isMobile ? w * 0.55 : w * 0.45;
+      const gridMaxH = (h - barH) * 0.88;
       const cellSize = Math.floor(Math.min(gridMaxH, gridMaxW) / options.gridSize);
-      const gridTotalW = cellSize * options.gridSize;
-      const gridTotalH = cellSize * options.gridSize;
+      const gridTotalSize = cellSize * options.gridSize;
 
-      const gridX = (w - gridTotalW) / 2;
-      const gridY = Math.max(12, ((h - barH) - gridTotalH) / 2);
+      const gridX = (w - gridTotalSize) / 2;
+      const gridY = Math.max(tbY + 10, ((h - barH) - gridTotalSize) / 2);
 
       this.grid.cellSize = cellSize;
       this.grid.offsetX = gridX;
       this.grid.offsetY = gridY;
 
-      const leftPanelCenter = gridX / 2;
-      const rightPanelCenter = gridX + gridTotalW + gridX / 2;
-      const gridCenterY = gridY + gridTotalH / 2;
+      // Left panel centers
+      const leftSpace = gridX;
+      const leftCenter = leftSpace / 2;
 
-      const buyW = Math.max(90, gridX * 0.75);
-      const buyH = Math.max(45, (h - barH) * 0.12);
+      // Right panel centers
+      const rightSpaceStart = gridX + gridTotalSize;
+      const rightSpaceWidth = w - rightSpaceStart;
+      const rightCenter = rightSpaceStart + rightSpaceWidth / 2;
 
-      this.drawBuyButton(this.buySuper, leftPanelCenter, gridCenterY - buyH * 0.8, buyW, buyH, 0x00d2ff);
-      this.buySuperHit.setPosition(leftPanelCenter, gridCenterY - buyH * 0.8).setSize(buyW, buyH).setDisplaySize(buyW, buyH);
-      this.buySuperTxt1.setPosition(leftPanelCenter, gridCenterY - buyH * 0.8 - 12).setFontSize(Math.min(12, buyH * 0.22));
-      this.buySuperTxt2.setPosition(leftPanelCenter, gridCenterY - buyH * 0.8 + 8).setFontSize(Math.min(16, buyH * 0.35));
+      const centerY = gridY + gridTotalSize / 2;
 
-      this.drawBuyButton(this.buyRegular, leftPanelCenter, gridCenterY + buyH * 0.8, buyW, buyH, 0xff006a);
-      this.buyRegularHit.setPosition(leftPanelCenter, gridCenterY + buyH * 0.8).setSize(buyW, buyH).setDisplaySize(buyW, buyH);
-      this.buyRegularTxt1.setPosition(leftPanelCenter, gridCenterY + buyH * 0.8 - 12).setFontSize(Math.min(12, buyH * 0.22));
-      this.buyRegularTxt2.setPosition(leftPanelCenter, gridCenterY + buyH * 0.8 + 8).setFontSize(Math.min(16, buyH * 0.35));
+      // Buy Buttons - vertically stacked on left
+      const buyW = Math.min(200, leftSpace * 0.85);
+      const buyH = Math.min(60, (h - barH) * 0.12);
+      const buyGap = Math.min(15, h * 0.02);
 
-      const anteY = gridCenterY + buyH * 1.6 + 20;
-      this.drawAnteBetButton(leftPanelCenter, anteY, buyW, 30);
-      this.anteBetHit.setPosition(leftPanelCenter, anteY).setSize(buyW, 30).setDisplaySize(buyW, 30);
-      this.anteBetIcon.setPosition(leftPanelCenter - buyW * 0.3, anteY).setFontSize(14);
-      this.anteBetTxt.setPosition(leftPanelCenter + 10, anteY).setFontSize(11);
+      const buySuperY = centerY - buyH - buyGap / 2;
+      const buyRegularY = centerY + buyGap / 2;
 
-      const spinRadius = Math.min(55, gridX * 0.35);
-      this.drawSpinButton(rightPanelCenter, gridCenterY, spinRadius);
-      this.drawSpinGlow(rightPanelCenter, gridCenterY, spinRadius);
-      this.spinBtnHit.setPosition(rightPanelCenter, gridCenterY).setSize(spinRadius * 2.2, spinRadius * 2.2).setDisplaySize(spinRadius * 2.2, spinRadius * 2.2);
-      this.spinBtnLabel.setPosition(rightPanelCenter, gridCenterY).setFontSize(Math.min(22, spinRadius * 0.44));
-      this.spinBtnRadius = spinRadius;
+      this.layoutBuyButton(this.buySuper, this.buySuperHit, this.buySuperTxt1, this.buySuperTxt2, leftCenter, buySuperY, buyW, buyH, 0x00d2ff, 'SUPER');
+      this.layoutBuyButton(this.buyRegular, this.buyRegularHit, this.buyRegularTxt1, this.buyRegularTxt2, leftCenter, buyRegularY, buyW, buyH, 0xff006a, 'BUY');
 
-      this.btnAuto.setPosition(rightPanelCenter, gridCenterY + spinRadius + 35).setSize(130, 36).setDisplaySize(130, 36);
-      this.txtAuto.setPosition(rightPanelCenter, gridCenterY + spinRadius + 35).setFontSize(15);
+      // Ante bet under buy regular
+      const anteY = buyRegularY + buyH / 2 + buyGap * 1.5 + 20;
+      this.layoutAnteBet(leftCenter, anteY, buyW, Math.min(40, buyH * 0.8));
 
-      this.txtFSRemaining.setPosition(w / 2, Math.max(15, gridY - 25)).setFontSize(28);
+      // Spin button on right
+      const spinRadius = Math.min(70, Math.max(45, rightSpaceWidth * 0.25));
+      this.layoutSpinButton(rightCenter, centerY - 15, spinRadius);
+
+      // Auto play under spin button
+      this.btnAuto.setPosition(rightCenter, centerY + spinRadius + 30).setSize(120, 40).setDisplaySize(120, 40);
+      this.txtAuto.setPosition(rightCenter, centerY + spinRadius + 30).setFontSize(16);
+
+      // Free Spins Label
+      this.txtFSRemaining.setPosition(w / 2, Math.max(20, gridY - 30)).setFontSize(28);
     }
 
-    // Draw grid frame & glow — premium double-stroke with breathing gradient
+    // ==========================================
+    // GRID FRAME & GLOW
+    // ==========================================
     const gPad = 12;
     const gW = this.grid.cellSize * 7 + gPad * 2;
     const gH = gW;
@@ -449,105 +476,138 @@ export class Game extends Phaser.Scene {
     const gY = this.grid.offsetY - gPad;
 
     this.gridGlow.clear();
-    // Multi-layer glow for depth
     this.gridGlow.fillStyle(0x6600cc, 0.06);
     this.gridGlow.fillRoundedRect(gX - 12, gY - 12, gW + 24, gH + 24, 22);
     this.gridGlow.fillStyle(0x00d2ff, 0.08);
     this.gridGlow.fillRoundedRect(gX - 6, gY - 6, gW + 12, gH + 12, 18);
 
     this.gridFrame.clear();
-    // Dark panel fill
     this.gridFrame.fillStyle(0x060d1f, 0.92);
     this.gridFrame.fillRoundedRect(gX, gY, gW, gH, 14);
-    // Outer stroke — strong border
     this.gridFrame.lineStyle(3, 0x1a2855, 1.0);
     this.gridFrame.strokeRoundedRect(gX, gY, gW, gH, 14);
-    // Inner stroke — subtle cyan accent
     this.gridFrame.lineStyle(1, 0x00d2ff, 0.25);
     this.gridFrame.strokeRoundedRect(gX + 4, gY + 4, gW - 8, gH - 8, 10);
 
-    // Bottom bar — glassmorphism
-    this.bottomBar.clear();
-    // Dark base
+    // ==========================================
+    // BOTTOM BAR HUD PLATE
+    // ==========================================
+    const barCY = h - barH / 2;
+    
+    // Main dark base for the bottom bar
     this.bottomBar.fillStyle(0x040810, 0.96);
     this.bottomBar.fillRect(0, h - barH, w, barH);
-    // Top edge highlight
     this.bottomBar.lineStyle(1, 0x1a2855, 0.9);
     this.bottomBar.lineBetween(0, h - barH, w, h - barH);
-    // Subtle inner glow line
-    this.bottomBar.lineStyle(1, 0x00d2ff, 0.08);
-    this.bottomBar.lineBetween(0, h - barH + 1, w, h - barH + 1);
-    // Vertical separators between balance, bet, and win sections
-    const sepColor = 0x1a2855;
-    this.bottomBar.lineStyle(1, sepColor, 0.5);
-    this.bottomBar.lineBetween(w * 0.32, h - barH + 8, w * 0.32, h - 8);
-    this.bottomBar.lineBetween(w * 0.68, h - barH + 8, w * 0.68, h - 8);
 
-    const barCY = h - barH / 2;
-    // Hide purely textual labels if screen is extremely narrow (< 450px)
-    const showLabels = w >= 450;
+    // Pill background dimensions 
+    const pillH = barH * 0.65;
+    const pillRadius = pillH / 2;
     
-    // Scale down text proportionally
-    const fs = Math.min(22, Math.max(14, barH * 0.35));
-    const fsLabel = Math.min(12, barH * 0.20);
-
-    // Balance section (left 30%)
-    this.txtMoneyLabel.setPosition(w * 0.04, barCY - (showLabels ? fs * 0.50 : 0)).setFontSize(fsLabel).setVisible(showLabels);
-    this.txtMoney.setPosition(w * 0.04, barCY + (showLabels ? fs * 0.30 : 0)).setFontSize(fs).setOrigin(0, 0.5);
-
-    // Bet section (center)
-    const betBtnSize = Math.min(34, Math.max(24, barH * 0.55));
-    // Squeeze the minus/plus buttons closer if screen is small
-    const betCenterOffset = w < 400 ? w * 0.16 : w * 0.12;
-
-    this.drawBetButton(this.btnBetMinus, (w / 2) - betCenterOffset, barCY, betBtnSize, false);
-    this.btnBetMinusHit.setPosition((w / 2) - betCenterOffset, barCY).setSize(betBtnSize + 16, betBtnSize + 16).setDisplaySize(betBtnSize + 16, betBtnSize + 16);
+    const betW = Math.min(180, w * 0.25);
+    const pillW = Math.min(200, (w - betW - 80) / 2); // Split remaining space left/right
     
-    this.drawBetButton(this.btnBetPlus, (w / 2) + betCenterOffset, barCY, betBtnSize, true);
-    this.btnBetPlusHit.setPosition((w / 2) + betCenterOffset, barCY).setSize(betBtnSize + 16, betBtnSize + 16).setDisplaySize(betBtnSize + 16, betBtnSize + 16);
+    // Balance panel (left)
+    const balX1 = Math.max(10, w * 0.02);
+    this.bottomBar.fillStyle(0x131d36, 0.6);
+    this.bottomBar.fillRoundedRect(balX1, barCY - pillH/2, pillW, pillH, pillRadius);
+    this.bottomBar.lineStyle(1, 0x1a2855, 1);
+    this.bottomBar.strokeRoundedRect(balX1, barCY - pillH/2, pillW, pillH, pillRadius);
 
-    this.txtBetLabel.setPosition(w * 0.5, barCY - (showLabels ? fs * 0.50 : 0)).setFontSize(fsLabel).setVisible(showLabels);
-    this.txtBet.setPosition(w * 0.5, barCY + (showLabels ? fs * 0.30 : 0)).setFontSize(fs).setOrigin(0.5, 0.5);
+    // Win panel (right)
+    const winX1 = w - balX1 - pillW;
+    this.bottomBar.fillStyle(0x131d36, 0.6);
+    this.bottomBar.fillRoundedRect(winX1, barCY - pillH/2, pillW, pillH, pillRadius);
+    this.bottomBar.lineStyle(1, 0x1a2855, 1);
+    this.bottomBar.strokeRoundedRect(winX1, barCY - pillH/2, pillW, pillH, pillRadius);
 
-    // Win section (right 30%)
-    this.txtLastWinLabel.setPosition(w * 0.96, barCY - (showLabels ? fs * 0.50 : 0)).setFontSize(fsLabel).setVisible(showLabels);
-    this.txtLastWin.setPosition(w * 0.96, barCY + (showLabels ? fs * 0.30 : 0)).setFontSize(fs).setOrigin(1, 0.5);
+    // Bet panel (center)
+    const betX1 = (w - betW) / 2;
+    this.bottomBar.fillStyle(0x131d36, 0.6);
+    this.bottomBar.fillRoundedRect(betX1, barCY - pillH/2, betW, pillH, pillRadius);
+    this.bottomBar.lineStyle(1, 0x00d2ff, 0.3); // Slight accent on the bet box
+    this.bottomBar.strokeRoundedRect(betX1, barCY - pillH/2, betW, pillH, pillRadius);
 
-    // Toolbar (top-right)
-    const tbY = 18;
-    const tbGap = Math.max(30, w * 0.04);
-    this.soundToggle.setPosition(w - tbGap * 0.5, tbY).setFontSize(Math.min(24, Math.max(16, w * 0.03)));
-    this.btnPaytable.setPosition(w - tbGap * 1.5, tbY).setFontSize(Math.min(24, Math.max(16, w * 0.03)));
-    this.btnSettings.setPosition(w - tbGap * 2.5, tbY).setFontSize(Math.min(24, Math.max(16, w * 0.03)));
-    this.btnFullscreen.setPosition(w - tbGap * 3.5, tbY).setFontSize(Math.min(24, Math.max(16, w * 0.03)));
+    const fs = Math.min(20, Math.max(14, barH * 0.30));
+    const fsLabel = Math.min(11, barH * 0.18);
+    const textPad = pillRadius;
+
+    // Balance Texts
+    this.txtMoneyLabel.setPosition(balX1 + textPad, barCY).setFontSize(fsLabel).setOrigin(0, 0.5);
+    this.txtMoney.setPosition(balX1 + pillW - textPad, barCY).setFontSize(fs).setOrigin(1, 0.5);
+
+    // Bet Texts
+    const betBtnSize = Math.min(30, Math.max(22, pillH * 0.7));
+    this.drawBetButton(this.btnBetMinus, betX1 + betBtnSize, barCY, betBtnSize, false);
+    this.btnBetMinusHit.setPosition(betX1 + betBtnSize, barCY).setSize(betBtnSize * 1.5, betBtnSize * 1.5).setDisplaySize(betBtnSize * 1.5, betBtnSize * 1.5);
+    
+    this.drawBetButton(this.btnBetPlus, betX1 + betW - betBtnSize, barCY, betBtnSize, true);
+    this.btnBetPlusHit.setPosition(betX1 + betW - betBtnSize, barCY).setSize(betBtnSize * 1.5, betBtnSize * 1.5).setDisplaySize(betBtnSize * 1.5, betBtnSize * 1.5);
+
+    this.txtBetLabel.setPosition(w * 0.5, barCY - pillH * 0.25).setFontSize(fsLabel);
+    this.txtBet.setPosition(w * 0.5, barCY + pillH * 0.15).setFontSize(Math.max(14, fs));
+
+    // Win Texts
+    this.txtLastWinLabel.setPosition(winX1 + textPad, barCY).setFontSize(fsLabel).setOrigin(0, 0.5);
+    this.txtLastWin.setPosition(winX1 + pillW - textPad, barCY).setFontSize(fs).setOrigin(1, 0.5);
+
+    // DEMO label placement
+    if (this.stakeEngine.isDemoMode()) {
+      this.demoLabel.setPosition(winX1 - 10, barCY).setFontSize(14);
+    }
+  }
+
+  // --- Layout Helpers ---
+
+  private layoutBuyButton(
+    gfx: Phaser.GameObjects.Graphics, hit: Phaser.GameObjects.Rectangle,
+    txt1: Phaser.GameObjects.Text, txt2: Phaser.GameObjects.Text,
+    cx: number, cy: number, w: number, h: number, color: number, title: string
+  ) {
+    this.drawBuyButton(gfx, cx, cy, w, h, color);
+    hit.setPosition(cx, cy).setSize(w, h).setDisplaySize(w, h);
+    const fsTitle = Math.min(18, h * 0.28);
+    const fsFreeSpins = Math.min(10, h * 0.16);
+    const fsSub = Math.min(16, h * 0.28);
+
+    txt1.setText(`${title}\nFREE SPINS`)
+        .setLineSpacing(-Math.max(2, h * 0.05))
+        .setPosition(cx, cy - h * 0.15).setFontSize(fsTitle);
+
+    txt2.setPosition(cx, cy + h * 0.25).setFontSize(fsSub);
+  }
+
+  private layoutAnteBet(cx: number, cy: number, w: number, h: number) {
+    this.drawAnteBetButton(cx, cy, w, h);
+    this.anteBetHit.setPosition(cx, cy).setSize(w, h).setDisplaySize(w, h);
+    this.anteBetIcon.setPosition(cx - w * 0.35, cy).setFontSize(Math.min(16, h * 0.5));
+    this.anteBetTxt.setPosition(cx - w * 0.2, cy).setFontSize(Math.min(13, w * 0.08));
+  }
+
+  private layoutSpinButton(cx: number, cy: number, radius: number) {
+    this.drawSpinButton(cx, cy, radius);
+    this.drawSpinGlow(cx, cy, radius);
+    this.spinBtnHit.setPosition(cx, cy).setSize(radius * 2.2, radius * 2.2).setDisplaySize(radius * 2.2, radius * 2.2);
+    this.spinBtnLabel.setPosition(cx, cy).setFontSize(Math.min(22, radius * 0.40));
+    this.spinBtnRadius = radius;
   }
 
   private drawSpinButton(cx: number, cy: number, radius: number) {
     this.spinBtnGfx.clear();
-    // Deep shadow
     this.spinBtnGfx.fillStyle(0x000000, 0.45);
     this.spinBtnGfx.fillCircle(cx + 1, cy + 5, radius);
-
-    // Main green circle
     this.spinBtnGfx.fillStyle(0x00c853, 1);
     this.spinBtnGfx.fillCircle(cx, cy, radius);
-
-    // Upper gloss highlight
     this.spinBtnGfx.fillStyle(0x69f0ae, 0.45);
     this.spinBtnGfx.fillCircle(cx, cy - radius * 0.25, radius * 0.6);
-
-    // Outer bright stroke
     this.spinBtnGfx.lineStyle(3, 0xffffff, 0.9);
     this.spinBtnGfx.strokeCircle(cx, cy, radius);
-
-    // Inner thin accent ring
     this.spinBtnGfx.lineStyle(1, 0xb9f6ca, 0.5);
     this.spinBtnGfx.strokeCircle(cx, cy, radius - 5);
   }
 
   private drawSpinGlow(cx: number, cy: number, radius: number) {
     this.spinGlowRing.clear();
-    // Pulsing outer glow ring (opacity animated by the tween)
     this.spinGlowRing.fillStyle(0x00e676, 0.15);
     this.spinGlowRing.fillCircle(cx, cy, radius * 1.5);
     this.spinGlowRing.fillStyle(0x00e676, 0.08);
@@ -558,56 +618,42 @@ export class Game extends Phaser.Scene {
     gfx.clear();
     const x = cx - bw / 2;
     const y = cy - bh / 2;
+    const rad = Math.min(16, bh * 0.3);
 
-    // Deep shadow
+    // Drop shadow
     gfx.fillStyle(0x000000, 0.4);
-    gfx.fillRoundedRect(x + 1, y + 4, bw, bh, 14);
+    gfx.fillRoundedRect(x, y + 4, bw, bh, rad);
 
-    // Main fill — darker base shade
-    const darkerColor = Phaser.Display.Color.ValueToColor(color).darken(20).color;
+    // Main fill
+    const darkerColor = Phaser.Display.Color.ValueToColor(color).darken(30).color;
     gfx.fillStyle(darkerColor, 1);
-    gfx.fillRoundedRect(x, y, bw, bh, 14);
+    gfx.fillRoundedRect(x, y, bw, bh, rad);
 
-    // Lighter top half for gradient effect
+    // Gradient top half
     gfx.fillStyle(color, 1);
-    gfx.fillRoundedRect(x, y, bw, bh * 0.55, 14);
+    gfx.fillRoundedRect(x, y, bw, bh * 0.5, rad);
     
-    // Gloss highlight (very top)
-    gfx.fillStyle(0xffffff, 0.18);
-    gfx.fillRoundedRect(x + 4, y + 2, bw - 8, bh * 0.28, 10);
+    // Top highlight (glass edge)
+    gfx.fillStyle(0xffffff, 0.15);
+    gfx.fillRoundedRect(x + 2, y + 2, bw - 4, Math.max(2, bh * 0.15), Math.max(2, rad - 2));
 
-    // Outer stroke
-    gfx.lineStyle(2, 0xffffff, 0.7);
-    gfx.strokeRoundedRect(x, y, bw, bh, 14);
-
-    // Inner subtle accent stroke
-    gfx.lineStyle(1, 0xffffff, 0.12);
-    gfx.strokeRoundedRect(x + 2, y + 2, bw - 4, bh - 4, 12);
+    // Refined stroke
+    gfx.lineStyle(1.5, 0xffffff, 0.5);
+    gfx.strokeRoundedRect(x, y, bw, bh, rad);
+    gfx.lineStyle(1, 0x000000, 0.3);
+    gfx.strokeRoundedRect(x + 1, y + 1, bw - 2, bh - 2, rad);
   }
 
   private drawAnteBetButton(cx: number, cy: number, bw: number, bh: number) {
     this.anteBetBtn.clear();
     const x = cx - bw / 2;
     const y = cy - bh / 2;
+    const rad = Math.min(12, bh * 0.35);
 
-    // Drop shadow
     this.anteBetBtn.fillStyle(0x000000, 0.5);
-    this.anteBetBtn.fillRoundedRect(x, y + 4, bw, bh, 8);
+    this.anteBetBtn.fillRoundedRect(x, y + 4, bw, bh, rad);
 
     if (options.anteBetEnabled) {
-      this.anteBetBtn.fillStyle(0xff9900, 1);
-      this.anteBetBtn.fillRoundedRect(x, y, bw, bh, 8);
-      
-      this.anteBetBtn.fillStyle(0xffffff, 0.2);
-      this.anteBetBtn.fillRoundedRect(x, y, bw, bh * 0.4, 8);
-
-      this.anteBetBtn.lineStyle(3, 0xffffff, 1);
-      this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, 8);
-      
-      this.anteBetTxt.setColor('#ffffff');
-      this.anteBetIcon.setStroke('#000000', 4);
-    } else {
-      this.anteBetBtn.fillStyle(0x334466, 1);
       this.anteBetBtn.fillRoundedRect(x, y, bw, bh, 8);
       this.anteBetBtn.lineStyle(3, 0x8899aa, 1);
       this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, 8);
