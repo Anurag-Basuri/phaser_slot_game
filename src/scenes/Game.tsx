@@ -28,6 +28,7 @@ export class Game extends Phaser.Scene {
   private gridFrame!: Phaser.GameObjects.Graphics;
   private gridGlow!: Phaser.GameObjects.Graphics;
   private spinBtnGfx!: Phaser.GameObjects.Graphics;
+  private spinGlowRing!: Phaser.GameObjects.Graphics;
   private spinBtnHit!: Phaser.GameObjects.Rectangle;
   private spinBtnLabel!: Phaser.GameObjects.Text;
   private spinBtnRadius = 50;
@@ -73,6 +74,8 @@ export class Game extends Phaser.Scene {
   fsActive = false;
   soundEnabled = true;
   lastWin = 0;
+  private _winCountTween?: Phaser.Tweens.Tween;
+  private _displayedWin = 0;
 
   // Spin lock — prevents double-trigger across pointer + keyboard
   private _spinLock = false;
@@ -119,8 +122,16 @@ export class Game extends Phaser.Scene {
     // Ambient grid glow animation
     this.tweens.add({
       targets: this.gridGlow,
-      alpha: { from: 0.2, to: 0.5 },
-      yoyo: true, repeat: -1, duration: 2000,
+      alpha: { from: 0.15, to: 0.45 },
+      yoyo: true, repeat: -1, duration: 2500,
+      ease: 'Sine.easeInOut',
+    });
+
+    // Spin button ambient glow pulse
+    this.tweens.add({
+      targets: this.spinGlowRing,
+      alpha: { from: 0.25, to: 0.7 },
+      yoyo: true, repeat: -1, duration: 1200,
       ease: 'Sine.easeInOut',
     });
 
@@ -159,6 +170,9 @@ export class Game extends Phaser.Scene {
 
     // === GRID FRAME ===
     this.gridFrame = this.add.graphics().setDepth(1);
+
+    // === SPIN GLOW RING ===
+    this.spinGlowRing = this.add.graphics().setDepth(14).setAlpha(0.5);
 
     // === GRID ===
     this.grid = new Grid(this);
@@ -343,6 +357,7 @@ export class Game extends Phaser.Scene {
       const spinY = anteY + anteH/2 + spinRadius + Math.max(10, bottomSpaceHeight * 0.06);
 
       this.drawSpinButton(w / 2, spinY, spinRadius);
+      this.drawSpinGlow(w / 2, spinY, spinRadius);
       this.spinBtnHit.setPosition(w / 2, spinY).setSize(spinRadius * 2.2, spinRadius * 2.2).setDisplaySize(spinRadius * 2.2, spinRadius * 2.2);
       this.spinBtnLabel.setPosition(w / 2, spinY).setFontSize(Math.min(22, spinRadius * 0.45));
       this.spinBtnRadius = spinRadius;
@@ -395,6 +410,7 @@ export class Game extends Phaser.Scene {
 
       const spinRadius = Math.min(55, gridX * 0.35);
       this.drawSpinButton(rightPanelCenter, gridCenterY, spinRadius);
+      this.drawSpinGlow(rightPanelCenter, gridCenterY, spinRadius);
       this.spinBtnHit.setPosition(rightPanelCenter, gridCenterY).setSize(spinRadius * 2.2, spinRadius * 2.2).setDisplaySize(spinRadius * 2.2, spinRadius * 2.2);
       this.spinBtnLabel.setPosition(rightPanelCenter, gridCenterY).setFontSize(Math.min(22, spinRadius * 0.44));
       this.spinBtnRadius = spinRadius;
@@ -405,31 +421,47 @@ export class Game extends Phaser.Scene {
       this.txtFSRemaining.setPosition(w / 2, Math.max(15, gridY - 25)).setFontSize(28);
     }
 
-    // Draw grid frame & glow
-    const gPad = 10;
+    // Draw grid frame & glow — premium double-stroke with breathing gradient
+    const gPad = 12;
     const gW = this.grid.cellSize * 7 + gPad * 2;
     const gH = gW;
     const gX = this.grid.offsetX - gPad;
     const gY = this.grid.offsetY - gPad;
 
     this.gridGlow.clear();
-    this.gridGlow.fillStyle(0x00d2ff, 0.10);
-    this.gridGlow.fillRoundedRect(gX - 4, gY - 4, gW + 8, gH + 8, 16);
+    // Multi-layer glow for depth
+    this.gridGlow.fillStyle(0x6600cc, 0.06);
+    this.gridGlow.fillRoundedRect(gX - 12, gY - 12, gW + 24, gH + 24, 22);
+    this.gridGlow.fillStyle(0x00d2ff, 0.08);
+    this.gridGlow.fillRoundedRect(gX - 6, gY - 6, gW + 12, gH + 12, 18);
 
     this.gridFrame.clear();
-    this.gridFrame.fillStyle(0x080e22, 0.85);
-    this.gridFrame.fillRoundedRect(gX, gY, gW, gH, 12);
-    this.gridFrame.lineStyle(2, 0x1a3366, 0.9);
-    this.gridFrame.strokeRoundedRect(gX, gY, gW, gH, 12);
-    this.gridFrame.lineStyle(1, 0x00d2ff, 0.20);
-    this.gridFrame.strokeRoundedRect(gX + 2, gY + 2, gW - 4, gH - 4, 10);
+    // Dark panel fill
+    this.gridFrame.fillStyle(0x060d1f, 0.92);
+    this.gridFrame.fillRoundedRect(gX, gY, gW, gH, 14);
+    // Outer stroke — strong border
+    this.gridFrame.lineStyle(3, 0x1a2855, 1.0);
+    this.gridFrame.strokeRoundedRect(gX, gY, gW, gH, 14);
+    // Inner stroke — subtle cyan accent
+    this.gridFrame.lineStyle(1, 0x00d2ff, 0.25);
+    this.gridFrame.strokeRoundedRect(gX + 4, gY + 4, gW - 8, gH - 8, 10);
 
-    // Bottom bar
+    // Bottom bar — glassmorphism
     this.bottomBar.clear();
-    this.bottomBar.fillStyle(0x060b18, 0.97);
+    // Dark base
+    this.bottomBar.fillStyle(0x040810, 0.96);
     this.bottomBar.fillRect(0, h - barH, w, barH);
-    this.bottomBar.lineStyle(1, 0x1a2244, 0.8);
+    // Top edge highlight
+    this.bottomBar.lineStyle(1, 0x1a2855, 0.9);
     this.bottomBar.lineBetween(0, h - barH, w, h - barH);
+    // Subtle inner glow line
+    this.bottomBar.lineStyle(1, 0x00d2ff, 0.08);
+    this.bottomBar.lineBetween(0, h - barH + 1, w, h - barH + 1);
+    // Vertical separators between balance, bet, and win sections
+    const sepColor = 0x1a2855;
+    this.bottomBar.lineStyle(1, sepColor, 0.5);
+    this.bottomBar.lineBetween(w * 0.32, h - barH + 8, w * 0.32, h - 8);
+    this.bottomBar.lineBetween(w * 0.68, h - barH + 8, w * 0.68, h - 8);
 
     const barCY = h - barH / 2;
     // Hide purely textual labels if screen is extremely narrow (< 450px)
@@ -472,21 +504,34 @@ export class Game extends Phaser.Scene {
 
   private drawSpinButton(cx: number, cy: number, radius: number) {
     this.spinBtnGfx.clear();
-    // Dark Drop shadow
-    this.spinBtnGfx.fillStyle(0x000000, 0.5);
-    this.spinBtnGfx.fillCircle(cx, cy + 4, radius);
+    // Deep shadow
+    this.spinBtnGfx.fillStyle(0x000000, 0.45);
+    this.spinBtnGfx.fillCircle(cx + 1, cy + 5, radius);
 
-    // Main circle
-    this.spinBtnGfx.fillStyle(0x00e676, 1);
+    // Main green circle
+    this.spinBtnGfx.fillStyle(0x00c853, 1);
     this.spinBtnGfx.fillCircle(cx, cy, radius);
 
-    // Inner highlight
-    this.spinBtnGfx.fillStyle(0x66ffa6, 0.5);
-    this.spinBtnGfx.fillCircle(cx, cy - radius * 0.2, radius * 0.7);
+    // Upper gloss highlight
+    this.spinBtnGfx.fillStyle(0x69f0ae, 0.45);
+    this.spinBtnGfx.fillCircle(cx, cy - radius * 0.25, radius * 0.6);
 
-    // Thick Stroke
-    this.spinBtnGfx.lineStyle(4, 0xffffff, 1);
+    // Outer bright stroke
+    this.spinBtnGfx.lineStyle(3, 0xffffff, 0.9);
     this.spinBtnGfx.strokeCircle(cx, cy, radius);
+
+    // Inner thin accent ring
+    this.spinBtnGfx.lineStyle(1, 0xb9f6ca, 0.5);
+    this.spinBtnGfx.strokeCircle(cx, cy, radius - 5);
+  }
+
+  private drawSpinGlow(cx: number, cy: number, radius: number) {
+    this.spinGlowRing.clear();
+    // Pulsing outer glow ring (opacity animated by the tween)
+    this.spinGlowRing.fillStyle(0x00e676, 0.15);
+    this.spinGlowRing.fillCircle(cx, cy, radius * 1.5);
+    this.spinGlowRing.fillStyle(0x00e676, 0.08);
+    this.spinGlowRing.fillCircle(cx, cy, radius * 1.9);
   }
 
   private drawBuyButton(gfx: Phaser.GameObjects.Graphics, cx: number, cy: number, bw: number, bh: number, color: number) {
@@ -494,21 +539,30 @@ export class Game extends Phaser.Scene {
     const x = cx - bw / 2;
     const y = cy - bh / 2;
 
-    // Drop shadow
-    gfx.fillStyle(0x000000, 0.5);
-    gfx.fillRoundedRect(x, y + 4, bw, bh, 12);
+    // Deep shadow
+    gfx.fillStyle(0x000000, 0.4);
+    gfx.fillRoundedRect(x + 1, y + 4, bw, bh, 14);
 
-    // Fully opaque fill
+    // Main fill — darker base shade
+    const darkerColor = Phaser.Display.Color.ValueToColor(color).darken(20).color;
+    gfx.fillStyle(darkerColor, 1);
+    gfx.fillRoundedRect(x, y, bw, bh, 14);
+
+    // Lighter top half for gradient effect
     gfx.fillStyle(color, 1);
-    gfx.fillRoundedRect(x, y, bw, bh, 12);
+    gfx.fillRoundedRect(x, y, bw, bh * 0.55, 14);
     
-    // Gloss highlight (top half)
-    gfx.fillStyle(0xffffff, 0.2);
-    gfx.fillRoundedRect(x, y, bw, bh * 0.4, 12);
+    // Gloss highlight (very top)
+    gfx.fillStyle(0xffffff, 0.18);
+    gfx.fillRoundedRect(x + 4, y + 2, bw - 8, bh * 0.28, 10);
 
-    // Thick white stroke
-    gfx.lineStyle(3, 0xffffff, 1);
-    gfx.strokeRoundedRect(x, y, bw, bh, 12);
+    // Outer stroke
+    gfx.lineStyle(2, 0xffffff, 0.7);
+    gfx.strokeRoundedRect(x, y, bw, bh, 14);
+
+    // Inner subtle accent stroke
+    gfx.lineStyle(1, 0xffffff, 0.12);
+    gfx.strokeRoundedRect(x + 2, y + 2, bw - 4, bh - 4, 12);
   }
 
   private drawAnteBetButton(cx: number, cy: number, bw: number, bh: number) {
@@ -545,15 +599,24 @@ export class Game extends Phaser.Scene {
 
   private drawBetButton(gfx: Phaser.GameObjects.Graphics, cx: number, cy: number, size: number, isPlus: boolean) {
     gfx.clear();
-    gfx.fillStyle(0x111833, 1);
+    // Shadow
+    gfx.fillStyle(0x000000, 0.3);
+    gfx.fillCircle(cx, cy + 2, size / 2);
+    // Dark fill
+    gfx.fillStyle(0x0d1530, 1);
     gfx.fillCircle(cx, cy, size / 2);
-    gfx.lineStyle(2, 0x2244aa, 0.7);
+    // Subtle inner glow
+    gfx.fillStyle(0x1a2855, 0.6);
+    gfx.fillCircle(cx, cy - 2, size / 2 - 3);
+    // Outer ring
+    gfx.lineStyle(2, 0x3355aa, 0.8);
     gfx.strokeCircle(cx, cy, size / 2);
     // Draw +/- sign
-    gfx.lineStyle(2, 0xaabbee, 0.9);
-    gfx.lineBetween(cx - 7, cy, cx + 7, cy);
+    const armLen = Math.max(5, size * 0.18);
+    gfx.lineStyle(2.5, 0xccddff, 0.95);
+    gfx.lineBetween(cx - armLen, cy, cx + armLen, cy);
     if (isPlus) {
-      gfx.lineBetween(cx, cy - 7, cx, cy + 7);
+      gfx.lineBetween(cx, cy - armLen, cx, cy + armLen);
     }
   }
 
@@ -900,11 +963,40 @@ export class Game extends Phaser.Scene {
   }
 
   updateLastWinDisplay() {
-    if (this.lastWin > 0) {
-      this.txtLastWin.setText(`${this.lastWin.toFixed(2)}`);
-    } else {
-      this.txtLastWin.setText('0.00');
+    // Rolling counter animation instead of instant update
+    const target = this.lastWin;
+    if (this._winCountTween) {
+      this._winCountTween.stop();
     }
+    if (target <= 0) {
+      this._displayedWin = 0;
+      this.txtLastWin.setText('0.00');
+      this.txtLastWin.setColor('#44ff88');
+      return;
+    }
+    const start = this._displayedWin;
+    const delta = target - start;
+    const duration = Math.min(1200, Math.max(300, Math.abs(delta) * 15));
+    let elapsed = 0;
+    this._winCountTween = this.tweens.addCounter({
+      from: 0,
+      to: 100,
+      duration,
+      ease: 'Cubic.easeOut',
+      onUpdate: (tween: Phaser.Tweens.Tween) => {
+        const progress = (tween.getValue?.() ?? 0) / 100;
+        this._displayedWin = start + delta * progress;
+        this.txtLastWin.setText(this._displayedWin.toFixed(2));
+        // Color intensifies as value rises
+        if (this._displayedWin > 0) {
+          this.txtLastWin.setColor('#44ff88');
+        }
+      },
+      onComplete: () => {
+        this._displayedWin = target;
+        this.txtLastWin.setText(target.toFixed(2));
+      },
+    });
   }
 
   private requestPurchase(triggerType: number, betMultCost: number) {
