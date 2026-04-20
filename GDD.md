@@ -5,7 +5,7 @@
 **Game Type:** Cascading Cluster Pays Slot  
 **Target Platform:** Stake Engine (stake-engine.com)  
 **Volatility:** High  
-**Target RTP:** 96.00%  
+**Target RTP:** 96.53%  
 **Max Win:** 25,000× Bet  
 
 ---
