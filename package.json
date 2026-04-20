@@ -6,15 +6,13 @@
     "dev": "vite --open",
     "start": "vite --open",
     "build": "vite build",
-    "bundle": "powershell -ExecutionPolicy Bypass -File scripts/bundle.ps1",
     "preview": "vite preview",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "lint": "eslint .",
     "lint:fix": "npm run lint -- --fix",
     "lint:tsc": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "math:sim": "python math-engine/run.py --sims 1000000 --export",
-    "math:quick": "python math-engine/run.py --sims 100000",
+    "math:run": "cd math-engine && make run GAME=sugar_rush_1000",
     "prepare": "husky"
   },
   "dependencies": {
