@@ -90,20 +90,23 @@ npm run bundle      # Build + package into sweet_cluster_1000.zip
 
 ## 📊 Math Engine
 
-The Python math engine (`math-engine/`) validates the game's mathematical model:
+The project utilizes the official **Stake Engine Math SDK** (`math-engine/`) for 100% compliant RGS mathematical delivery. 
 
-- **Target RTP:** 96.00%
-- **Validated RTP:** ~96.56% (200K simulations)
-- **Hit Rate:** ~37.33%
-- **Max Win:** 25,000× bet
+### Implementation Details:
+- **Architecture**: Overrides `GeneralGameState` and `GameExecutables` to implement the unique 7x7 grid multipliers tracking logic natively in Python.
+- **RTP Tuning**: Uses Genetic Algorithm compilation against `BR0.csv` and `FR0.csv` reelstrips to mathematically enforce the target RTP.
+- **Bet Modes Generated**:
+  1. Base Game (1x)
+  2. Free Spins Feature Buy (100x)
+  3. Super Free Spins Feature Buy (500x)
 
-### Output Files
-
+### SDK Generation
+Running `make run GAME=sugar_rush_1000` will emit the required RGS packages:
 | File | Purpose |
 |------|---------|
-| `game_config.json` | Static game config for Stake Engine RGS |
-| `simulation_results.csv` | Per-simulation outcome data |
-| `rtp_report.txt` | Human-readable RTP validation report |
+| `config_fe.json` | Static game config for Stake Frontend |
+| `books_base.jsonl.zst` | Compressed event timelines |
+| `lookUpTable_base_0.csv` | Final payout distribution mappings |
 
 ## 🔗 Stake Engine Integration
 
