@@ -9,6 +9,7 @@ import { SpinEventData, StakeEngineClient } from '../engine/StakeEngineClient';
 import { StakeError } from '../engine/StakeEngineClient';
 import options, { BET_PRESETS } from '../options';
 import { DisplayBalance } from '../helpers/Currency';
+import { T } from '../helpers/I18n';
 
 /**
  * Main Game Scene — Production-ready for Stake Engine.
@@ -67,6 +68,10 @@ export class Game extends Phaser.Scene {
   private anteBetTxt!: Phaser.GameObjects.Text;
   private anteBetIcon!: Phaser.GameObjects.Text;
 
+  // Replay UI
+  private replayBtnHit!: Phaser.GameObjects.Rectangle;
+  private replayBtnTxt!: Phaser.GameObjects.Text;
+
   // State — balance always starts from options.money in demo, or from Stake Engine auth
   valueMoney = options.money;
   currency = 'USD';
@@ -96,14 +101,26 @@ export class Game extends Phaser.Scene {
     // ErrorManager must be created before auth so showBlockingError is available
     this.errorManager = new ErrorManager(this);
 
-    if (!this.stakeEngine.isDemoMode()) {
+    if (this.stakeEngine.isReplayMode()) {
+      try {
+        await this.stakeEngine.fetchReplay();
+        this.valueMoney = 0; // Balance hidden in replay mode
+        this.currency = 'USD';
+      } catch (err) {
+        this.errorManager.showBlockingError(
+          'REPLAY FETCH FAILED',
+          async () => { throw new Error('Replay invalid'); },
+          () => window.location.reload()
+        );
+        return;
+      }
+    } else if (!this.stakeEngine.isDemoMode()) {
       try {
         const auth = await this.stakeEngine.authenticate();
         this.valueMoney = StakeEngineClient.toDisplayAmount(auth.balance.amount);
         this.currency = auth.balance.currency;
 
         if (auth.round) {
-          console.log('[Game] Resuming pending round:', auth.round.roundId);
           this.handlePendingRound();
         }
       } catch (err) {
@@ -216,7 +233,7 @@ export class Game extends Phaser.Scene {
     this.buyRegularHit = this.add.rectangle(0, 0, 100, 50, 0xffffff, 0)
       .setInteractive({ useHandCursor: true }).setDepth(21)
       .on('pointerdown', () => this.requestPurchase(1, 100));
-    this.buyRegularTxt1 = this.add.text(0, 0, 'BUY', { ...btnStyle, color: '#ffffff' }).setOrigin(0.5).setDepth(21);
+    this.buyRegularTxt1 = this.add.text(0, 0, T('BUY', this.stakeEngine.isSocialMode()), { ...btnStyle, color: '#ffffff' }).setOrigin(0.5).setDepth(21);
     this.buyRegularTxt2 = this.add.text(0, 0, '100x', { ...btnStyle, color: '#ffe600', stroke: '#000', strokeThickness: 2 }).setOrigin(0.5).setDepth(21);
 
     // Ante bet setup
@@ -229,7 +246,7 @@ export class Game extends Phaser.Scene {
         this.audio.playSound('button');
       });
     this.anteBetIcon = this.add.text(0, 0, '⚡', { fontFamily: 'Arial' }).setOrigin(0.5).setDepth(21);
-    this.anteBetTxt = this.add.text(0, 0, 'ANTE BET', { fontFamily: 'Impact', color: '#ffffff' }).setOrigin(0, 0.5).setDepth(21);
+    this.anteBetTxt = this.add.text(0, 0, T('ANTE BET', this.stakeEngine.isSocialMode()), { fontFamily: 'Impact', color: '#ffffff' }).setOrigin(0, 0.5).setDepth(21);
 
     // Spin button setup
     this.spinBtnGfx = this.add.graphics().setDepth(20);
@@ -248,10 +265,18 @@ export class Game extends Phaser.Scene {
         if (!this.autoSpinActive) {
           const cost = this.getEffectiveBet();
           if (this.valueMoney < cost) { this.errorManager.showToast('INSUFFICIENT FUNDS', '#ff4466'); return; }
-          this.autoSpinActive = true;
-          this.autoSpinRemaining = 0;
-          this.updateAutoSpinDisplay();
-          if (!this._spinLock) this.time.delayedCall(50, () => { if (this.autoSpinActive && !this._spinLock) this.attemptSpin(0); });
+          
+          this.confirmDialog.show(
+            'AUTO PLAY',
+            'Start 100 automatic spins?',
+            () => {
+              this.autoSpinActive = true;
+              this.autoSpinRemaining = 100; // Hardcoded to 100 for now
+              this.updateAutoSpinDisplay();
+              if (!this._spinLock) this.time.delayedCall(50, () => { if (this.autoSpinActive && !this._spinLock) this.attemptSpin(0); });
+            },
+            () => { /* cancel */ }
+          );
         } else {
           this.stopAutoSpin();
         }
@@ -265,13 +290,13 @@ export class Game extends Phaser.Scene {
     // Bottom Bar Structural Graphic
     this.bottomBar = this.add.graphics().setDepth(45);
     
-    this.txtMoneyLabel = this.add.text(0, 0, 'BALANCE', tLabelStyle).setDepth(50);
+    this.txtMoneyLabel = this.add.text(0, 0, T('BALANCE', this.stakeEngine.isSocialMode()), tLabelStyle).setDepth(50);
     this.txtMoney = this.add.text(0, 0, '', tValStyle).setDepth(50);
     
-    this.txtBetLabel = this.add.text(0, 0, 'BET', tLabelStyle).setOrigin(0.5).setDepth(50);
+    this.txtBetLabel = this.add.text(0, 0, T('BET', this.stakeEngine.isSocialMode()), tLabelStyle).setOrigin(0.5).setDepth(50);
     this.txtBet = this.add.text(0, 0, '', tValStyle).setOrigin(0.5).setDepth(50);
     
-    this.txtLastWinLabel = this.add.text(0, 0, 'WIN', tLabelStyle).setOrigin(1, 0.5).setDepth(50);
+    this.txtLastWinLabel = this.add.text(0, 0, T('LAST WIN', this.stakeEngine.isSocialMode()), tLabelStyle).setOrigin(1, 0.5).setDepth(50);
     this.txtLastWin = this.add.text(0, 0, '', { ...tValStyle, color: '#ffe600' }).setOrigin(1, 0.5).setDepth(50);
     
     this.demoLabel = this.add.text(0, 0, '', {
@@ -317,6 +342,47 @@ export class Game extends Phaser.Scene {
     this.settings.setTurboCallback?.((enabled: boolean) => {
       this.grid.turboMode = enabled;
     });
+
+    if (this.stakeEngine.isReplayMode()) {
+      this.buySuper.setVisible(false);
+      this.buySuperHit.setVisible(false);
+      this.buySuperTxt1.setVisible(false);
+      this.buySuperTxt2.setVisible(false);
+      
+      this.buyRegular.setVisible(false);
+      this.buyRegularHit.setVisible(false);
+      this.buyRegularTxt1.setVisible(false);
+      this.buyRegularTxt2.setVisible(false);
+      
+      this.anteBetBtn.setVisible(false);
+      this.anteBetHit.setVisible(false);
+      this.anteBetIcon.setVisible(false);
+      this.anteBetTxt.setVisible(false);
+      
+      this.btnAuto.setVisible(false);
+      this.txtAuto.setVisible(false);
+      
+      this.btnBetMinus.setVisible(false);
+      this.btnBetMinusHit.setVisible(false);
+      this.btnBetPlus.setVisible(false);
+      this.btnBetPlusHit.setVisible(false);
+      
+      this.txtMoneyLabel.setVisible(false);
+      this.txtMoney.setVisible(false);
+      this.txtBetLabel.setVisible(false);
+      this.txtBet.setVisible(false);
+
+      this.spinBtnGfx.setVisible(false);
+      this.spinBtnHit.setVisible(false);
+      this.spinBtnLabel.setVisible(false);
+      this.spinGlowRing.setVisible(false);
+
+      this.replayBtnHit = this.add.rectangle(0, 0, 240, 70, 0xff006a)
+        .setStrokeStyle(3, 0xffffff, 1)
+        .setInteractive({ useHandCursor: true }).setDepth(55)
+        .on('pointerdown', () => this.executeReplay());
+      this.replayBtnTxt = this.add.text(0, 0, '▶ START REPLAY', {fontSize: '24px', fontFamily: 'Impact', color: '#fff'}).setOrigin(0.5).setDepth(56);
+    }
   }
 
   /** Proportional layout engine — handles three responsive modes */
@@ -468,6 +534,11 @@ export class Game extends Phaser.Scene {
 
       // Free Spins Label
       this.txtFSRemaining.setPosition(w / 2, Math.max(20, gridY - 30)).setFontSize(28);
+
+      if (this.stakeEngine.isReplayMode()) {
+        this.replayBtnHit.setPosition(w / 2, centerY);
+        this.replayBtnTxt.setPosition(w / 2, centerY);
+      }
     }
 
     // ==========================================
@@ -581,7 +652,10 @@ export class Game extends Phaser.Scene {
     const fsFreeSpins = Math.min(10, h * 0.16);
     const fsSub = Math.min(16, h * 0.28);
 
-    txt1.setText(`${title}\nFREE SPINS`)
+    const buyTitle = title === 'SUPER' ? T('SUPER FREE SPINS', this.stakeEngine.isSocialMode()) : T('BUY FREE SPINS', this.stakeEngine.isSocialMode());
+    // Split text cleanly for the button formatting
+    const multilineTitle = buyTitle.split(' ').join('\n');
+    txt1.setText(multilineTitle)
         .setLineSpacing(-Math.max(2, h * 0.05))
         .setPosition(cx, cy - h * 0.15).setFontSize(fsTitle);
 
@@ -1111,16 +1185,19 @@ export class Game extends Phaser.Scene {
     if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
 
     const cost = this.getEffectiveBet() * betMultCost;
-    const label = triggerType === 2 ? 'Super Free Spins' : 'Free Spins';
+    const label = triggerType === 2 
+      ? T('SUPER FREE SPINS', this.stakeEngine.isSocialMode()) 
+      : T('BUY FREE SPINS', this.stakeEngine.isSocialMode());
 
     if (this.valueMoney < cost) {
       this.errorManager.showToast('INSUFFICIENT FUNDS', '#ff4466');
       return;
     }
 
+    const formattedCost = DisplayBalance({ amount: cost, currency: this.currency });
     this.confirmDialog.show(
-      `Buy ${label}?`,
-      `Cost: ${cost.toFixed(2)}`,
+      label,
+      `Cost: ${formattedCost}`,
       () => this.executePurchase(triggerType, cost),
       () => { /* cancelled */ }
     );
@@ -1237,6 +1314,37 @@ export class Game extends Phaser.Scene {
     this.updateAutoSpinDisplay();
     this.updateSpinButtonState();
     if (this.autoSpinTimer) this.autoSpinTimer.remove();
+  }
+
+  // ==========================================
+  // REPLAY EXECUTION
+  // ==========================================
+  private async executeReplay() {
+    this.replayBtnHit.setVisible(false);
+    this.replayBtnTxt.setVisible(false);
+    
+    // We fetch replayData state bypassing normal play triggers
+    const replayData = await this.stakeEngine.fetchReplay();
+    const stateEvents = replayData.state || [];
+    const spinEvent = stateEvents.find((e: any) => e.type === 'spin');
+    const serverGrid = spinEvent ? (spinEvent.data as SpinEventData).grid : undefined;
+    
+    // Reset Grid context
+    this._spinLock = true;
+    this.lastWin = 0;
+    this.updateLastWinDisplay();
+    
+    this.audio.playReels();
+    this.grid.prepareSpin();
+    
+    // Check if free spins trigger was embedded to seed early
+    const fsEvent = stateEvents.find((e: any) => e.type === 'free_spins_awarded');
+    if (fsEvent) {
+       this.grid.isSuperFreeSpins = fsEvent.data.super;
+       this.grid.freeSpinsRemaining = fsEvent.data.count;
+    }
+
+    this.grid.injectServerResult(serverGrid);
   }
 
   private handlePendingRound() {
