@@ -12,8 +12,10 @@
  */
 
 export interface StakeAuthResponse {
-  balance: number; // Integer with 6 decimal precision
-  currency: string; // e.g. "USD", "BTC"
+  balance: { amount: number; currency: string };
+  minBet?: number;
+  maxBet?: number;
+  stepBet?: number;
   round?: {
     event: string; // Resume state for disconnect recovery
     roundId: string;
@@ -21,11 +23,13 @@ export interface StakeAuthResponse {
 }
 
 export interface StakePlayResponse {
-  roundId: string;
-  balance: number;
-  payout: number; // Total payout in integer precision
-  events: GameEvent[]; // Ordered list of game events to animate
-  multiplier: number; // Final outcome multiplier
+  balance: { amount: number; currency: string };
+  round: {
+    betID: string | number;
+    amount: number;
+    active: boolean;
+    state: GameEvent[];
+  };
 }
 
 export interface GameEvent {
@@ -222,8 +226,7 @@ export class StakeEngineClient {
   public async authenticate(): Promise<StakeAuthResponse> {
     if (this.isDemo) {
       return {
-        balance: 100_000 * PRECISION, // $100,000 demo balance
-        currency: 'USD',
+        balance: { amount: 100_000 * PRECISION, currency: 'USD' },
       };
     }
 
@@ -245,8 +248,10 @@ export class StakeEngineClient {
       this.authenticated = true;
 
       return {
-        balance: data.balance,
-        currency: data.currency || 'USD',
+        balance: data.balance || { amount: 0, currency: 'USD' },
+        minBet: data.minBet,
+        maxBet: data.maxBet,
+        stepBet: data.stepBet,
         round: data.round || undefined,
       };
     } catch (error) {
@@ -288,7 +293,7 @@ export class StakeEngineClient {
       }
 
       const data = await response.json();
-      this.currentRoundId = data.roundId;
+      this.currentRoundId = String(data.round?.betID || '');
 
       return data as StakePlayResponse;
     } catch (error) {
@@ -300,9 +305,9 @@ export class StakeEngineClient {
   /**
    * Get the current player balance.
    */
-  public async getBalance(): Promise<number> {
+  public async getBalance(): Promise<{ amount: number; currency: string }> {
     if (this.isDemo) {
-      return 100_000 * PRECISION;
+      return { amount: 100_000 * PRECISION, currency: 'USD' };
     }
 
     try {
@@ -315,7 +320,8 @@ export class StakeEngineClient {
       if (!response.ok) throw new Error('Balance fetch failed');
 
       const data = await response.json();
-      return data.balance;
+      // The balance API typically returns the identical balance object format
+      return data.balance || data;
     } catch (error) {
       console.error('[StakeEngine] Balance error:', error);
       throw error;
@@ -352,17 +358,17 @@ export class StakeEngineClient {
    *
    * Returns the display-amount balance, or throws StakeError on failure.
    */
-  public async resync(): Promise<{ balance: number; pendingRound?: { roundId: string; event: string } }> {
+  public async resync(): Promise<{ balance: number; currency: string; pendingRound?: { roundId: string; event: string } }> {
     if (this.isDemo) {
-      // In demo mode, localStorage is the source of truth
-      const stored = localStorage.getItem('balance');
-      return { balance: stored ? parseFloat(stored) : 100_000 };
+      // In demo mode, resync returns the starting balance (stateless)
+      return { balance: 100_000, currency: 'USD' };
     }
 
     try {
       const auth = await this.authenticate();
       return {
-        balance: StakeEngineClient.toDisplayAmount(auth.balance),
+        balance: StakeEngineClient.toDisplayAmount(auth.balance.amount),
+        currency: auth.balance.currency,
         pendingRound: auth.round ? { roundId: auth.round.roundId, event: auth.round.event } : undefined,
       };
     } catch (err) {
@@ -402,11 +408,16 @@ export class StakeEngineClient {
     }
 
     return {
-      roundId: `demo_${Date.now()}`,
-      balance: StakeEngineClient.toStakeAmount(100_000),
-      payout: 0,
-      events: [{ type: 'spin', data: { grid } as SpinEventData }],
-      multiplier: 1,
+      balance: {
+        amount: StakeEngineClient.toStakeAmount(100_000),
+        currency: 'USD'
+      },
+      round: {
+        betID: `demo_${Date.now()}`,
+        amount: StakeEngineClient.toStakeAmount(betAmount),
+        active: false,
+        state: [{ type: 'spin', data: { grid } as SpinEventData }]
+      }
     };
   }
 }

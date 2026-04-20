@@ -4,11 +4,11 @@ import {
   Grid, Audio, PaytableOverlay, SettingsOverlay,
   WinCelebration, ConfirmDialog, FreeSpinsIntro, ErrorManager
 } from '../components';
-import { LocalStorageKey } from '../constants';
-import { getStakeEngine, StakeEngineClient } from '../engine';
-import type { SpinEventData } from '../engine/StakeEngineClient';
+import { getStakeEngine } from '../engine';
+import { SpinEventData, StakeEngineClient } from '../engine/StakeEngineClient';
 import { StakeError } from '../engine/StakeEngineClient';
 import options, { BET_PRESETS } from '../options';
+import { DisplayBalance } from '../helpers/Currency';
 
 /**
  * Main Game Scene — Production-ready for Stake Engine.
@@ -67,8 +67,9 @@ export class Game extends Phaser.Scene {
   private anteBetTxt!: Phaser.GameObjects.Text;
   private anteBetIcon!: Phaser.GameObjects.Text;
 
-  // State
-  valueMoney = Number(localStorage.getItem(LocalStorageKey.Money) ?? options.money);
+  // State — balance always starts from options.money in demo, or from Stake Engine auth
+  valueMoney = options.money;
+  currency = 'USD';
   betPresetIndex = options.defaultBetIndex;
   autoSpinActive = false;
   autoSpinRemaining = 0; // 0 = infinite when autoSpinActive
@@ -98,7 +99,8 @@ export class Game extends Phaser.Scene {
     if (!this.stakeEngine.isDemoMode()) {
       try {
         const auth = await this.stakeEngine.authenticate();
-        this.valueMoney = StakeEngineClient.toDisplayAmount(auth.balance);
+        this.valueMoney = StakeEngineClient.toDisplayAmount(auth.balance.amount);
+        this.currency = auth.balance.currency;
 
         if (auth.round) {
           console.log('[Game] Resuming pending round:', auth.round.roundId);
@@ -1055,17 +1057,16 @@ export class Game extends Phaser.Scene {
     const baseBet = BET_PRESETS[this.betPresetIndex];
     return options.anteBetEnabled ? baseBet * options.anteBetCostMultiplier : baseBet;
   }
-
   updateMoneyDisplay() {
-    this.txtMoney.setText(`${this.valueMoney.toFixed(2)}`);
-    localStorage.setItem(LocalStorageKey.Money, String(this.valueMoney));
+    this.txtMoney.setText(DisplayBalance({ amount: this.valueMoney, currency: this.currency }));
   }
 
   updateBetDisplay() {
     const effectiveBet = this.getEffectiveBet();
+    const formatted = DisplayBalance({ amount: effectiveBet, currency: this.currency });
     const label = options.anteBetEnabled
-      ? `${effectiveBet.toFixed(2)} ⚡`
-      : `${effectiveBet.toFixed(2)}`;
+      ? `${formatted} ⚡`
+      : formatted;
     this.txtBet.setText(label);
   }
 
@@ -1077,7 +1078,7 @@ export class Game extends Phaser.Scene {
     }
     if (target <= 0) {
       this._displayedWin = 0;
-      this.txtLastWin.setText('0.00');
+      this.txtLastWin.setText(DisplayBalance({ amount: 0, currency: this.currency }));
       this.txtLastWin.setColor('#44ff88');
       return;
     }
@@ -1093,7 +1094,7 @@ export class Game extends Phaser.Scene {
       onUpdate: (tween: Phaser.Tweens.Tween) => {
         const progress = (tween.getValue?.() ?? 0) / 100;
         this._displayedWin = start + delta * progress;
-        this.txtLastWin.setText(this._displayedWin.toFixed(2));
+        this.txtLastWin.setText(DisplayBalance({ amount: this._displayedWin, currency: this.currency }));
         // Color intensifies as value rises
         if (this._displayedWin > 0) {
           this.txtLastWin.setColor('#44ff88');
@@ -1101,7 +1102,7 @@ export class Game extends Phaser.Scene {
       },
       onComplete: () => {
         this._displayedWin = target;
-        this.txtLastWin.setText(target.toFixed(2));
+        this.txtLastWin.setText(DisplayBalance({ amount: target, currency: this.currency }));
       },
     });
   }
@@ -1140,7 +1141,8 @@ export class Game extends Phaser.Scene {
 
     try {
       const result = await this.stakeEngine.play(cost, triggerType);
-      const spinEvent = result.events?.find(e => e.type === 'spin');
+      const stateEvents = result.round?.state || [];
+      const spinEvent = stateEvents.find((e: any) => e.type === 'spin');
       const serverGrid = spinEvent ? (spinEvent.data as SpinEventData).grid : undefined;
 
       // Show free spins intro, then configure FS state and inject grid
@@ -1194,14 +1196,11 @@ export class Game extends Phaser.Scene {
       this.grid.prepareSpin();
       this.updateSpinButtonState();
 
-      // Store pending round for disconnect recovery
-      localStorage.setItem('pending_bet', String(cost));
-
       try {
         const result = await this.stakeEngine.play(cost, triggerType);
-        localStorage.setItem('pending_round', JSON.stringify(result));
 
-        const spinEvent = result.events?.find(e => e.type === 'spin');
+        const stateEvents = result.round?.state || [];
+        const spinEvent = stateEvents.find((e: any) => e.type === 'spin');
         const serverGrid = spinEvent ? (spinEvent.data as SpinEventData).grid : undefined;
         this.grid.injectServerResult(serverGrid);
       } catch (err) {
@@ -1241,49 +1240,15 @@ export class Game extends Phaser.Scene {
   }
 
   private handlePendingRound() {
-    const pendingData = localStorage.getItem('pending_round');
-    if (pendingData) {
-      try {
-        const result = JSON.parse(pendingData);
-        const payout = result.payout ? StakeEngineClient.toDisplayAmount(result.payout) : 0;
-        if (payout > 0) {
-          this.valueMoney += payout;
-          this.updateMoneyDisplay();
-
-          const popup = this.add.text(
-            this.scale.width / 2, this.scale.height / 2,
-            `Previous round:\nWIN ${payout.toFixed(2)}`,
-            { fontSize: '32px', color: '#44ff88', fontStyle: 'bold', stroke: '#000', strokeThickness: 6, align: 'center' }
-          ).setOrigin(0.5).setDepth(60);
-
-          this.time.delayedCall(3000, () => popup.destroy());
-        }
-      } catch { /* ignore parse error */ }
-      localStorage.removeItem('pending_round');
-      localStorage.removeItem('pending_bet');
-      this.stakeEngine.endRound().catch(e => console.warn('[Game] endRound error:', e));
-    }
+    // Stateless — pending round recovery is handled server-side.
+    // On auth, the Stake Engine returns any pending round in auth.round.
+    // The server's resync endpoint handles balance reconciliation.
+    this.stakeEngine.endRound().catch(e => console.warn('[Game] endRound error:', e));
   }
 
-  private saveSpinRecord(winAmount: number, feature: string) {
-    localStorage.removeItem('pending_round');
-    localStorage.removeItem('pending_bet');
-
-    try {
-      const historyRaw = localStorage.getItem('game_history') || '[]';
-      const history = JSON.parse(historyRaw) as Array<{
-        ts: number; bet: number; win: number; feature: string;
-      }>;
-      history.unshift({
-        ts: Date.now(),
-        bet: this.getEffectiveBet(),
-        win: winAmount,
-        feature,
-      });
-      // Keep last 50 spins
-      if (history.length > 50) history.length = 50;
-      localStorage.setItem('game_history', JSON.stringify(history));
-    } catch { /* ignore */ }
+  private saveSpinRecord(_winAmount: number, _feature: string) {
+    // Stateless — no local history tracking.
+    // All game history is server-authoritative via Stake Engine.
   }
 
   /**
@@ -1338,9 +1303,7 @@ export class Game extends Phaser.Scene {
         this.stakeEngine.endRound().catch(e => console.warn('[Game] endRound error:', e));
       }
 
-      // Clean up local pending state
-      localStorage.removeItem('pending_round');
-      localStorage.removeItem('pending_bet');
+      // Clean up — no local state to clear
 
       // Unlock the game
       this._spinLock = false;
