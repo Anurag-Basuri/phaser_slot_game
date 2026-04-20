@@ -19,13 +19,13 @@ MIN_CLUSTER_SIZE = 5
 # --- SYMBOL DEFINITIONS ---
 # ID: (name, is_scatter)
 SYMBOLS = {
-    0: ("Red Gummy Bear", False),
-    1: ("Yellow Star Candy", False),
-    2: ("Purple Jelly Bean", False),
-    3: ("Green Square Candy", False),
-    4: ("Pink Heart Candy", False),
-    5: ("Orange Slice Candy", False),
-    6: ("Blue Gumdrop", False),
+    0: ("Orange Gummy Bear", False),
+    1: ("Purple Gummy Bear", False),
+    2: ("Red Gummy Bear", False),
+    3: ("Green Candy", False),
+    4: ("Purple Candy", False),
+    5: ("Orange Candy", False),
+    6: ("Pink Candy", False),
     7: ("Scatter Lollipop", True),
 }
 
@@ -41,13 +41,13 @@ SCATTER_CHANCE = 0.020  # 2.0% per cell
 # Each row is a symbol ID (0-6), columns are cluster tiers
 PAYTABLE = [
     # Cluster size:  5     6     7     8     9    10    11    12    13    14    15+
-    [0.12, 0.16, 0.19, 0.25, 0.31, 0.62, 0.93, 1.55, 3.10, 6.20, 12.40],    # 0: Red Bear (lowest)
-    [0.16, 0.19, 0.25, 0.31, 0.46, 0.78, 1.24, 1.86, 3.72, 7.44, 15.50],    # 1: Yellow Star
-    [0.19, 0.25, 0.31, 0.46, 0.62, 0.93, 1.55, 2.17, 4.96, 9.30, 18.60],    # 2: Purple Bean
-    [0.25, 0.31, 0.46, 0.62, 0.78, 1.24, 1.86, 3.10, 6.20, 12.40, 24.80],   # 3: Green Candy
-    [0.31, 0.46, 0.62, 0.78, 0.93, 1.86, 2.79, 6.20, 12.40, 24.80, 37.20],  # 4: Pink Heart
-    [0.46, 0.62, 0.78, 0.93, 1.24, 2.48, 3.72, 7.75, 18.60, 37.20, 62.00],  # 5: Orange Slice
-    [0.62, 0.93, 1.09, 1.24, 1.55, 3.10, 4.65, 9.30, 21.70, 43.40, 93.00],  # 6: Blue Gumdrop (highest)
+    [0.20, 0.25, 0.30, 0.40, 0.50, 1.00, 1.50, 2.50, 5.00, 10.00, 20.00],    # 0: Orange Gummy Bear
+    [0.25, 0.30, 0.40, 0.50, 0.75, 1.25, 2.00, 3.00, 6.00, 12.00, 25.00],    # 1: Purple Gummy Bear
+    [0.30, 0.40, 0.50, 0.75, 1.00, 1.50, 2.50, 3.50, 8.00, 15.00, 30.00],    # 2: Red Gummy Bear
+    [0.40, 0.50, 0.75, 1.00, 1.25, 2.00, 3.00, 5.00, 10.00, 20.00, 40.00],   # 3: Green Candy
+    [0.50, 0.75, 1.00, 1.25, 1.50, 3.00, 4.50, 10.00, 20.00, 40.00, 60.00],  # 4: Purple Candy
+    [0.75, 1.00, 1.25, 1.50, 2.00, 4.00, 6.00, 12.50, 30.00, 60.00, 100.00], # 5: Orange Candy
+    [1.00, 1.50, 1.75, 2.00, 2.50, 5.00, 7.50, 15.00, 35.00, 70.00, 150.00], # 6: Pink Candy
 ]
 
 # --- FREE SPINS ---

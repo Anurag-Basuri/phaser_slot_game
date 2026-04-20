@@ -315,7 +315,7 @@ def run_simulation(num_sims: int, export: bool = False):
     print()
 
     rtp_pass = abs(rtp - TARGET_RTP) <= 0.01  # Within 1% tolerance for simulation
-    print(f"  RTP CHECK: {'✅ PASS' if rtp_pass else '❌ FAIL (adjust weights/paytable)'}")
+    print(f"  RTP CHECK: {'[PASS]' if rtp_pass else '[FAIL] (adjust weights/paytable)'}")
     print()
 
     if feature_counts:
