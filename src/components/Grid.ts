@@ -418,55 +418,66 @@ export class Grid {
     const tier = this.getMultTier(mult);
     const cx = this.getX(c);
     const cy = this.getY(r);
-    const badgeRadius = this.cellSize * 0.22;
+    // Make wrapper width dependent on multiplier length (x2 vs x1024)
+    const multText = `x${mult}`;
+    const badgeW = this.cellSize * 0.70 + (multText.length * 5);
+    const badgeH = this.cellSize * 0.40;
 
     if (!this.multiplierGraphics[r][c]) {
       const gfx = this.scene.add.graphics().setDepth(12);
       
       // Soft glow behind the badge
       gfx.fillStyle(tier.fill, 0.20);
-      gfx.fillCircle(cx, cy, badgeRadius * 1.6);
+      gfx.fillRoundedRect(cx - badgeW/2 - 10, cy - badgeH/2 - 10, badgeW + 20, badgeH + 20, badgeH);
       
-      // Cell highlight border
+      // Cell highlight wrapper — inner block styling
       const pad = 2;
-      gfx.lineStyle(2, tier.fill, 0.5);
+      gfx.fillStyle(0xffd500, 0.6); // Yellow wrapper fill style backing
+      gfx.fillRoundedRect(
+        cx - this.cellSize / 2 + pad,
+        cy - this.cellSize / 2 + pad,
+        this.cellSize - pad * 2,
+        this.cellSize - pad * 2, 8
+      );
+      
+      gfx.lineStyle(3, 0xffaa00, 1.0);
       gfx.strokeRoundedRect(
         cx - this.cellSize / 2 + pad,
         cy - this.cellSize / 2 + pad,
         this.cellSize - pad * 2,
-        this.cellSize - pad * 2, 6
+        this.cellSize - pad * 2, 8
       );
 
-      // Badge circle — shadow
+      // Candy Bar Shadow
       gfx.fillStyle(0x000000, 0.4);
-      gfx.fillCircle(cx + 1, cy + 2, badgeRadius);
+      gfx.fillRoundedRect(cx - badgeW/2 + 2, cy - badgeH/2 + 2, badgeW, badgeH, badgeH/2);
 
-      // Badge circle — main fill
-      gfx.fillStyle(tier.fill, 0.95);
-      gfx.fillCircle(cx, cy, badgeRadius);
+      // Candy Bar Fill
+      gfx.fillStyle(tier.fill, 1.0);
+      gfx.fillRoundedRect(cx - badgeW/2, cy - badgeH/2, badgeW, badgeH, badgeH/2);
 
-      // Badge circle — inner highlight (glossy)
-      gfx.fillStyle(0xffffff, 0.25);
-      gfx.fillCircle(cx, cy - badgeRadius * 0.25, badgeRadius * 0.65);
+      // Glossy highlight
+      gfx.fillStyle(0xffffff, 0.35);
+      gfx.fillRoundedRect(cx - badgeW/2 + 2, cy - badgeH/2 + 2, badgeW - 4, badgeH * 0.4, (badgeH/2) - 2);
 
-      // Outer ring
+      // Border ring
       gfx.lineStyle(2, tier.stroke, 1);
-      gfx.strokeCircle(cx, cy, badgeRadius);
+      gfx.strokeRoundedRect(cx - badgeW/2, cy - badgeH/2, badgeW, badgeH, badgeH/2);
 
       this.multiplierGraphics[r][c] = gfx;
     }
 
-    const fontSize = Math.max(11, Math.floor(badgeRadius * 1.0));
+    const fontSize = Math.max(16, Math.floor(badgeH * 0.8));
     if (!this.multiplierTexts[r][c]) {
       this.multiplierTexts[r][c] = this.scene.add.text(
         cx, cy,
-        `×${mult}`,
+        multText,
         {
           fontSize: `${fontSize}px`,
-          color: '#ffffff',
-          fontStyle: 'bold',
-          stroke: '#000000',
-          strokeThickness: 3,
+          fontFamily: 'Impact, Arial Black',
+          color: tier.textColor,
+          stroke: tier.stroke.toString(16).padStart(6, '0'),
+          strokeThickness: 5,
         }
       ).setOrigin(0.5).setDepth(13).setAlpha(1);
 
