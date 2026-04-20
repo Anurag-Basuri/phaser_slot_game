@@ -51,7 +51,7 @@ export default {
   scatterChanceAnte: 0.04,      // With Ante Bet: 4.0%
 
   // Free spins awarded by scatter count
-  freeSpinsByScatter: { 3: 10, 4: 15, 5: 20, 6: 25, 7: 30 } as Record<number, number>,
+  freeSpinsByScatter: { 3: 10, 4: 12, 5: 15, 6: 20, 7: 30 } as Record<number, number>,
 
   gridSize: 7,
   symbolSize: 100,
