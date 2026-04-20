@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import options, { BET_PRESETS } from '../options';
+import { getStakeEngine } from '../engine/StakeEngineClient';
+import { T } from '../helpers/I18n';
 
 /**
  * Multi-page Game Rules / Info overlay — 7 pages matching Sugar Rush 1000.
@@ -71,7 +73,8 @@ export class PaytableOverlay {
     );
 
     // Title
-    pageWrapper.add(this.scene.add.text(logicalW / 2, 28, 'GAME RULES', {
+    const isSocial = getStakeEngine().isSocialMode();
+    pageWrapper.add(this.scene.add.text(logicalW / 2, 28, T('GAME RULES', isSocial), {
       fontSize: '28px', fontFamily: 'Impact, Arial Black, sans-serif',
       color: '#ffffff', fontStyle: 'bold',
       stroke: '#000000', strokeThickness: 4

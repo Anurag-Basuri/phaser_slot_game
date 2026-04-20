@@ -120,6 +120,10 @@ export class StakeEngineClient {
   private authenticated: boolean = false;
   private currentRoundId: string | null = null;
   private isDemo: boolean = false;
+  private _isReplay: boolean = false;
+  private _isSocial: boolean = false;
+
+  private replayData: any = null;
 
   constructor() {
     this.parseURLParams();
@@ -127,7 +131,12 @@ export class StakeEngineClient {
 
   /** Parse URL parameters provided by the Stake game launcher */
   private parseURLParams(): void {
+    // 1. Detect environment flags
     const params = new URLSearchParams(window.location.search);
+    this._isReplay = params.get('replay') === 'true';
+    this._isSocial = params.get('social') === 'true';
+
+    // 2. Setup internal RGS pointer / Authentication routing
     this.sessionID = params.get('sessionID') || params.get('session_id') || '';
     this.lang = params.get('lang') || 'en';
     this.device = params.get('device') || 'desktop';
@@ -145,6 +154,40 @@ export class StakeEngineClient {
   /** Check if running in demo mode (no Stake connection) */
   public isDemoMode(): boolean {
     return this.isDemo;
+  }
+
+  public isReplayMode(): boolean {
+    return this._isReplay;
+  }
+
+  public isSocialMode(): boolean {
+    return this._isSocial;
+  }
+
+  /**
+   * Fetch static replay data from the Stake RGS endpoint if running in Replay Mode.
+   */
+  public async fetchReplay(): Promise<any> {
+    if (!this._isReplay) throw new Error('Not running in replay mode.');
+    
+    const params = new URLSearchParams(window.location.search);
+    const game = params.get('game');
+    const version = params.get('version');
+    const mode = params.get('mode');
+    const event = params.get('event');
+    const rgsUrl = params.get('rgs_url');
+
+    try {
+      const response = await fetch(`${rgsUrl}/bet/replay/${game}/${version}/${mode}/${event}`);
+      if (!response.ok) throw new Error('Failed to fetch replay data');
+
+      const data = await response.json();
+      this.replayData = data;
+      return data;
+    } catch (error) {
+      console.error('[StakeEngine] Replay fetch failed:', error);
+      throw error;
+    }
   }
 
   /** Get the language code */
@@ -224,6 +267,11 @@ export class StakeEngineClient {
    * Returns the player's balance and any pending round state for recovery.
    */
   public async authenticate(): Promise<StakeAuthResponse> {
+    if (this._isReplay) {
+      // Replay mode bypasses Authentication entirely. It requires no session token.
+      return { balance: { amount: 0, currency: 'USD' } };
+    }
+
     if (this.isDemo) {
       return {
         balance: { amount: 100_000 * PRECISION, currency: 'USD' },
@@ -268,6 +316,10 @@ export class StakeEngineClient {
     betAmount: number,
     featureType: number = 0,
   ): Promise<StakePlayResponse> {
+    if (this._isReplay) {
+      throw new Error('Cannot execute real bets inside view-only replay mode');
+    }
+
     if (this.isDemo) {
       return this.generateDemoOutcome(betAmount, featureType);
     }
