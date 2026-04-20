@@ -16,8 +16,8 @@ export class PaytableOverlay {
   private txtPageNum!: Phaser.GameObjects.Text;
 
   private symbolNames = [
-    'Red Gummy Bear', 'Orange Gummy Bear', 'Purple Gummy Bear',
-    'Green Star', 'Pink Jelly Bean', 'Orange Heart', 'Pink Globe'
+    'Orange Gummy Bear', 'Purple Gummy Bear', 'Red Gummy Bear',
+    'Green Candy', 'Purple Candy', 'Orange Candy', 'Pink Candy'
   ];
 
   constructor(scene: Phaser.Scene) {
