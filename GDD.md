@@ -74,21 +74,24 @@ Multipliers of bet amount for cluster sizes 5 through 15+:
 ## 5. Multiplier System
 
 ### Progression
-When a grid position is part of a winning cluster, it receives a multiplier stamp:
+Whenever a winning symbol explodes it marks its spot on the grid.
+After the second time a symbol explodes on the same spot a multiplier is added, 
+starting from ×2 and doubling each time up to a maximum of ×1024.
 
-| Stage | Stored Value | Display Value | Visual |
-|-------|-------------|---------------|--------|
-| First Win | 2 | ×1 | Golden wrapper glow |
-| Second Win | 4 | ×2 | Golden box + ×2 text |
-| Third Win | 8 | ×4 | Golden box + ×4 text |
-| ... | doubles each time | half of stored | growing intensity |
-| Maximum | 1024 | ×1024 | Maximum glow |
+| Explosion Count | Multiplier Value | Visual |
+|-----------------|------------------|--------|
+| 1st | Marked (no value) | Golden wrapper glow |
+| 2nd | ×2 | Badge + ×2 text |
+| 3rd | ×4 | Badge + ×4 text |
+| 4th | ×8 | Badge + ×8 text |
+| ... | doubles each time | growing intensity |
+| 11th | ×1024 | Maximum glow |
 
 ### Rules
-- Multipliers are applied to the cluster payout
-- All multipliers within a winning cluster are **summed** together
-- **Base game:** Multipliers reset every spin
-- **Free Spins:** Multipliers persist across all spins
+- The multiplier applies to all winning combinations that hit on top of it
+- If more multipliers are involved in the same winning combination, they **add** to each other
+- **Base game:** Marked spots and multipliers last until the end of the tumbling sequence, then clear
+- **Free Spins:** Marked spots and multipliers persist across all spins until the round ends
 
 ---
 
@@ -98,14 +101,15 @@ When a grid position is part of a winning cluster, it receives a multiplier stam
 | Scatters on Board | Free Spins Awarded |
 |-------------------|--------------------|
 | 3 | 10 |
-| 4 | 15 |
-| 5 | 20 |
-| 6 | 25 |
+| 4 | 12 |
+| 5 | 15 |
+| 6 | 20 |
 | 7 | 30 |
 
 ### Rules
-- Free Spins can retrigger (3+ scatters on the final board after cascades)
+- Free Spins can retrigger (3+ scatters during the round award additional spins)
 - Multipliers persist throughout all Free Spins
+- Special reels are in play during the feature
 - Total win is displayed at the end of the Free Spins round
 
 ---

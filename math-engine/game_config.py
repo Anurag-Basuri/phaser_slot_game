@@ -54,9 +54,9 @@ PAYTABLE = [
 # Scatter count -> free spins awarded
 FREE_SPINS_BY_SCATTER = {
     3: 10,
-    4: 15,
-    5: 20,
-    6: 25,
+    4: 12,
+    5: 15,
+    6: 20,
     7: 30,
 }
 
