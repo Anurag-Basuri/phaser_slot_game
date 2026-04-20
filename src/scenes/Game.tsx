@@ -235,11 +235,11 @@ export class Game extends Phaser.Scene {
     this.spinBtnHit = this.add.rectangle(0, 0, 100, 100, 0xffffff, 0)
       .setInteractive({ useHandCursor: true }).setDepth(21)
       .on('pointerdown', () => this.handleUniversalAction());
-    this.spinBtnLabel = this.add.text(0, 0, 'SPIN', { fontFamily: 'Impact', color: '#ffffff', stroke: '#003300', strokeThickness: 3 }).setOrigin(0.5).setDepth(21);
+    this.spinBtnLabel = this.add.text(0, 0, '▶▶▶', { fontFamily: 'Impact, Arial Black, sans-serif', color: '#ffffff', stroke: '#004400', strokeThickness: 4, shadow: { offsetX: 0, offsetY: 2, color: '#003300', blur: 6, fill: true } }).setOrigin(0.5).setDepth(21);
 
     // Auto Play setup
-    this.btnAuto = this.add.rectangle(0, 0, 100, 30, 0x0a1426)
-      .setStrokeStyle(1, 0x00d2ff, 0.5)
+    this.btnAuto = this.add.rectangle(0, 0, 100, 30, 0x0a0618)
+      .setStrokeStyle(1.5, 0x331144, 0.6)
       .setInteractive({ useHandCursor: true }).setDepth(21)
       .on('pointerdown', () => {
         if (this.fsActive || this.anyOverlayOpen()) return;
@@ -254,11 +254,11 @@ export class Game extends Phaser.Scene {
           this.stopAutoSpin();
         }
       });
-    this.txtAuto = this.add.text(0, 0, 'AUTO', { fontFamily: 'Arial', fontStyle: 'bold', color: '#ffffff' }).setOrigin(0.5).setDepth(21);
+    this.txtAuto = this.add.text(0, 0, 'AUTO', { fontFamily: 'Arial', fontStyle: 'bold', color: '#bbaacc' }).setOrigin(0.5).setDepth(21);
 
     // === BOTTOM BAR ===
-    const tLabelStyle = { fontFamily: 'Arial', fontStyle: 'bold', color: '#7788aa' };
-    const tValStyle = { fontFamily: 'Verdana', fontStyle: 'bold', color: '#ffffff' };
+    const tLabelStyle = { fontFamily: 'Arial', fontStyle: 'bold', color: '#8877aa' };
+    const tValStyle = { fontFamily: 'Verdana', fontStyle: 'bold', color: '#eeddff' };
     
     // Bottom Bar Structural Graphic
     this.bottomBar = this.add.graphics().setDepth(45);
@@ -288,8 +288,10 @@ export class Game extends Phaser.Scene {
 
     // === FREE SPINS COUNTER ===
     this.txtFSRemaining = this.add.text(0, 0, '', {
-      fontSize: '36px', color: '#fff', align: 'center', fontStyle: 'bold',
-      stroke: '#ea00ff', strokeThickness: 5
+      fontSize: '36px', color: '#ffffff', align: 'center', fontStyle: 'bold',
+      fontFamily: 'Impact, Arial Black, sans-serif',
+      stroke: '#cc00ff', strokeThickness: 6,
+      shadow: { offsetX: 0, offsetY: 3, color: '#8800cc', blur: 12, fill: true }
     }).setOrigin(0.5).setVisible(false).setDepth(20);
 
     // === TOOLBAR ===
@@ -338,9 +340,9 @@ export class Game extends Phaser.Scene {
     
     // We draw the capsule inside gridGlow or bottomBar so it's behind the texts
     this.bottomBar.clear();
-    this.bottomBar.fillStyle(0x060d1f, 0.6);
+    this.bottomBar.fillStyle(0x0a0618, 0.65);
     this.bottomBar.fillRoundedRect(tbX - topBarW/2, tbY - topBarH/2, topBarW, topBarH, topBarH / 2);
-    this.bottomBar.lineStyle(1, 0x1a2855, 0.8);
+    this.bottomBar.lineStyle(1, 0x331144, 0.7);
     this.bottomBar.strokeRoundedRect(tbX - topBarW/2, tbY - topBarH/2, topBarW, topBarH, topBarH / 2);
 
     const tbIconSize = Math.max(16, topBarH * 0.45);
@@ -476,17 +478,21 @@ export class Game extends Phaser.Scene {
     const gY = this.grid.offsetY - gPad;
 
     this.gridGlow.clear();
-    this.gridGlow.fillStyle(0x6600cc, 0.06);
-    this.gridGlow.fillRoundedRect(gX - 12, gY - 12, gW + 24, gH + 24, 22);
-    this.gridGlow.fillStyle(0x00d2ff, 0.08);
-    this.gridGlow.fillRoundedRect(gX - 6, gY - 6, gW + 12, gH + 12, 18);
+    // Outer candy glow — pink/purple Sugar Rush theme
+    this.gridGlow.fillStyle(0xff00cc, 0.04);
+    this.gridGlow.fillRoundedRect(gX - 16, gY - 16, gW + 32, gH + 32, 26);
+    this.gridGlow.fillStyle(0x9933ff, 0.06);
+    this.gridGlow.fillRoundedRect(gX - 8, gY - 8, gW + 16, gH + 16, 20);
 
     this.gridFrame.clear();
-    this.gridFrame.fillStyle(0x060d1f, 0.92);
+    // Dark frosted glass background
+    this.gridFrame.fillStyle(0x0a0818, 0.93);
     this.gridFrame.fillRoundedRect(gX, gY, gW, gH, 14);
-    this.gridFrame.lineStyle(3, 0x1a2855, 1.0);
+    // Outer border — subtle pink
+    this.gridFrame.lineStyle(2.5, 0x331144, 1.0);
     this.gridFrame.strokeRoundedRect(gX, gY, gW, gH, 14);
-    this.gridFrame.lineStyle(1, 0x00d2ff, 0.25);
+    // Inner accent — soft magenta
+    this.gridFrame.lineStyle(1, 0xff00cc, 0.15);
     this.gridFrame.strokeRoundedRect(gX + 4, gY + 4, gW - 8, gH - 8, 10);
 
     // ==========================================
@@ -495,37 +501,40 @@ export class Game extends Phaser.Scene {
     const barCY = h - barH / 2;
     
     // Main dark base for the bottom bar
-    this.bottomBar.fillStyle(0x040810, 0.96);
+    this.bottomBar.fillStyle(0x060812, 0.97);
     this.bottomBar.fillRect(0, h - barH, w, barH);
-    this.bottomBar.lineStyle(1, 0x1a2855, 0.9);
+    // Top edge highlight — subtle pink
+    this.bottomBar.lineStyle(1.5, 0x331144, 0.8);
     this.bottomBar.lineBetween(0, h - barH, w, h - barH);
+    this.bottomBar.lineStyle(1, 0xff00cc, 0.08);
+    this.bottomBar.lineBetween(0, h - barH + 1, w, h - barH + 1);
 
     // Pill background dimensions 
     const pillH = barH * 0.65;
     const pillRadius = pillH / 2;
     
     const betW = Math.min(180, w * 0.25);
-    const pillW = Math.min(200, (w - betW - 80) / 2); // Split remaining space left/right
+    const pillW = Math.min(200, (w - betW - 80) / 2);
     
-    // Balance panel (left)
+    // Balance panel (left) — dark with purple tint
     const balX1 = Math.max(10, w * 0.02);
-    this.bottomBar.fillStyle(0x131d36, 0.6);
+    this.bottomBar.fillStyle(0x0e0a1e, 0.7);
     this.bottomBar.fillRoundedRect(balX1, barCY - pillH/2, pillW, pillH, pillRadius);
-    this.bottomBar.lineStyle(1, 0x1a2855, 1);
+    this.bottomBar.lineStyle(1, 0x2a1a3d, 0.9);
     this.bottomBar.strokeRoundedRect(balX1, barCY - pillH/2, pillW, pillH, pillRadius);
 
-    // Win panel (right)
+    // Win panel (right) — dark with purple tint
     const winX1 = w - balX1 - pillW;
-    this.bottomBar.fillStyle(0x131d36, 0.6);
+    this.bottomBar.fillStyle(0x0e0a1e, 0.7);
     this.bottomBar.fillRoundedRect(winX1, barCY - pillH/2, pillW, pillH, pillRadius);
-    this.bottomBar.lineStyle(1, 0x1a2855, 1);
+    this.bottomBar.lineStyle(1, 0x2a1a3d, 0.9);
     this.bottomBar.strokeRoundedRect(winX1, barCY - pillH/2, pillW, pillH, pillRadius);
 
-    // Bet panel (center)
+    // Bet panel (center) — subtle magenta accent
     const betX1 = (w - betW) / 2;
-    this.bottomBar.fillStyle(0x131d36, 0.6);
+    this.bottomBar.fillStyle(0x0e0a1e, 0.7);
     this.bottomBar.fillRoundedRect(betX1, barCY - pillH/2, betW, pillH, pillRadius);
-    this.bottomBar.lineStyle(1, 0x00d2ff, 0.3); // Slight accent on the bet box
+    this.bottomBar.lineStyle(1, 0xff00cc, 0.2);
     this.bottomBar.strokeRoundedRect(betX1, barCY - pillH/2, betW, pillH, pillRadius);
 
     const fs = Math.min(20, Math.max(14, barH * 0.30));
@@ -594,24 +603,37 @@ export class Game extends Phaser.Scene {
 
   private drawSpinButton(cx: number, cy: number, radius: number) {
     this.spinBtnGfx.clear();
-    this.spinBtnGfx.fillStyle(0x000000, 0.45);
+    // Drop shadow
+    this.spinBtnGfx.fillStyle(0x000000, 0.5);
     this.spinBtnGfx.fillCircle(cx + 1, cy + 5, radius);
-    this.spinBtnGfx.fillStyle(0x00c853, 1);
+    // Base dark green
+    this.spinBtnGfx.fillStyle(0x009640, 1);
     this.spinBtnGfx.fillCircle(cx, cy, radius);
-    this.spinBtnGfx.fillStyle(0x69f0ae, 0.45);
-    this.spinBtnGfx.fillCircle(cx, cy - radius * 0.25, radius * 0.6);
-    this.spinBtnGfx.lineStyle(3, 0xffffff, 0.9);
+    // Lighter green top half (gradient effect)
+    this.spinBtnGfx.fillStyle(0x00c853, 1);
+    this.spinBtnGfx.fillCircle(cx, cy - radius * 0.15, radius * 0.85);
+    // Glossy highlight
+    this.spinBtnGfx.fillStyle(0x69f0ae, 0.40);
+    this.spinBtnGfx.fillCircle(cx, cy - radius * 0.30, radius * 0.55);
+    // Top glass edge
+    this.spinBtnGfx.fillStyle(0xffffff, 0.15);
+    this.spinBtnGfx.fillCircle(cx, cy - radius * 0.40, radius * 0.35);
+    // Outer border ring
+    this.spinBtnGfx.lineStyle(3.5, 0xffffff, 0.85);
     this.spinBtnGfx.strokeCircle(cx, cy, radius);
-    this.spinBtnGfx.lineStyle(1, 0xb9f6ca, 0.5);
+    // Inner accent ring
+    this.spinBtnGfx.lineStyle(1.5, 0xb9f6ca, 0.4);
     this.spinBtnGfx.strokeCircle(cx, cy, radius - 5);
   }
 
   private drawSpinGlow(cx: number, cy: number, radius: number) {
     this.spinGlowRing.clear();
-    this.spinGlowRing.fillStyle(0x00e676, 0.15);
-    this.spinGlowRing.fillCircle(cx, cy, radius * 1.5);
-    this.spinGlowRing.fillStyle(0x00e676, 0.08);
-    this.spinGlowRing.fillCircle(cx, cy, radius * 1.9);
+    this.spinGlowRing.fillStyle(0x00e676, 0.12);
+    this.spinGlowRing.fillCircle(cx, cy, radius * 1.6);
+    this.spinGlowRing.fillStyle(0x00e676, 0.06);
+    this.spinGlowRing.fillCircle(cx, cy, radius * 2.0);
+    this.spinGlowRing.fillStyle(0x00ff88, 0.03);
+    this.spinGlowRing.fillCircle(cx, cy, radius * 2.4);
   }
 
   private drawBuyButton(gfx: Phaser.GameObjects.Graphics, cx: number, cy: number, bw: number, bh: number, color: number) {
@@ -621,26 +643,27 @@ export class Game extends Phaser.Scene {
     const rad = Math.min(16, bh * 0.3);
 
     // Drop shadow
-    gfx.fillStyle(0x000000, 0.4);
-    gfx.fillRoundedRect(x, y + 4, bw, bh, rad);
+    gfx.fillStyle(0x000000, 0.5);
+    gfx.fillRoundedRect(x + 1, y + 5, bw, bh, rad);
 
-    // Main fill
-    const darkerColor = Phaser.Display.Color.ValueToColor(color).darken(30).color;
+    // Main fill — darker base
+    const darkerColor = Phaser.Display.Color.ValueToColor(color).darken(35).color;
     gfx.fillStyle(darkerColor, 1);
     gfx.fillRoundedRect(x, y, bw, bh, rad);
 
-    // Gradient top half
+    // Gradient top half — brighter
     gfx.fillStyle(color, 1);
-    gfx.fillRoundedRect(x, y, bw, bh * 0.5, rad);
-    
-    // Top highlight (glass edge)
-    gfx.fillStyle(0xffffff, 0.15);
-    gfx.fillRoundedRect(x + 2, y + 2, bw - 4, Math.max(2, bh * 0.15), Math.max(2, rad - 2));
+    gfx.fillRoundedRect(x, y, bw, bh * 0.50, rad);
 
-    // Refined stroke
-    gfx.lineStyle(1.5, 0xffffff, 0.5);
+    // Top glass highlight
+    gfx.fillStyle(0xffffff, 0.18);
+    gfx.fillRoundedRect(x + 3, y + 3, bw - 6, Math.max(3, bh * 0.12), Math.max(2, rad - 2));
+
+    // Outer border — white glow
+    gfx.lineStyle(2, 0xffffff, 0.55);
     gfx.strokeRoundedRect(x, y, bw, bh, rad);
-    gfx.lineStyle(1, 0x000000, 0.3);
+    // Inner shadow line
+    gfx.lineStyle(1, 0x000000, 0.25);
     gfx.strokeRoundedRect(x + 1, y + 1, bw - 2, bh - 2, rad);
   }
 
@@ -650,36 +673,52 @@ export class Game extends Phaser.Scene {
     const y = cy - bh / 2;
     const rad = Math.min(12, bh * 0.35);
 
-    this.anteBetBtn.fillStyle(0x000000, 0.5);
-    this.anteBetBtn.fillRoundedRect(x, y + 4, bw, bh, rad);
+    // Shadow
+    this.anteBetBtn.fillStyle(0x000000, 0.45);
+    this.anteBetBtn.fillRoundedRect(x + 1, y + 4, bw, bh, rad);
 
     if (options.anteBetEnabled) {
-      this.anteBetBtn.fillRoundedRect(x, y, bw, bh, 8);
-      this.anteBetBtn.lineStyle(3, 0x8899aa, 1);
-      this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, 8);
-      
-      this.anteBetTxt.setColor('#ffffff');
+      // Active state — amber/gold tint
+      this.anteBetBtn.fillStyle(0x332800, 1);
+      this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
+      this.anteBetBtn.fillStyle(0x665500, 0.5);
+      this.anteBetBtn.fillRoundedRect(x, y, bw, bh * 0.5, rad);
+      this.anteBetBtn.lineStyle(2, 0xffaa00, 0.8);
+      this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, rad);
+
+      this.anteBetTxt.setColor('#ffcc44');
+      this.anteBetIcon.setColor('#ffaa00');
       this.anteBetIcon.setStroke('#000000', 4);
+    } else {
+      // Inactive state — muted dark
+      this.anteBetBtn.fillStyle(0x0e0a1e, 0.8);
+      this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
+      this.anteBetBtn.lineStyle(1, 0x2a1a3d, 0.6);
+      this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, rad);
+
+      this.anteBetTxt.setColor('#776688');
+      this.anteBetIcon.setColor('#776688');
+      this.anteBetIcon.setStroke('#000000', 2);
     }
   }
 
   private drawBetButton(gfx: Phaser.GameObjects.Graphics, cx: number, cy: number, size: number, isPlus: boolean) {
     gfx.clear();
     // Shadow
-    gfx.fillStyle(0x000000, 0.3);
+    gfx.fillStyle(0x000000, 0.35);
     gfx.fillCircle(cx, cy + 2, size / 2);
     // Dark fill
-    gfx.fillStyle(0x0d1530, 1);
+    gfx.fillStyle(0x0e0a1e, 1);
     gfx.fillCircle(cx, cy, size / 2);
-    // Subtle inner glow
-    gfx.fillStyle(0x1a2855, 0.6);
+    // Subtle inner glow — purple tint
+    gfx.fillStyle(0x1a1230, 0.7);
     gfx.fillCircle(cx, cy - 2, size / 2 - 3);
-    // Outer ring
-    gfx.lineStyle(2, 0x3355aa, 0.8);
+    // Outer ring — magenta accent
+    gfx.lineStyle(2, 0x882288, 0.7);
     gfx.strokeCircle(cx, cy, size / 2);
     // Draw +/- sign
     const armLen = Math.max(5, size * 0.18);
-    gfx.lineStyle(2.5, 0xccddff, 0.95);
+    gfx.lineStyle(2.5, 0xddccee, 0.95);
     gfx.lineBetween(cx - armLen, cy, cx + armLen, cy);
     if (isPlus) {
       gfx.lineBetween(cx, cy - armLen, cx, cy + armLen);
@@ -824,9 +863,9 @@ export class Game extends Phaser.Scene {
       this.spinBtnLabel.setColor('#ff4466');
     } else if (this._spinLock) {
       this.spinBtnLabel.setText('⋯');
-      this.spinBtnLabel.setColor('#556688');
+      this.spinBtnLabel.setColor('#88aa88');
     } else {
-      this.spinBtnLabel.setText('SPIN');
+      this.spinBtnLabel.setText('▶▶▶');
       this.spinBtnLabel.setColor('#ffffff');
     }
   }
@@ -837,11 +876,13 @@ export class Game extends Phaser.Scene {
       const label = this.autoSpinRemaining > 0 ? `${this.autoSpinRemaining}` : '∞';
       this.txtAuto.setText(label);
       this.txtAuto.setColor('#ff4466');
-      this.btnAuto.setStrokeStyle(3, 0xff4466, 1);
+      this.btnAuto.setStrokeStyle(2, 0xff4466, 0.8);
+      this.btnAuto.setFillStyle(0x1a0a14, 1);
     } else {
       this.txtAuto.setText('AUTO');
-      this.txtAuto.setColor('#ffffff');
-      this.btnAuto.setStrokeStyle(3, 0xffffff, 1);
+      this.txtAuto.setColor('#bbaacc');
+      this.btnAuto.setStrokeStyle(1.5, 0x331144, 0.6);
+      this.btnAuto.setFillStyle(0x0a0618, 1);
     }
   }
 

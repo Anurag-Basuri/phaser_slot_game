@@ -302,7 +302,7 @@ export class PaytableOverlay {
     yPos += 30;
 
     const gameInfo = [
-      `Target RTP:  96.00%`,
+      `Target RTP:  96.53%`,
       `Max Win:  25,000× Bet`,
       `Volatility:  High`,
       `Min Bet:  0.20  |  Max Bet:  100.00`,

@@ -133,11 +133,11 @@ export class SettingsOverlay {
     yPos += rowH + 30;
 
     // Game info
-    this.container.add(this.scene.add.text(w / 2, yPos, 'Sweet Cluster 1000', {
+    this.container.add(this.scene.add.text(w / 2, yPos, 'Sugar Rush 1000', {
       fontSize: '16px', color: '#ff00cc', fontStyle: 'bold',
     }).setOrigin(0.5));
     yPos += 24;
-    this.container.add(this.scene.add.text(w / 2, yPos, 'RTP: 96.00%  •  Max Win: 25,000×', {
+    this.container.add(this.scene.add.text(w / 2, yPos, 'RTP: 96.53%  •  Max Win: 25,000×', {
       fontSize: '12px', color: '#445566',
     }).setOrigin(0.5));
     yPos += 18;
