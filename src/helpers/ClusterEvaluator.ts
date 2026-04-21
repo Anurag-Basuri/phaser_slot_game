@@ -29,8 +29,12 @@ export class ClusterEvaluator {
       for (let c = 0; c < this.cols; c++) {
         if (!visited[r][c] && this.grid[r][c] !== -1) {
           const symbolId = this.grid[r][c];
-          // We ignore scatter (symbolId 7) for cluster logic usually, or handle separately
-          if (symbolId === 7) continue; 
+          // We ignore scatter (symbolId 8) for cluster logic usually, or handle separately
+          if (symbolId === 8) continue; 
+          
+          // If starting on a Wild, we won't evaluate it by itself as its own cluster.
+          // It only evaluates as part of adjacent regular symbols.
+          if (symbolId === 7) continue;
           
           const clusterPositions = this.dfs(r, c, symbolId, visited);
           if (clusterPositions.length >= minSize) {
@@ -63,9 +67,12 @@ export class ClusterEvaluator {
         const nr = current.row + dir.dr;
         const nc = current.col + dir.dc;
 
-        if (this.isValid(nr, nc) && !visited[nr][nc] && this.grid[nr][nc] === targetSymbol) {
-          visited[nr][nc] = true;
-          stack.push({ row: nr, col: nc });
+        if (this.isValid(nr, nc) && !visited[nr][nc]) {
+          const neighborId = this.grid[nr][nc];
+          if (neighborId === targetSymbol || neighborId === 7) {
+            visited[nr][nc] = true;
+            stack.push({ row: nr, col: nc });
+          }
         }
       }
     }

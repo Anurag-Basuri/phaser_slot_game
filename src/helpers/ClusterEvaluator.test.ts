@@ -68,9 +68,9 @@ describe('ClusterEvaluator', () => {
     expect(clusters[1].symbolId).toBe(3);
   });
 
-  it('should ignore scatter symbols (ID 7) for cluster grouping', () => {
+  it('should ignore scatter symbols (ID 8) for cluster grouping', () => {
     const grid = [
-      [ 7,  7,  7,  7,  7],
+      [ 8,  8,  8,  8,  8],
       [-1, -1, -1, -1, -1],
       [-1, -1, -1, -1, -1],
       [-1, -1, -1, -1, -1],
@@ -81,5 +81,21 @@ describe('ClusterEvaluator', () => {
 
     // Scatters evaluate separately via scatter logic, not via ClusterEvaluator.
     expect(clusters).toHaveLength(0);
+  });
+
+  it('should allow wilds (ID 7) to substitute for regular symbols in a cluster', () => {
+    const grid = [
+      [ 1,  1,  7,  1,  1],
+      [-1, -1, -1, -1, -1],
+      [-1, -1, -1, -1, -1],
+      [-1, -1, -1, -1, -1],
+      [-1, -1, -1, -1, -1],
+    ];
+    const evaluator = new ClusterEvaluator(grid);
+    const clusters = evaluator.findClusters(5);
+
+    expect(clusters).toHaveLength(1);
+    expect(clusters[0].symbolId).toBe(1);
+    expect(clusters[0].positions).toHaveLength(5);
   });
 });
