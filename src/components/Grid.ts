@@ -54,7 +54,7 @@ export class Grid {
 
   private symbolKeys = [
     'candy_0', 'candy_1', 'candy_2', 'candy_3',
-    'candy_4', 'candy_5', 'candy_6', 'scatter'
+    'candy_4', 'candy_5', 'candy_6', 'wild', 'scatter'
   ];
 
   // Layout — set dynamically by Game.tsx
@@ -114,10 +114,10 @@ export class Grid {
         const x = this.offsetX + c * this.cellSize + gap;
         const y = this.offsetY + r * this.cellSize + gap;
         const s = this.cellSize - gap * 2;
-        // Fully opaque dark blue backgrounds — alternating tint
-        const tint = (r + c) % 2 === 0 ? 0x0c1528 : 0x101d38;
-        this.cellBackgrounds.fillStyle(tint, 1.0);
-        this.cellBackgrounds.fillRoundedRect(x, y, s, s, 6);
+        // Semi-transparent dark pink/purple backgrounds for glass effect
+        const tint = (r + c) % 2 === 0 ? 0x2a0018 : 0x3d0024;
+        this.cellBackgrounds.fillStyle(tint, 0.6);
+        this.cellBackgrounds.fillRoundedRect(x, y, s, s, 10);
       }
     }
   }
@@ -155,13 +155,13 @@ export class Grid {
     return this.offsetY + row * this.cellSize + this.cellSize / 2;
   }
 
-  /** Pick a weighted random symbol ID (0-6) or scatter (7). */
+  /** Pick a weighted random symbol ID (0-7) or scatter (8). */
   private pickSymbol(): number {
     const scatterRate = options.anteBetEnabled
       ? options.scatterChanceAnte
       : options.scatterChance;
 
-    if (Math.random() < scatterRate) return 7;
+    if (Math.random() < scatterRate) return 8;
 
     const weights = options.symbolWeights;
     const total = weights.reduce((a, b) => a + b, 0);
@@ -663,7 +663,7 @@ export class Grid {
     const scatterPositions: { r: number; c: number }[] = [];
     for (let r = 0; r < size; r++) {
       for (let c = 0; c < size; c++) {
-        if (idGrid[r][c] === 7) {
+        if (idGrid[r][c] === 8) {
           scatters++;
           scatterPositions.push({ r, c });
         }

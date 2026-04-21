@@ -438,11 +438,11 @@ export class StakeEngineClient {
     featureType: number,
   ): StakePlayResponse {
     const gridSize = 7;
-    const symbolWeights = [18, 17, 16, 14, 13, 12, 10];
+    const symbolWeights = [18, 16, 15, 14, 13, 12, 9, 3];
     const totalWeight = symbolWeights.reduce((a, b) => a + b, 0);
 
     const pickSymbol = (): number => {
-      if (Math.random() < 0.02) return 7; // scatter
+      if (Math.random() < 0.02) return 8; // scatter
       let roll = Math.random() * totalWeight;
       for (let i = 0; i < symbolWeights.length; i++) {
         roll -= symbolWeights[i];
