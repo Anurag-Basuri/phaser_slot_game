@@ -200,21 +200,23 @@ export class Game extends Phaser.Scene {
     // === GRID FRAME ===
     this.gridFrame = this.add.graphics({ x: 0, y: 0 }).setDepth(2);
 
-    // === LOGO ===
-    this.logoText1 = this.add.text(0, 0, 'SUGAR RUSH', {
+    // === LOGO (top-right like real Sugar Rush 1000) ===
+    this.logoText1 = this.add.text(0, 0, 'Sugar Rush', {
       fontFamily: 'Impact, Arial Black, sans-serif',
-      color: '#ff3399',
+      color: '#ff6699',
       fontStyle: 'bold',
       stroke: '#ffffff',
-      shadow: { offsetX: 0, offsetY: 4, color: '#990044', blur: 6, fill: true }
+      strokeThickness: 5,
+      shadow: { offsetX: 2, offsetY: 3, color: '#cc3366', blur: 4, fill: true }
     }).setDepth(30).setOrigin(0.5);
 
     this.logoText2 = this.add.text(0, 0, '1000', {
       fontFamily: 'Impact, Arial Black, sans-serif',
-      color: '#ffe600',
+      color: '#ffcc66',
       fontStyle: 'bold',
-      stroke: '#ff0066',
-      shadow: { offsetX: 0, offsetY: 4, color: '#cc0044', blur: 8, fill: true }
+      stroke: '#ff6699',
+      strokeThickness: 4,
+      shadow: { offsetX: 2, offsetY: 3, color: '#cc6633', blur: 4, fill: true }
     }).setDepth(30).setOrigin(0.5);
 
     // Buy buttons setup
@@ -400,36 +402,27 @@ export class Game extends Phaser.Scene {
     const w = this.scale.width;
     const h = this.scale.height;
     
+    // Draw programmatic bright candy land background gradient over the bg image
+    this.drawBrightBackground(w, h);
+
     // Determine screen mode
     const isPortrait = h > w;
-    const isMobile = w < 768; // Roughly tablet/mobile breakpoint
+    const isMobile = w < 768;
     const isMobilePortrait = isPortrait && isMobile;
 
     this.bgImage.setPosition(w / 2, h / 2).setDisplaySize(w, h);
 
-    // Height of the bottom glassmorphism bar
+    // Height of the bottom bar
     const barH = Math.max(50, h * 0.07);
 
-    // Toolbar top-right background plate (Glassy capsule)
-    const topBarW = Math.max(160, w * 0.18 + 40);
-    const topBarH = Math.max(36, h * 0.05);
-    const tbY = Math.max(15, h * 0.02) + topBarH / 2;
-    const tbX = w - Math.max(15, w * 0.02) - topBarW / 2;
-    
-    // We draw the capsule inside gridGlow or bottomBar so it's behind the texts
+    // Toolbar icons — bottom-left corner (like Pragmatic Play)
     this.bottomBar.clear();
-    this.bottomBar.fillStyle(0x0a0618, 0.65);
-    this.bottomBar.fillRoundedRect(tbX - topBarW/2, tbY - topBarH/2, topBarW, topBarH, topBarH / 2);
-    this.bottomBar.lineStyle(1, 0x331144, 0.7);
-    this.bottomBar.strokeRoundedRect(tbX - topBarW/2, tbY - topBarH/2, topBarW, topBarH, topBarH / 2);
+    const tbIconSize = Math.max(18, barH * 0.4);
 
-    const tbIconSize = Math.max(16, topBarH * 0.45);
-    const tbGap = topBarW / 4;
-
-    this.soundToggle.setPosition(tbX + tbGap * 1.5, tbY).setFontSize(tbIconSize).setOrigin(0.5);
-    this.btnPaytable.setPosition(tbX + tbGap * 0.5, tbY).setFontSize(tbIconSize).setOrigin(0.5);
-    this.btnSettings.setPosition(tbX - tbGap * 0.5, tbY).setFontSize(tbIconSize).setOrigin(0.5);
-    this.btnFullscreen.setPosition(tbX - tbGap * 1.5, tbY).setFontSize(tbIconSize).setOrigin(0.5);
+    this.btnFullscreen.setPosition(Math.max(20, w * 0.015), barH * 0.5 + 8).setFontSize(tbIconSize).setOrigin(0.5).setDepth(52);
+    this.btnSettings.setPosition(Math.max(50, w * 0.04), barH * 0.5 + 8).setFontSize(tbIconSize).setOrigin(0.5).setDepth(52);
+    this.btnPaytable.setPosition(Math.max(80, w * 0.065), barH * 0.5 + 8).setFontSize(tbIconSize).setOrigin(0.5).setDepth(52);
+    this.soundToggle.setPosition(Math.max(110, w * 0.09), barH * 0.5 + 8).setFontSize(tbIconSize).setOrigin(0.5).setDepth(52);
 
     let gridTotalSize = 0;
 
@@ -553,30 +546,93 @@ export class Game extends Phaser.Scene {
       }
     }
 
-    // Title positioning
-    const logoY = Math.max(35, h * 0.08);
-    const logoX = Math.max(160, w * 0.20);
-    this.logoText1.setPosition(logoX, logoY - 20).setFontSize(Math.min(54, w * 0.055)).setRotation(-0.02);
-    this.logoText2.setPosition(logoX, logoY + 30).setFontSize(Math.min(72, w * 0.075)).setRotation(-0.02);
+    // Title positioning — top-right like real Sugar Rush 1000
+    const logoX = w - Math.max(100, w * 0.10);
+    const logoY1 = Math.max(25, h * 0.06);
+    const logoFS1 = Math.min(36, w * 0.04);
+    const logoFS2 = Math.min(48, w * 0.055);
+    this.logoText1.setPosition(logoX, logoY1).setFontSize(logoFS1).setStroke('#ffffff', Math.max(3, logoFS1 * 0.08));
+    this.logoText2.setPosition(logoX, logoY1 + logoFS1 * 0.9).setFontSize(logoFS2).setStroke('#ff6699', Math.max(3, logoFS2 * 0.06));
 
-    // Draw the Glassmorphic Chassis Frame
+    // Draw the Light Blue Metallic Chassis Frame (matching Sugar Rush 1000 reference)
     this.gridFrame.clear();
-    const framePad = 12;
+    const framePad = 16;
     const gX = this.grid.offsetX - framePad;
     const gY = this.grid.offsetY - framePad;
-    const gSize = gridTotalSize + framePad * 2;
+    const gW = gridTotalSize + framePad * 2;
+    const gH = gridTotalSize + framePad * 2;
+    const frameR = 8;
+    const f = this.gridFrame;
     
-    // Outer shadow/glow
-    this.gridFrame.fillStyle(0x000000, 0.4);
-    this.gridFrame.fillRoundedRect(gX + 5, gY + 5, gSize, gSize, 16);
-    // Outer glass frost (dark blue-pink hue)
-    this.gridFrame.fillStyle(0x441166, 0.5);
-    this.gridFrame.fillRoundedRect(gX, gY, gSize, gSize, 16);
-    this.gridFrame.lineStyle(4, 0xffbbec, 0.4);
-    this.gridFrame.strokeRoundedRect(gX, gY, gSize, gSize, 16);
-    // Inner frame border 
-    this.gridFrame.lineStyle(2, 0xffffff, 0.8);
-    this.gridFrame.strokeRoundedRect(gX - 2, gY - 2, gSize + 4, gSize + 4, 18);
+    // Drop shadow
+    f.fillStyle(0x5588aa, 0.3);
+    f.fillRoundedRect(gX + 4, gY + 6, gW, gH + 20, frameR);
+    
+    // Main frame - light cyan/teal metallic
+    f.fillStyle(0x7ec8e3, 0.92);
+    f.fillRoundedRect(gX, gY, gW, gH, frameR);
+    
+    // Lighter top-half highlight (metallic sheen)
+    f.fillStyle(0xa8dff0, 0.5);
+    f.fillRoundedRect(gX + 2, gY + 2, gW - 4, gH * 0.35, frameR);
+    
+    // Left and right metallic side rails
+    f.fillStyle(0x6bb8d4, 0.8);
+    f.fillRect(gX, gY + framePad, framePad * 0.7, gH - framePad * 2);
+    f.fillRect(gX + gW - framePad * 0.7, gY + framePad, framePad * 0.7, gH - framePad * 2);
+    
+    // Inner border (bright)
+    f.lineStyle(2, 0xbbeeff, 0.8);
+    f.strokeRoundedRect(gX + 4, gY + 4, gW - 8, gH - 8, frameR - 2);
+    
+    // Outer border
+    f.lineStyle(3, 0x5599bb, 0.85);
+    f.strokeRoundedRect(gX, gY, gW, gH, frameR);
+    
+    // === FROSTING / ICING on top edge ===
+    // White icing base
+    const frostY = gY - 8;
+    const frostH = 18;
+    f.fillStyle(0xfff0f5, 0.95);
+    f.fillRoundedRect(gX + 5, frostY, gW - 10, frostH, 9);
+    
+    // Pink icing drip pattern on top
+    f.fillStyle(0xffaabb, 0.7);
+    f.fillRoundedRect(gX + 8, frostY + 2, gW - 16, frostH * 0.4, 5);
+    
+    // Colorful sprinkles
+    const sprinkleColors = [0xff6688, 0x66cc77, 0xffcc44, 0x66aaff, 0xff88dd];
+    for (let i = 0; i < gW - 20; i += 12) {
+      const sx = gX + 10 + i + Math.random() * 5;
+      const sy = frostY + 4 + Math.random() * (frostH - 8);
+      const sc = sprinkleColors[i % sprinkleColors.length];
+      f.fillStyle(sc, 0.9);
+      f.fillRect(sx, sy, 4, 2);
+    }
+    
+    // === BOTTOM EDGE with round teal rivets ===
+    // Bottom metallic base bar
+    const baseY = gY + gH - 4;
+    const baseH = 20;
+    f.fillStyle(0x5a9ab5, 0.85);
+    f.fillRoundedRect(gX + 5, baseY, gW - 10, baseH, 6);
+    f.fillStyle(0x78b8d0, 0.5);
+    f.fillRoundedRect(gX + 7, baseY + 2, gW - 14, baseH * 0.4, 4);
+    
+    // Round rivets along the bottom
+    const rivetCount = Math.floor(gW / 70);
+    const rivetGap = (gW - 30) / rivetCount;
+    for (let i = 0; i <= rivetCount; i++) {
+      const rx = gX + 15 + i * rivetGap;
+      const ry = baseY + baseH / 2;
+      const rr = 7;
+      // Rivet outer
+      f.fillStyle(0x4a8aa5, 1);
+      f.fillCircle(rx, ry, rr);
+      // Rivet inner highlight
+      f.fillStyle(0x6ab8d4, 0.7);
+      f.fillCircle(rx, ry - 1, rr * 0.6);
+    }
 
 
     // ==========================================
@@ -585,13 +641,11 @@ export class Game extends Phaser.Scene {
     const barCY = h - barH / 2;
     
     // Main dark base for the bottom bar
-    this.bottomBar.fillStyle(0x060812, 0.97);
+    this.bottomBar.fillStyle(0x111118, 0.95);
     this.bottomBar.fillRect(0, h - barH, w, barH);
-    // Top edge highlight — subtle pink
-    this.bottomBar.lineStyle(1.5, 0x331144, 0.8);
+    // Top edge highlight — golden line like Pragmatic
+    this.bottomBar.lineStyle(1.5, 0x998844, 0.5);
     this.bottomBar.lineBetween(0, h - barH, w, h - barH);
-    this.bottomBar.lineStyle(1, 0xff00cc, 0.08);
-    this.bottomBar.lineBetween(0, h - barH + 1, w, h - barH + 1);
 
     // Pill background dimensions 
     const pillH = barH * 0.65;
@@ -648,6 +702,60 @@ export class Game extends Phaser.Scene {
     if (this.stakeEngine.isDemoMode()) {
       this.demoLabel.setPosition(winX1 - 10, barCY).setFontSize(14);
     }
+  }
+
+  /** Draw a bright candy land gradient background programmatically */
+  private brightBg?: Phaser.GameObjects.Graphics;
+  private drawBrightBackground(w: number, h: number) {
+    if (!this.brightBg) {
+      this.brightBg = this.add.graphics().setDepth(-1);
+    }
+    this.brightBg.clear();
+    
+    // Sky gradient — light blue at top to pastel pink at bottom
+    const steps = 20;
+    const stepH = h / steps;
+    for (let i = 0; i < steps; i++) {
+      const t = i / steps;
+      // Interpolate from sky blue (top) to pastel pink (bottom)
+      const r = Math.floor(0x87 + (0xff - 0x87) * t);
+      const g = Math.floor(0xce + (0xbb - 0xce) * t);
+      const b = Math.floor(0xfa + (0xdd - 0xfa) * t);
+      const color = (r << 16) | (g << 8) | b;
+      this.brightBg.fillStyle(color, 1);
+      this.brightBg.fillRect(0, i * stepH, w, stepH + 1);
+    }
+    
+    // Pink candy hills in the foreground
+    this.brightBg.fillStyle(0xffaacc, 0.6);
+    for (let i = 0; i < 6; i++) {
+      const hx = (w / 5) * i;
+      const hy = h * 0.75 + Math.sin(i * 1.2) * h * 0.08;
+      const hr = w * 0.2 + Math.sin(i * 0.7) * w * 0.05;
+      this.brightBg.fillCircle(hx, hy, hr);
+    }
+    
+    // Brighter pink hills closer
+    this.brightBg.fillStyle(0xff99bb, 0.5);
+    for (let i = 0; i < 5; i++) {
+      const hx = (w / 4) * i + w * 0.1;
+      const hy = h * 0.85 + Math.cos(i * 0.9) * h * 0.04;
+      const hr = w * 0.18;
+      this.brightBg.fillCircle(hx, hy, hr);
+    }
+    
+    // Bottom ground fill
+    this.brightBg.fillStyle(0xffbbdd, 0.7);
+    this.brightBg.fillRect(0, h * 0.88, w, h * 0.12);
+    
+    // Fluffy clouds
+    this.brightBg.fillStyle(0xffffff, 0.4);
+    this.brightBg.fillCircle(w * 0.15, h * 0.1, 50);
+    this.brightBg.fillCircle(w * 0.18, h * 0.08, 40);
+    this.brightBg.fillCircle(w * 0.12, h * 0.09, 35);
+    this.brightBg.fillCircle(w * 0.75, h * 0.12, 45);
+    this.brightBg.fillCircle(w * 0.78, h * 0.10, 38);
+    this.brightBg.fillCircle(w * 0.72, h * 0.11, 32);
   }
 
   // --- Layout Helpers ---
@@ -708,39 +816,56 @@ export class Game extends Phaser.Scene {
     this.spinBtnLabel.setPosition(cx, cy).setFontSize(Math.min(22, radius * 0.40)).setDepth(25);
     this.spinBtnRadius = radius;
     
-    // Draw Pragmatic Play style spin button
-    this.spinBtnGraphics.clear();
+    // Draw authentic Sugar Rush 1000 spin button (dark circle with white arrow)
+    const g = this.spinBtnGraphics;
+    g.clear();
     
-    // Outer glow
-    this.spinBtnGraphics.fillStyle(0xffffff, 0.05);
-    this.spinBtnGraphics.fillCircle(cx, cy, radius * 1.25);
+    // Outer ring shadow
+    g.fillStyle(0x222222, 0.5);
+    g.fillCircle(cx, cy + 3, radius + 4);
     
-    // Drop shadow
-    this.spinBtnGraphics.fillStyle(0x000000, 0.4);
-    this.spinBtnGraphics.fillCircle(cx, cy + 3, radius);
-
-    // Dark base
-    this.spinBtnGraphics.fillStyle(0x990033, 1);
-    this.spinBtnGraphics.fillCircle(cx, cy, radius);
+    // Outer metallic ring
+    g.lineStyle(6, 0x999999, 0.9);
+    g.strokeCircle(cx, cy, radius + 2);
     
-    // Gradient top layer (pink/magenta)
-    this.spinBtnGraphics.fillStyle(0xff006a, 0.9);
-    this.spinBtnGraphics.fillCircle(cx, cy - radius * 0.1, radius * 0.9);
-
-    // Stroke
-    this.spinBtnGraphics.lineStyle(4, 0xffffff, 0.6);
-    this.spinBtnGraphics.strokeCircle(cx, cy, radius * 0.96);
+    // Main dark fill
+    g.fillStyle(0x1a1a1a, 1);
+    g.fillCircle(cx, cy, radius);
     
-    // Draw inner white spinning arrows icon directly
-    const arrowRadius = radius * 0.55;
-    this.spinBtnGraphics.lineStyle(6, 0xffffff, 1);
-    this.spinBtnGraphics.beginPath();
-    this.spinBtnGraphics.arc(cx, cy, arrowRadius, Phaser.Math.DegToRad(-45), Phaser.Math.DegToRad(180));
-    this.spinBtnGraphics.strokePath();
+    // Subtle inner gradient (slightly lighter center)
+    g.fillStyle(0x333333, 0.4);
+    g.fillCircle(cx, cy - radius * 0.15, radius * 0.7);
     
-    this.spinBtnGraphics.beginPath();
-    this.spinBtnGraphics.arc(cx, cy, arrowRadius, Phaser.Math.DegToRad(135), Phaser.Math.DegToRad(0));
-    this.spinBtnGraphics.strokePath();
+    // Inner ring
+    g.lineStyle(2, 0x555555, 0.6);
+    g.strokeCircle(cx, cy, radius * 0.85);
+    
+    // Draw the circular arrow icon (white, thick)
+    const arrowR = radius * 0.5;
+    g.lineStyle(Math.max(4, radius * 0.08), 0xffffff, 1);
+    
+    // Top arc
+    g.beginPath();
+    g.arc(cx, cy, arrowR, Phaser.Math.DegToRad(-60), Phaser.Math.DegToRad(160));
+    g.strokePath();
+    
+    // Bottom arc
+    g.beginPath();
+    g.arc(cx, cy, arrowR, Phaser.Math.DegToRad(120), Phaser.Math.DegToRad(340));
+    g.strokePath();
+    
+    // Arrow heads (small triangles)
+    const headSize = Math.max(6, radius * 0.12);
+    // Top arrowhead pointing right
+    const ax1 = cx + arrowR * Math.cos(Phaser.Math.DegToRad(160));
+    const ay1 = cy + arrowR * Math.sin(Phaser.Math.DegToRad(160));
+    g.fillStyle(0xffffff, 1);
+    g.fillTriangle(ax1, ay1 - headSize, ax1 + headSize, ay1, ax1, ay1 + headSize);
+    
+    // Bottom arrowhead pointing left
+    const ax2 = cx + arrowR * Math.cos(Phaser.Math.DegToRad(340));
+    const ay2 = cy + arrowR * Math.sin(Phaser.Math.DegToRad(340));
+    g.fillTriangle(ax2, ay2 - headSize, ax2 - headSize, ay2, ax2, ay2 + headSize);
   }
 
 

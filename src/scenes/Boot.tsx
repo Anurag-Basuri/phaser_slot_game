@@ -13,16 +13,22 @@ export class Boot extends Phaser.Scene {
     const w = this.scale.width;
     const h = this.scale.height;
 
-    // === CANDY LAND BACKGROUND ===
+    // === BRIGHT CANDY LAND BACKGROUND ===
     const bg = this.add.image(w / 2, h / 2, 'candyland_bg').setDisplaySize(w, h);
-    // Soft vignette overlay
-    const vignette = this.add.graphics();
-    vignette.fillStyle(0x1a0028, 0.45);
-    vignette.fillRect(0, 0, w, h);
-    // Gradient bars top/bottom
-    vignette.fillStyle(0x0a0014, 0.6);
-    vignette.fillRect(0, 0, w, h * 0.12);
-    vignette.fillRect(0, h * 0.88, w, h * 0.12);
+    
+    // Bright sky-to-pink gradient overlay (NOT dark)
+    const gradient = this.add.graphics();
+    const steps = 15;
+    const stepH = h / steps;
+    for (let i = 0; i < steps; i++) {
+      const t = i / steps;
+      const r = Math.floor(0x87 + (0xff - 0x87) * t);
+      const g = Math.floor(0xce + (0xaa - 0xce) * t);
+      const b = Math.floor(0xfa + (0xcc - 0xfa) * t);
+      const color = (r << 16) | (g << 8) | b;
+      gradient.fillStyle(color, 0.4);
+      gradient.fillRect(0, i * stepH, w, stepH + 1);
+    }
 
     // === FLOATING CANDY BACKGROUND PARTICLES ===
     for (let i = 0; i < 8; i++) {
