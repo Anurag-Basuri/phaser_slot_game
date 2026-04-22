@@ -410,7 +410,8 @@ export class Game extends Phaser.Scene {
     const isMobile = w < 768;
     const isMobilePortrait = isPortrait && isMobile;
 
-    this.bgImage.setPosition(w / 2, h / 2).setDisplaySize(w, h);
+    // Hide old dark bg image — we use programmatic bright background now
+    this.bgImage.setVisible(false);
 
     // Height of the bottom bar
     const barH = Math.max(50, h * 0.07);
@@ -437,7 +438,7 @@ export class Game extends Phaser.Scene {
       gridTotalSize = cellSize * options.gridSize;
       
       const gridX = (w - gridTotalSize) / 2;
-      const gridY = Math.max(tbY + 30, h * 0.06);
+      const gridY = Math.max(30, h * 0.06);
 
       this.grid.cellSize = cellSize;
       this.grid.offsetX = gridX;
@@ -497,7 +498,7 @@ export class Game extends Phaser.Scene {
       gridTotalSize = cellSize * options.gridSize;
 
       const gridX = (w - gridTotalSize) / 2;
-      const gridY = Math.max(tbY + 10, ((h - barH) - gridTotalSize) / 2);
+      const gridY = Math.max(10, ((h - barH) - gridTotalSize) / 2);
 
       this.grid.cellSize = cellSize;
       this.grid.offsetX = gridX;
@@ -708,7 +709,7 @@ export class Game extends Phaser.Scene {
   private brightBg?: Phaser.GameObjects.Graphics;
   private drawBrightBackground(w: number, h: number) {
     if (!this.brightBg) {
-      this.brightBg = this.add.graphics().setDepth(-1);
+      this.brightBg = this.add.graphics().setDepth(0);
     }
     this.brightBg.clear();
     

@@ -13,22 +13,49 @@ export class Boot extends Phaser.Scene {
     const w = this.scale.width;
     const h = this.scale.height;
 
-    // === BRIGHT CANDY LAND BACKGROUND ===
-    const bg = this.add.image(w / 2, h / 2, 'candyland_bg').setDisplaySize(w, h);
+    // === BRIGHT CANDY LAND BACKGROUND (fully programmatic) ===
+    // Hide dark bg image — draw bright gradient instead
+    const bg = this.add.image(w / 2, h / 2, 'candyland_bg').setDisplaySize(w, h).setVisible(false);
     
-    // Bright sky-to-pink gradient overlay (NOT dark)
     const gradient = this.add.graphics();
-    const steps = 15;
+    const steps = 25;
     const stepH = h / steps;
     for (let i = 0; i < steps; i++) {
       const t = i / steps;
+      // Sky blue at top → pastel pink at bottom
       const r = Math.floor(0x87 + (0xff - 0x87) * t);
-      const g = Math.floor(0xce + (0xaa - 0xce) * t);
+      const g = Math.floor(0xce + (0x99 - 0xce) * t);
       const b = Math.floor(0xfa + (0xcc - 0xfa) * t);
       const color = (r << 16) | (g << 8) | b;
-      gradient.fillStyle(color, 0.4);
+      gradient.fillStyle(color, 1);
       gradient.fillRect(0, i * stepH, w, stepH + 1);
     }
+    
+    // Pink candy hills
+    gradient.fillStyle(0xffaacc, 0.7);
+    for (let i = 0; i < 7; i++) {
+      const hx = (w / 6) * i;
+      const hy = h * 0.78 + Math.sin(i * 1.3) * h * 0.06;
+      gradient.fillCircle(hx, hy, w * 0.18);
+    }
+    gradient.fillStyle(0xff99bb, 0.6);
+    for (let i = 0; i < 5; i++) {
+      const hx = (w / 4) * i + w * 0.12;
+      const hy = h * 0.88;
+      gradient.fillCircle(hx, hy, w * 0.15);
+    }
+    gradient.fillStyle(0xffbbdd, 0.8);
+    gradient.fillRect(0, h * 0.9, w, h * 0.1);
+    
+    // White fluffy clouds
+    gradient.fillStyle(0xffffff, 0.5);
+    gradient.fillCircle(w * 0.12, h * 0.08, 45);
+    gradient.fillCircle(w * 0.15, h * 0.06, 35);
+    gradient.fillCircle(w * 0.09, h * 0.07, 30);
+    gradient.fillCircle(w * 0.8, h * 0.1, 40);
+    gradient.fillCircle(w * 0.83, h * 0.08, 32);
+    gradient.fillCircle(w * 0.45, h * 0.05, 28);
+    gradient.fillCircle(w * 0.48, h * 0.04, 22);
 
     // === FLOATING CANDY BACKGROUND PARTICLES ===
     for (let i = 0; i < 8; i++) {
@@ -220,7 +247,7 @@ export class Boot extends Phaser.Scene {
     playBtn.on('pointerdown', () => {
       this.tweens.killAll();
       this.tweens.add({
-        targets: [titleMain, title1000, subtitle, btnBg, playText, btnGlow, centerGlow, vignette],
+        targets: [titleMain, title1000, subtitle, btnBg, playText, btnGlow, centerGlow, gradient],
         alpha: 0,
         duration: 350,
         onComplete: () => this.scene.start('Game'),
