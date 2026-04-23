@@ -27,11 +27,12 @@ export class Preload extends Phaser.Scene {
     // Scene assets
     this.load.image('candyland_bg', 'images/candyland_bg.png');
 
-    // Audio
+    // Audio (including previously unused lose.mp3)
     this.load.audio('backgroundDefault', 'audio/background-default.mp3');
     this.load.audio('reels', 'audio/reels.mp3');
     this.load.audio('reelStop', 'audio/reel_stop.mp3');
     this.load.audio('win', 'audio/win.mp3');
+    this.load.audio('lose', 'audio/lose.mp3');
     this.load.audio('button', 'audio/button.mp3');
     this.load.audio('musicDefault', 'audio/music_default.mp3');
   }

@@ -94,7 +94,7 @@ export class Boot extends Phaser.Scene {
     const titleFontSize = Math.min(72, w * 0.09);
     const titleMain = this.add.text(w / 2, h * 0.28, 'SUGAR RUSH', {
       fontSize: `${titleFontSize}px`,
-      fontFamily: 'Impact, Arial Black, sans-serif',
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
       color: '#ff3399',
       fontStyle: 'bold',
       stroke: '#ffffff',
@@ -109,7 +109,7 @@ export class Boot extends Phaser.Scene {
     const numFontSize = Math.min(120, w * 0.15);
     const title1000 = this.add.text(w / 2, h * 0.42, '1000', {
       fontSize: `${numFontSize}px`,
-      fontFamily: 'Impact, Arial Black, sans-serif',
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
       color: '#ffe600',
       fontStyle: 'bold',
       stroke: '#ff0066',
@@ -207,7 +207,7 @@ export class Boot extends Phaser.Scene {
     const playFontSize = Math.min(32, btnH * 0.45);
     const playText = this.add.text(btnX, btnY, '▶  PLAY', {
       fontSize: `${playFontSize}px`,
-      fontFamily: 'Impact, Arial Black, sans-serif',
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
       color: '#ffffff',
       fontStyle: 'bold',
       shadow: {

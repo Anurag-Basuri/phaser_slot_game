@@ -75,7 +75,7 @@ export class PaytableOverlay {
     // Title
     const isSocial = getStakeEngine().isSocialMode();
     pageWrapper.add(this.scene.add.text(logicalW / 2, 28, T('GAME RULES', isSocial), {
-      fontSize: '28px', fontFamily: 'Impact, Arial Black, sans-serif',
+      fontSize: '28px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
       color: '#ffffff', fontStyle: 'bold',
       stroke: '#000000', strokeThickness: 4
     }).setOrigin(0.5));
@@ -211,7 +211,7 @@ export class PaytableOverlay {
     let yPos = 75;
 
     page.add(this.scene.add.text(w / 2, yPos, 'TUMBLE FEATURE', {
-      fontSize: '24px', fontFamily: 'Impact, Arial Black, sans-serif',
+      fontSize: '24px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
       color: '#ffffff', fontStyle: 'bold',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5));
@@ -251,7 +251,7 @@ export class PaytableOverlay {
     let yPos = 75;
 
     page.add(this.scene.add.text(w / 2, yPos, 'MULTIPLIER SPOTS FEATURE', {
-      fontSize: '24px', fontFamily: 'Impact, Arial Black, sans-serif',
+      fontSize: '24px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
       color: '#ffffff', fontStyle: 'bold',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5));
@@ -300,7 +300,7 @@ export class PaytableOverlay {
     let yPos = 75;
 
     page.add(this.scene.add.text(w / 2, yPos, 'FREE SPINS', {
-      fontSize: '24px', fontFamily: 'Impact, Arial Black, sans-serif',
+      fontSize: '24px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
       color: '#ffffff', fontStyle: 'bold',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5));
@@ -364,7 +364,7 @@ export class PaytableOverlay {
     let yPos = 75;
 
     page.add(this.scene.add.text(w / 2, yPos, 'GAME RULES', {
-      fontSize: '24px', fontFamily: 'Impact, Arial Black, sans-serif',
+      fontSize: '24px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
       color: '#ffffff', fontStyle: 'bold',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5));
@@ -452,7 +452,7 @@ export class PaytableOverlay {
     let yPos = 75;
 
     page.add(this.scene.add.text(w / 2, yPos, 'HOW TO PLAY', {
-      fontSize: '24px', fontFamily: 'Impact, Arial Black, sans-serif',
+      fontSize: '24px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
       color: '#ffffff', fontStyle: 'bold',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5));
@@ -472,7 +472,7 @@ export class PaytableOverlay {
 
     yPos += 15;
     page.add(this.scene.add.text(w / 2, yPos, 'MAIN GAME INTERFACE', {
-      fontSize: '20px', fontFamily: 'Impact, Arial Black, sans-serif',
+      fontSize: '20px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
       color: '#ffffff', fontStyle: 'bold',
     }).setOrigin(0.5));
     yPos += 40;
@@ -518,7 +518,7 @@ export class PaytableOverlay {
     let yPos = 75;
 
     page.add(this.scene.add.text(w / 2, yPos, 'SETTINGS MENU', {
-      fontSize: '22px', fontFamily: 'Impact, Arial Black, sans-serif',
+      fontSize: '22px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
       color: '#ffffff', fontStyle: 'bold',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5));
@@ -539,7 +539,7 @@ export class PaytableOverlay {
 
     yPos += 20;
     page.add(this.scene.add.text(w / 2, yPos, 'INFORMATION SCREEN', {
-      fontSize: '18px', fontFamily: 'Impact, Arial Black, sans-serif',
+      fontSize: '18px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
       color: '#ffffff', fontStyle: 'bold',
     }).setOrigin(0.5));
     yPos += 35;
@@ -554,7 +554,7 @@ export class PaytableOverlay {
     yPos += 35;
 
     page.add(this.scene.add.text(w / 2, yPos, 'BET MENU', {
-      fontSize: '18px', fontFamily: 'Impact, Arial Black, sans-serif',
+      fontSize: '18px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
       color: '#ffffff', fontStyle: 'bold',
     }).setOrigin(0.5));
     yPos += 32;
@@ -571,7 +571,7 @@ export class PaytableOverlay {
 
     // MAX WIN
     page.add(this.scene.add.text(w / 2, yPos, 'MAX WIN', {
-      fontSize: '18px', fontFamily: 'Impact, Arial Black, sans-serif',
+      fontSize: '18px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
       color: '#ffe600', fontStyle: 'bold',
       stroke: '#000', strokeThickness: 2,
     }).setOrigin(0.5));
