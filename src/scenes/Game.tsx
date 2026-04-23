@@ -202,25 +202,25 @@ export class Game extends Phaser.Scene {
 
     // === LOGO (top-right like real Sugar Rush 1000) ===
     this.logoText1 = this.add.text(0, 0, 'Sugar Rush', {
-      fontFamily: 'Impact, Arial Black, sans-serif',
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
       color: '#ff6699',
-      fontStyle: 'bold',
+      fontStyle: 'normal',
       stroke: '#ffffff',
       strokeThickness: 5,
       shadow: { offsetX: 2, offsetY: 3, color: '#cc3366', blur: 4, fill: true }
     }).setDepth(30).setOrigin(0.5);
 
     this.logoText2 = this.add.text(0, 0, '1000', {
-      fontFamily: 'Impact, Arial Black, sans-serif',
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
       color: '#ffcc66',
-      fontStyle: 'bold',
+      fontStyle: 'normal',
       stroke: '#ff6699',
       strokeThickness: 4,
       shadow: { offsetX: 2, offsetY: 3, color: '#cc6633', blur: 4, fill: true }
     }).setDepth(30).setOrigin(0.5);
 
     // Buy buttons setup
-    const btnStyle = { fontFamily: 'Impact', fontStyle: 'bold', align: 'center', strokeThickness: 1 };
+    const btnStyle = { fontFamily: '"Luckiest Guy", cursive, sans-serif', fontStyle: 'normal', align: 'center', strokeThickness: 1 };
     
     // Super Buy
     this.panelSuperGraphics = this.add.graphics({ x: 0, y: 0 }).setDepth(20);
@@ -254,7 +254,7 @@ export class Game extends Phaser.Scene {
         this.audio.playSound('button');
       });
     this.anteBetIcon = this.add.text(0, 0, '⚡', { fontFamily: 'Arial' }).setOrigin(0.5).setDepth(21);
-    this.anteBetTxt = this.add.text(0, 0, T('ANTE BET', this.stakeEngine.isSocialMode()), { fontFamily: 'Impact', color: '#ffffff' }).setOrigin(0, 0.5).setDepth(21);
+    this.anteBetTxt = this.add.text(0, 0, T('ANTE BET', this.stakeEngine.isSocialMode()), { fontFamily: '"Luckiest Guy", cursive, sans-serif', color: '#ffffff' }).setOrigin(0, 0.5).setDepth(21);
 
     // Spin button setup (Authentic Pragmatic Circular Style)
     this.spinBtnGraphics = this.add.graphics().setDepth(20);
@@ -264,7 +264,7 @@ export class Game extends Phaser.Scene {
           this.tweens.add({ targets: this.spinBtnGraphics, scaleX: 0.9, scaleY: 0.9, yoyo: true, duration: 80 });
           this.handleUniversalAction();
       });
-    this.spinBtnLabel = this.add.text(0, 0, '', { fontFamily: 'Impact, Arial Black, sans-serif' }).setOrigin(0.5).setDepth(21);
+    this.spinBtnLabel = this.add.text(0, 0, '', { fontFamily: '"Luckiest Guy", cursive, sans-serif' }).setOrigin(0.5).setDepth(21);
 
     // Auto Play setup
     this.btnAuto = this.add.rectangle(0, 0, 100, 30, 0x0a0618)
@@ -310,7 +310,7 @@ export class Game extends Phaser.Scene {
     this.txtLastWin = this.add.text(0, 0, '', { ...tValStyle, color: '#ffe600' }).setOrigin(1, 0.5).setDepth(50);
     
     this.demoLabel = this.add.text(0, 0, '', {
-      fontFamily: 'Impact', color: '#ff4466'
+      fontFamily: '"Luckiest Guy", cursive, sans-serif', color: '#ff4466'
     }).setOrigin(1, 0.5).setDepth(50).setAlpha(0.8);
 
     if (this.stakeEngine.isDemoMode()) {
@@ -326,7 +326,7 @@ export class Game extends Phaser.Scene {
     // === FREE SPINS COUNTER ===
     this.txtFSRemaining = this.add.text(0, 0, '', {
       fontSize: '36px', color: '#ffffff', align: 'center', fontStyle: 'bold',
-      fontFamily: 'Impact, Arial Black, sans-serif',
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
       stroke: '#cc00ff', strokeThickness: 6,
       shadow: { offsetX: 0, offsetY: 3, color: '#8800cc', blur: 12, fill: true }
     }).setOrigin(0.5).setVisible(false).setDepth(20);
@@ -393,7 +393,7 @@ export class Game extends Phaser.Scene {
         .setStrokeStyle(3, 0xffffff, 1)
         .setInteractive({ useHandCursor: true }).setDepth(55)
         .on('pointerdown', () => this.executeReplay());
-      this.replayBtnTxt = this.add.text(0, 0, '▶ START REPLAY', {fontSize: '24px', fontFamily: 'Impact', color: '#fff'}).setOrigin(0.5).setDepth(56);
+      this.replayBtnTxt = this.add.text(0, 0, '▶ START REPLAY', {fontSize: '24px', fontFamily: '"Luckiest Guy", cursive, sans-serif', color: '#fff'}).setOrigin(0.5).setDepth(56);
     }
   }
 

@@ -216,6 +216,17 @@ export class Grid {
           sprite.setScale(Math.min(scale, 1));
           sprite.setDepth(10);
 
+          // Apply circular crop to wild/scatter to remove square backgrounds
+          if (symId === 7 || symId === 8) {
+            const cropRadius = Math.min(sprite.width, sprite.height) / 2;
+            sprite.setCrop(
+              sprite.width / 2 - cropRadius,
+              sprite.height / 2 - cropRadius,
+              cropRadius * 2,
+              cropRadius * 2
+            );
+          }
+
           this.sprites[r][c] = sprite;
 
           // Weighted drop with slight stagger per column for satisfying cascade rhythm
@@ -483,7 +494,7 @@ export class Grid {
         multText,
         {
           fontSize: `${fontSize}px`,
-          fontFamily: 'Impact, Arial Black',
+          fontFamily: '"Luckiest Guy", cursive, sans-serif',
           color: tier.textColor,
           stroke: tier.stroke.toString(16).padStart(6, '0'),
           strokeThickness: 5,
