@@ -46,14 +46,15 @@ export class ConfirmDialog {
     panel.fillRoundedRect(px, py, panelW, panelH, 20);
     // Gradient-like top accent
     panel.fillStyle(0xff006a, 0.12);
-    panel.fillRoundedRect(px, py, panelW, 60, { tl: 20, tr: 20, bl: 0, br: 0 });
+    panel.fillRoundedRect(px, py, panelW, 60, 20);
     panel.lineStyle(3, 0xff006a, 0.8);
     panel.strokeRoundedRect(px, py, panelW, panelH, 20);
     this.container.add(panel);
 
     // Title
     this.container.add(this.scene.add.text(w / 2, py + 36, title, {
-      fontSize: '28px', color: '#ffffff', fontStyle: 'bold',
+      fontSize: '28px', color: '#ffffff', fontStyle: 'normal',
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
     }).setOrigin(0.5));
 
     // Subtitle
@@ -75,7 +76,7 @@ export class ConfirmDialog {
 
     // Confirm button
     const confirmBg = this.scene.add.graphics();
-    confirmBg.fillStyle(0x22cc66, 1);
+    confirmBg.fillStyle(0xff006a, 1);
     confirmBg.fillRoundedRect(w / 2 - btnW - btnGap / 2, btnY, btnW, btnH, 12);
     this.container.add(confirmBg);
 
@@ -112,12 +113,12 @@ export class ConfirmDialog {
     });
     confirmHit.on('pointerover', () => {
       confirmBg.clear();
-      confirmBg.fillStyle(0x33dd77, 1);
+      confirmBg.fillStyle(0xff3388, 1);
       confirmBg.fillRoundedRect(w / 2 - btnW - btnGap / 2, btnY, btnW, btnH, 12);
     });
     confirmHit.on('pointerout', () => {
       confirmBg.clear();
-      confirmBg.fillStyle(0x22cc66, 1);
+      confirmBg.fillStyle(0xff006a, 1);
       confirmBg.fillRoundedRect(w / 2 - btnW - btnGap / 2, btnY, btnW, btnH, 12);
     });
 

@@ -51,6 +51,7 @@ export class Game extends Phaser.Scene {
   private txtBet!: Phaser.GameObjects.Text;
   private txtBetLabel!: Phaser.GameObjects.Text;
   private bottomBar!: Phaser.GameObjects.Graphics;
+  private toolbarGfx!: Phaser.GameObjects.Graphics;
   private txtFSRemaining!: Phaser.GameObjects.Text;
   private buySuperHit!: Phaser.GameObjects.Rectangle;
   private buyRegularHit!: Phaser.GameObjects.Rectangle;
@@ -154,17 +155,16 @@ export class Game extends Phaser.Scene {
 
     this.buildUI();
     this.wireInteractions();
+    
+    // Initialize grid before layoutAll so its internal graphics exist
+    this.grid.init();
+
     this.layoutAll();
     this.updateMoneyDisplay();
     this.updateBetDisplay();
 
     // Set active bet
     options.betAmount = BET_PRESETS[this.betPresetIndex];
-
-
-
-    // Initialize grid
-    this.grid.init();
 
     // Start background music
     this.audio.playMusic('backgroundDefault');
@@ -294,11 +294,11 @@ export class Game extends Phaser.Scene {
           this.stopAutoSpin();
         }
       });
-    this.txtAuto = this.add.text(0, 0, 'AUTO', { fontFamily: 'Arial', fontStyle: 'bold', color: '#bbaacc' }).setOrigin(0.5).setDepth(21);
+    this.txtAuto = this.add.text(0, 0, 'AUTO', { fontFamily: '"Luckiest Guy", cursive, sans-serif', fontStyle: 'normal', color: '#ccbbdd' }).setOrigin(0.5).setDepth(21);
 
     // === BOTTOM BAR ===
-    const tLabelStyle = { fontFamily: 'Arial', fontStyle: 'bold', color: '#8877aa' };
-    const tValStyle = { fontFamily: 'Verdana', fontStyle: 'bold', color: '#eeddff' };
+    const tLabelStyle = { fontFamily: '"Luckiest Guy", cursive, sans-serif', fontStyle: 'normal', color: '#ffffff', alpha: 0.55 };
+    const tValStyle = { fontFamily: '"Luckiest Guy", cursive, sans-serif', fontStyle: 'normal', color: '#ffffff' };
     
     // Bottom Bar Structural Graphic
     this.bottomBar = this.add.graphics().setDepth(45);
@@ -310,7 +310,7 @@ export class Game extends Phaser.Scene {
     this.txtBet = this.add.text(0, 0, '', tValStyle).setOrigin(0.5).setDepth(50);
     
     this.txtLastWinLabel = this.add.text(0, 0, T('LAST WIN', this.stakeEngine.isSocialMode()), tLabelStyle).setOrigin(1, 0.5).setDepth(50);
-    this.txtLastWin = this.add.text(0, 0, '', { ...tValStyle, color: '#ffe600' }).setOrigin(1, 0.5).setDepth(50);
+    this.txtLastWin = this.add.text(0, 0, '', { ...tValStyle, color: '#ffee44' }).setOrigin(1, 0.5).setDepth(50);
     
     this.demoLabel = this.add.text(0, 0, '', {
       fontFamily: '"Luckiest Guy", cursive, sans-serif', color: '#ff4466'
@@ -334,23 +334,29 @@ export class Game extends Phaser.Scene {
       shadow: { offsetX: 0, offsetY: 3, color: '#8800cc', blur: 12, fill: true }
     }).setOrigin(0.5).setVisible(false).setDepth(20);
 
-    // === TOOLBAR ===
-    this.soundToggle = this.add.text(0, 0, '🔊', { fontSize: '28px', color: '#ffffff', stroke: '#000000', strokeThickness: 5 })
-      .setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(16);
-    this.btnPaytable = this.add.text(0, 0, 'ℹ', { fontSize: '28px', color: '#ffffff', stroke: '#000000', strokeThickness: 5 })
-      .setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(16);
-    this.btnSettings = this.add.text(0, 0, '⚙', { fontSize: '28px', color: '#ffffff', stroke: '#000000', strokeThickness: 5 })
-      .setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(16);
-    this.btnFullscreen = this.add.text(0, 0, '⛶', { fontSize: '28px', color: '#ffffff', stroke: '#000000', strokeThickness: 5 })
-      .setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(16);
+    // === TOOLBAR (Graphics-drawn icons instead of emoji) ===
+    this.toolbarGfx = this.add.graphics().setDepth(46);
+    this.soundToggle = this.add.text(0, 0, '', { fontSize: '1px' })
+      .setOrigin(0.5).setDepth(16).setAlpha(0.001);
+    this.btnPaytable = this.add.text(0, 0, '', { fontSize: '1px' })
+      .setOrigin(0.5).setDepth(16).setAlpha(0.001);
+    this.btnSettings = this.add.text(0, 0, '', { fontSize: '1px' })
+      .setOrigin(0.5).setDepth(16).setAlpha(0.001);
+    this.btnFullscreen = this.add.text(0, 0, '', { fontSize: '1px' })
+      .setOrigin(0.5).setDepth(16).setAlpha(0.001);
+    // Make hit areas interactive
+    [this.soundToggle, this.btnPaytable, this.btnSettings, this.btnFullscreen].forEach(btn => {
+      btn.setInteractive(new Phaser.Geom.Circle(0, 0, 18), Phaser.Geom.Circle.Contains);
+      (btn as any).input!.cursor = 'pointer';
+    });
 
     // === OVERLAYS ===
     this.paytable = new PaytableOverlay(this);
     this.settings = new SettingsOverlay(this);
     this.settings.setSoundCallback((enabled) => {
       this.soundEnabled = enabled;
-      this.soundToggle.setText(enabled ? '🔊' : '🔇');
       this.sound.mute = !enabled;
+      this.drawToolbarIcons();
     });
     this.settings.setTurboCallback?.((enabled: boolean) => {
       this.grid.turboMode = enabled;
@@ -467,7 +473,7 @@ export class Game extends Phaser.Scene {
     // 2. BUY PANELS & ANTE BET
     // ==========================================
     const buyW = isMobilePortrait ? w * 0.44 : Math.min(180, w * 0.16);
-    const buyH = isMobilePortrait ? 70 : 85;
+    const buyH = isMobilePortrait ? 70 : 100;
     const buyGap = 10;
     let buyX: number = 0;
     let buyY1: number = 0;
@@ -521,10 +527,14 @@ export class Game extends Phaser.Scene {
     // 3. BOTTOM BAR & HUD
     // ==========================================
     this.bottomBar.clear();
-    this.bottomBar.fillStyle(0x000000, 0.75);
+    // Dark gradient base
+    this.bottomBar.fillStyle(0x0a0618, 0.88);
     this.bottomBar.fillRect(0, h - barH, w, barH);
-    this.bottomBar.lineStyle(2, 0xffffff, 0.1);
-    this.bottomBar.lineBetween(0, h - barH, w, h - barH);
+    // Candy-pink accent line at top
+    this.bottomBar.fillStyle(0xff006a, 0.35);
+    this.bottomBar.fillRect(0, h - barH, w, 2);
+    this.bottomBar.fillStyle(0xff006a, 0.08);
+    this.bottomBar.fillRect(0, h - barH + 2, w, 8);
 
     const pillH = barH * 0.65;
     const pillY = h - barH / 2;
@@ -580,13 +590,15 @@ export class Game extends Phaser.Scene {
     this.btnAuto.setPosition(autoX, autoY).setSize(autoW, autoH).setDisplaySize(autoW, autoH);
     this.txtAuto.setPosition(autoX, autoY).setFontSize(14);
 
-    // Toolbar
+    // Toolbar — position hidden hit-area texts, then draw icons
     const toolY = h - barH / 2;
     const toolPad = isMobile ? 12 : sidePad + 10;
-    this.btnSettings.setPosition(toolPad, toolY).setFontSize(24);
-    this.btnPaytable.setPosition(toolPad + 35, toolY).setFontSize(24);
-    this.soundToggle.setPosition(toolPad + 70, toolY).setFontSize(24);
-    this.btnFullscreen.setPosition(toolPad + 105, toolY).setFontSize(24);
+    const toolGap = 38;
+    this.btnSettings.setPosition(toolPad, toolY);
+    this.btnPaytable.setPosition(toolPad + toolGap, toolY);
+    this.soundToggle.setPosition(toolPad + toolGap * 2, toolY);
+    this.btnFullscreen.setPosition(toolPad + toolGap * 3, toolY);
+    this.drawToolbarIcons();
 
     // Logo
     const logoX = w - Math.max(100, w * 0.10);
@@ -595,6 +607,18 @@ export class Game extends Phaser.Scene {
     const logoFS2 = Math.min(48, w * 0.055);
     this.logoText1.setPosition(logoX, logoY1).setFontSize(logoFS1).setStroke('#ffffff', Math.max(3, logoFS1 * 0.08));
     this.logoText2.setPosition(logoX, logoY1 + logoFS1 * 0.9).setFontSize(logoFS2).setStroke('#ff6699', Math.max(3, logoFS2 * 0.06));
+
+    // Logo floating animation (only add once)
+    if (!this.tweens.isTweening(this.logoText1)) {
+      this.tweens.add({
+        targets: [this.logoText1, this.logoText2],
+        y: '+=3',
+        yoyo: true,
+        repeat: -1,
+        duration: 2500,
+        ease: 'Sine.easeInOut',
+      });
+    }
 
     // FS Counter
     this.txtFSRemaining.setPosition(w / 2, gridY - 30).setFontSize(Math.min(42, w * 0.08));
@@ -605,20 +629,90 @@ export class Game extends Phaser.Scene {
     }
   }
 
+  /** Draw vector toolbar icons into the shared toolbarGfx graphics object */
+  private drawToolbarIcons() {
+    if (!this.toolbarGfx) return;
+    this.toolbarGfx.clear();
+    const iconR = 15;
+    const positions = [
+      { obj: this.btnSettings, type: 'settings' },
+      { obj: this.btnPaytable, type: 'info' },
+      { obj: this.soundToggle, type: this.soundEnabled ? 'sound_on' : 'sound_off' },
+      { obj: this.btnFullscreen, type: 'fullscreen' },
+    ];
+    for (const { obj, type } of positions) {
+      const cx = obj.x, cy = obj.y;
+      // Dark circle background
+      this.toolbarGfx.fillStyle(0x000000, 0.45);
+      this.toolbarGfx.fillCircle(cx, cy, iconR);
+      this.toolbarGfx.lineStyle(1.5, 0xffffff, 0.25);
+      this.toolbarGfx.strokeCircle(cx, cy, iconR);
+      // Icon strokes
+      this.toolbarGfx.lineStyle(2, 0xffffff, 0.85);
+      const s = iconR * 0.45; // icon half-size
+      if (type === 'settings') {
+        // Gear: circle + 4 ticks
+        this.toolbarGfx.strokeCircle(cx, cy, s * 0.55);
+        for (let a = 0; a < 4; a++) {
+          const angle = (a * Math.PI) / 2;
+          this.toolbarGfx.lineBetween(
+            cx + Math.cos(angle) * s * 0.4, cy + Math.sin(angle) * s * 0.4,
+            cx + Math.cos(angle) * s * 1.1, cy + Math.sin(angle) * s * 1.1
+          );
+        }
+      } else if (type === 'info') {
+        // "i" character
+        this.toolbarGfx.fillStyle(0xffffff, 0.85);
+        this.toolbarGfx.fillCircle(cx, cy - s * 0.7, 2);
+        this.toolbarGfx.fillRect(cx - 1.5, cy - s * 0.3, 3, s * 1.2);
+      } else if (type === 'sound_on') {
+        // Speaker + waves
+        this.toolbarGfx.fillStyle(0xffffff, 0.85);
+        this.toolbarGfx.fillRect(cx - s * 0.6, cy - s * 0.25, s * 0.4, s * 0.5);
+        this.toolbarGfx.fillTriangle(cx - s * 0.2, cy - s * 0.5, cx - s * 0.2, cy + s * 0.5, cx + s * 0.3, cy);
+        this.toolbarGfx.lineStyle(1.5, 0xffffff, 0.7);
+        this.toolbarGfx.beginPath();
+        this.toolbarGfx.arc(cx + s * 0.3, cy, s * 0.5, -0.6, 0.6, false);
+        this.toolbarGfx.strokePath();
+      } else if (type === 'sound_off') {
+        // Speaker + X
+        this.toolbarGfx.fillStyle(0x888888, 0.7);
+        this.toolbarGfx.fillRect(cx - s * 0.6, cy - s * 0.25, s * 0.4, s * 0.5);
+        this.toolbarGfx.fillTriangle(cx - s * 0.2, cy - s * 0.5, cx - s * 0.2, cy + s * 0.5, cx + s * 0.3, cy);
+        this.toolbarGfx.lineStyle(2, 0xff4466, 0.9);
+        this.toolbarGfx.lineBetween(cx + s * 0.2, cy - s * 0.5, cx + s * 0.9, cy + s * 0.5);
+      } else if (type === 'fullscreen') {
+        // Four corner brackets
+        const b = s * 0.8, t = s * 0.35;
+        // TL
+        this.toolbarGfx.lineBetween(cx - b, cy - b + t, cx - b, cy - b);
+        this.toolbarGfx.lineBetween(cx - b, cy - b, cx - b + t, cy - b);
+        // TR
+        this.toolbarGfx.lineBetween(cx + b - t, cy - b, cx + b, cy - b);
+        this.toolbarGfx.lineBetween(cx + b, cy - b, cx + b, cy - b + t);
+        // BL
+        this.toolbarGfx.lineBetween(cx - b, cy + b - t, cx - b, cy + b);
+        this.toolbarGfx.lineBetween(cx - b, cy + b, cx - b + t, cy + b);
+        // BR
+        this.toolbarGfx.lineBetween(cx + b - t, cy + b, cx + b, cy + b);
+        this.toolbarGfx.lineBetween(cx + b, cy + b - t, cx + b, cy + b);
+      }
+    }
+  }
+
   private drawPill(gfx: Phaser.GameObjects.Graphics, x: number, y: number, w: number, h: number) {
     const r = h / 2;
-    gfx.fillStyle(0x000000, 0.4);
+    gfx.fillStyle(0x0a0618, 0.55);
     gfx.fillRoundedRect(x - w / 2, y - h / 2, w, h, r);
-    gfx.lineStyle(1.5, 0xffffff, 0.12);
+    gfx.lineStyle(1.5, 0xffffff, 0.15);
     gfx.strokeRoundedRect(x - w / 2, y - h / 2, w, h, r);
   }
 
   private updateBuyText(txt1: Phaser.GameObjects.Text, txt2: Phaser.GameObjects.Text, x: number, y: number, h: number, type: string) {
-    const fsTitle = Math.min(18, h * 0.22);
-    const fsSub = Math.min(22, h * 0.3);
-    const title = type === 'SUPER' ? T('SUPER FREE SPINS', this.stakeEngine.isSocialMode()) : T('BUY FREE SPINS', this.stakeEngine.isSocialMode());
-    const multiline = title.split(' ').join('\n');
-    txt1.setText(multiline).setPosition(x, y - h * 0.18).setFontSize(fsTitle).setLineSpacing(-5);
+    const fsTitle = Math.min(20, h * 0.22);
+    const fsSub = Math.min(28, h * 0.32);
+    const title = type === 'SUPER' ? 'SUPER\nFREE SPINS' : 'BUY\nFREE SPINS';
+    txt1.setText(title).setPosition(x, y - h * 0.15).setFontSize(fsTitle).setLineSpacing(-2);
     txt2.setPosition(x, y + h * 0.22).setFontSize(fsSub);
   }
 
@@ -641,7 +735,7 @@ export class Game extends Phaser.Scene {
     gfx.fillRoundedRect(-w / 2, -h / 2, w, h, r);
 
     gfx.fillStyle(accent, 0.85);
-    gfx.fillRoundedRect(-w / 2, -h / 2, w, h * 0.5, { tl: r, tr: r, bl: 0, br: 0 });
+    gfx.fillRoundedRect(-w / 2, -h / 2, w, h * 0.5, Math.floor(r * 0.8));
 
     // Inner bright glass highlight
     gfx.fillStyle(0xffffff, 0.25);
@@ -662,19 +756,26 @@ export class Game extends Phaser.Scene {
     const y = cy - bh / 2;
     const rad = bh / 2;
 
-    this.anteBetBtn.fillStyle(0x000000, 0.5);
-    this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
-
     if (options.anteBetEnabled) {
-      this.anteBetBtn.lineStyle(2, 0xffaa00, 0.8);
+      // Active: amber-filled pill with glow
+      this.anteBetBtn.fillStyle(0xffaa00, 0.15);
+      this.anteBetBtn.fillRoundedRect(x - 3, y - 3, bw + 6, bh + 6, rad + 3);
+      this.anteBetBtn.fillStyle(0x332200, 0.7);
+      this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
+      this.anteBetBtn.fillStyle(0xffaa00, 0.25);
+      this.anteBetBtn.fillRoundedRect(x, y, bw, bh * 0.5, rad);
+      this.anteBetBtn.lineStyle(2, 0xffcc44, 0.9);
       this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, rad);
       this.anteBetTxt.setColor('#ffcc44');
-      this.anteBetIcon.setColor('#ffaa00');
+      this.anteBetIcon.setColor('#ffcc00');
     } else {
+      // Inactive: dark muted pill
+      this.anteBetBtn.fillStyle(0x000000, 0.5);
+      this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
       this.anteBetBtn.lineStyle(1.5, 0xffffff, 0.15);
       this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, rad);
-      this.anteBetTxt.setColor('#ffffff');
-      this.anteBetIcon.setColor('#ffffff');
+      this.anteBetTxt.setColor('#888899');
+      this.anteBetIcon.setColor('#888899');
     }
   }
 
@@ -694,7 +795,7 @@ export class Game extends Phaser.Scene {
   /** Update spin button visual to reflect current state */
   private updateSpinButtonState() {
     const spinSize = this.spinBtnHit.width;
-    const iconSize = spinSize * 0.45;
+    const iconSize = spinSize * 0.4;
     const cx = this.spinBtnHit.x;
     const cy = this.spinBtnHit.y;
     
@@ -703,48 +804,68 @@ export class Game extends Phaser.Scene {
     gfx.clear();
     const r = spinSize / 2;
 
-    // Outer Drop Shadow
-    gfx.fillStyle(0x000000, 0.35);
-    gfx.fillCircle(cx, cy + 6, r);
-
-    // Metallic Rim Outer (Dark)
-    gfx.fillStyle(0x222222, 1);
-    gfx.fillCircle(cx, cy, r);
-    
-    // Metallic Rim Inner (Light silver)
-    gfx.fillStyle(0xdddddd, 1);
-    gfx.fillCircle(cx, cy, r - 3);
-
-    // Main Face
-    const color = this._spinLock && !this.autoSpinActive ? 0xaaaaaa : 0xffffff;
-    gfx.fillStyle(color, 1);
-    gfx.fillCircle(cx, cy, r - 6);
-
-    // Subtle inner gradient gloss
-    gfx.fillStyle(0xffffff, 0.5);
-    gfx.beginPath();
-    gfx.arc(cx, cy - r * 0.3, r * 0.6, Math.PI, 0, false);
-    gfx.fill();
-
     if (this.autoSpinActive) {
-      // STOP Icon (Red Square)
-      gfx.fillStyle(0xff1144, 1);
-      gfx.fillRoundedRect(cx - iconSize / 2.5, cy - iconSize / 2.5, iconSize * 0.8, iconSize * 0.8, 6);
-      gfx.fillStyle(0xffaacc, 0.5);
-      gfx.fillRoundedRect(cx - iconSize / 2.5 + 2, cy - iconSize / 2.5 + 2, iconSize * 0.8 - 4, iconSize * 0.3, 2);
+      // === AUTO-SPIN STOP (Red) ===
+      gfx.fillStyle(0x000000, 0.3);
+      gfx.fillCircle(cx, cy + 5, r);
+      gfx.fillStyle(0x660011, 1);
+      gfx.fillCircle(cx, cy, r);
+      gfx.fillStyle(0x991122, 1);
+      gfx.fillCircle(cx, cy, r - 3);
+      gfx.fillStyle(0xdd2244, 1);
+      gfx.fillCircle(cx, cy, r - 6);
+      // Gloss
+      gfx.fillStyle(0xff6688, 0.35);
+      gfx.beginPath();
+      gfx.arc(cx, cy - r * 0.25, r * 0.55, Math.PI, 0, false);
+      gfx.fill();
+      // White stop square
+      const sq = iconSize * 0.55;
+      gfx.fillStyle(0xffffff, 1);
+      gfx.fillRoundedRect(cx - sq, cy - sq, sq * 2, sq * 2, 4);
     } else if (this._spinLock) {
+      // === SPINNING (Muted green) ===
+      gfx.fillStyle(0x000000, 0.3);
+      gfx.fillCircle(cx, cy + 5, r);
+      gfx.fillStyle(0x0a4420, 1);
+      gfx.fillCircle(cx, cy, r);
+      gfx.fillStyle(0x1a6633, 1);
+      gfx.fillCircle(cx, cy, r - 3);
+      gfx.fillStyle(0x228844, 1);
+      gfx.fillCircle(cx, cy, r - 6);
       // Loading dots
-      gfx.fillStyle(0x555555, 0.9);
-      gfx.fillCircle(cx - 14, cy, 6);
-      gfx.fillCircle(cx, cy, 6);
-      gfx.fillCircle(cx + 14, cy, 6);
+      gfx.fillStyle(0xffffff, 0.8);
+      gfx.fillCircle(cx - 14, cy, 5);
+      gfx.fillCircle(cx, cy, 5);
+      gfx.fillCircle(cx + 14, cy, 5);
     } else {
-      // PLAY Icon (Dark Triangle)
-      gfx.fillStyle(0x0a0a0a, 1);
+      // === READY (Vibrant green) ===
+      // Green glow beneath
+      gfx.fillStyle(0x22cc44, 0.25);
+      gfx.fillCircle(cx, cy + 8, r + 6);
+      // Drop shadow
+      gfx.fillStyle(0x000000, 0.35);
+      gfx.fillCircle(cx, cy + 5, r);
+      // Dark green rim
+      gfx.fillStyle(0x0a5520, 1);
+      gfx.fillCircle(cx, cy, r);
+      // Mid green rim
+      gfx.fillStyle(0x1a8833, 1);
+      gfx.fillCircle(cx, cy, r - 3);
+      // Main vibrant green face
+      gfx.fillStyle(0x22cc44, 1);
+      gfx.fillCircle(cx, cy, r - 6);
+      // Top gloss highlight
+      gfx.fillStyle(0x66ff88, 0.3);
+      gfx.beginPath();
+      gfx.arc(cx, cy - r * 0.25, r * 0.55, Math.PI, 0, false);
+      gfx.fill();
+      // White play triangle
+      gfx.fillStyle(0xffffff, 1);
       const s = iconSize;
       gfx.fillTriangle(
-        cx - s * 0.25, cy - s * 0.45,
-        cx - s * 0.25, cy + s * 0.45,
+        cx - s * 0.2, cy - s * 0.45,
+        cx - s * 0.2, cy + s * 0.45,
         cx + s * 0.55, cy
       );
     }
@@ -841,7 +962,7 @@ export class Game extends Phaser.Scene {
     // Sound toggle
     this.soundToggle.on('pointerdown', () => {
       this.soundEnabled = !this.soundEnabled;
-      this.soundToggle.setText(this.soundEnabled ? '🔊' : '🔇');
+      this.drawToolbarIcons();
       this.sound.mute = !this.soundEnabled;
     });
 

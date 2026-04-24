@@ -88,8 +88,9 @@ export class WinCelebration {
     // Tier text
     const tierText = this.scene.add.text(w / 2, h * 0.35, tier.name, {
       fontSize: `${tier.fontSize}px`,
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
       color: tier.color,
-      fontStyle: 'bold',
+      fontStyle: 'normal',
       stroke: tier.stroke,
       strokeThickness: Math.floor(tier.fontSize * 0.12),
       align: 'center',
@@ -99,8 +100,9 @@ export class WinCelebration {
     // Win amount (counting up animation)
     const amountText = this.scene.add.text(w / 2, h * 0.55, '0.00', {
       fontSize: `${Math.floor(tier.fontSize * 0.7)}px`,
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
       color: '#ffffff',
-      fontStyle: 'bold',
+      fontStyle: 'normal',
       stroke: '#000000',
       strokeThickness: 8,
       align: 'center',
