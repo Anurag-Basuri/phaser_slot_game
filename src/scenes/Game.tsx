@@ -516,11 +516,11 @@ export class Game extends Phaser.Scene {
 
     // 3. Top Pipe (Cyan with stripes/frosting)
     f.fillStyle(0xaae8f9, 1); // Light cyan
-    f.fillRoundedRect(frameX, frameY, frameW, pipeHeight + 10, 10);
+    f.fillRoundedRect(frameX, frameY, frameW, pipeHeight, 10);
 
     // Pipe shading
     f.fillStyle(0x000000, 0.1);
-    f.fillRect(frameX, frameY + pipeHeight * 0.7, frameW, pipeHeight * 0.3 + 10);
+    f.fillRect(frameX, frameY + pipeHeight * 0.7, frameW, pipeHeight * 0.3);
 
     // Frosting drips
     f.fillStyle(0xffffff, 1);

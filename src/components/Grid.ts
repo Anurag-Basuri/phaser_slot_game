@@ -70,13 +70,18 @@ export class Grid {
   private get sweepDuration() { return this.turboMode ? 140 : 280; }
   private cellBackgrounds!: Phaser.GameObjects.Graphics;
 
-  // Multiplier badge color tiers (inner fill, outer stroke)
+  // Multiplier text color tiers (wrapper is always golden)
   private static readonly MULT_TIERS = [
-    { max: 4,    fill: 0x3388ff, stroke: 0x0055cc, textColor: '#aaddff' },  // Blue
-    { max: 16,   fill: 0x9944ff, stroke: 0x5500cc, textColor: '#ddbbff' },  // Purple
-    { max: 64,   fill: 0xff44aa, stroke: 0xcc0066, textColor: '#ffbbdd' },  // Pink
-    { max: 256,  fill: 0xff8800, stroke: 0xcc5500, textColor: '#ffdda0' },  // Orange
-    { max: Infinity, fill: 0xffcc00, stroke: 0xcc8800, textColor: '#fff4a0' }, // Gold
+    { mult: 2,    fill: '#ffe600', stroke: '#cc5500' }, // Yellow/Gold
+    { mult: 4,    fill: '#ffcc00', stroke: '#cc3300' }, // Yellow-orange
+    { mult: 8,    fill: '#ff8800', stroke: '#aa0000' }, // Orange
+    { mult: 16,   fill: '#ff0000', stroke: '#660000' }, // Red
+    { mult: 32,   fill: '#ff00aa', stroke: '#660066' }, // Magenta
+    { mult: 64,   fill: '#cc00ff', stroke: '#4400aa' }, // Purple
+    { mult: 128,  fill: '#8800ff', stroke: '#220088' }, // Deep Purple
+    { mult: 256,  fill: '#0088ff', stroke: '#002288' }, // Blue
+    { mult: 512,  fill: '#00ddff', stroke: '#0044aa' }, // Cyan
+    { mult: 1024, fill: '#ffaaaa', stroke: '#aa0044' }, // Light Pink
   ];
 
   constructor(scene: Phaser.Scene) {
@@ -106,19 +111,32 @@ export class Grid {
 
   /**
    * Draw the Sugar Rush 1000 machine interior background.
-   * Vertical gradient from light blue to pink, with vertical separator lines.
+   * Vertical gradient from light blue to pink, with horizontal and vertical lines.
    */
   public drawCellBackgrounds() {
     this.cellBackgrounds.clear();
     const size = options.gridSize;
     const totalSize = this.cellSize * size;
 
-    // 1. Draw the vertical gradient background for the whole grid
-    this.cellBackgrounds.fillGradientStyle(0xcceeff, 0xcceeff, 0xffccff, 0xffccff, 1);
-    this.cellBackgrounds.fillRect(this.offsetX, this.offsetY, totalSize, totalSize);
+    // 1. Draw the vertical gradient using horizontal strips (safe in Phaser 3 Graphics)
+    const steps = 30;
+    const stripHeight = totalSize / steps;
+    for (let i = 0; i < steps; i++) {
+      const t = i / (steps - 1);
+      // Interpolate from sky blue (204, 238, 255) to pink (255, 204, 255)
+      const r = Math.round(204 + (255 - 204) * t);
+      const g = Math.round(238 + (204 - 238) * t);
+      const b = Math.round(255 + (255 - 255) * t);
+      const color = (r << 16) | (g << 8) | b;
+      
+      this.cellBackgrounds.fillStyle(color, 1);
+      this.cellBackgrounds.fillRect(this.offsetX, this.offsetY + i * stripHeight, totalSize, Math.ceil(stripHeight));
+    }
 
-    // 2. Draw vertical separator lines between columns
-    this.cellBackgrounds.lineStyle(2, 0x4466aa, 0.15); // Soft dark blue lines
+    // 2. Draw light, playful grid lines (vertical and horizontal)
+    this.cellBackgrounds.lineStyle(2, 0xffffff, 0.4); 
+    
+    // Vertical lines
     for (let c = 1; c < size; c++) {
       const x = this.offsetX + c * this.cellSize;
       this.cellBackgrounds.beginPath();
@@ -126,14 +144,30 @@ export class Grid {
       this.cellBackgrounds.lineTo(x, this.offsetY + totalSize);
       this.cellBackgrounds.strokePath();
       
-      // Highlight right next to the dark line for depth
-      this.cellBackgrounds.lineStyle(1, 0xffffff, 0.3);
+      // Depth shadow next to the line
+      this.cellBackgrounds.lineStyle(1, 0x4466aa, 0.1);
       this.cellBackgrounds.beginPath();
-      this.cellBackgrounds.moveTo(x + 1, this.offsetY);
-      this.cellBackgrounds.lineTo(x + 1, this.offsetY + totalSize);
+      this.cellBackgrounds.moveTo(x - 1, this.offsetY);
+      this.cellBackgrounds.lineTo(x - 1, this.offsetY + totalSize);
+      this.cellBackgrounds.strokePath();
+      this.cellBackgrounds.lineStyle(2, 0xffffff, 0.4); // reset
+    }
+
+    // Horizontal lines
+    for (let r = 1; r < size; r++) {
+      const y = this.offsetY + r * this.cellSize;
+      this.cellBackgrounds.beginPath();
+      this.cellBackgrounds.moveTo(this.offsetX, y);
+      this.cellBackgrounds.lineTo(this.offsetX + totalSize, y);
       this.cellBackgrounds.strokePath();
       
-      this.cellBackgrounds.lineStyle(2, 0x4466aa, 0.15); // Reset for next iteration
+      // Depth shadow next to the line
+      this.cellBackgrounds.lineStyle(1, 0x4466aa, 0.1);
+      this.cellBackgrounds.beginPath();
+      this.cellBackgrounds.moveTo(this.offsetX, y - 1);
+      this.cellBackgrounds.lineTo(this.offsetX + totalSize, y - 1);
+      this.cellBackgrounds.strokePath();
+      this.cellBackgrounds.lineStyle(2, 0xffffff, 0.4); // reset
     }
 
     // 3. Inner-shadow vignette (recessed look)
@@ -456,7 +490,7 @@ export class Grid {
   /** Get color tier for a given multiplier value */
   private getMultTier(mult: number) {
     for (const tier of Grid.MULT_TIERS) {
-      if (mult <= tier.max) return tier;
+      if (mult <= tier.mult) return tier;
     }
     return Grid.MULT_TIERS[Grid.MULT_TIERS.length - 1];
   }
@@ -468,81 +502,74 @@ export class Grid {
     const tier = this.getMultTier(mult);
     const cx = this.getX(c);
     const cy = this.getY(r);
-    // Make wrapper width dependent on multiplier length (x2 vs x1024)
-    const multText = `x${mult}`;
-    const badgeW = this.cellSize * 0.70 + (multText.length * 5);
-    const badgeH = this.cellSize * 0.40;
+    
+    // Width scales down slightly for very large numbers, but mostly stays constant
+    const badgeW = this.cellSize * 0.88;
+    const badgeH = this.cellSize * 0.50;
 
     if (!this.multiplierGraphics[r][c]) {
       const gfx = this.scene.add.graphics().setDepth(12);
       
-      // Soft glow behind the badge
-      gfx.fillStyle(tier.fill, 0.20);
-      gfx.fillRoundedRect(cx - badgeW/2 - 10, cy - badgeH/2 - 10, badgeW + 20, badgeH + 20, badgeH);
-      
-      // Cell highlight wrapper — inner block styling
-      const pad = 2;
-      gfx.fillStyle(0xffd500, 0.6); // Yellow wrapper fill style backing
-      gfx.fillRoundedRect(
-        cx - this.cellSize / 2 + pad,
-        cy - this.cellSize / 2 + pad,
-        this.cellSize - pad * 2,
-        this.cellSize - pad * 2, 8
-      );
-      
-      gfx.lineStyle(3, 0xffaa00, 1.0);
-      gfx.strokeRoundedRect(
-        cx - this.cellSize / 2 + pad,
-        cy - this.cellSize / 2 + pad,
-        this.cellSize - pad * 2,
-        this.cellSize - pad * 2, 8
-      );
-
-      // Candy Bar Shadow
+      // Base drop shadow
       gfx.fillStyle(0x000000, 0.4);
-      gfx.fillRoundedRect(cx - badgeW/2 + 2, cy - badgeH/2 + 2, badgeW, badgeH, badgeH/2);
+      gfx.fillRoundedRect(cx - badgeW/2 + 2, cy - badgeH/2 + 4, badgeW, badgeH, 6);
+      
+      // Main wrapper block (golden yellow)
+      gfx.fillStyle(0xffcc00, 1);
+      gfx.fillRoundedRect(cx - badgeW/2, cy - badgeH/2, badgeW, badgeH, 6);
 
-      // Candy Bar Fill
-      gfx.fillStyle(tier.fill, 1.0);
-      gfx.fillRoundedRect(cx - badgeW/2, cy - badgeH/2, badgeW, badgeH, badgeH/2);
+      // Left and right "dimples" / wrapper folds
+      gfx.fillStyle(0xffaa00, 1);
+      gfx.fillRect(cx - badgeW/2, cy - badgeH/2 + 4, 8, badgeH - 8);
+      gfx.fillRect(cx + badgeW/2 - 8, cy - badgeH/2 + 4, 8, badgeH - 8);
 
-      // Glossy highlight
-      gfx.fillStyle(0xffffff, 0.35);
-      gfx.fillRoundedRect(cx - badgeW/2 + 2, cy - badgeH/2 + 2, badgeW - 4, badgeH * 0.4, (badgeH/2) - 2);
+      // Inner highlight (top curved edge)
+      gfx.fillStyle(0xffeebb, 0.8);
+      gfx.fillRoundedRect(cx - badgeW/2 + 10, cy - badgeH/2 + 2, badgeW - 20, badgeH * 0.3, 4);
 
-      // Border ring
-      gfx.lineStyle(2, tier.stroke, 1);
-      gfx.strokeRoundedRect(cx - badgeW/2, cy - badgeH/2, badgeW, badgeH, badgeH/2);
+      // Outer wrapper stroke (reddish orange)
+      gfx.lineStyle(2, 0xcc2200, 1);
+      gfx.strokeRoundedRect(cx - badgeW/2, cy - badgeH/2, badgeW, badgeH, 6);
 
       this.multiplierGraphics[r][c] = gfx;
-    }
 
-    const fontSize = Math.max(16, Math.floor(badgeH * 0.8));
-    if (!this.multiplierTexts[r][c]) {
-      this.multiplierTexts[r][c] = this.scene.add.text(
-        cx, cy,
-        multText,
-        {
-          fontSize: `${fontSize}px`,
-          fontFamily: '"Luckiest Guy", cursive, sans-serif',
-          color: tier.textColor,
-          stroke: tier.stroke.toString(16).padStart(6, '0'),
-          strokeThickness: 5,
-        }
-      ).setOrigin(0.5).setDepth(13).setAlpha(1);
+      // Text with tier colors
+      const fontSize = mult >= 128 ? '20px' : '26px';
+      const txt = this.scene.add.text(cx, cy + 2, `x${mult}`, {
+        fontFamily: '"Luckiest Guy", cursive, sans-serif',
+        fontSize: fontSize,
+        color: tier.fill,
+        stroke: tier.stroke,
+        strokeThickness: 6,
+        shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 0, stroke: true, fill: true }
+      }).setOrigin(0.5).setDepth(13);
 
-      // Pop-in animation
-      this.multiplierTexts[r][c]!.setScale(0);
+      this.multiplierTexts[r][c] = txt;
+
+      // Entrance animation for new multipliers
       this.scene.tweens.add({
-        targets: this.multiplierTexts[r][c],
-        scale: 1,
+        targets: [gfx, txt],
+        scaleX: { from: 0.5, to: 1 },
+        scaleY: { from: 0.5, to: 1 },
         duration: 300,
-        ease: 'Back.easeOut',
+        ease: 'Back.easeOut'
       });
     } else {
-      // Update existing — flash & pulse
-      this.clearMultiplierUI(r, c);
-      this.drawMultiplierUI(r, c);
+      // Existing multiplier — update text and pop
+      const txt = this.multiplierTexts[r][c]!;
+      const fontSize = mult >= 128 ? '20px' : '26px';
+      txt.setText(`x${mult}`);
+      txt.setFontSize(fontSize);
+      txt.setColor(tier.fill);
+      txt.setStroke(tier.stroke, 6);
+      
+      this.scene.tweens.add({
+        targets: [this.multiplierGraphics[r][c], txt],
+        scale: 1.3,
+        yoyo: true,
+        duration: 150,
+        ease: 'Sine.easeInOut'
+      });
     }
   }
 
