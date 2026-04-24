@@ -42,30 +42,27 @@ export class ConfirmDialog {
     const py = (h - panelH) / 2;
 
     const panel = this.scene.add.graphics();
-    panel.fillStyle(0x0d1225, 0.98);
+    panel.fillStyle(0x130f24, 1); // Dark navy
     panel.fillRoundedRect(px, py, panelW, panelH, 20);
-    // Gradient-like top accent
-    panel.fillStyle(0xff006a, 0.12);
-    panel.fillRoundedRect(px, py, panelW, 60, 20);
-    panel.lineStyle(3, 0xff006a, 0.8);
+    panel.lineStyle(4, 0xff006a, 1);
     panel.strokeRoundedRect(px, py, panelW, panelH, 20);
     this.container.add(panel);
 
     // Title
-    this.container.add(this.scene.add.text(w / 2, py + 36, title, {
-      fontSize: '28px', color: '#ffffff', fontStyle: 'normal',
+    this.container.add(this.scene.add.text(w / 2, py + 45, title, {
+      fontSize: '32px', color: '#ffffff', fontStyle: 'normal',
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
     }).setOrigin(0.5));
 
     // Subtitle
-    this.container.add(this.scene.add.text(w / 2, py + 90, subtitle, {
-      fontSize: '22px', color: '#ffe600', fontStyle: 'bold',
-      stroke: '#000000', strokeThickness: 3,
+    this.container.add(this.scene.add.text(w / 2, py + 110, subtitle, {
+      fontSize: '20px', color: '#ffe600', fontStyle: 'bold',
+      fontFamily: 'monospace',
     }).setOrigin(0.5));
 
     // Warning text
-    this.container.add(this.scene.add.text(w / 2, py + 130, 'This amount will be deducted from your balance.', {
-      fontSize: '13px', color: '#8888aa',
+    this.container.add(this.scene.add.text(w / 2, py + 150, 'This amount will be deducted from your balance.', {
+      fontSize: '12px', color: '#8888aa', fontFamily: 'monospace',
     }).setOrigin(0.5));
 
     // Buttons

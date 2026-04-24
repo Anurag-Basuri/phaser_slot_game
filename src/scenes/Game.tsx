@@ -223,7 +223,7 @@ export class Game extends Phaser.Scene {
     }).setDepth(30).setOrigin(0.5);
 
     // Buy buttons setup
-    const btnStyle = { fontFamily: '"Luckiest Guy", cursive, sans-serif', fontStyle: 'normal', align: 'center', strokeThickness: 1 };
+    const btnStyle = { fontFamily: '"Luckiest Guy", cursive, sans-serif', fontStyle: 'normal', align: 'center', strokeThickness: 0, shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 0, fill: true } };
     
     // Super Buy
     this.panelSuperGraphics = this.add.graphics({ x: 0, y: 0 }).setDepth(20);
@@ -234,7 +234,7 @@ export class Game extends Phaser.Scene {
           this.requestPurchase(2, 500);
       });
     this.buySuperTxt1 = this.add.text(0, 0, 'SUPER', { ...btnStyle, color: '#ffffff' }).setOrigin(0.5).setDepth(21);
-    this.buySuperTxt2 = this.add.text(0, 0, '500x', { ...btnStyle, color: '#ffe600', stroke: '#000', strokeThickness: 2 }).setOrigin(0.5).setDepth(21);
+    this.buySuperTxt2 = this.add.text(0, 0, '500x', { ...btnStyle, color: '#ffe600', stroke: '#000000', strokeThickness: 4 }).setOrigin(0.5).setDepth(21);
 
     // Regular Buy
     this.panelRegularGraphics = this.add.graphics({ x: 0, y: 0 }).setDepth(20);
@@ -245,7 +245,7 @@ export class Game extends Phaser.Scene {
           this.requestPurchase(1, 100);
       });
     this.buyRegularTxt1 = this.add.text(0, 0, T('BUY', this.stakeEngine.isSocialMode()), { ...btnStyle, color: '#ffffff' }).setOrigin(0.5).setDepth(21);
-    this.buyRegularTxt2 = this.add.text(0, 0, '100x', { ...btnStyle, color: '#ffe600', stroke: '#000', strokeThickness: 2 }).setOrigin(0.5).setDepth(21);
+    this.buyRegularTxt2 = this.add.text(0, 0, '100x', { ...btnStyle, color: '#ffe600', stroke: '#000000', strokeThickness: 4 }).setOrigin(0.5).setDepth(21);
 
     // Ante bet setup
     this.anteBetBtn = this.add.graphics().setDepth(20);
@@ -783,45 +783,42 @@ export class Game extends Phaser.Scene {
   }
 
   private updateBuyText(txt1: Phaser.GameObjects.Text, txt2: Phaser.GameObjects.Text, x: number, y: number, h: number, type: string) {
-    const fsTitle = Math.min(20, h * 0.22);
+    const fsTitle = Math.min(20, h * 0.20);
     const fsSub = Math.min(28, h * 0.32);
     const title = type === 'SUPER' ? 'SUPER\nFREE SPINS' : 'BUY\nFREE SPINS';
-    txt1.setText(title).setPosition(x, y - h * 0.15).setFontSize(fsTitle).setLineSpacing(-2);
+    txt1.setText(title).setPosition(x, y - h * 0.18).setFontSize(fsTitle).setLineSpacing(-2);
     txt2.setPosition(x, y + h * 0.22).setFontSize(fsSub);
   }
 
   private drawBuyPanel(gfx: Phaser.GameObjects.Graphics, w: number, h: number, isSuper: boolean) {
     gfx.clear();
     const r = 16;
-    const accent = isSuper ? 0xffbb00 : 0xff006a;
-    const accentDark = isSuper ? 0xcc5500 : 0x990044;
+    const accent = isSuper ? 0xffb700 : 0xff006a;
+    const accentDark = isSuper ? 0x994400 : 0x660033;
     
     // Drop shadow
-    gfx.fillStyle(0x000000, 0.4);
-    gfx.fillRoundedRect(-w / 2 + 4, -h / 2 + 4, w, h, r);
+    gfx.fillStyle(0x000000, 0.3);
+    gfx.fillRoundedRect(-w / 2 + 3, -h / 2 + 5, w, h, r);
     
-    // Base glass layer
-    gfx.fillStyle(0x000000, 0.6);
+    // Base solid background (bottom half color)
+    gfx.fillStyle(accentDark, 1);
     gfx.fillRoundedRect(-w / 2, -h / 2, w, h, r);
 
-    // Accent Gradient Overlay (Top half)
-    gfx.fillStyle(accentDark, 0.7);
-    gfx.fillRoundedRect(-w / 2, -h / 2, w, h, r);
+    // Top half solid color
+    gfx.fillStyle(accent, 1);
+    gfx.fillRoundedRect(-w / 2, -h / 2, w, h * 0.55, {tl: r, tr: r, bl: 0, br: 0} as any);
 
-    gfx.fillStyle(accent, 0.85);
-    gfx.fillRoundedRect(-w / 2, -h / 2, w, h * 0.5, Math.floor(r * 0.8));
-
-    // Inner bright glass highlight
+    // Inner bright glass highlight (Top rim)
     gfx.fillStyle(0xffffff, 0.25);
-    gfx.fillRoundedRect(-w / 2 + 4, -h / 2 + 3, w - 8, h * 0.2, r - 4);
+    gfx.fillRoundedRect(-w / 2 + 2, -h / 2 + 2, w - 4, h * 0.15, {tl: r-2, tr: r-2, bl: 0, br: 0} as any);
 
-    // Inner glowing border
+    // Outer thick colored border
     gfx.lineStyle(3, accent, 1);
     gfx.strokeRoundedRect(-w / 2, -h / 2, w, h, r);
-
-    // Outer thin rim
-    gfx.lineStyle(1, 0xffffff, 0.4);
-    gfx.strokeRoundedRect(-w / 2 - 1, -h / 2 - 1, w + 2, h + 2, r + 1);
+    
+    // Extra white outer ring for pop
+    gfx.lineStyle(2, 0xffffff, 0.8);
+    gfx.strokeRoundedRect(-w / 2 - 2, -h / 2 - 2, w + 4, h + 4, r + 2);
   }
 
   private drawAnteBetButton(cx: number, cy: number, bw: number, bh: number) {
@@ -831,25 +828,19 @@ export class Game extends Phaser.Scene {
     const rad = bh / 2;
 
     if (options.anteBetEnabled) {
-      // Active: amber-filled pill with glow
-      this.anteBetBtn.fillStyle(0xffaa00, 0.15);
-      this.anteBetBtn.fillRoundedRect(x - 3, y - 3, bw + 6, bh + 6, rad + 3);
-      this.anteBetBtn.fillStyle(0x332200, 0.7);
+      // Active: translucent brown pill, orange bolt, white text
+      this.anteBetBtn.fillStyle(0x4a2c11, 0.8);
       this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
-      this.anteBetBtn.fillStyle(0xffaa00, 0.25);
-      this.anteBetBtn.fillRoundedRect(x, y, bw, bh * 0.5, rad);
-      this.anteBetBtn.lineStyle(2, 0xffcc44, 0.9);
+      this.anteBetBtn.lineStyle(2, 0xff8800, 0.8);
       this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, rad);
-      this.anteBetTxt.setColor('#ffcc44');
-      this.anteBetIcon.setColor('#ffcc00');
+      this.anteBetTxt.setColor('#ffffff').setShadow(0, 2, '#000000', 0, true, true);
+      this.anteBetIcon.setColor('#ff8800');
     } else {
-      // Inactive: dark muted pill
-      this.anteBetBtn.fillStyle(0x000000, 0.5);
+      // Inactive: highly translucent dark grey pill, dim orange bolt
+      this.anteBetBtn.fillStyle(0x000000, 0.6);
       this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
-      this.anteBetBtn.lineStyle(1.5, 0xffffff, 0.15);
-      this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, rad);
-      this.anteBetTxt.setColor('#888899');
-      this.anteBetIcon.setColor('#888899');
+      this.anteBetTxt.setColor('#888899').setShadow(0, 0, '#000000', 0, false, false);
+      this.anteBetIcon.setColor('#aa5522');
     }
   }
 
