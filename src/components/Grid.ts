@@ -98,28 +98,72 @@ export class Grid {
       this.cellSize * options.gridSize + 10,
       this.cellSize * options.gridSize + 10
     );
-    this.cellBackgrounds = this.scene.add.graphics().setDepth(1);
+    this.cellBackgrounds = this.scene.add.graphics().setDepth(2);
     this.drawCellBackgrounds();
     this.fillEmpty();
     this.startIdleShimmer();
   }
 
-  /** Draw subtle grid cell lines — the grid_panel image provides the interior gradient. */
+  /**
+   * Draw premium cell backgrounds — frosted glass cells with
+   * checkerboard depth pattern, rounded corners, and inner-shadow
+   * vignette along the grid edges for a recessed 3D look.
+   */
   public drawCellBackgrounds() {
     this.cellBackgrounds.clear();
     const size = options.gridSize;
-    const gap = 1;
-    
+    const gap = 2;
+    const totalSize = this.cellSize * size;
+
     for (let r = 0; r < size; r++) {
       for (let c = 0; c < size; c++) {
         const x = this.offsetX + c * this.cellSize + gap;
         const y = this.offsetY + r * this.cellSize + gap;
         const s = this.cellSize - gap * 2;
-        
-        // Hairline cell border only — no fill, let the grid_panel bg show through
-        this.cellBackgrounds.lineStyle(0.5, 0xffffff, 0.08);
-        this.cellBackgrounds.strokeRoundedRect(x, y, s, s, 2);
+        const radius = Math.max(4, s * 0.08);
+
+        // Checkerboard: alternate opacity for subtle depth
+        const isLight = (r + c) % 2 === 0;
+
+        // Cell fill — frosted glass
+        this.cellBackgrounds.fillStyle(0x1a0a30, isLight ? 0.18 : 0.10);
+        this.cellBackgrounds.fillRoundedRect(x, y, s, s, radius);
+
+        // Top highlight — 3D inset illusion
+        this.cellBackgrounds.fillStyle(0xffffff, isLight ? 0.06 : 0.03);
+        this.cellBackgrounds.fillRoundedRect(
+          x + 1, y + 1, s - 2, s * 0.22,
+          { tl: radius, tr: radius, bl: 0, br: 0 },
+        );
+
+        // Cell border — soft separator
+        this.cellBackgrounds.lineStyle(0.75, 0xffffff, 0.07);
+        this.cellBackgrounds.strokeRoundedRect(x, y, s, s, radius);
       }
+    }
+
+    // --- Inner-shadow vignette (recessed look) ---
+    const gx = this.offsetX;
+    const gy = this.offsetY;
+    // Top edge shadow
+    for (let i = 0; i < 6; i++) {
+      this.cellBackgrounds.fillStyle(0x000000, 0.07 - i * 0.012);
+      this.cellBackgrounds.fillRect(gx, gy + i * 2, totalSize, 2);
+    }
+    // Bottom edge shadow
+    for (let i = 0; i < 6; i++) {
+      this.cellBackgrounds.fillStyle(0x000000, 0.07 - i * 0.012);
+      this.cellBackgrounds.fillRect(gx, gy + totalSize - 2 - i * 2, totalSize, 2);
+    }
+    // Left edge shadow
+    for (let i = 0; i < 4; i++) {
+      this.cellBackgrounds.fillStyle(0x000000, 0.05 - i * 0.012);
+      this.cellBackgrounds.fillRect(gx + i * 2, gy, 2, totalSize);
+    }
+    // Right edge shadow
+    for (let i = 0; i < 4; i++) {
+      this.cellBackgrounds.fillStyle(0x000000, 0.05 - i * 0.012);
+      this.cellBackgrounds.fillRect(gx + totalSize - 2 - i * 2, gy, 2, totalSize);
     }
   }
 
@@ -204,7 +248,7 @@ export class Grid {
           const sprite = this.scene.add.sprite(this.getX(c), startY, this.symbolKeys[symId]);
           sprite.setData('symId', symId);
 
-          const scale = (this.cellSize * 0.82) / Math.max(sprite.width, sprite.height);
+          const scale = (this.cellSize * 0.68) / Math.max(sprite.width, sprite.height);
           sprite.setScale(Math.min(scale, 1));
           sprite.setDepth(10);
 
@@ -379,7 +423,7 @@ export class Grid {
         const sprite = this.sprites[r][c];
         if (sprite) {
           sprite.setPosition(this.getX(c), this.getY(r));
-          const scale = (this.cellSize * 0.82) / Math.max(sprite.width, sprite.height);
+          const scale = (this.cellSize * 0.68) / Math.max(sprite.width, sprite.height);
           sprite.setScale(Math.min(scale, 1));
         }
         // Redraw multiplier UI

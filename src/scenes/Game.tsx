@@ -434,17 +434,17 @@ export class Game extends Phaser.Scene {
     let gridY: number;
 
     if (isMobilePortrait) {
-      gridTotalSize = Math.min(w * 0.92, safeH * 0.55);
+      gridTotalSize = Math.min(w * 0.90, safeH * 0.50);
       gridX = (w - gridTotalSize) / 2;
-      gridY = Math.max(60, safeH * 0.1);
+      gridY = Math.max(55, safeH * 0.08);
     } else if (isMobileLandscape) {
-      gridTotalSize = Math.min(h * 0.8, w * 0.45);
+      gridTotalSize = Math.min(h * 0.75, w * 0.42);
       gridX = (w - gridTotalSize) / 2;
       gridY = (safeH - gridTotalSize) / 2;
     } else {
-      gridTotalSize = Math.min(w * 0.6, safeH * 0.82);
+      gridTotalSize = Math.min(w * 0.50, safeH * 0.78);
       gridX = (w - gridTotalSize) / 2;
-      gridY = (safeH - gridTotalSize) / 2 + 10;
+      gridY = (safeH - gridTotalSize) / 2 + 8;
     }
 
     this.grid.offsetX = gridX;
@@ -454,20 +454,32 @@ export class Game extends Phaser.Scene {
     this.grid.repositionSprites();
 
     // === GRID PANEL IMAGE ===
-    const framePad = Math.max(14, gridTotalSize * 0.035);
+    const framePad = Math.max(22, gridTotalSize * 0.06);
     const panelCX = gridX + gridTotalSize / 2;
     const panelCY = gridY + gridTotalSize / 2;
     const panelW = gridTotalSize + framePad * 2;
     const panelH = gridTotalSize + framePad * 2;
     this.gridPanel.setPosition(panelCX, panelCY).setDisplaySize(panelW, panelH).setVisible(true);
 
-    // === SUBTLE GRID FRAME OVERLAY ===
+    // === PREMIUM GRID FRAME ===
     this.gridFrame.clear();
     const f = this.gridFrame;
-    f.lineStyle(1.5, 0x000000, 0.15);
-    f.strokeRect(gridX - 1, gridY - 1, gridTotalSize + 2, gridTotalSize + 2);
-    f.lineStyle(1, 0xffffff, 0.1);
-    f.strokeRect(gridX, gridY, gridTotalSize, gridTotalSize);
+
+    // Layer 1 — ambient halo
+    f.lineStyle(8, 0xcc44ff, 0.06);
+    f.strokeRoundedRect(gridX - 10, gridY - 10, gridTotalSize + 20, gridTotalSize + 20, 14);
+
+    // Layer 2 — mid glow ring
+    f.lineStyle(3.5, 0x9944cc, 0.18);
+    f.strokeRoundedRect(gridX - 5, gridY - 5, gridTotalSize + 10, gridTotalSize + 10, 9);
+
+    // Layer 3 — primary border
+    f.lineStyle(2, 0xaa66dd, 0.40);
+    f.strokeRoundedRect(gridX - 1, gridY - 1, gridTotalSize + 2, gridTotalSize + 2, 5);
+
+    // Layer 4 — inner bright edge
+    f.lineStyle(1, 0xffffff, 0.08);
+    f.strokeRoundedRect(gridX, gridY, gridTotalSize, gridTotalSize, 4);
 
     // ==========================================
     // 2. BUY PANELS & ANTE BET
