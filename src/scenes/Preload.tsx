@@ -1,7 +1,4 @@
 import Phaser from 'phaser';
-import { render } from 'phaser-jsx';
-
-import { Progress } from '../components';
 
 export class Preload extends Phaser.Scene {
   constructor() {
@@ -9,7 +6,22 @@ export class Preload extends Phaser.Scene {
   }
 
   preload() {
-    render(<Progress />, this);
+    // Update HTML overlay text during load
+    this.load.on('progress', (value: number) => {
+      const textElem = document.getElementById('loadingText');
+      if (textElem) {
+        textElem.innerText = `${Math.floor(value * 100)}%`;
+      }
+    });
+
+    // Hide HTML overlay once load is complete
+    this.load.on('complete', () => {
+      const overlay = document.getElementById('loadingOverlay');
+      if (overlay) {
+        overlay.classList.add('hidden');
+        setTimeout(() => overlay.remove(), 600);
+      }
+    });
 
     // Production candy symbols
     this.load.image('candy_0', 'images/candies/candy_0.png');

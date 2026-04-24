@@ -7,20 +7,11 @@ import config from './config';
  * Initializes the Phaser game engine and hides the HTML loading overlay.
  */
 
-// Remove loading overlay once Phaser canvas renders
-const hideLoader = () => {
-  const overlay = document.getElementById('loadingOverlay');
-  if (overlay) {
-    overlay.classList.add('hidden');
-    setTimeout(() => overlay.remove(), 600);
-  }
-};
+// The HTML loader overlay is left active.
+// It will be updated and hidden by the Preload scene once assets finish loading.
 
 const game = new Phaser.Game({
   ...config,
-  callbacks: {
-    postBoot: hideLoader,
-  },
 });
 
 export default game;
