@@ -434,9 +434,12 @@ export class Game extends Phaser.Scene {
     let gridY: number;
 
     if (isMobilePortrait) {
-      gridTotalSize = Math.min(w * 0.90, safeH * 0.50);
+      const topSpace = Math.max(80, h * 0.1);
+      const bottomSpace = 160; // Space for buy panels
+      const availableH = safeH - topSpace - bottomSpace;
+      gridTotalSize = Math.min(w * 0.95, availableH * 0.95);
       gridX = (w - gridTotalSize) / 2;
-      gridY = Math.max(55, safeH * 0.08);
+      gridY = topSpace + (availableH - gridTotalSize) / 2 + 20;
     } else if (isMobileLandscape) {
       gridTotalSize = Math.min(h * 0.75, w * 0.42);
       gridX = (w - gridTotalSize) / 2;
@@ -554,9 +557,13 @@ export class Game extends Phaser.Scene {
     let buyY2: number = 0;
 
     if (isMobilePortrait) {
-      buyX = w * 0.25;
-      buyY1 = safeH - 120;
-      const buyX2 = w * 0.75;
+      buyX = buyW / 2 + 10;
+      const anteH = 40;
+      const blockHeight = buyH * 2 + buyGap * 2 + anteH;
+      const blockStartY = safeH - blockHeight - 15;
+      
+      buyY1 = blockStartY + buyH / 2;
+      buyY2 = buyY1 + buyH + buyGap;
       
       this.drawBuyPanel(this.panelSuperGraphics, buyW, buyH, true);
       this.buySuperHit.setPosition(buyX, buyY1).setSize(buyW, buyH);
@@ -564,13 +571,18 @@ export class Game extends Phaser.Scene {
       this.updateBuyText(this.buySuperTxt1, this.buySuperTxt2, buyX, buyY1, buyH, 'SUPER');
 
       this.drawBuyPanel(this.panelRegularGraphics, buyW, buyH, false);
-      this.buyRegularHit.setPosition(buyX2, buyY1).setSize(buyW, buyH);
-      this.panelRegularGraphics.setPosition(buyX2, buyY1);
-      this.updateBuyText(this.buyRegularTxt1, this.buyRegularTxt2, buyX2, buyY1, buyH, 'BUY');
+      this.buyRegularHit.setPosition(buyX, buyY2).setSize(buyW, buyH);
+      this.panelRegularGraphics.setPosition(buyX, buyY2);
+      this.updateBuyText(this.buyRegularTxt1, this.buyRegularTxt2, buyX, buyY2, buyH, 'BUY');
     } else {
-      buyX = gridX - buyW / 2 - 25;
+      buyX = gridX - buyW / 2 - Math.max(20, w * 0.02);
       if (buyX < buyW / 2 + 10) buyX = buyW / 2 + 10;
-      buyY1 = gridY + gridTotalSize * 0.35;
+      
+      const anteH = 45;
+      const blockHeight = buyH * 2 + buyGap * 2 + anteH;
+      const blockStartY = gridY + (gridTotalSize - blockHeight) / 2;
+      
+      buyY1 = blockStartY + buyH / 2;
       buyY2 = buyY1 + buyH + buyGap;
       
       this.drawBuyPanel(this.panelSuperGraphics, buyW, buyH, true);
@@ -588,14 +600,14 @@ export class Game extends Phaser.Scene {
     const anteW = buyW;
     const anteH = isMobilePortrait ? 40 : 45;
     const anteX = buyX;
-    const anteY = isMobilePortrait ? safeH - 45 : buyY2 + buyH + buyGap + 20;
-    const anteTargetX = isMobilePortrait ? w / 2 : anteX;
-    const anteTargetW = isMobilePortrait ? w * 0.9 : anteW;
+    const anteY = buyY2 + buyH + buyGap + 20;
+    const anteTargetX = anteX;
+    const anteTargetW = anteW;
     
     this.anteBetHit.setPosition(anteTargetX, anteY).setSize(anteTargetW, anteH);
     this.drawAnteBetButton(anteTargetX, anteY, anteTargetW, anteH);
-    this.anteBetIcon.setPosition(anteTargetX - anteTargetW * 0.35, anteY).setFontSize(Math.min(18, anteH * 0.5));
-    this.anteBetTxt.setPosition(anteTargetX - anteTargetW * 0.2, anteY).setFontSize(Math.min(14, anteTargetW * 0.08));
+    this.anteBetIcon.setPosition(anteTargetX - 40, anteY).setFontSize(22).setOrigin(0.5);
+    this.anteBetTxt.setPosition(anteTargetX - 25, anteY).setFontSize(16).setOrigin(0, 0.5);
 
     // ==========================================
     // 3. BOTTOM BAR & HUD
@@ -650,9 +662,9 @@ export class Game extends Phaser.Scene {
     }
 
     // Spin Button
-    const spinSize = isMobile ? barH * 1.3 : barH * 1.6;
-    const spinX = w - spinSize / 2 - sidePad;
-    const spinY = h - barH / 2 - (isMobile ? 10 : 25);
+    const spinSize = isMobile ? Math.max(70, w * 0.16) : 100;
+    const spinX = w - spinSize / 2 - Math.max(10, sidePad);
+    const spinY = isMobilePortrait ? safeH - spinSize / 2 - 20 : h - barH / 2 - 15;
     this.spinBtnHit.setPosition(spinX, spinY).setSize(spinSize, spinSize);
     this.updateSpinButtonState();
 
@@ -660,7 +672,7 @@ export class Game extends Phaser.Scene {
     const autoW = 80;
     const autoH = 28;
     const autoX = spinX;
-    const autoY = spinY + spinSize / 2 + 12;
+    const autoY = spinY + spinSize / 2 + 14;
     this.btnAuto.setPosition(autoX, autoY).setSize(autoW, autoH).setDisplaySize(autoW, autoH);
     this.txtAuto.setPosition(autoX, autoY).setFontSize(14);
 

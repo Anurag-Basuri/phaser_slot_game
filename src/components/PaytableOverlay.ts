@@ -21,11 +21,50 @@ export class PaytableOverlay {
   private currentPage = 0;
   private visible = false;
   private txtPageNum!: Phaser.GameObjects.Text;
+  private dotIndicators: Phaser.GameObjects.Graphics[] = [];
+
+  private readonly FONT_BODY = '"Inter", "Arial", sans-serif';
+  private readonly FONT_TITLE = '"Luckiest Guy", cursive, sans-serif';
+  private readonly COL_BODY = '#d0d0e0';
+  private readonly COL_MUTED = '#8888aa';
+  private readonly COL_ACCENT = '#ff006a';
+  private readonly COL_GOLD = '#ffe600';
 
   private symbolNames = [
     'Orange Gummy Bear', 'Purple Gummy Bear', 'Red Gummy Bear',
     'Green Candy', 'Purple Candy', 'Orange Candy', 'Pink Candy'
   ];
+
+  /** Draw a dark translucent card rectangle onto a page */
+  private drawCard(page: Phaser.GameObjects.Container, x: number, y: number, cw: number, ch: number, accent = false) {
+    const g = this.scene.add.graphics();
+    g.fillStyle(0x1a1530, 0.6);
+    g.fillRoundedRect(x, y, cw, ch, 12);
+    g.lineStyle(1.5, accent ? 0xff006a : 0x332244, accent ? 0.6 : 0.5);
+    g.strokeRoundedRect(x, y, cw, ch, 12);
+    page.add(g);
+  }
+
+  /** Draw a horizontal divider line */
+  private drawDivider(page: Phaser.GameObjects.Container, x1: number, x2: number, y: number) {
+    const g = this.scene.add.graphics();
+    g.lineStyle(1, 0x332244, 0.6);
+    g.lineBetween(x1, y, x2, y);
+    page.add(g);
+  }
+
+  /** Add a section title with underline accent */
+  private addSectionTitle(page: Phaser.GameObjects.Container, x: number, y: number, text: string): number {
+    page.add(this.scene.add.text(x, y, text, {
+      fontSize: '22px', fontFamily: this.FONT_TITLE, color: '#ffffff'
+    }).setOrigin(0.5));
+    const g = this.scene.add.graphics();
+    const lw = Math.min(text.length * 11, 300);
+    g.lineStyle(2, 0xff006a, 0.5);
+    g.lineBetween(x - lw/2, y + 16, x + lw/2, y + 16);
+    page.add(g);
+    return y + 40;
+  }
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -55,15 +94,28 @@ export class PaytableOverlay {
     const logicalW = 860;
     const logicalH = 640;
 
-    // Dark overlay
+    // Dark translucent backdrop
     const bg = this.scene.add.graphics();
-    bg.fillStyle(0x0a0618, 0.97);
+    bg.fillStyle(0x000000, 0.7);
     bg.fillRect(-w, -h, w * 3, h * 3);
     bg.setInteractive(new Phaser.Geom.Rectangle(-w, -h, w * 3, h * 3), Phaser.Geom.Rectangle.Contains);
     this.container.add(bg);
 
     const pageWrapper = this.scene.add.container(0, 0);
     this.container.add(pageWrapper);
+
+    // Premium Panel Background for the Info Pages
+    const panel = this.scene.add.graphics();
+    panel.fillStyle(0x130f24, 0.98); // Dark navy
+    panel.fillRoundedRect(0, 0, logicalW, logicalH, 24);
+    
+    // Top gradient accent for the panel header
+    panel.fillStyle(0xff006a, 0.15);
+    panel.fillRoundedRect(0, 0, logicalW, 70, 24);
+    
+    panel.lineStyle(4, 0xff006a, 1); // Hot pink border
+    panel.strokeRoundedRect(0, 0, logicalW, logicalH, 24);
+    pageWrapper.add(panel);
 
     const scale = Math.min(w / logicalW, h / logicalH, 1);
     pageWrapper.setScale(scale);
@@ -74,18 +126,22 @@ export class PaytableOverlay {
 
     // Title
     const isSocial = getStakeEngine().isSocialMode();
-    pageWrapper.add(this.scene.add.text(logicalW / 2, 28, T('GAME RULES', isSocial), {
-      fontSize: '28px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      color: '#ffffff', fontStyle: 'bold',
-      stroke: '#000000', strokeThickness: 4
+    pageWrapper.add(this.scene.add.text(logicalW / 2, 35, T('GAME RULES', isSocial), {
+      fontSize: '28px', fontFamily: this.FONT_TITLE, color: '#ffffff'
     }).setOrigin(0.5));
 
-    // Close button
-    const closeBtn = this.scene.add.text(logicalW - 35, 26, '✕', {
-      fontSize: '30px', color: '#ffffff', stroke: '#000', strokeThickness: 3
+    // Close button — circle with X
+    const closeBtnGfx = this.scene.add.graphics();
+    closeBtnGfx.fillStyle(0xff006a, 0.2);
+    closeBtnGfx.fillCircle(logicalW - 35, 35, 18);
+    closeBtnGfx.lineStyle(2, 0xff006a, 0.8);
+    closeBtnGfx.strokeCircle(logicalW - 35, 35, 18);
+    pageWrapper.add(closeBtnGfx);
+    const closeBtn = this.scene.add.text(logicalW - 35, 35, '✕', {
+      fontSize: '22px', color: '#ffffff', fontFamily: this.FONT_BODY, fontStyle: 'bold'
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     closeBtn.on('pointerdown', () => this.hide());
-    closeBtn.on('pointerover', () => closeBtn.setColor('#ff4466'));
+    closeBtn.on('pointerover', () => closeBtn.setColor('#ff4488'));
     closeBtn.on('pointerout', () => closeBtn.setColor('#ffffff'));
     pageWrapper.add(closeBtn);
 
@@ -98,37 +154,41 @@ export class PaytableOverlay {
     this.buildPage6_HowToPlay(pageWrapper, logicalW, logicalH);
     this.buildPage7_Settings(pageWrapper, logicalW, logicalH);
 
-    // Navigation — ◀ ✕ ▶ (matching Pragmatic Play style)
-    const navY = logicalH - 35;
+    // Navigation — ◀ ▶ with dot indicators
+    const navY = logicalH - 38;
     const navCenter = logicalW / 2;
 
-    const prevBtn = this.scene.add.text(navCenter - 50, navY, '◀', {
-      fontSize: '28px', color: '#44cc44', fontStyle: 'bold',
+    const prevBtn = this.scene.add.text(navCenter - 120, navY, '◀', {
+      fontSize: '28px', color: '#ff006a', fontStyle: 'bold',
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     prevBtn.on('pointerdown', () => this.changePage(-1));
-    prevBtn.on('pointerover', () => prevBtn.setColor('#66ff66'));
-    prevBtn.on('pointerout', () => prevBtn.setColor('#44cc44'));
+    prevBtn.on('pointerover', () => prevBtn.setColor('#ff4488'));
+    prevBtn.on('pointerout', () => prevBtn.setColor('#ff006a'));
     pageWrapper.add(prevBtn);
 
-    const closeNavBtn = this.scene.add.text(navCenter, navY, '✕', {
-      fontSize: '28px', color: '#44cc44', fontStyle: 'bold',
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    closeNavBtn.on('pointerdown', () => this.hide());
-    closeNavBtn.on('pointerover', () => closeNavBtn.setColor('#ff4466'));
-    closeNavBtn.on('pointerout', () => closeNavBtn.setColor('#44cc44'));
-    pageWrapper.add(closeNavBtn);
-
-    const nextBtn = this.scene.add.text(navCenter + 50, navY, '▶', {
-      fontSize: '28px', color: '#44cc44', fontStyle: 'bold',
+    const nextBtn = this.scene.add.text(navCenter + 120, navY, '▶', {
+      fontSize: '28px', color: '#ff006a', fontStyle: 'bold',
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     nextBtn.on('pointerdown', () => this.changePage(1));
-    nextBtn.on('pointerover', () => nextBtn.setColor('#66ff66'));
-    nextBtn.on('pointerout', () => nextBtn.setColor('#44cc44'));
+    nextBtn.on('pointerover', () => nextBtn.setColor('#ff4488'));
+    nextBtn.on('pointerout', () => nextBtn.setColor('#ff006a'));
     pageWrapper.add(nextBtn);
 
-    // Page indicator
-    this.txtPageNum = this.scene.add.text(logicalW - 60, navY, 'Page 1/7', {
-      fontSize: '14px', color: '#888888', fontStyle: 'bold'
+    // Dot indicators
+    this.dotIndicators = [];
+    for (let i = 0; i < 7; i++) {
+      const dot = this.scene.add.graphics();
+      const dx = navCenter - 48 + i * 16;
+      dot.fillStyle(i === 0 ? 0xff006a : 0x332244, 1);
+      dot.fillCircle(dx, navY, i === 0 ? 5 : 4);
+      if (i === 0) { dot.lineStyle(1, 0xff006a, 0.5); dot.strokeCircle(dx, navY, 7); }
+      pageWrapper.add(dot);
+      this.dotIndicators.push(dot);
+    }
+
+    // Page label
+    this.txtPageNum = this.scene.add.text(logicalW - 70, navY, '1 / 7', {
+      fontSize: '14px', color: '#8888aa', fontFamily: this.FONT_BODY
     }).setOrigin(0.5);
     pageWrapper.add(this.txtPageNum);
 
@@ -140,63 +200,75 @@ export class PaytableOverlay {
   // ─────────────────────────────────────────────
   private buildPage1_Symbols(parent: Phaser.GameObjects.Container, w: number, h: number) {
     const page = this.scene.add.container(0, 0).setVisible(false);
-    let yPos = 68;
+    const pad = 30;
+    let yPos = 75;
 
-    page.add(this.scene.add.text(w / 2, yPos, 'All symbols pay in blocks of minimum 5 symbols connected\nhorizontally or vertically. The game is played on a 7×7 grid of symbols.', {
-      fontSize: '13px', color: '#cccccc', align: 'center', lineSpacing: 4,
+    yPos = this.addSectionTitle(page, w / 2, yPos, 'SYMBOL PAYOUTS');
+
+    // Card background for the whole payout table
+    this.drawCard(page, pad - 5, yPos - 5, w - pad * 2 + 10, 370);
+
+    // Intro text
+    page.add(this.scene.add.text(w / 2, yPos + 5, 'Cluster Pays: Min 5 connected symbols (horizontal/vertical) on a 7\u00d77 grid.', {
+      fontSize: '13px', color: this.COL_MUTED, align: 'center', fontFamily: this.FONT_BODY
     }).setOrigin(0.5, 0));
-    yPos += 52;
+    yPos += 30;
 
-    // Display symbols — highest paying first (left to right), in a row with payouts below
-    const order = [6, 5, 4, 3, 2, 1, 0]; // Pink Candy → Orange Gummy Bear
+    const order = [6, 5, 4, 3, 2, 1, 0];
     const colCount = 7;
-    const colW = (w - 60) / colCount;
-    const startX = 30;
+    const colW = (w - pad * 2 - 40) / colCount;
+    const startX = pad + 35;
 
     // Symbol icons row
     order.forEach((symId, col) => {
       const cx = startX + col * colW + colW / 2;
-      const icon = this.scene.add.sprite(cx, yPos + 28, `candy_${symId}`);
-      const iconScale = Math.min(0.5, 48 / Math.max(icon.width, 1));
-      icon.setScale(iconScale);
+      const icon = this.scene.add.sprite(cx, yPos + 25, `candy_${symId}`);
+      icon.setScale(Math.min(0.45, 44 / Math.max(icon.width, 1)));
       page.add(icon);
     });
-    yPos += 65;
+    yPos += 55;
 
-    // Payout rows — from 15+ down to 5
+    // Payout rows with alternating shading
     const tiers = [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5];
+    const rowH = 24;
     tiers.forEach((tier, rowIdx) => {
+      const rowY = yPos + rowIdx * rowH;
+      // Alternating row background
+      if (rowIdx % 2 === 0) {
+        const rowBg = this.scene.add.graphics();
+        rowBg.fillStyle(0xffffff, 0.03);
+        rowBg.fillRect(pad, rowY - 2, w - pad * 2, rowH);
+        page.add(rowBg);
+      }
       const tierLabel = tier >= 15 ? '15+' : `${tier}`;
+      // Tier label
+      page.add(this.scene.add.text(startX - 8, rowY, tierLabel, {
+        fontSize: '11px', color: this.COL_MUTED, fontStyle: 'bold', fontFamily: this.FONT_BODY
+      }).setOrigin(1, 0));
+      // Values
       order.forEach((symId, col) => {
         const cx = startX + col * colW + colW / 2;
         const payIdx = tier >= 15 ? 10 : tier - 5;
         const val = options.payvalues[symId][payIdx];
-        const valStr = val >= 1 ? val.toFixed(2) : val.toFixed(2);
-        const color = rowIdx < 2 ? '#ffe600' : rowIdx < 5 ? '#ffcc77' : '#cccccc';
-        const fs = rowIdx < 2 ? '12px' : '11px';
-
-        // Tier label on left side of first column
-        if (col === 0) {
-          page.add(this.scene.add.text(startX - 2, yPos + rowIdx * 28, tierLabel, {
-            fontSize: '11px', color: '#999999', fontStyle: 'bold',
-          }).setOrigin(1, 0));
-        }
-
-        page.add(this.scene.add.text(cx, yPos + rowIdx * 28, valStr, {
-          fontSize: fs, color,
+        const color = rowIdx < 2 ? this.COL_GOLD : rowIdx < 5 ? '#ffcc77' : this.COL_BODY;
+        page.add(this.scene.add.text(cx, rowY, val.toFixed(2), {
+          fontSize: '11px', color, fontFamily: this.FONT_BODY, fontStyle: 'bold'
         }).setOrigin(0.5, 0));
       });
     });
 
-    yPos += tiers.length * 28 + 15;
+    yPos += tiers.length * rowH + 20;
 
-    // Scatter info
-    const scatterIcon = this.scene.add.sprite(w / 2 - 120, yPos + 18, 'scatter');
-    scatterIcon.setScale(Math.min(0.3, 50 / Math.max(scatterIcon.width, 1)));
+    // Scatter info card
+    this.drawCard(page, pad - 5, yPos - 5, w - pad * 2 + 10, 55, true);
+    const scatterIcon = this.scene.add.sprite(pad + 35, yPos + 22, 'scatter');
+    scatterIcon.setScale(Math.min(0.28, 42 / Math.max(scatterIcon.width, 1)));
     page.add(scatterIcon);
-
-    page.add(this.scene.add.text(w / 2 - 65, yPos + 6, 'This is the SCATTER symbol.\nSCATTER symbol appears on all reels.', {
-      fontSize: '13px', color: '#cccccc', lineSpacing: 4,
+    page.add(this.scene.add.text(pad + 75, yPos + 8, 'SCATTER \u2014 Appears on all reels. Triggers Free Spins.', {
+      fontSize: '13px', color: this.COL_BODY, fontFamily: this.FONT_BODY
+    }));
+    page.add(this.scene.add.text(pad + 75, yPos + 28, '3 or more Scatters award 10-30 Free Spins.', {
+      fontSize: '12px', color: this.COL_MUTED, fontFamily: this.FONT_BODY
     }));
 
     parent.add(page);
@@ -208,35 +280,46 @@ export class PaytableOverlay {
   // ─────────────────────────────────────────────
   private buildPage2_Tumble(parent: Phaser.GameObjects.Container, w: number, h: number) {
     const page = this.scene.add.container(0, 0).setVisible(false);
+    const pad = 40;
     let yPos = 75;
 
-    page.add(this.scene.add.text(w / 2, yPos, 'TUMBLE FEATURE', {
-      fontSize: '24px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      color: '#ffffff', fontStyle: 'bold',
-      stroke: '#000000', strokeThickness: 3,
-    }).setOrigin(0.5));
-    yPos += 55;
+    yPos = this.addSectionTitle(page, w / 2, yPos, 'TUMBLE FEATURE');
+
+    // Card for the explanation
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 220);
 
     const tumbleRules = [
-      'The TUMBLE FEATURE means that after every spin, winning',
-      'combinations are paid and all winning symbols disappear.',
-      '',
-      'The remaining symbols fall to the bottom of the screen and',
-      'the empty positions are replaced with new symbols coming',
-      'from above.',
-      '',
-      'Tumbling will continue until no more winning combinations',
-      'appear as a result of a tumble.',
-      '',
-      'All wins are added to the player\'s balance after all of the',
-      'tumbles resulted from a base spin have been played.',
+      '\u2022  After every winning spin, winning symbols are removed.',
+      '\u2022  Remaining symbols drop to the bottom of the grid.',
+      '\u2022  Empty positions are filled with new symbols from above.',
+      '\u2022  Tumbling continues until no new wins appear.',
+      '\u2022  All wins are added to your balance after the full sequence.',
     ];
+    tumbleRules.forEach((line, i) => {
+      page.add(this.scene.add.text(pad + 20, yPos + 10 + i * 38, line, {
+        fontSize: '15px', color: this.COL_BODY, fontFamily: this.FONT_BODY, lineSpacing: 4,
+        wordWrap: { width: w - pad * 2 - 50 }
+      }));
+    });
+    yPos += 235;
 
-    tumbleRules.forEach((line) => {
-      page.add(this.scene.add.text(w / 2, yPos, line, {
-        fontSize: '15px', color: '#cccccc', align: 'center',
-      }).setOrigin(0.5, 0));
-      yPos += line === '' ? 12 : 24;
+    // Visual flow diagram
+    this.drawCard(page, pad, yPos, w - pad * 2, 70, true);
+    const steps = ['SPIN', 'WIN', 'REMOVE', 'DROP', 'REPEAT'];
+    const stepW = (w - pad * 2) / steps.length;
+    steps.forEach((s, i) => {
+      const sx = pad + i * stepW + stepW / 2;
+      page.add(this.scene.add.text(sx, yPos + 20, s, {
+        fontSize: '14px', color: i === 4 ? this.COL_GOLD : '#ffffff', fontStyle: 'bold', fontFamily: this.FONT_BODY
+      }).setOrigin(0.5));
+      if (i < steps.length - 1) {
+        page.add(this.scene.add.text(sx + stepW / 2, yPos + 20, '\u2192', {
+          fontSize: '16px', color: this.COL_ACCENT, fontFamily: this.FONT_BODY
+        }).setOrigin(0.5));
+      }
+      page.add(this.scene.add.text(sx, yPos + 42, ['Start', 'Cluster pays', 'Symbols vanish', 'Fill gaps', 'Until no wins'][i], {
+        fontSize: '10px', color: this.COL_MUTED, fontFamily: this.FONT_BODY
+      }).setOrigin(0.5));
     });
 
     parent.add(page);
@@ -248,44 +331,57 @@ export class PaytableOverlay {
   // ─────────────────────────────────────────────
   private buildPage3_Multipliers(parent: Phaser.GameObjects.Container, w: number, h: number) {
     const page = this.scene.add.container(0, 0).setVisible(false);
+    const pad = 40;
     let yPos = 75;
 
-    page.add(this.scene.add.text(w / 2, yPos, 'MULTIPLIER SPOTS FEATURE', {
-      fontSize: '24px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      color: '#ffffff', fontStyle: 'bold',
-      stroke: '#000000', strokeThickness: 3,
-    }).setOrigin(0.5));
-    yPos += 55;
+    yPos = this.addSectionTitle(page, w / 2, yPos, 'MULTIPLIER SPOTS');
 
-    const multRules = [
-      'Whenever a winning symbol explodes it marks its spot on the',
-      'grid. After the second time a symbol explodes on the same',
-      'spot a multiplier is added to the spot, starting from ×2 and',
-      'doubling every time one more symbol explodes on top of it',
-      'up to a maximum of ×1024.',
-      '',
-      'The multiplier applies to all winning combinations that hit',
-      'on top of it. If more multipliers are involved in the same',
-      'winning combination, they add to each other.',
-      '',
-      'In the base game all the marked spots with multipliers last',
-      'until the end of the tumbling sequence, being cleared when',
-      'there are no more tumbles.',
+    // Rules card
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 185);
+    const rules = [
+      '\u2022  Winning symbols mark their grid spot.',
+      '\u2022  Second explosion on same spot \u2192 \u00d72 multiplier.',
+      '\u2022  Each further explosion doubles it (up to \u00d71024).',
+      '\u2022  Multiple multipliers in one cluster are summed.',
+      '\u2022  Base game: multipliers reset after tumble sequence.',
     ];
-
-    multRules.forEach((line) => {
-      page.add(this.scene.add.text(w / 2, yPos, line, {
-        fontSize: '15px', color: '#cccccc', align: 'center',
-      }).setOrigin(0.5, 0));
-      yPos += line === '' ? 12 : 24;
+    rules.forEach((line, i) => {
+      page.add(this.scene.add.text(pad + 20, yPos + 10 + i * 32, line, {
+        fontSize: '15px', color: this.COL_BODY, fontFamily: this.FONT_BODY,
+        wordWrap: { width: w - pad * 2 - 50 }
+      }));
     });
+    yPos += 200;
 
-    // Multiplier progression visual
-    yPos += 20;
-    const progLabel = '×2  →  ×4  →  ×8  →  ×16  →  ...  →  ×1024';
-    page.add(this.scene.add.text(w / 2, yPos, progLabel, {
-      fontSize: '18px', color: '#ffe600', fontStyle: 'bold',
-      stroke: '#000', strokeThickness: 3,
+    // Multiplier progression visual card
+    this.drawCard(page, pad, yPos, w - pad * 2, 90, true);
+    page.add(this.scene.add.text(w / 2, yPos + 15, 'MULTIPLIER PROGRESSION', {
+      fontSize: '12px', color: this.COL_MUTED, fontStyle: 'bold', fontFamily: this.FONT_BODY
+    }).setOrigin(0.5));
+    const mults = ['\u00d72', '\u00d74', '\u00d78', '\u00d716', '\u00d732', '\u00d764', '...', '\u00d71024'];
+    const mw = (w - pad * 2 - 40) / mults.length;
+    mults.forEach((m, i) => {
+      const mx = pad + 20 + i * mw + mw / 2;
+      const isMax = i === mults.length - 1;
+      page.add(this.scene.add.text(mx, yPos + 48, m, {
+        fontSize: isMax ? '18px' : '16px', color: isMax ? this.COL_GOLD : '#ffffff',
+        fontStyle: 'bold', fontFamily: this.FONT_BODY
+      }).setOrigin(0.5));
+      if (i < mults.length - 1 && m !== '...') {
+        page.add(this.scene.add.text(mx + mw / 2, yPos + 48, '\u2192', {
+          fontSize: '14px', color: this.COL_ACCENT, fontFamily: this.FONT_BODY
+        }).setOrigin(0.5));
+      }
+    });
+    yPos += 110;
+
+    // Free spins note
+    this.drawCard(page, pad, yPos, w - pad * 2, 55);
+    page.add(this.scene.add.text(w / 2, yPos + 14, '\u26a1 During Free Spins, multipliers persist across all spins!', {
+      fontSize: '14px', color: this.COL_GOLD, fontFamily: this.FONT_BODY, fontStyle: 'bold'
+    }).setOrigin(0.5));
+    page.add(this.scene.add.text(w / 2, yPos + 36, 'They are only cleared when the bonus round ends.', {
+      fontSize: '12px', color: this.COL_MUTED, fontFamily: this.FONT_BODY
     }).setOrigin(0.5));
 
     parent.add(page);
@@ -297,40 +393,34 @@ export class PaytableOverlay {
   // ─────────────────────────────────────────────
   private buildPage4_FreeSpins(parent: Phaser.GameObjects.Container, w: number, h: number) {
     const page = this.scene.add.container(0, 0).setVisible(false);
+    const pad = 40;
     let yPos = 75;
 
-    page.add(this.scene.add.text(w / 2, yPos, 'FREE SPINS', {
-      fontSize: '24px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      color: '#ffffff', fontStyle: 'bold',
-      stroke: '#000000', strokeThickness: 3,
-    }).setOrigin(0.5));
-    yPos += 50;
+    yPos = this.addSectionTitle(page, w / 2, yPos, 'FREE SPINS');
 
+    // Rules card
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 160);
     const fsRules = [
-      'Hit 3, 4, 5, 6 or 7 SCATTER symbols anywhere on the screen',
-      'to win 10, 12, 15, 20 or 30 free spins respectively.',
-      '',
-      'During the FREE SPINS round marked spots and their',
-      'multipliers remain in place until the end of the round and',
-      'can increase with subsequent tumbles across all of the',
-      'free spins.',
-      '',
-      'Hit 3, 4, 5, 6 or 7 SCATTER symbols during the round',
-      'anywhere on the screen to win 10, 12, 15, 20 or 30',
-      'additional free spins respectively.',
-      '',
-      'Special reels are in play during the feature.',
+      '\u2022  3-7 Scatter symbols trigger 10-30 free spins.',
+      '\u2022  Multipliers persist across the entire bonus round.',
+      '\u2022  Re-trigger with 3+ Scatters during free spins.',
+      '\u2022  Special reels are in play during the feature.',
     ];
-
-    fsRules.forEach((line) => {
-      page.add(this.scene.add.text(w / 2, yPos, line, {
-        fontSize: '15px', color: '#cccccc', align: 'center',
-      }).setOrigin(0.5, 0));
-      yPos += line === '' ? 12 : 24;
+    fsRules.forEach((line, i) => {
+      page.add(this.scene.add.text(pad + 20, yPos + 10 + i * 34, line, {
+        fontSize: '15px', color: this.COL_BODY, fontFamily: this.FONT_BODY,
+        wordWrap: { width: w - pad * 2 - 50 }
+      }));
     });
+    yPos += 175;
 
-    // Scatter table
-    yPos += 20;
+    // Scatter table card
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 185, true);
+    page.add(this.scene.add.text(w / 2, yPos + 8, 'SCATTER AWARDS', {
+      fontSize: '14px', color: '#ffffff', fontStyle: 'bold', fontFamily: this.FONT_BODY
+    }).setOrigin(0.5));
+    yPos += 35;
+
     const scatterTable = [
       { count: '3 Scatters', spins: '10 Free Spins' },
       { count: '4 Scatters', spins: '12 Free Spins' },
@@ -338,18 +428,23 @@ export class PaytableOverlay {
       { count: '6 Scatters', spins: '20 Free Spins' },
       { count: '7 Scatters', spins: '30 Free Spins' },
     ];
-
-    scatterTable.forEach((row) => {
-      page.add(this.scene.add.text(w / 2 - 80, yPos, row.count, {
-        fontSize: '14px', color: '#ffffff', fontStyle: 'bold',
+    scatterTable.forEach((row, i) => {
+      if (i % 2 === 0) {
+        const bg = this.scene.add.graphics();
+        bg.fillStyle(0xffffff, 0.03);
+        bg.fillRect(pad + 10, yPos - 2, w - pad * 2 - 20, 26);
+        page.add(bg);
+      }
+      page.add(this.scene.add.text(w / 2 - 60, yPos, row.count, {
+        fontSize: '15px', color: '#ffffff', fontStyle: 'bold', fontFamily: this.FONT_BODY
       }).setOrigin(1, 0));
-      page.add(this.scene.add.text(w / 2 - 40, yPos, '→', {
-        fontSize: '14px', color: '#ffe600',
+      page.add(this.scene.add.text(w / 2 - 20, yPos, '\u2192', {
+        fontSize: '15px', color: this.COL_ACCENT, fontFamily: this.FONT_BODY
       }).setOrigin(0.5, 0));
-      page.add(this.scene.add.text(w / 2, yPos, row.spins, {
-        fontSize: '14px', color: '#ffe600', fontStyle: 'bold',
+      page.add(this.scene.add.text(w / 2 + 20, yPos, row.spins, {
+        fontSize: '15px', color: this.COL_GOLD, fontStyle: 'bold', fontFamily: this.FONT_BODY
       }));
-      yPos += 24;
+      yPos += 28;
     });
 
     parent.add(page);
@@ -361,85 +456,46 @@ export class PaytableOverlay {
   // ─────────────────────────────────────────────
   private buildPage5_GameRules(parent: Phaser.GameObjects.Container, w: number, h: number) {
     const page = this.scene.add.container(0, 0).setVisible(false);
+    const pad = 40;
     let yPos = 75;
-
-    page.add(this.scene.add.text(w / 2, yPos, 'GAME RULES', {
-      fontSize: '24px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      color: '#ffffff', fontStyle: 'bold',
-      stroke: '#000000', strokeThickness: 3,
+    yPos = this.addSectionTitle(page, w / 2, yPos, 'GAME RULES');
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 50, true);
+    page.add(this.scene.add.text(w / 2 - 40, yPos + 18, 'VOLATILITY', {
+      fontSize: '14px', color: '#ffffff', fontStyle: 'bold', fontFamily: this.FONT_BODY
     }).setOrigin(0.5));
-    yPos += 45;
-
-    // Volatility badge
-    const volBadge = this.scene.add.graphics();
-    const badgeW = 200;
-    volBadge.lineStyle(2, 0xffffff, 0.7);
-    volBadge.strokeRoundedRect(w / 2 - badgeW / 2, yPos, badgeW, 30, 15);
-    page.add(volBadge);
-    page.add(this.scene.add.text(w / 2 - 30, yPos + 15, 'VOLATILITY', {
-      fontSize: '12px', color: '#ffffff', fontStyle: 'bold',
+    page.add(this.scene.add.text(w / 2 + 60, yPos + 18, '\u26a1\u26a1\u26a1\u26a1\u26a1', {
+      fontSize: '16px', color: this.COL_GOLD
     }).setOrigin(0.5));
-    page.add(this.scene.add.text(w / 2 + 55, yPos + 15, '⚡⚡⚡⚡⚡', {
-      fontSize: '12px', color: '#ffe600',
-    }).setOrigin(0.5));
-    yPos += 45;
-
-    page.add(this.scene.add.text(w / 2, yPos, 'High volatility games pay out less often on average but the chance\nto hit big wins in a short time span is higher.', {
-      fontSize: '13px', color: '#cccccc', align: 'center', lineSpacing: 4,
-    }).setOrigin(0.5, 0));
-    yPos += 55;
-
+    yPos += 60;
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 175);
     const rules = [
-      'Only the highest win is paid per winning combination.',
-      'When winning with multiple blocks all wins are added to the total win.',
-      'Free spins and bonus wins are added to the payline win.',
-      '',
-      'All wins are multiplied by base bet.',
-      'All values are expressed as actual wins in coins.',
-      'Free spins win is awarded to the player after the round completes.',
-      'Free spins total win in the history contains the whole win of the cycle.',
-      '',
-      'SPACE and ENTER buttons on the keyboard can be used to start and stop the spin.',
+      '\u2022  Only the highest win per combination is paid.',
+      '\u2022  Multiple block wins are summed to total win.',
+      '\u2022  All wins are multiplied by base bet.',
+      '\u2022  Free spins win awarded after round completes.',
+      '\u2022  SPACE key starts/stops the spin.',
     ];
-
-    rules.forEach((line) => {
-      page.add(this.scene.add.text(w / 2, yPos, line, {
-        fontSize: '13px', color: '#cccccc', align: 'center',
-      }).setOrigin(0.5, 0));
-      yPos += line === '' ? 10 : 22;
+    rules.forEach((line, i) => {
+      page.add(this.scene.add.text(pad + 20, yPos + 8 + i * 30, line, {
+        fontSize: '14px', color: this.COL_BODY, fontFamily: this.FONT_BODY,
+        wordWrap: { width: w - pad * 2 - 50 }
+      }));
     });
-
-    yPos += 15;
-
-    // RTP info
-    const rtpInfo = [
-      'The theoretical RTP of this game is 96.53%',
-      'The RTP of the game when using "BUY FREE SPINS" is 96.52%',
-      'The RTP of the game when using "BUY SUPER FREE SPINS" is 96.44%',
-    ];
-    rtpInfo.forEach((line) => {
-      page.add(this.scene.add.text(w / 2, yPos, line, {
-        fontSize: '13px', color: '#ffffff', align: 'center', fontStyle: 'bold',
-      }).setOrigin(0.5, 0));
-      yPos += 22;
-    });
-
-    yPos += 15;
-
-    // Bet limits
-    page.add(this.scene.add.text(w / 2, yPos, `MINIMUM BET: ${BET_PRESETS[0].toFixed(2)}`, {
-      fontSize: '14px', color: '#ffffff', fontStyle: 'bold',
+    yPos += 185;
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 95);
+    page.add(this.scene.add.text(pad + 20, yPos + 8, 'RTP (Return to Player)', {
+      fontSize: '13px', color: this.COL_MUTED, fontStyle: 'bold', fontFamily: this.FONT_BODY
+    }));
+    page.add(this.scene.add.text(pad + 20, yPos + 30, 'Base: 96.53%  |  Buy FS: 96.52%  |  Super: 96.44%', {
+      fontSize: '14px', color: '#ffffff', fontFamily: this.FONT_BODY
+    }));
+    page.add(this.scene.add.text(pad + 20, yPos + 55, `Bet: ${BET_PRESETS[0].toFixed(2)} \u2013 ${BET_PRESETS[BET_PRESETS.length - 1].toFixed(2)}  |  Max Win: ${options.maxWinMultiplier.toLocaleString()}\u00d7`, {
+      fontSize: '14px', color: this.COL_GOLD, fontFamily: this.FONT_BODY, fontStyle: 'bold'
+    }));
+    yPos += 105;
+    page.add(this.scene.add.text(w / 2, yPos + 5, 'Malfunction voids all pays and plays.', {
+      fontSize: '12px', color: this.COL_MUTED, fontStyle: 'italic', fontFamily: this.FONT_BODY
     }).setOrigin(0.5, 0));
-    yPos += 22;
-    page.add(this.scene.add.text(w / 2, yPos, `MAXIMUM BET: ${BET_PRESETS[BET_PRESETS.length - 1].toFixed(2)}`, {
-      fontSize: '14px', color: '#ffffff', fontStyle: 'bold',
-    }).setOrigin(0.5, 0));
-    yPos += 28;
-
-    page.add(this.scene.add.text(w / 2, yPos, 'Malfunction voids all pays and plays.', {
-      fontSize: '12px', color: '#999999', fontStyle: 'italic',
-    }).setOrigin(0.5, 0));
-
     parent.add(page);
     this.pages.push(page);
   }
@@ -465,9 +521,9 @@ export class PaytableOverlay {
     ];
     howTo.forEach((line) => {
       page.add(this.scene.add.text(w / 2, yPos, line, {
-        fontSize: '14px', color: '#cccccc', align: 'center',
+        fontSize: '15px', color: '#e0e0e0', align: 'center', fontFamily: '"Inter", "Arial", sans-serif'
       }).setOrigin(0.5, 0));
-      yPos += 24;
+      yPos += 26;
     });
 
     yPos += 15;
@@ -501,9 +557,9 @@ export class PaytableOverlay {
 
     uiInfo.forEach((line) => {
       page.add(this.scene.add.text(w / 2, yPos, line, {
-        fontSize: '13px', color: '#cccccc', align: 'center',
+        fontSize: '14px', color: '#e0e0e0', align: 'center', fontFamily: '"Inter", "Arial", sans-serif'
       }).setOrigin(0.5, 0));
-      yPos += line === '' ? 8 : 20;
+      yPos += line === '' ? 10 : 22;
     });
 
     parent.add(page);
@@ -590,7 +646,7 @@ export class PaytableOverlay {
     yPos += 15;
 
     page.add(this.scene.add.text(w / 2, yPos, 'BUY FREE SPINS: Pay 100× total bet to trigger FREE SPINS.\nBUY SUPER FREE SPINS: Pay 500× total bet with ×2 starting multipliers.', {
-      fontSize: '12px', color: '#999999', align: 'center', lineSpacing: 4,
+      fontSize: '13px', color: '#aaaaaa', align: 'center', lineSpacing: 6, fontFamily: '"Inter", "Arial", sans-serif'
     }).setOrigin(0.5, 0));
 
     parent.add(page);
@@ -611,7 +667,22 @@ export class PaytableOverlay {
     this.pages.forEach((p, i) => p.setVisible(i === index));
     this.currentPage = index;
     if (this.txtPageNum) {
-      this.txtPageNum.setText(`Page ${index + 1}/${this.pages.length}`);
+      this.txtPageNum.setText(`${index + 1} / ${this.pages.length}`);
+    }
+    // Update dot indicators
+    if (this.dotIndicators.length > 0) {
+      const navCenter = 860 / 2;
+      const navY = 640 - 38;
+      this.dotIndicators.forEach((dot, i) => {
+        dot.clear();
+        const dx = navCenter - 48 + i * 16;
+        if (i === index) {
+          dot.fillStyle(0xff006a, 1); dot.fillCircle(dx, navY, 5);
+          dot.lineStyle(1, 0xff006a, 0.4); dot.strokeCircle(dx, navY, 7);
+        } else {
+          dot.fillStyle(0x332244, 1); dot.fillCircle(dx, navY, 4);
+        }
+      });
     }
   }
 
