@@ -93,6 +93,7 @@ export class WinCelebration {
       fontStyle: 'normal',
       stroke: tier.stroke,
       strokeThickness: Math.floor(tier.fontSize * 0.12),
+      shadow: { offsetX: 0, offsetY: 8, color: '#000000', blur: 0, stroke: true, fill: true },
       align: 'center',
     }).setOrigin(0.5).setScale(0);
     this.container.add(tierText);
@@ -105,6 +106,7 @@ export class WinCelebration {
       fontStyle: 'normal',
       stroke: '#000000',
       strokeThickness: 8,
+      shadow: { offsetX: 0, offsetY: 6, color: '#000000', blur: 0, stroke: true, fill: true },
       align: 'center',
     }).setOrigin(0.5).setAlpha(0);
     this.container.add(amountText);

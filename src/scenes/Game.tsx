@@ -294,11 +294,11 @@ export class Game extends Phaser.Scene {
           this.stopAutoSpin();
         }
       });
-    this.txtAuto = this.add.text(0, 0, 'AUTO', { fontFamily: '"Luckiest Guy", cursive, sans-serif', fontStyle: 'normal', color: '#ccbbdd' }).setOrigin(0.5).setDepth(21);
+    this.txtAuto = this.add.text(0, 0, 'AUTO', { fontFamily: '"Inter", "Arial", sans-serif', fontStyle: '900', color: '#ffffff', shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 0, fill: true } }).setOrigin(0.5).setDepth(21);
 
     // === BOTTOM BAR ===
-    const tLabelStyle = { fontFamily: '"Luckiest Guy", cursive, sans-serif', fontStyle: 'normal', color: '#ffffff', alpha: 0.55 };
-    const tValStyle = { fontFamily: '"Luckiest Guy", cursive, sans-serif', fontStyle: 'normal', color: '#ffffff' };
+    const tLabelStyle = { fontFamily: '"Inter", "Arial", sans-serif', fontStyle: 'bold', color: '#8888aa', alpha: 1 };
+    const tValStyle = { fontFamily: '"Inter", "Arial", sans-serif', fontStyle: '900', color: '#ffffff', shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 0, fill: true } };
     
     // Bottom Bar Structural Graphic
     this.bottomBar = this.add.graphics().setDepth(45);
