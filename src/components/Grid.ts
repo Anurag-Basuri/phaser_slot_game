@@ -104,29 +104,21 @@ export class Grid {
     this.startIdleShimmer();
   }
 
-  /** Draw Sugar Rush 1000 grid interior — smooth pastel gradient from cyan to pink. */
+  /** Draw subtle grid cell lines — the grid_panel image provides the interior gradient. */
   public drawCellBackgrounds() {
     this.cellBackgrounds.clear();
     const size = options.gridSize;
     const gap = 1;
     
     for (let r = 0; r < size; r++) {
-      const t = r / (size - 1); // 0 at top, 1 at bottom
-      // Interpolate from light cyan (top) to pink/magenta (bottom)
-      const red = Math.floor(0xcc + (0xff - 0xcc) * t);
-      const green = Math.floor(0xee + (0x99 - 0xee) * t);
-      const blue = Math.floor(0xff + (0xdd - 0xff) * t);
-      const color = (red << 16) | (green << 8) | blue;
-      
       for (let c = 0; c < size; c++) {
         const x = this.offsetX + c * this.cellSize + gap;
         const y = this.offsetY + r * this.cellSize + gap;
         const s = this.cellSize - gap * 2;
         
-        // Slight alternating alpha for subtle grid lines
-        const alpha = (r + c) % 2 === 0 ? 0.45 : 0.35;
-        this.cellBackgrounds.fillStyle(color, alpha);
-        this.cellBackgrounds.fillRoundedRect(x, y, s, s, 4);
+        // Hairline cell border only — no fill, let the grid_panel bg show through
+        this.cellBackgrounds.lineStyle(0.5, 0xffffff, 0.08);
+        this.cellBackgrounds.strokeRoundedRect(x, y, s, s, 2);
       }
     }
   }

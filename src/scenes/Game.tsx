@@ -27,8 +27,8 @@ export class Game extends Phaser.Scene {
   private stakeEngine!: StakeEngineClient;
 
   // UI elements
-  // UI elements
   private bgImage!: Phaser.GameObjects.Image;
+  private gridPanel!: Phaser.GameObjects.Image;
   private logoText1!: Phaser.GameObjects.Text;
   private logoText2!: Phaser.GameObjects.Text;
   private gridFrame!: Phaser.GameObjects.Graphics;
@@ -190,14 +190,17 @@ export class Game extends Phaser.Scene {
     const w = this.scale.width;
     const h = this.scale.height;
 
-    // === BACKGROUND ===
-    this.bgImage = this.add.image(w / 2, h / 2, 'candyland_bg').setDisplaySize(w, h).setDepth(0);
+    // === BACKGROUND (actual candy-land panorama) ===
+    this.bgImage = this.add.image(w / 2, h / 2, 'game_bg').setDepth(0);
+
+    // === GRID PANEL (authentic Sugar Rush 1000 frame image) ===
+    this.gridPanel = this.add.image(0, 0, 'grid_panel').setDepth(1);
 
     // === GRID ===
     this.grid = new Grid(this);
     this.wireGridCallbacks();
 
-    // === GRID FRAME ===
+    // === GRID FRAME (subtle overlay for cell delineation) ===
     this.gridFrame = this.add.graphics({ x: 0, y: 0 }).setDepth(2);
 
     // === LOGO (top-right like real Sugar Rush 1000) ===
@@ -401,17 +404,16 @@ export class Game extends Phaser.Scene {
   private layoutAll() {
     const w = this.scale.width;
     const h = this.scale.height;
-    
-    // Draw programmatic bright candy land background gradient over the bg image
-    this.drawBrightBackground(w, h);
+
+    // === BACKGROUND — cover the screen with candy village panorama ===
+    const bgScaleX = w / this.bgImage.width;
+    const bgScaleY = h / this.bgImage.height;
+    this.bgImage.setPosition(w / 2, h / 2).setScale(Math.max(bgScaleX, bgScaleY)).setVisible(true);
 
     // Determine screen mode
     const isPortrait = h > w;
     const isMobile = w < 768;
     const isMobilePortrait = isPortrait && isMobile;
-
-    // Hide old dark bg image — we use programmatic bright background now
-    this.bgImage.setVisible(false);
 
     // Height of the bottom bar
     const barH = Math.max(50, h * 0.07);
@@ -555,85 +557,28 @@ export class Game extends Phaser.Scene {
     this.logoText1.setPosition(logoX, logoY1).setFontSize(logoFS1).setStroke('#ffffff', Math.max(3, logoFS1 * 0.08));
     this.logoText2.setPosition(logoX, logoY1 + logoFS1 * 0.9).setFontSize(logoFS2).setStroke('#ff6699', Math.max(3, logoFS2 * 0.06));
 
-    // Draw the Light Blue Metallic Chassis Frame (matching Sugar Rush 1000 reference)
+    // === GRID PANEL IMAGE (authentic Sugar Rush 1000 frame) ===
+    // user_bg_2.jpeg already contains the metallic teal frame, icing top, rivets bottom
+    const framePad = Math.max(14, gridTotalSize * 0.035);
+    const panelCX = this.grid.offsetX + gridTotalSize / 2;
+    const panelCY = this.grid.offsetY + gridTotalSize / 2;
+    const panelW = gridTotalSize + framePad * 2;
+    const panelH = gridTotalSize + framePad * 2;
+    this.gridPanel.setPosition(panelCX, panelCY).setDisplaySize(panelW, panelH).setVisible(true);
+
+    // === SUBTLE GRID FRAME OVERLAY ===
     this.gridFrame.clear();
-    const framePad = 16;
-    const gX = this.grid.offsetX - framePad;
-    const gY = this.grid.offsetY - framePad;
-    const gW = gridTotalSize + framePad * 2;
-    const gH = gridTotalSize + framePad * 2;
-    const frameR = 8;
     const f = this.gridFrame;
+    const gX = this.grid.offsetX;
+    const gY = this.grid.offsetY;
     
-    // Drop shadow
-    f.fillStyle(0x5588aa, 0.3);
-    f.fillRoundedRect(gX + 4, gY + 6, gW, gH + 20, frameR);
+    // Subtle inner shadow around grid cell area
+    f.lineStyle(1.5, 0x000000, 0.15);
+    f.strokeRect(gX - 1, gY - 1, gridTotalSize + 2, gridTotalSize + 2);
     
-    // Main frame - light cyan/teal metallic
-    f.fillStyle(0x7ec8e3, 0.92);
-    f.fillRoundedRect(gX, gY, gW, gH, frameR);
-    
-    // Lighter top-half highlight (metallic sheen)
-    f.fillStyle(0xa8dff0, 0.5);
-    f.fillRoundedRect(gX + 2, gY + 2, gW - 4, gH * 0.35, frameR);
-    
-    // Left and right metallic side rails
-    f.fillStyle(0x6bb8d4, 0.8);
-    f.fillRect(gX, gY + framePad, framePad * 0.7, gH - framePad * 2);
-    f.fillRect(gX + gW - framePad * 0.7, gY + framePad, framePad * 0.7, gH - framePad * 2);
-    
-    // Inner border (bright)
-    f.lineStyle(2, 0xbbeeff, 0.8);
-    f.strokeRoundedRect(gX + 4, gY + 4, gW - 8, gH - 8, frameR - 2);
-    
-    // Outer border
-    f.lineStyle(3, 0x5599bb, 0.85);
-    f.strokeRoundedRect(gX, gY, gW, gH, frameR);
-    
-    // === FROSTING / ICING on top edge ===
-    // White icing base
-    const frostY = gY - 8;
-    const frostH = 18;
-    f.fillStyle(0xfff0f5, 0.95);
-    f.fillRoundedRect(gX + 5, frostY, gW - 10, frostH, 9);
-    
-    // Pink icing drip pattern on top
-    f.fillStyle(0xffaabb, 0.7);
-    f.fillRoundedRect(gX + 8, frostY + 2, gW - 16, frostH * 0.4, 5);
-    
-    // Colorful sprinkles
-    const sprinkleColors = [0xff6688, 0x66cc77, 0xffcc44, 0x66aaff, 0xff88dd];
-    for (let i = 0; i < gW - 20; i += 12) {
-      const sx = gX + 10 + i + Math.random() * 5;
-      const sy = frostY + 4 + Math.random() * (frostH - 8);
-      const sc = sprinkleColors[i % sprinkleColors.length];
-      f.fillStyle(sc, 0.9);
-      f.fillRect(sx, sy, 4, 2);
-    }
-    
-    // === BOTTOM EDGE with round teal rivets ===
-    // Bottom metallic base bar
-    const baseY = gY + gH - 4;
-    const baseH = 20;
-    f.fillStyle(0x5a9ab5, 0.85);
-    f.fillRoundedRect(gX + 5, baseY, gW - 10, baseH, 6);
-    f.fillStyle(0x78b8d0, 0.5);
-    f.fillRoundedRect(gX + 7, baseY + 2, gW - 14, baseH * 0.4, 4);
-    
-    // Round rivets along the bottom
-    const rivetCount = Math.floor(gW / 70);
-    const rivetGap = (gW - 30) / rivetCount;
-    for (let i = 0; i <= rivetCount; i++) {
-      const rx = gX + 15 + i * rivetGap;
-      const ry = baseY + baseH / 2;
-      const rr = 7;
-      // Rivet outer
-      f.fillStyle(0x4a8aa5, 1);
-      f.fillCircle(rx, ry, rr);
-      // Rivet inner highlight
-      f.fillStyle(0x6ab8d4, 0.7);
-      f.fillCircle(rx, ry - 1, rr * 0.6);
-    }
+    // Soft inner glow
+    f.lineStyle(1, 0xffffff, 0.1);
+    f.strokeRect(gX, gY, gridTotalSize, gridTotalSize);
 
 
     // ==========================================
@@ -705,59 +650,7 @@ export class Game extends Phaser.Scene {
     }
   }
 
-  /** Draw a bright candy land gradient background programmatically */
-  private brightBg?: Phaser.GameObjects.Graphics;
-  private drawBrightBackground(w: number, h: number) {
-    if (!this.brightBg) {
-      this.brightBg = this.add.graphics().setDepth(0);
-    }
-    this.brightBg.clear();
-    
-    // Sky gradient — light blue at top to pastel pink at bottom
-    const steps = 20;
-    const stepH = h / steps;
-    for (let i = 0; i < steps; i++) {
-      const t = i / steps;
-      // Interpolate from sky blue (top) to pastel pink (bottom)
-      const r = Math.floor(0x87 + (0xff - 0x87) * t);
-      const g = Math.floor(0xce + (0xbb - 0xce) * t);
-      const b = Math.floor(0xfa + (0xdd - 0xfa) * t);
-      const color = (r << 16) | (g << 8) | b;
-      this.brightBg.fillStyle(color, 1);
-      this.brightBg.fillRect(0, i * stepH, w, stepH + 1);
-    }
-    
-    // Pink candy hills in the foreground
-    this.brightBg.fillStyle(0xffaacc, 0.6);
-    for (let i = 0; i < 6; i++) {
-      const hx = (w / 5) * i;
-      const hy = h * 0.75 + Math.sin(i * 1.2) * h * 0.08;
-      const hr = w * 0.2 + Math.sin(i * 0.7) * w * 0.05;
-      this.brightBg.fillCircle(hx, hy, hr);
-    }
-    
-    // Brighter pink hills closer
-    this.brightBg.fillStyle(0xff99bb, 0.5);
-    for (let i = 0; i < 5; i++) {
-      const hx = (w / 4) * i + w * 0.1;
-      const hy = h * 0.85 + Math.cos(i * 0.9) * h * 0.04;
-      const hr = w * 0.18;
-      this.brightBg.fillCircle(hx, hy, hr);
-    }
-    
-    // Bottom ground fill
-    this.brightBg.fillStyle(0xffbbdd, 0.7);
-    this.brightBg.fillRect(0, h * 0.88, w, h * 0.12);
-    
-    // Fluffy clouds
-    this.brightBg.fillStyle(0xffffff, 0.4);
-    this.brightBg.fillCircle(w * 0.15, h * 0.1, 50);
-    this.brightBg.fillCircle(w * 0.18, h * 0.08, 40);
-    this.brightBg.fillCircle(w * 0.12, h * 0.09, 35);
-    this.brightBg.fillCircle(w * 0.75, h * 0.12, 45);
-    this.brightBg.fillCircle(w * 0.78, h * 0.10, 38);
-    this.brightBg.fillCircle(w * 0.72, h * 0.11, 32);
-  }
+  // (drawBrightBackground removed — replaced by actual background images)
 
   // --- Layout Helpers ---
 

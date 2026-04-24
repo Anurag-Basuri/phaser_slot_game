@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 
 /**
  * Boot Scene — Sugar Rush 1000 style premium title screen.
- * Matches Pragmatic Play's candy-land aesthetic with vibrant animations.
+ * Uses the actual candy-land background image for authentic Pragmatic Play aesthetic.
  */
 export class Boot extends Phaser.Scene {
   constructor() {
@@ -13,56 +13,27 @@ export class Boot extends Phaser.Scene {
     const w = this.scale.width;
     const h = this.scale.height;
 
-    // === BRIGHT CANDY LAND BACKGROUND (fully programmatic) ===
-    // Hide dark bg image — draw bright gradient instead
-    const bg = this.add.image(w / 2, h / 2, 'candyland_bg').setDisplaySize(w, h).setVisible(false);
-    
-    const gradient = this.add.graphics();
-    const steps = 25;
-    const stepH = h / steps;
-    for (let i = 0; i < steps; i++) {
-      const t = i / steps;
-      // Sky blue at top → pastel pink at bottom
-      const r = Math.floor(0x87 + (0xff - 0x87) * t);
-      const g = Math.floor(0xce + (0x99 - 0xce) * t);
-      const b = Math.floor(0xfa + (0xcc - 0xfa) * t);
-      const color = (r << 16) | (g << 8) | b;
-      gradient.fillStyle(color, 1);
-      gradient.fillRect(0, i * stepH, w, stepH + 1);
-    }
-    
-    // Pink candy hills
-    gradient.fillStyle(0xffaacc, 0.7);
-    for (let i = 0; i < 7; i++) {
-      const hx = (w / 6) * i;
-      const hy = h * 0.78 + Math.sin(i * 1.3) * h * 0.06;
-      gradient.fillCircle(hx, hy, w * 0.18);
-    }
-    gradient.fillStyle(0xff99bb, 0.6);
-    for (let i = 0; i < 5; i++) {
-      const hx = (w / 4) * i + w * 0.12;
-      const hy = h * 0.88;
-      gradient.fillCircle(hx, hy, w * 0.15);
-    }
-    gradient.fillStyle(0xffbbdd, 0.8);
-    gradient.fillRect(0, h * 0.9, w, h * 0.1);
-    
-    // White fluffy clouds
-    gradient.fillStyle(0xffffff, 0.5);
-    gradient.fillCircle(w * 0.12, h * 0.08, 45);
-    gradient.fillCircle(w * 0.15, h * 0.06, 35);
-    gradient.fillCircle(w * 0.09, h * 0.07, 30);
-    gradient.fillCircle(w * 0.8, h * 0.1, 40);
-    gradient.fillCircle(w * 0.83, h * 0.08, 32);
-    gradient.fillCircle(w * 0.45, h * 0.05, 28);
-    gradient.fillCircle(w * 0.48, h * 0.04, 22);
+    // === CANDY LAND BACKGROUND (actual image — no more programmatic gradients) ===
+    const bg = this.add.image(w / 2, h / 2, 'game_bg');
+    const bgScaleX = w / bg.width;
+    const bgScaleY = h / bg.height;
+    bg.setScale(Math.max(bgScaleX, bgScaleY));
+
+    // Subtle vignette overlay for text readability over bright background
+    const vignette = this.add.graphics();
+    // Center-transparent radial vignette (darker at edges, clearer at center)
+    vignette.fillStyle(0x000000, 0.25);
+    vignette.fillRect(0, 0, w, h);
+    // Clear out center for visibility of background
+    vignette.fillStyle(0x000000, 0.0);
+    vignette.fillCircle(w / 2, h * 0.4, Math.min(w, h) * 0.5);
 
     // === FLOATING CANDY BACKGROUND PARTICLES ===
     for (let i = 0; i < 8; i++) {
       const x = Phaser.Math.Between(Math.floor(w * 0.05), Math.floor(w * 0.95));
       const y = Phaser.Math.Between(Math.floor(h * 0.15), Math.floor(h * 0.85));
       const candy = this.add.sprite(x, y, `candy_${i % 7}`);
-      candy.setScale(Phaser.Math.FloatBetween(0.15, 0.28)).setAlpha(0.2);
+      candy.setScale(Phaser.Math.FloatBetween(0.12, 0.22)).setAlpha(0.25);
       this.tweens.add({
         targets: candy,
         y: y - Phaser.Math.Between(20, 50),
@@ -75,11 +46,11 @@ export class Boot extends Phaser.Scene {
       });
     }
 
-    // === CENTRAL GLOW ===
+    // === CENTRAL GLOW (adjusted for bright background) ===
     const centerGlow = this.add.graphics();
-    centerGlow.fillStyle(0xff00cc, 0.08);
+    centerGlow.fillStyle(0xffffff, 0.12);
     centerGlow.fillCircle(w / 2, h * 0.38, Math.min(350, w * 0.35));
-    centerGlow.fillStyle(0xff66aa, 0.05);
+    centerGlow.fillStyle(0xffccee, 0.08);
     centerGlow.fillCircle(w / 2, h * 0.38, Math.min(500, w * 0.50));
     this.tweens.add({
       targets: centerGlow,
@@ -125,12 +96,13 @@ export class Boot extends Phaser.Scene {
     const subtitle = this.add.text(w / 2, h * 0.54, '7×7 Cluster Pays  •  Cascading Reels  •  Up to 25,000× Win', {
       fontSize: `${subFontSize}px`,
       fontFamily: 'Arial, sans-serif',
-      color: '#bbaacc',
+      color: '#ffffff',
+      stroke: '#333333',
+      strokeThickness: 3,
       align: 'center',
     }).setOrigin(0.5).setAlpha(0);
 
     // === ENTRANCE ANIMATIONS ===
-    // Title swoops in with scale + fade
     this.tweens.add({
       targets: titleMain,
       alpha: 1,
@@ -139,7 +111,6 @@ export class Boot extends Phaser.Scene {
       duration: 700,
       ease: 'Back.easeOut',
     });
-    // "1000" slams in after title
     this.tweens.add({
       targets: title1000,
       alpha: 1,
@@ -149,7 +120,6 @@ export class Boot extends Phaser.Scene {
       delay: 250,
       ease: 'Back.easeOut',
     });
-    // Subtitle fades in
     this.tweens.add({
       targets: subtitle,
       alpha: 1,
@@ -182,19 +152,14 @@ export class Boot extends Phaser.Scene {
 
     // Button background
     const btnBg = this.add.graphics().setAlpha(0);
-    // Drop shadow
     btnBg.fillStyle(0x000000, 0.4);
     btnBg.fillRoundedRect(btnX - btnW / 2, btnY - btnH / 2 + 4, btnW, btnH, btnRadius);
-    // Main gradient — pink/magenta
     btnBg.fillStyle(0xff006a, 1);
     btnBg.fillRoundedRect(btnX - btnW / 2, btnY - btnH / 2, btnW, btnH, btnRadius);
-    // Top highlight
     btnBg.fillStyle(0xff3388, 1);
     btnBg.fillRoundedRect(btnX - btnW / 2, btnY - btnH / 2, btnW, btnH * 0.5, btnRadius);
-    // Glass edge
     btnBg.fillStyle(0xffffff, 0.15);
     btnBg.fillRoundedRect(btnX - btnW / 2 + 3, btnY - btnH / 2 + 3, btnW - 6, Math.max(4, btnH * 0.15), Math.max(2, btnRadius - 2));
-    // Border
     btnBg.lineStyle(2.5, 0xffffff, 0.7);
     btnBg.strokeRoundedRect(btnX - btnW / 2, btnY - btnH / 2, btnW, btnH, btnRadius);
 
@@ -247,7 +212,7 @@ export class Boot extends Phaser.Scene {
     playBtn.on('pointerdown', () => {
       this.tweens.killAll();
       this.tweens.add({
-        targets: [titleMain, title1000, subtitle, btnBg, playText, btnGlow, centerGlow, gradient],
+        targets: [titleMain, title1000, subtitle, btnBg, playText, btnGlow, centerGlow, bg, vignette],
         alpha: 0,
         duration: 350,
         onComplete: () => this.scene.start('Game'),
@@ -259,7 +224,9 @@ export class Boot extends Phaser.Scene {
     this.add.text(w / 2, h * 0.93, 'RTP: 96.53%  |  High Volatility  |  Cluster Pays  |  v1.0.0', {
       fontSize: `${footerFontSize}px`,
       fontFamily: 'Arial, sans-serif',
-      color: '#443355',
+      color: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 3,
       align: 'center',
     }).setOrigin(0.5);
 
@@ -267,7 +234,9 @@ export class Boot extends Phaser.Scene {
     this.add.text(w / 2, h * 0.97, 'Powered by Stake Engine', {
       fontSize: `${Math.max(10, footerFontSize - 2)}px`,
       fontFamily: 'Arial, sans-serif',
-      color: '#332244',
+      color: '#dddddd',
+      stroke: '#000000',
+      strokeThickness: 2,
       align: 'center',
     }).setOrigin(0.5);
   }
