@@ -19,3 +19,11 @@ yarn-error.log*
 
 sweet_cluster_1000.zip
 bundle/
+
+# Python & Proces
+./venv_bg
+/venv_bg
+/public/images/candies_backup/
+process_candies.py
+__pycache__/
+*.pyc
