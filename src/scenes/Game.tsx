@@ -624,15 +624,36 @@ export class Game extends Phaser.Scene {
 
   private drawBuyPanel(gfx: Phaser.GameObjects.Graphics, w: number, h: number, isSuper: boolean) {
     gfx.clear();
-    const r = 12;
-    const accent = isSuper ? 0xffaa00 : 0xff006a;
+    const r = 16;
+    const accent = isSuper ? 0xffbb00 : 0xff006a;
+    const accentDark = isSuper ? 0xcc5500 : 0x990044;
     
-    gfx.fillStyle(0x000000, 0.35);
+    // Drop shadow
+    gfx.fillStyle(0x000000, 0.4);
+    gfx.fillRoundedRect(-w / 2 + 4, -h / 2 + 4, w, h, r);
+    
+    // Base glass layer
+    gfx.fillStyle(0x000000, 0.6);
     gfx.fillRoundedRect(-w / 2, -h / 2, w, h, r);
-    gfx.lineStyle(2, accent, 0.8);
+
+    // Accent Gradient Overlay (Top half)
+    gfx.fillStyle(accentDark, 0.7);
+    gfx.fillRoundedRect(-w / 2, -h / 2, w, h, r);
+
+    gfx.fillStyle(accent, 0.85);
+    gfx.fillRoundedRect(-w / 2, -h / 2, w, h * 0.5, { tl: r, tr: r, bl: 0, br: 0 });
+
+    // Inner bright glass highlight
+    gfx.fillStyle(0xffffff, 0.25);
+    gfx.fillRoundedRect(-w / 2 + 4, -h / 2 + 3, w - 8, h * 0.2, r - 4);
+
+    // Inner glowing border
+    gfx.lineStyle(3, accent, 1);
     gfx.strokeRoundedRect(-w / 2, -h / 2, w, h, r);
-    gfx.fillStyle(0xffffff, 0.1);
-    gfx.fillRoundedRect(-w / 2 + 2, -h / 2 + 2, w - 4, h / 2, { tl: r - 2, tr: r - 2, bl: 0, br: 0 });
+
+    // Outer thin rim
+    gfx.lineStyle(1, 0xffffff, 0.4);
+    gfx.strokeRoundedRect(-w / 2 - 1, -h / 2 - 1, w + 2, h + 2, r + 1);
   }
 
   private drawAnteBetButton(cx: number, cy: number, bw: number, bh: number) {
@@ -682,37 +703,49 @@ export class Game extends Phaser.Scene {
     gfx.clear();
     const r = spinSize / 2;
 
-    // Shadow
-    gfx.fillStyle(0x000000, 0.3);
-    gfx.fillCircle(cx, cy + 3, r);
+    // Outer Drop Shadow
+    gfx.fillStyle(0x000000, 0.35);
+    gfx.fillCircle(cx, cy + 6, r);
 
-    // Main Circle (White)
-    const color = this._spinLock && !this.autoSpinActive ? 0xcccccc : 0xffffff;
-    gfx.fillStyle(color, 1);
+    // Metallic Rim Outer (Dark)
+    gfx.fillStyle(0x222222, 1);
     gfx.fillCircle(cx, cy, r);
     
-    // Border
-    gfx.lineStyle(4, 0x000000, 0.1);
-    gfx.strokeCircle(cx, cy, r);
+    // Metallic Rim Inner (Light silver)
+    gfx.fillStyle(0xdddddd, 1);
+    gfx.fillCircle(cx, cy, r - 3);
+
+    // Main Face
+    const color = this._spinLock && !this.autoSpinActive ? 0xaaaaaa : 0xffffff;
+    gfx.fillStyle(color, 1);
+    gfx.fillCircle(cx, cy, r - 6);
+
+    // Subtle inner gradient gloss
+    gfx.fillStyle(0xffffff, 0.5);
+    gfx.beginPath();
+    gfx.arc(cx, cy - r * 0.3, r * 0.6, Math.PI, 0, false);
+    gfx.fill();
 
     if (this.autoSpinActive) {
       // STOP Icon (Red Square)
-      gfx.fillStyle(0xff4466, 1);
-      gfx.fillRect(cx - iconSize / 2.5, cy - iconSize / 2.5, iconSize * 0.8, iconSize * 0.8);
+      gfx.fillStyle(0xff1144, 1);
+      gfx.fillRoundedRect(cx - iconSize / 2.5, cy - iconSize / 2.5, iconSize * 0.8, iconSize * 0.8, 6);
+      gfx.fillStyle(0xffaacc, 0.5);
+      gfx.fillRoundedRect(cx - iconSize / 2.5 + 2, cy - iconSize / 2.5 + 2, iconSize * 0.8 - 4, iconSize * 0.3, 2);
     } else if (this._spinLock) {
       // Loading dots
-      gfx.fillStyle(0x333333, 0.8);
-      gfx.fillCircle(cx - 12, cy, 5);
-      gfx.fillCircle(cx, cy, 5);
-      gfx.fillCircle(cx + 12, cy, 5);
+      gfx.fillStyle(0x555555, 0.9);
+      gfx.fillCircle(cx - 14, cy, 6);
+      gfx.fillCircle(cx, cy, 6);
+      gfx.fillCircle(cx + 14, cy, 6);
     } else {
       // PLAY Icon (Dark Triangle)
-      gfx.fillStyle(0x1a1a1a, 1);
+      gfx.fillStyle(0x0a0a0a, 1);
       const s = iconSize;
       gfx.fillTriangle(
-        cx - s / 3, cy - s / 2,
-        cx - s / 3, cy + s / 2,
-        cx + s * 0.6, cy
+        cx - s * 0.25, cy - s * 0.45,
+        cx - s * 0.25, cy + s * 0.45,
+        cx + s * 0.55, cy
       );
     }
   }
@@ -763,6 +796,25 @@ export class Game extends Phaser.Scene {
       if (this.anyOverlayOpen()) return;
       this.changeBet(1);
     });
+
+    // Premium Hover states builder
+    const addHover = (hit: Phaser.GameObjects.GameObject, target: any) => {
+      hit.on('pointerover', () => {
+        this.tweens.add({ targets: target, scaleX: 1.1, scaleY: 1.1, duration: 150, ease: 'Back.easeOut' });
+      });
+      hit.on('pointerout', () => {
+        this.tweens.add({ targets: target, scaleX: 1.0, scaleY: 1.0, duration: 150, ease: 'Back.easeIn' });
+      });
+    };
+
+    addHover(this.buySuperHit, [this.panelSuperGraphics, this.buySuperTxt1, this.buySuperTxt2]);
+    addHover(this.buyRegularHit, [this.panelRegularGraphics, this.buyRegularTxt1, this.buyRegularTxt2]);
+    addHover(this.anteBetHit, [this.anteBetBtn, this.anteBetTxt, this.anteBetIcon]);
+    addHover(this.soundToggle, this.soundToggle);
+    addHover(this.btnPaytable, this.btnPaytable);
+    addHover(this.btnSettings, this.btnSettings);
+    addHover(this.btnFullscreen, this.btnFullscreen);
+    addHover(this.spinBtnHit, this.spinBtnGraphics);
 
     // Buy features (with confirmation) — also guard overlays
     this.buySuperHit.on('pointerdown', () => {
@@ -1018,9 +1070,8 @@ export class Game extends Phaser.Scene {
         }
       };
 
-      if (this.lastWin > 0) {
-        const betAmount = this.getEffectiveBet();
-        this.winCelebration.show(this.lastWin, betAmount, finishUp);
+      if (this.lastWin >= this.getEffectiveBet() * 2) {
+        this.winCelebration.show(this.lastWin, this.getEffectiveBet(), finishUp);
       } else {
         finishUp();
       }

@@ -63,33 +63,59 @@ export class Boot extends Phaser.Scene {
 
     // === TITLE — "SUGAR RUSH" ===
     const titleFontSize = Math.min(72, w * 0.09);
+    
+    // Stack multiple texts to create a thick 3D extrusion/bevel effect
+    const titleShadow = this.add.text(w / 2, h * 0.28 + 8, 'SUGAR RUSH', {
+      fontSize: `${titleFontSize}px`, fontFamily: '"Luckiest Guy", cursive, sans-serif', color: '#660033'
+    }).setOrigin(0.5).setAlpha(0).setScale(0.5);
+
+    const titleBack = this.add.text(w / 2, h * 0.28 + 4, 'SUGAR RUSH', {
+      fontSize: `${titleFontSize}px`, fontFamily: '"Luckiest Guy", cursive, sans-serif', color: '#cc0066',
+      stroke: '#ffffff', strokeThickness: Math.max(8, titleFontSize * 0.15)
+    }).setOrigin(0.5).setAlpha(0).setScale(0.5);
+
     const titleMain = this.add.text(w / 2, h * 0.28, 'SUGAR RUSH', {
       fontSize: `${titleFontSize}px`,
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      color: '#ff3399',
+      color: '#ff66b3', // fallback
       fontStyle: 'bold',
       stroke: '#ffffff',
-      strokeThickness: Math.max(6, titleFontSize * 0.1),
-      shadow: {
-        offsetX: 0, offsetY: 4,
-        color: '#990044', blur: 12, fill: true,
-      },
+      strokeThickness: Math.max(4, titleFontSize * 0.06),
     }).setOrigin(0.5).setAlpha(0).setScale(0.5);
+    
+    // Apply gradient
+    const grad1 = titleMain.context.createLinearGradient(0, 0, 0, titleMain.height);
+    grad1.addColorStop(0, '#ff99cc');
+    grad1.addColorStop(0.5, '#ff3399');
+    grad1.addColorStop(1, '#e60073');
+    titleMain.setFill(grad1);
 
     // === TITLE — "1000" ===
     const numFontSize = Math.min(120, w * 0.15);
+    
+    const numShadow = this.add.text(w / 2, h * 0.42 + 10, '1000', {
+      fontSize: `${numFontSize}px`, fontFamily: '"Luckiest Guy", cursive, sans-serif', color: '#990000'
+    }).setOrigin(0.5).setAlpha(0).setScale(0.3);
+
+    const numBack = this.add.text(w / 2, h * 0.42 + 5, '1000', {
+      fontSize: `${numFontSize}px`, fontFamily: '"Luckiest Guy", cursive, sans-serif', color: '#ff6600',
+      stroke: '#ff0066', strokeThickness: Math.max(12, numFontSize * 0.1)
+    }).setOrigin(0.5).setAlpha(0).setScale(0.3);
+
     const title1000 = this.add.text(w / 2, h * 0.42, '1000', {
       fontSize: `${numFontSize}px`,
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
       color: '#ffe600',
       fontStyle: 'bold',
-      stroke: '#ff0066',
-      strokeThickness: Math.max(8, numFontSize * 0.08),
-      shadow: {
-        offsetX: 0, offsetY: 6,
-        color: '#cc0044', blur: 20, fill: true,
-      },
+      stroke: '#ffffff',
+      strokeThickness: Math.max(4, numFontSize * 0.04),
     }).setOrigin(0.5).setAlpha(0).setScale(0.3);
+
+    const grad2 = title1000.context.createLinearGradient(0, 0, 0, title1000.height);
+    grad2.addColorStop(0, '#ffff66');
+    grad2.addColorStop(0.5, '#ffcc00');
+    grad2.addColorStop(1, '#ff9900');
+    title1000.setFill(grad2);
 
     // === SUBTITLE ===
     const subFontSize = Math.min(18, w * 0.025);
@@ -104,118 +130,124 @@ export class Boot extends Phaser.Scene {
 
     // === ENTRANCE ANIMATIONS ===
     this.tweens.add({
-      targets: titleMain,
-      alpha: 1,
-      scale: 1,
-      y: h * 0.26,
-      duration: 700,
-      ease: 'Back.easeOut',
+      targets: [titleShadow, titleBack, titleMain],
+      alpha: 1, scale: 1, y: `-=${h * 0.02}`,
+      duration: 800, ease: 'Back.easeOut',
     });
+    
+    // Continuous subtle float for "SUGAR RUSH"
     this.tweens.add({
-      targets: title1000,
-      alpha: 1,
-      scale: 1,
-      y: h * 0.40,
-      duration: 700,
-      delay: 250,
-      ease: 'Back.easeOut',
+      targets: [titleShadow, titleBack, titleMain],
+      y: `-=8`,
+      yoyo: true, repeat: -1,
+      duration: 2500, ease: 'Sine.easeInOut',
+      delay: 800
     });
+
+    this.tweens.add({
+      targets: [numShadow, numBack, title1000],
+      alpha: 1, scale: 1, y: `-=${h * 0.02}`,
+      duration: 800, delay: 250, ease: 'Back.easeOut',
+    });
+    
     this.tweens.add({
       targets: subtitle,
-      alpha: 1,
-      duration: 500,
-      delay: 600,
+      alpha: 1, duration: 500, delay: 600,
     });
 
     // === "1000" GLOW PULSE ===
     this.tweens.add({
-      targets: title1000,
-      scale: { from: 1, to: 1.06 },
-      yoyo: true,
-      repeat: -1,
-      duration: 1800,
-      ease: 'Sine.easeInOut',
-      delay: 1200,
+      targets: [numShadow, numBack, title1000],
+      scale: { from: 1, to: 1.05 },
+      yoyo: true, repeat: -1,
+      duration: 1800, ease: 'Sine.easeInOut', delay: 1200,
     });
 
-    // === PLAY BUTTON ===
+    // === PREMIUM PLAY BUTTON ===
     const btnW = Math.min(300, w * 0.45);
     const btnH = Math.min(75, h * 0.09);
     const btnY = h * 0.64;
     const btnX = w / 2;
-    const btnRadius = Math.min(16, btnH * 0.22);
+    const btnRadius = Math.min(35, btnH * 0.5); // Fully rounded pill
+
+    // Button container for easy scaling
+    const btnContainer = this.add.container(btnX, btnY).setAlpha(0);
 
     // Outer glow
-    const btnGlow = this.add.graphics().setAlpha(0);
-    btnGlow.fillStyle(0xff006a, 0.25);
-    btnGlow.fillRoundedRect(btnX - btnW / 2 - 12, btnY - btnH / 2 - 12, btnW + 24, btnH + 24, btnRadius + 8);
+    const btnGlow = this.add.graphics();
+    btnGlow.fillStyle(0xff006a, 0.4);
+    btnGlow.fillRoundedRect(-btnW / 2 - 15, -btnH / 2 - 15, btnW + 30, btnH + 30, btnRadius + 10);
+    btnContainer.add(btnGlow);
 
-    // Button background
-    const btnBg = this.add.graphics().setAlpha(0);
-    btnBg.fillStyle(0x000000, 0.4);
-    btnBg.fillRoundedRect(btnX - btnW / 2, btnY - btnH / 2 + 4, btnW, btnH, btnRadius);
+    // Button background layered
+    const btnBg = this.add.graphics();
+    btnBg.fillStyle(0x000000, 0.5);
+    btnBg.fillRoundedRect(-btnW / 2, -btnH / 2 + 6, btnW, btnH, btnRadius); // shadow
     btnBg.fillStyle(0xff006a, 1);
-    btnBg.fillRoundedRect(btnX - btnW / 2, btnY - btnH / 2, btnW, btnH, btnRadius);
+    btnBg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, btnRadius); // base
     btnBg.fillStyle(0xff3388, 1);
-    btnBg.fillRoundedRect(btnX - btnW / 2, btnY - btnH / 2, btnW, btnH * 0.5, btnRadius);
-    btnBg.fillStyle(0xffffff, 0.15);
-    btnBg.fillRoundedRect(btnX - btnW / 2 + 3, btnY - btnH / 2 + 3, btnW - 6, Math.max(4, btnH * 0.15), Math.max(2, btnRadius - 2));
-    btnBg.lineStyle(2.5, 0xffffff, 0.7);
-    btnBg.strokeRoundedRect(btnX - btnW / 2, btnY - btnH / 2, btnW, btnH, btnRadius);
-
-    // Hit area
-    const playBtn = this.add.rectangle(btnX, btnY, btnW, btnH, 0xffffff, 0)
-      .setInteractive({ useHandCursor: true })
-      .setAlpha(0.001);
+    btnBg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH * 0.5, btnRadius); // top gloss
+    btnBg.fillStyle(0xffffff, 0.25);
+    btnBg.fillRoundedRect(-btnW / 2 + 5, -btnH / 2 + 3, btnW - 10, btnH * 0.2, btnRadius - 2); // crisp highlight
+    btnBg.lineStyle(3, 0xffffff, 0.9);
+    btnBg.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, btnRadius); // rim
+    btnContainer.add(btnBg);
 
     // Button text
     const playFontSize = Math.min(32, btnH * 0.45);
-    const playText = this.add.text(btnX, btnY, '▶  PLAY', {
+    const playText = this.add.text(0, 0, '▶  PLAY', {
       fontSize: `${playFontSize}px`,
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
       color: '#ffffff',
       fontStyle: 'bold',
-      shadow: {
-        offsetX: 0, offsetY: 2,
-        color: '#000000', blur: 4, fill: true,
-      },
-    }).setOrigin(0.5).setAlpha(0);
+      shadow: { offsetX: 0, offsetY: 3, color: '#000000', blur: 4, fill: true },
+    }).setOrigin(0.5);
+    btnContainer.add(playText);
+
+    // Hit area inside container
+    const playBtn = this.add.rectangle(0, 0, btnW, btnH, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true });
+    btnContainer.add(playBtn);
 
     // Animate button entrance
     this.tweens.add({
-      targets: [btnBg, btnGlow, playText],
-      alpha: 1,
-      duration: 500,
-      delay: 900,
+      targets: btnContainer,
+      alpha: 1, y: btnY - 10,
+      duration: 600, delay: 900, ease: 'Back.easeOut'
     });
 
-    // Glow pulse on button
+    // Hover pop & float
     this.tweens.add({
       targets: btnGlow,
       alpha: { from: 0.4, to: 0.8 },
-      yoyo: true,
-      repeat: -1,
-      duration: 1200,
-      ease: 'Sine.easeInOut',
-      delay: 1500,
+      scale: { from: 1, to: 1.05 },
+      yoyo: true, repeat: -1,
+      duration: 1200, ease: 'Sine.easeInOut',
     });
 
-    // Hover effects
     playBtn.on('pointerover', () => {
-      this.tweens.add({ targets: [btnBg, playText], scaleX: 1.04, scaleY: 1.04, duration: 120 });
-    });
-    playBtn.on('pointerout', () => {
-      this.tweens.add({ targets: [btnBg, playText], scaleX: 1, scaleY: 1, duration: 120 });
+      this.tweens.add({ targets: btnContainer, scale: 1.08, duration: 150, ease: 'Back.easeOut' });
+      btnBg.lineStyle(4, 0xffff00, 1); // gold rim on hover
+      btnBg.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, btnRadius);
     });
 
-    // Click handler
+    playBtn.on('pointerout', () => {
+      this.tweens.add({ targets: btnContainer, scale: 1, duration: 150, ease: 'Back.easeIn' });
+      btnBg.clear();
+      btnBg.fillStyle(0x000000, 0.5).fillRoundedRect(-btnW / 2, -btnH / 2 + 6, btnW, btnH, btnRadius);
+      btnBg.fillStyle(0xff006a, 1).fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, btnRadius);
+      btnBg.fillStyle(0xff3388, 1).fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH * 0.5, btnRadius);
+      btnBg.fillStyle(0xffffff, 0.25).fillRoundedRect(-btnW / 2 + 5, -btnH / 2 + 3, btnW - 10, btnH * 0.2, btnRadius - 2);
+      btnBg.lineStyle(3, 0xffffff, 0.9).strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, btnRadius);
+    });
+
     playBtn.on('pointerdown', () => {
-      this.tweens.killAll();
-      this.tweens.add({
-        targets: [titleMain, title1000, subtitle, btnBg, playText, btnGlow, centerGlow, bg, vignette],
-        alpha: 0,
-        duration: 350,
-        onComplete: () => this.scene.start('Game'),
+      this.tweens.add({ targets: btnContainer, scale: 0.95, duration: 100, yoyo: true });
+      
+      // Smooth fade transition
+      this.cameras.main.fade(400, 0, 0, 0);
+      this.cameras.main.once('camerafadeoutcomplete', () => {
+        this.scene.start('Game');
       });
     });
 
