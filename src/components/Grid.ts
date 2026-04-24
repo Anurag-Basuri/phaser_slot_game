@@ -54,7 +54,7 @@ export class Grid {
 
   private symbolKeys = [
     'candy_0', 'candy_1', 'candy_2', 'candy_3',
-    'candy_4', 'candy_5', 'candy_6', 'wild', 'scatter'
+    'candy_4', 'candy_5', 'candy_6', 'scatter'
   ];
 
   // Layout — set dynamically by Game.tsx
@@ -88,7 +88,7 @@ export class Grid {
     this.scene = scene;
     const size = options.gridSize;
     this.sprites = Array.from({ length: size }, () => Array(size).fill(null));
-    this.multipliers = Array.from({ length: size }, () => Array(size).fill(1));
+    this.multipliers = Array.from({ length: size }, () => Array(size).fill(0));
     this.multiplierGraphics = Array.from({ length: size }, () => Array(size).fill(null));
     this.multiplierTexts = Array.from({ length: size }, () => Array(size).fill(null));
   }
@@ -234,7 +234,7 @@ export class Grid {
       ? options.scatterChanceAnte
       : options.scatterChance;
 
-    if (Math.random() < scatterRate) return 8;
+    if (Math.random() < scatterRate) return 7;
 
     const weights = options.symbolWeights;
     const total = weights.reduce((a, b) => a + b, 0);
@@ -353,7 +353,7 @@ export class Grid {
       this.maxWinReached = false;
       for (let r = 0; r < options.gridSize; r++) {
         for (let c = 0; c < options.gridSize; c++) {
-          this.multipliers[r][c] = 1;
+          this.multipliers[r][c] = 0;
           this.clearMultiplierUI(r, c);
         }
       }
@@ -456,7 +456,7 @@ export class Grid {
         }
         // Redraw multiplier UI
         this.clearMultiplierUI(r, c);
-        if (this.multipliers[r][c] > 1) {
+        if (this.multipliers[r][c] >= 1) {
           this.drawMultiplierUI(r, c);
         }
       }
@@ -497,9 +497,10 @@ export class Grid {
 
   private drawMultiplierUI(r: number, c: number) {
     const mult = this.multipliers[r][c];
-    if (mult <= 1) return;
+    if (mult === 0) return;
 
-    const tier = this.getMultTier(mult);
+    // A multiplier of 1 means it's just "marked". Use the tier for x2 for styling the wrapper.
+    const tier = this.getMultTier(Math.max(2, mult));
     const cx = this.getX(c);
     const cy = this.getY(r);
     
@@ -533,43 +534,61 @@ export class Grid {
 
       this.multiplierGraphics[r][c] = gfx;
 
-      // Text with tier colors
-      const fontSize = mult >= 128 ? '20px' : '26px';
-      const txt = this.scene.add.text(cx, cy + 2, `x${mult}`, {
-        fontFamily: '"Luckiest Guy", cursive, sans-serif',
-        fontSize: fontSize,
-        color: tier.fill,
-        stroke: tier.stroke,
-        strokeThickness: 6,
-        shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 0, stroke: true, fill: true }
-      }).setOrigin(0.5).setDepth(13);
-
-      this.multiplierTexts[r][c] = txt;
-
-      // Entrance animation for new multipliers
+      // Entrance animation for new wrappers
       this.scene.tweens.add({
-        targets: [gfx, txt],
+        targets: gfx,
         scaleX: { from: 0.5, to: 1 },
         scaleY: { from: 0.5, to: 1 },
         duration: 300,
         ease: 'Back.easeOut'
       });
     } else {
-      // Existing multiplier — update text and pop
-      const txt = this.multiplierTexts[r][c]!;
-      const fontSize = mult >= 128 ? '20px' : '26px';
-      txt.setText(`x${mult}`);
-      txt.setFontSize(fontSize);
-      txt.setColor(tier.fill);
-      txt.setStroke(tier.stroke, 6);
-      
       this.scene.tweens.add({
-        targets: [this.multiplierGraphics[r][c], txt],
-        scale: 1.3,
+        targets: this.multiplierGraphics[r][c],
+        scale: 1.2,
         yoyo: true,
         duration: 150,
         ease: 'Sine.easeInOut'
       });
+    }
+
+    if (mult > 1) {
+      if (!this.multiplierTexts[r][c]) {
+        const fontSize = mult >= 128 ? '20px' : '26px';
+        const txt = this.scene.add.text(cx, cy + 2, `x${mult}`, {
+          fontFamily: '"Luckiest Guy", cursive, sans-serif',
+          fontSize: fontSize,
+          color: tier.fill,
+          stroke: tier.stroke,
+          strokeThickness: 6,
+          shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 0, stroke: true, fill: true }
+        }).setOrigin(0.5).setDepth(13);
+
+        this.multiplierTexts[r][c] = txt;
+
+        this.scene.tweens.add({
+          targets: txt,
+          scaleX: { from: 0.5, to: 1 },
+          scaleY: { from: 0.5, to: 1 },
+          duration: 300,
+          ease: 'Back.easeOut'
+        });
+      } else {
+        const txt = this.multiplierTexts[r][c]!;
+        const fontSize = mult >= 128 ? '20px' : '26px';
+        txt.setText(`x${mult}`);
+        txt.setFontSize(fontSize);
+        txt.setColor(tier.fill);
+        txt.setStroke(tier.stroke, 6);
+        
+        this.scene.tweens.add({
+          targets: txt,
+          scale: 1.3,
+          yoyo: true,
+          duration: 150,
+          ease: 'Sine.easeInOut'
+        });
+      }
     }
   }
 
@@ -695,8 +714,10 @@ export class Grid {
             });
 
             // Advance multiplier
-            if (this.multipliers[r][c] === 1) {
-              this.multipliers[r][c] = 2;
+            if (this.multipliers[r][c] === 0) {
+              this.multipliers[r][c] = 1; // Mark the spot
+            } else if (this.multipliers[r][c] === 1) {
+              this.multipliers[r][c] = 2; // First multiplier value
             } else {
               this.multipliers[r][c] = Math.min(this.multipliers[r][c] * 2, 1024);
             }
@@ -740,7 +761,7 @@ export class Grid {
     const scatterPositions: { r: number; c: number }[] = [];
     for (let r = 0; r < size; r++) {
       for (let c = 0; c < size; c++) {
-        if (idGrid[r][c] === 8) {
+        if (idGrid[r][c] === 7) {
           scatters++;
           scatterPositions.push({ r, c });
         }
