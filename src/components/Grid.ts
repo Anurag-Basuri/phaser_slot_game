@@ -105,64 +105,58 @@ export class Grid {
   }
 
   /**
-   * Draw premium cell backgrounds — frosted glass cells with
-   * checkerboard depth pattern, rounded corners, and inner-shadow
-   * vignette along the grid edges for a recessed 3D look.
+   * Draw the Sugar Rush 1000 machine interior background.
+   * Vertical gradient from light blue to pink, with vertical separator lines.
    */
   public drawCellBackgrounds() {
     this.cellBackgrounds.clear();
     const size = options.gridSize;
-    const gap = 2;
     const totalSize = this.cellSize * size;
 
-    for (let r = 0; r < size; r++) {
-      for (let c = 0; c < size; c++) {
-        const x = this.offsetX + c * this.cellSize + gap;
-        const y = this.offsetY + r * this.cellSize + gap;
-        const s = this.cellSize - gap * 2;
-        const radius = Math.max(4, s * 0.08);
+    // 1. Draw the vertical gradient background for the whole grid
+    this.cellBackgrounds.fillGradientStyle(0xcceeff, 0xcceeff, 0xffccff, 0xffccff, 1);
+    this.cellBackgrounds.fillRect(this.offsetX, this.offsetY, totalSize, totalSize);
 
-        // Checkerboard: alternate opacity for subtle depth
-        const isLight = (r + c) % 2 === 0;
-
-        // Cell fill — frosted glass
-        this.cellBackgrounds.fillStyle(0x1a0a30, isLight ? 0.18 : 0.10);
-        this.cellBackgrounds.fillRoundedRect(x, y, s, s, radius);
-
-        // Top highlight — 3D inset illusion
-        this.cellBackgrounds.fillStyle(0xffffff, isLight ? 0.06 : 0.03);
-        this.cellBackgrounds.fillRoundedRect(
-          x + 1, y + 1, s - 2, s * 0.22,
-          { tl: radius, tr: radius, bl: 0, br: 0 },
-        );
-
-        // Cell border — soft separator
-        this.cellBackgrounds.lineStyle(0.75, 0xffffff, 0.07);
-        this.cellBackgrounds.strokeRoundedRect(x, y, s, s, radius);
-      }
+    // 2. Draw vertical separator lines between columns
+    this.cellBackgrounds.lineStyle(2, 0x4466aa, 0.15); // Soft dark blue lines
+    for (let c = 1; c < size; c++) {
+      const x = this.offsetX + c * this.cellSize;
+      this.cellBackgrounds.beginPath();
+      this.cellBackgrounds.moveTo(x, this.offsetY);
+      this.cellBackgrounds.lineTo(x, this.offsetY + totalSize);
+      this.cellBackgrounds.strokePath();
+      
+      // Highlight right next to the dark line for depth
+      this.cellBackgrounds.lineStyle(1, 0xffffff, 0.3);
+      this.cellBackgrounds.beginPath();
+      this.cellBackgrounds.moveTo(x + 1, this.offsetY);
+      this.cellBackgrounds.lineTo(x + 1, this.offsetY + totalSize);
+      this.cellBackgrounds.strokePath();
+      
+      this.cellBackgrounds.lineStyle(2, 0x4466aa, 0.15); // Reset for next iteration
     }
 
-    // --- Inner-shadow vignette (recessed look) ---
+    // 3. Inner-shadow vignette (recessed look)
     const gx = this.offsetX;
     const gy = this.offsetY;
     // Top edge shadow
     for (let i = 0; i < 6; i++) {
-      this.cellBackgrounds.fillStyle(0x000000, 0.07 - i * 0.012);
+      this.cellBackgrounds.fillStyle(0x000000, 0.05 - i * 0.008);
       this.cellBackgrounds.fillRect(gx, gy + i * 2, totalSize, 2);
     }
     // Bottom edge shadow
     for (let i = 0; i < 6; i++) {
-      this.cellBackgrounds.fillStyle(0x000000, 0.07 - i * 0.012);
+      this.cellBackgrounds.fillStyle(0x000000, 0.05 - i * 0.008);
       this.cellBackgrounds.fillRect(gx, gy + totalSize - 2 - i * 2, totalSize, 2);
     }
     // Left edge shadow
-    for (let i = 0; i < 4; i++) {
-      this.cellBackgrounds.fillStyle(0x000000, 0.05 - i * 0.012);
+    for (let i = 0; i < 6; i++) {
+      this.cellBackgrounds.fillStyle(0x000000, 0.05 - i * 0.008);
       this.cellBackgrounds.fillRect(gx + i * 2, gy, 2, totalSize);
     }
     // Right edge shadow
-    for (let i = 0; i < 4; i++) {
-      this.cellBackgrounds.fillStyle(0x000000, 0.05 - i * 0.012);
+    for (let i = 0; i < 6; i++) {
+      this.cellBackgrounds.fillStyle(0x000000, 0.05 - i * 0.008);
       this.cellBackgrounds.fillRect(gx + totalSize - 2 - i * 2, gy, 2, totalSize);
     }
   }

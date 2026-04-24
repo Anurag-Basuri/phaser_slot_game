@@ -454,32 +454,94 @@ export class Game extends Phaser.Scene {
     this.grid.repositionSprites();
 
     // === GRID PANEL IMAGE ===
-    const framePad = Math.max(22, gridTotalSize * 0.06);
-    const panelCX = gridX + gridTotalSize / 2;
-    const panelCY = gridY + gridTotalSize / 2;
-    const panelW = gridTotalSize + framePad * 2;
-    const panelH = gridTotalSize + framePad * 2;
-    this.gridPanel.setPosition(panelCX, panelCY).setDisplaySize(panelW, panelH).setVisible(true);
+    this.gridPanel.setVisible(false); // Hide the old background image
 
-    // === PREMIUM GRID FRAME ===
+    // === PREMIUM CANDY MACHINE FRAME ===
     this.gridFrame.clear();
     const f = this.gridFrame;
 
-    // Layer 1 — ambient halo
-    f.lineStyle(8, 0xcc44ff, 0.06);
-    f.strokeRoundedRect(gridX - 10, gridY - 10, gridTotalSize + 20, gridTotalSize + 20, 14);
+    const pipeHeight = Math.max(20, gridTotalSize * 0.04);
+    const sideWidth = Math.max(15, gridTotalSize * 0.03);
+    const trayHeight = Math.max(50, gridTotalSize * 0.1);
+    const frameW = gridTotalSize + sideWidth * 2;
+    const frameH = gridTotalSize + pipeHeight + trayHeight;
+    const frameX = gridX - sideWidth;
+    const frameY = gridY - pipeHeight;
 
-    // Layer 2 — mid glow ring
-    f.lineStyle(3.5, 0x9944cc, 0.18);
-    f.strokeRoundedRect(gridX - 5, gridY - 5, gridTotalSize + 10, gridTotalSize + 10, 9);
+    // 1. Bottom Tray (Cyan metallic base)
+    f.fillStyle(0x7ac9d9, 1); // Base cyan
+    f.fillRoundedRect(frameX - 10, gridY + gridTotalSize, frameW + 20, trayHeight, 15);
+    
+    // Bottom tray highlight/shadow
+    f.fillStyle(0xaae8f9, 0.5); // Highlight
+    f.fillRoundedRect(frameX - 8, gridY + gridTotalSize + 2, frameW + 16, trayHeight * 0.2, 8);
 
-    // Layer 3 — primary border
-    f.lineStyle(2, 0xaa66dd, 0.40);
-    f.strokeRoundedRect(gridX - 1, gridY - 1, gridTotalSize + 2, gridTotalSize + 2, 5);
+    // Bottom dark base
+    f.fillStyle(0x2b3b6b, 1);
+    f.fillRect(frameX - 5, gridY + gridTotalSize + trayHeight - 20, frameW + 10, 20); // simplified to fillRect to avoid partial corner type issues
+    
+    // Tray holes
+    f.fillStyle(0x1a2542, 1);
+    for(let i=0; i<7; i++) {
+       let holeX = gridX + (i + 0.5) * (gridTotalSize/7);
+       f.fillEllipse(holeX, gridY + gridTotalSize + trayHeight * 0.35, Math.min(25, gridTotalSize/7 * 0.6), 8);
+    }
 
-    // Layer 4 — inner bright edge
-    f.lineStyle(1, 0xffffff, 0.08);
-    f.strokeRoundedRect(gridX, gridY, gridTotalSize, gridTotalSize, 4);
+    // Capsule indents on dark base
+    f.fillStyle(0x151d33, 1);
+    for(let i=0; i<5; i++) {
+       let capW = Math.min(40, frameW / 7);
+       let spacing = (frameW - (capW * 5)) / 6;
+       let capX = frameX + spacing + (capW + spacing) * i;
+       f.fillRoundedRect(capX, gridY + gridTotalSize + trayHeight - 15, capW, 10, 5);
+    }
+
+    // 2. Side Pillars (Cyan)
+    f.fillStyle(0x8bdcf0, 1);
+    f.fillRect(frameX, gridY, sideWidth, gridTotalSize);
+    f.fillRect(gridX + gridTotalSize, gridY, sideWidth, gridTotalSize);
+
+    // Pillar inner shadow
+    f.fillStyle(0x000000, 0.15);
+    f.fillRect(frameX + sideWidth - 4, gridY, 4, gridTotalSize);
+    f.fillRect(gridX + gridTotalSize, gridY, 4, gridTotalSize);
+
+    // Rivets on side pillars
+    f.fillStyle(0x4a8b9e, 1);
+    for(let i=0; i<6; i++) {
+       let ry = gridY + 20 + i * ((gridTotalSize - 40)/5);
+       f.fillCircle(frameX + sideWidth/2, ry, sideWidth * 0.2);
+       f.fillCircle(gridX + gridTotalSize + sideWidth/2, ry, sideWidth * 0.2);
+    }
+
+    // 3. Top Pipe (Cyan with stripes/frosting)
+    f.fillStyle(0xaae8f9, 1); // Light cyan
+    f.fillRoundedRect(frameX, frameY, frameW, pipeHeight + 10, 10);
+
+    // Pipe shading
+    f.fillStyle(0x000000, 0.1);
+    f.fillRect(frameX, frameY + pipeHeight * 0.7, frameW, pipeHeight * 0.3 + 10);
+
+    // Frosting drips
+    f.fillStyle(0xffffff, 1);
+    f.fillRoundedRect(frameX - 5, frameY - 5, frameW + 10, pipeHeight, 10);
+    // Use fixed seeded pattern for drips so it doesn't flicker on resize
+    const dripHeights = [15, 25, 12, 30, 18, 14, 28, 16, 22, 10, 24, 15];
+    for(let i=0; i<12; i++) {
+       let dripX = frameX + 10 + i * ((frameW - 20)/11);
+       let dripHeight = dripHeights[i] * (pipeHeight / 20);
+       f.fillRoundedRect(dripX - 8, frameY + pipeHeight - 10, 16, dripHeight, 8);
+    }
+    
+    // Sprinkles on frosting
+    const colors = [0xff44aa, 0x44ffaa, 0xffaa44, 0x44aaff];
+    const sprinklePos = [0.1, 0.15, 0.25, 0.3, 0.4, 0.45, 0.55, 0.6, 0.7, 0.75, 0.85, 0.9];
+    for(let i=0; i<12; i++) {
+       f.fillStyle(colors[i % colors.length], 1);
+       let sx = frameX + sprinklePos[i] * frameW;
+       let sy = frameY + (i % 2 === 0 ? 0 : 5);
+       f.fillRoundedRect(sx, sy, 8, 4, 2); // horizontal sprinkle
+    }
 
     // ==========================================
     // 2. BUY PANELS & ANTE BET
