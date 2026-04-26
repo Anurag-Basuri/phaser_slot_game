@@ -994,8 +994,9 @@ export class Game extends Phaser.Scene {
     if (isPlus) gfx.lineBetween(cx, cy - arm, cx, cy + arm);
   }
 
-  /** Update spin button visual to reflect current state */
+  /** Update spin button visual and all UI interactivity to reflect current state */
   private updateSpinButtonState() {
+    this.updateUIInteractivity();
     const spinSize = this.spinBtnHit.width;
     const iconSize = spinSize * 0.4;
     
@@ -1093,6 +1094,83 @@ export class Game extends Phaser.Scene {
         cx + s * 0.65, cy
       );
     }
+  }
+
+  /**
+   * Centralized UI interactivity manager — dims and disables controls
+   * that should not be used during certain game states.
+   * 
+   * Rules:
+   * - During spin: bet ±, buy panels, ante bet, settings, paytable → DISABLED
+   * - During free spins: bet ±, buy panels, ante bet, autoplay open → DISABLED
+   * - During autoplay: bet ±, buy panels, ante bet → DISABLED
+   * - Sound toggle & fullscreen → ALWAYS ENABLED
+   */
+  private updateUIInteractivity() {
+    const spinning = this._spinLock;
+    const inFS = this.fsActive;
+    const inAuto = this.autoSpinActive;
+    const busy = spinning || inFS || inAuto;
+
+    // ─── Bet +/- buttons ───
+    const betDisabled = busy;
+    this.btnBetMinus.setAlpha(betDisabled ? 0.3 : 1);
+    this.btnBetPlus.setAlpha(betDisabled ? 0.3 : 1);
+    // Disable pointer events by toggling interactive
+    if (betDisabled) {
+      this.btnBetMinusHit.disableInteractive();
+      this.btnBetPlusHit.disableInteractive();
+    } else {
+      this.btnBetMinusHit.setInteractive();
+      this.btnBetPlusHit.setInteractive();
+    }
+
+    // ─── Buy Free Spins panels ───
+    const buyDisabled = busy;
+    this.panelSuperGraphics.setAlpha(buyDisabled ? 0.3 : 1);
+    this.panelRegularGraphics.setAlpha(buyDisabled ? 0.3 : 1);
+    this.buySuperTxt1.setAlpha(buyDisabled ? 0.3 : 1);
+    this.buySuperTxt2.setAlpha(buyDisabled ? 0.3 : 1);
+    this.buyRegularTxt1.setAlpha(buyDisabled ? 0.3 : 1);
+    this.buyRegularTxt2.setAlpha(buyDisabled ? 0.3 : 1);
+    if (buyDisabled) {
+      this.buySuperHit.disableInteractive();
+      this.buyRegularHit.disableInteractive();
+    } else {
+      this.buySuperHit.setInteractive();
+      this.buyRegularHit.setInteractive();
+    }
+
+    // ─── Ante Bet toggle ───
+    const anteDisabled = busy;
+    this.anteBetBtn.setAlpha(anteDisabled ? 0.3 : 1);
+    this.anteBetTxt.setAlpha(anteDisabled ? 0.4 : 1);
+    this.anteBetIcon.setAlpha(anteDisabled ? 0.4 : 1);
+    if (anteDisabled) {
+      this.anteBetHit.disableInteractive();
+    } else {
+      this.anteBetHit.setInteractive();
+    }
+
+    // ─── Settings & Paytable ─── (disabled during active spin only)
+    const menuDisabled = spinning || inFS;
+    this.btnSettings.setAlpha(menuDisabled ? 0.35 : 1);
+    this.btnPaytable.setAlpha(menuDisabled ? 0.35 : 1);
+    if (menuDisabled) {
+      this.btnSettings.disableInteractive();
+      this.btnPaytable.disableInteractive();
+    } else {
+      this.btnSettings.setInteractive(
+        new Phaser.Geom.Circle(0, 0, 22), Phaser.Geom.Circle.Contains
+      );
+      this.btnPaytable.setInteractive(
+        new Phaser.Geom.Circle(0, 0, 22), Phaser.Geom.Circle.Contains
+      );
+    }
+
+    // ─── Sound toggle & Fullscreen → ALWAYS enabled ───
+    this.soundToggle.setAlpha(1);
+    this.btnFullscreen.setAlpha(1);
   }
 
   private wireInteractions() {
@@ -1545,6 +1623,7 @@ export class Game extends Phaser.Scene {
 
   private async executePurchase(triggerType: number, cost: number) {
     this._spinLock = true;
+    this.updateSpinButtonState();
     this.valueMoney -= cost;
     this.lastWin = 0;
     options.betAmount = BET_PRESETS[this.betPresetIndex];
@@ -1671,6 +1750,7 @@ export class Game extends Phaser.Scene {
     
     // Reset Grid context
     this._spinLock = true;
+    this.updateSpinButtonState();
     this.lastWin = 0;
     this.updateLastWinDisplay();
     
