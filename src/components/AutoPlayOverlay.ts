@@ -10,8 +10,8 @@ export class AutoPlayOverlay {
   private turboSpin = false;
   private quickSpin = false;
   private skipScreens = false;
-  private spins = 100;
-  private allowedSpins = [10, 20, 30, 50, 70, 100, 500, 1000];
+  private spins = 50;
+  private allowedSpins = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100];
 
   private txtSpinsCount!: Phaser.GameObjects.Text;
   private btnStartTxt!: Phaser.GameObjects.Text;
@@ -113,8 +113,16 @@ export class AutoPlayOverlay {
     const pY = (h - pH) / 2;
 
     const panelBg = this.scene.add.graphics();
-    panelBg.fillStyle(0x0f0f11, 1);
-    panelBg.fillRoundedRect(pX, pY, pW, pH, 16);
+    // Premium dark gradient panel with glowing border
+    panelBg.fillStyle(0x0a0a0f, 0.95);
+    panelBg.fillRoundedRect(pX, pY, pW, pH, 20);
+    panelBg.lineStyle(2, 0x442266, 1);
+    panelBg.strokeRoundedRect(pX, pY, pW, pH, 20);
+    
+    // Inner highlight
+    panelBg.lineStyle(1, 0x6644aa, 0.5);
+    panelBg.strokeRoundedRect(pX + 2, pY + 2, pW - 4, pH - 4, 18);
+
     panelBg.setInteractive(new Phaser.Geom.Rectangle(pX, pY, pW, pH), Phaser.Geom.Rectangle.Contains);
     this.container.add(panelBg);
 
@@ -129,13 +137,21 @@ export class AutoPlayOverlay {
     this.container.add(closeBtn);
 
     // Title
-    const title = this.scene.add.text(pX + pW / 2, pY + 40, 'AUTOPLAY SETTINGS', {
-      fontFamily: '"Inter", "Arial", sans-serif',
-      fontSize: '24px',
-      color: '#ffaa00',
-      fontStyle: '900'
+    const title = this.scene.add.text(pX + pW / 2, pY + 35, 'AUTOPLAY', {
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontSize: '32px',
+      color: '#ffcc00',
+      stroke: '#441166',
+      strokeThickness: 6,
+      shadow: { offsetX: 0, offsetY: 4, color: '#000000', blur: 0, fill: true }
     }).setOrigin(0.5, 0);
     this.container.add(title);
+    
+    // Separator line
+    const sep = this.scene.add.graphics();
+    sep.lineStyle(2, 0x331155, 0.8);
+    sep.lineBetween(pX + 40, pY + 90, pX + pW - 40, pY + 90);
+    this.container.add(sep);
 
     // Checkboxes row
     const cbY = pY + 120;
@@ -158,12 +174,13 @@ export class AutoPlayOverlay {
     const cb3 = this.createCheckbox(pX + cbWidth * 2.1, cbY, 'SKIP\nSCREENS', this.skipScreens, (val) => this.skipScreens = val);
 
     // Slider section
-    const slideY = pY + 260;
-    const slideTitle = this.scene.add.text(pX + pW / 2, slideY - 40, 'NUMBER OF AUTOSPINS', {
+    const slideY = pY + 280;
+    const slideTitle = this.scene.add.text(pX + pW / 2, slideY - 50, 'NUMBER OF SPINS', {
       fontFamily: '"Inter", sans-serif',
       fontSize: '18px',
-      color: '#ffffff',
-      fontStyle: '900'
+      color: '#aaaaee',
+      fontStyle: '800',
+      letterSpacing: 1.5
     }).setOrigin(0.5);
     this.container.add(slideTitle);
 
@@ -173,10 +190,12 @@ export class AutoPlayOverlay {
     this.container.add(this.sliderTrackGfx);
 
     this.txtSpinsCount = this.scene.add.text(pX + pW - 30, slideY, `${this.spins}`, {
-      fontFamily: '"Inter", sans-serif',
-      fontSize: '32px',
-      color: '#ffffff',
-      fontStyle: '900'
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontSize: '42px',
+      color: '#00ff88',
+      stroke: '#004422',
+      strokeThickness: 6,
+      shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 4, fill: true }
     }).setOrigin(1, 0.5);
     this.container.add(this.txtSpinsCount);
 
@@ -194,14 +213,28 @@ export class AutoPlayOverlay {
     this.container.add(this.sliderThumbHit);
 
     // Start Button
-    const startY = pY + pH - 20;
+    const startY = pY + pH - 30;
     const startBtnGfx = this.scene.add.graphics();
+    
+    // Premium bright green button with 3D depth
+    startBtnGfx.fillStyle(0x006622, 1);
+    startBtnGfx.fillRoundedRect(pX + 30, startY - 76, pW - 60, 60, 12);
     startBtnGfx.fillStyle(0x00cc55, 1);
-    startBtnGfx.fillRoundedRect(pX + 20, startY - 80, pW - 40, 60, 8);
+    startBtnGfx.fillRoundedRect(pX + 30, startY - 80, pW - 60, 60, 12);
+    
+    // Highlight
+    startBtnGfx.fillStyle(0x44ff88, 0.4);
+    startBtnGfx.fillRoundedRect(pX + 34, startY - 78, pW - 68, 15, 8);
+
     this.container.add(startBtnGfx);
 
-    const startHit = this.scene.add.rectangle(pX + pW/2, startY - 50, pW - 40, 60, 0xffffff, 0)
+    const startHit = this.scene.add.rectangle(pX + pW/2, startY - 50, pW - 60, 60, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
+    
+    // Start button hover effects
+    startHit.on('pointerover', () => startBtnGfx.setAlpha(0.8));
+    startHit.on('pointerout', () => startBtnGfx.setAlpha(1));
+    
     startHit.on('pointerdown', () => {
       this.hide();
       if (this.onStartCallback) {
@@ -211,10 +244,12 @@ export class AutoPlayOverlay {
     this.container.add(startHit);
 
     this.btnStartTxt = this.scene.add.text(pX + pW / 2, startY - 50, `START AUTOPLAY (${this.spins})`, {
-      fontFamily: '"Inter", sans-serif',
-      fontSize: '22px',
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontSize: '26px',
       color: '#ffffff',
-      fontStyle: '900'
+      stroke: '#004422',
+      strokeThickness: 5,
+      shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 0, fill: true }
     }).setOrigin(0.5);
     this.container.add(this.btnStartTxt);
 
@@ -228,19 +263,27 @@ export class AutoPlayOverlay {
     
     const draw = () => {
       gfx.clear();
+      
+      // Box background
+      gfx.fillStyle(0x1a1a24, 1);
+      gfx.fillRoundedRect(x, y, size, size, 8);
+      
       if (state) {
-        gfx.fillStyle(0x00cc55, 1);
-        gfx.fillRoundedRect(x, y, size, size, 6);
-        // Checkmark
-        gfx.lineStyle(3, 0xffffff, 1);
+        // Active border
+        gfx.lineStyle(2, 0x00ff88, 1);
+        gfx.strokeRoundedRect(x, y, size, size, 8);
+        
+        // Neon Checkmark
+        gfx.lineStyle(4, 0x00ff88, 1);
         gfx.beginPath();
-        gfx.moveTo(x + 10, y + size/2);
-        gfx.lineTo(x + size/2 - 2, y + size - 12);
-        gfx.lineTo(x + size - 10, y + 10);
+        gfx.moveTo(x + 8, y + size/2);
+        gfx.lineTo(x + size/2 - 2, y + size - 10);
+        gfx.lineTo(x + size - 8, y + 10);
         gfx.strokePath();
       } else {
-        gfx.lineStyle(2, 0x555555, 1);
-        gfx.strokeRoundedRect(x, y, size, size, 6);
+        // Inactive border
+        gfx.lineStyle(2, 0x333344, 1);
+        gfx.strokeRoundedRect(x, y, size, size, 8);
       }
     };
     draw();
@@ -297,23 +340,37 @@ export class AutoPlayOverlay {
     const y = this.sliderThumbHit.y;
 
     this.sliderTrackGfx.clear();
-    // Background track
-    this.sliderTrackGfx.fillStyle(0x333333, 1);
-    this.sliderTrackGfx.fillRect(this.sliderX, y - 2, this.sliderWidth, 4);
-    // Filled track
-    this.sliderTrackGfx.fillStyle(0x00cc55, 1);
-    this.sliderTrackGfx.fillRect(this.sliderX, y - 2, fillW, 4);
+    // Background track (dark pill)
+    this.sliderTrackGfx.fillStyle(0x1a1a24, 1);
+    this.sliderTrackGfx.fillRoundedRect(this.sliderX, y - 6, this.sliderWidth, 12, 6);
+    this.sliderTrackGfx.lineStyle(2, 0x333344, 1);
+    this.sliderTrackGfx.strokeRoundedRect(this.sliderX, y - 6, this.sliderWidth, 12, 6);
+    
+    // Filled track (neon gradient effect using multiple fills)
+    this.sliderTrackGfx.fillStyle(0x008844, 1);
+    this.sliderTrackGfx.fillRoundedRect(this.sliderX, y - 6, fillW, 12, { tl: 6, bl: 6, tr: 0, br: 0 });
+    this.sliderTrackGfx.fillStyle(0x00ff88, 1);
+    this.sliderTrackGfx.fillRoundedRect(this.sliderX, y - 4, fillW, 8, { tl: 4, bl: 4, tr: 0, br: 0 });
 
     const thumbX = this.sliderX + fillW;
     this.sliderThumbHit.setX(thumbX);
     
     this.sliderThumbGfx.clear();
+    
+    // Thumb shadow
+    this.sliderThumbGfx.fillStyle(0x000000, 0.5);
+    this.sliderThumbGfx.fillCircle(thumbX, y + 4, 18);
+    
+    // Thumb body
+    this.sliderThumbGfx.fillStyle(0x00ff88, 1);
+    this.sliderThumbGfx.fillCircle(thumbX, y, 18);
+    
+    // Thumb inner
     this.sliderThumbGfx.fillStyle(0x00cc55, 1);
-    this.sliderThumbGfx.fillRoundedRect(thumbX - 15, y - 20, 30, 40, 4);
-    // Triple lines
+    this.sliderThumbGfx.fillCircle(thumbX, y, 14);
+    
+    // Inner white highlight
     this.sliderThumbGfx.fillStyle(0xffffff, 1);
-    this.sliderThumbGfx.fillRect(thumbX - 6, y - 6, 2, 12);
-    this.sliderThumbGfx.fillRect(thumbX - 1, y - 6, 2, 12);
-    this.sliderThumbGfx.fillRect(thumbX + 4, y - 6, 2, 12);
+    this.sliderThumbGfx.fillCircle(thumbX, y, 8);
   }
 }

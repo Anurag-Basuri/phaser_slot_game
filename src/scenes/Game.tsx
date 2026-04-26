@@ -27,6 +27,7 @@ export class Game extends Phaser.Scene {
   autoPlayOverlay!: AutoPlayOverlay;
 
   private stakeEngine!: StakeEngineClient;
+  private skipScreensActive = false;
 
   // UI elements
   private bgImage!: Phaser.GameObjects.Image;
@@ -334,6 +335,7 @@ export class Game extends Phaser.Scene {
 
     this.autoPlayOverlay.setCallbacks((spins, turbo, quick, skip) => {
       this.grid.turboMode = turbo || quick;
+      this.skipScreensActive = skip;
       this.autoSpinActive = true;
       this.autoSpinRemaining = spins;
       this.updateAutoSpinDisplay();
@@ -1111,6 +1113,7 @@ export class Game extends Phaser.Scene {
         }
         this.autoPlayOverlay.show();
       } else {
+        this.skipScreensActive = false;
         this.stopAutoSpin();
       }
     });
@@ -1337,7 +1340,8 @@ export class Game extends Phaser.Scene {
       this.audio.playMusic('backgroundDefault', 1000);
 
       const betAmount = this.getEffectiveBet();
-      this.winCelebration.show(totalWin, betAmount, () => {
+      
+      const doSummary = () => {
         const endText = this.add.text(
           this.scale.width / 2, this.scale.height / 2,
           `FREE SPINS TOTAL\n${totalWin.toFixed(2)}`,
@@ -1375,7 +1379,13 @@ export class Game extends Phaser.Scene {
             }
           }
         });
-      });
+      };
+
+      if (!this.skipScreensActive) {
+        this.winCelebration.show(totalWin, betAmount, doSummary);
+      } else {
+        doSummary();
+      }
     };
 
     this.grid.onMaxWinCallback = (totalWin) => {
@@ -1434,7 +1444,7 @@ export class Game extends Phaser.Scene {
         }
       };
 
-      if (this.lastWin >= this.getEffectiveBet() * 2) {
+      if (this.lastWin >= this.getEffectiveBet() * 2 && !this.skipScreensActive) {
         this.winCelebration.show(this.lastWin, this.getEffectiveBet(), finishUp);
       } else {
         finishUp();
