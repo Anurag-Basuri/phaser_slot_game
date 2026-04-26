@@ -3,7 +3,7 @@ import { BET_PRESETS } from '../options';
 
 /**
  * Premium Bet Panel overlay — Sugar Rush–style bet selector.
- * Shows BET level and TOTAL BET with +/- controls and a BET MAX button.
+ * Anchored above the spin button area, shows BET (level) and TOTAL BET.
  */
 export class BetOverlay {
   private scene: Phaser.Scene;
@@ -11,22 +11,21 @@ export class BetOverlay {
   private visible = false;
   private _resizeTimer: ReturnType<typeof setTimeout> | null = null;
 
-  // Callbacks
   private onBetChange: ((index: number) => void) | null = null;
 
-  // State (owned by Game, synced before show)
+  // State (synced from Game before show)
   private betIndex = 4;
   private anteBetEnabled = false;
   private anteBetMultiplier = 1.25;
 
-  // UI refs that update
+  // Dynamic UI refs
   private txtBetValue!: Phaser.GameObjects.Text;
   private txtTotalValue!: Phaser.GameObjects.Text;
   private txtMultiplier!: Phaser.GameObjects.Text;
-  private btnMinusGfx!: Phaser.GameObjects.Graphics;
-  private btnPlusGfx!: Phaser.GameObjects.Graphics;
-  private btnTotalMinusGfx!: Phaser.GameObjects.Graphics;
-  private btnTotalPlusGfx!: Phaser.GameObjects.Graphics;
+  private btnBetMinus!: Phaser.GameObjects.Graphics;
+  private btnBetPlus!: Phaser.GameObjects.Graphics;
+  private btnTotalMinus!: Phaser.GameObjects.Graphics;
+  private btnTotalPlus!: Phaser.GameObjects.Graphics;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -50,11 +49,8 @@ export class BetOverlay {
     });
   }
 
-  public setCallback(cb: (index: number) => void) {
-    this.onBetChange = cb;
-  }
+  public setCallback(cb: (index: number) => void) { this.onBetChange = cb; }
 
-  /** Sync state from Game before showing */
   public syncState(betIndex: number, anteBetEnabled: boolean, anteBetMultiplier: number) {
     this.betIndex = betIndex;
     this.anteBetEnabled = anteBetEnabled;
@@ -62,20 +58,17 @@ export class BetOverlay {
   }
 
   public show() {
-    if (this.container?.scene) {
-      this.container.removeAll(true);
-      this.container.destroy();
-    }
+    if (this.container?.scene) { this.container.removeAll(true); this.container.destroy(); }
     this.build();
     this.visible = true;
     this.container.setVisible(true);
     this.container.setAlpha(0);
-    this.scene.tweens.add({ targets: this.container, alpha: 1, duration: 200 });
+    this.scene.tweens.add({ targets: this.container, alpha: 1, duration: 180, ease: 'Sine.easeOut' });
   }
 
   public hide() {
     this.scene.tweens.add({
-      targets: this.container, alpha: 0, duration: 150,
+      targets: this.container, alpha: 0, duration: 130,
       onComplete: () => { this.container.setVisible(false); this.visible = false; },
     });
   }
@@ -85,247 +78,228 @@ export class BetOverlay {
 
   private emitChange() {
     if (this.onBetChange) this.onBetChange(this.betIndex);
-    this.refreshDisplay();
+    this.refreshValues();
   }
 
-  private refreshDisplay() {
+  private refreshValues() {
     const baseBet = BET_PRESETS[this.betIndex];
     const totalBet = this.anteBetEnabled ? baseBet * this.anteBetMultiplier : baseBet;
-    this.txtBetValue.setText(`$${baseBet.toFixed(2)}`);
+    const level = this.betIndex + 1; // 1-indexed level
+
+    this.txtBetValue.setText(level.toString());
     this.txtTotalValue.setText(`$${totalBet.toFixed(2)}`);
+    this.txtMultiplier.setText(`BET MULTIPLIER ${level}x`);
 
-    const betMultiplier = Math.round(baseBet / BET_PRESETS[0]);
-    this.txtMultiplier.setText(`BET MULTIPLIER ${betMultiplier}x`);
-
-    // Dim min/max boundary buttons
+    // Dim boundary buttons
     const atMin = this.betIndex <= 0;
     const atMax = this.betIndex >= BET_PRESETS.length - 1;
-    this.btnMinusGfx.setAlpha(atMin ? 0.3 : 1);
-    this.btnTotalMinusGfx.setAlpha(atMin ? 0.3 : 1);
-    this.btnPlusGfx.setAlpha(atMax ? 0.3 : 1);
-    this.btnTotalPlusGfx.setAlpha(atMax ? 0.3 : 1);
+    this.btnBetMinus.setAlpha(atMin ? 0.3 : 1);
+    this.btnTotalMinus.setAlpha(atMin ? 0.3 : 1);
+    this.btnBetPlus.setAlpha(atMax ? 0.3 : 1);
+    this.btnTotalPlus.setAlpha(atMax ? 0.3 : 1);
   }
 
+  // ═══════════════════════════════════════════════
+  //  BUILD
+  // ═══════════════════════════════════════════════
   private build() {
     const w = this.scene.scale.width;
     const h = this.scene.scale.height;
+    const isMobile = w < 768;
 
     this.container = this.scene.add.container(0, 0).setDepth(140).setVisible(false);
 
-    // Dark background
-    const bg = this.scene.add.graphics();
-    bg.fillStyle(0x000000, 0.6);
-    bg.fillRect(0, 0, w, h);
-    bg.setInteractive(new Phaser.Geom.Rectangle(0, 0, w, h), Phaser.Geom.Rectangle.Contains);
-    bg.on('pointerdown', () => this.hide());
-    this.container.add(bg);
+    // ── Full-screen tap-to-dismiss ──
+    const dimBg = this.scene.add.graphics();
+    dimBg.fillStyle(0x000000, 0.55);
+    dimBg.fillRect(0, 0, w, h);
+    dimBg.setInteractive(new Phaser.Geom.Rectangle(0, 0, w, h), Phaser.Geom.Rectangle.Contains);
+    dimBg.on('pointerdown', () => this.hide());
+    this.container.add(dimBg);
 
-    // Panel dimensions
-    const isMobile = w < 768;
-    const pW = isMobile ? w * 0.92 : 380;
-    const pH = isMobile ? 310 : 320;
+    // ── Panel ──
+    const pW = Math.min(380, w * 0.92);
+    const pH = 340;
     const pX = (w - pW) / 2;
-    const pY = (h - pH) / 2;
+    const pY = (h - pH) / 2 - (isMobile ? 10 : 0);
+    const rad = 18;
 
-    // Panel background
     const panel = this.scene.add.graphics();
-    // Drop shadow
-    panel.fillStyle(0x000000, 0.6);
-    panel.fillRoundedRect(pX + 4, pY + 6, pW, pH, 20);
-    // Main
-    panel.fillStyle(0x111118, 0.98);
-    panel.fillRoundedRect(pX, pY, pW, pH, 20);
-    // Accent border
-    panel.lineStyle(2.5, 0xff006a, 0.7);
-    panel.strokeRoundedRect(pX, pY, pW, pH, 20);
-    // Inner highlight
-    panel.lineStyle(1, 0xffffff, 0.06);
-    panel.strokeRoundedRect(pX + 2, pY + 2, pW - 4, pH - 4, 18);
-    // Header accent
-    panel.fillStyle(0xffffff, 0.04);
-    panel.fillRoundedRect(pX, pY, pW, 55, { tl: 20, tr: 20, bl: 0, br: 0 } as any);
-    panel.lineStyle(1, 0xffffff, 0.08);
-    panel.lineBetween(pX + 20, pY + 55, pX + pW - 20, pY + 55);
-
+    // Thick shadow
+    panel.fillStyle(0x000000, 0.65);
+    panel.fillRoundedRect(pX + 3, pY + 5, pW, pH, rad);
+    // Body — solid dark
+    panel.fillStyle(0x12121a, 1);
+    panel.fillRoundedRect(pX, pY, pW, pH, rad);
+    // Subtle border
+    panel.lineStyle(2, 0x2a2a3a, 1);
+    panel.strokeRoundedRect(pX, pY, pW, pH, rad);
+    // Prevent clicks passing through
     panel.setInteractive(new Phaser.Geom.Rectangle(pX, pY, pW, pH), Phaser.Geom.Rectangle.Contains);
     this.container.add(panel);
 
-    // Close button
-    const closeBtn = this.scene.add.text(pX + pW - 30, pY + 27, '✕', {
-      fontSize: '22px', color: '#8899aa', fontFamily: '"Inter", sans-serif', fontStyle: 'bold'
+    // ── Close (✕) ──
+    const closeBtn = this.scene.add.text(pX + pW - 28, pY + 25, '✕', {
+      fontSize: '20px', color: '#666', fontFamily: '"Inter", Arial, sans-serif', fontStyle: 'bold',
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     closeBtn.on('pointerdown', () => this.hide());
     closeBtn.on('pointerover', () => closeBtn.setColor('#ff006a'));
-    closeBtn.on('pointerout', () => closeBtn.setColor('#8899aa'));
+    closeBtn.on('pointerout', () => closeBtn.setColor('#666'));
     this.container.add(closeBtn);
 
-    // Title — Bet Multiplier Nx
-    const betMultiplier = Math.round(BET_PRESETS[this.betIndex] / BET_PRESETS[0]);
-    this.txtMultiplier = this.scene.add.text(pX + pW / 2 - 10, pY + 27, `BET MULTIPLIER ${betMultiplier}x`, {
-      fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      fontSize: '22px', color: '#ffffff',
-      shadow: { offsetX: 0, offsetY: 2, color: '#ff006a', blur: 6, fill: true }
+    // ── Title: BET MULTIPLIER Nx ──
+    const level = this.betIndex + 1;
+    this.txtMultiplier = this.scene.add.text(pX + pW / 2 - 8, pY + 25, `BET MULTIPLIER ${level}x`, {
+      fontFamily: '"Inter", Arial, sans-serif',
+      fontSize: '16px', color: '#ffffff', fontStyle: '800',
+      letterSpacing: 1.5,
     }).setOrigin(0.5);
     this.container.add(this.txtMultiplier);
 
-    // ─── BET ROW ───
-    const rowH = 60;
-    const rowY1 = pY + 85;
-    this.buildRow(pX, rowY1, pW, rowH, 'BET', BET_PRESETS[this.betIndex], true);
+    // ── Thin separator under title ──
+    const sep1 = this.scene.add.graphics();
+    sep1.lineStyle(1, 0x2a2a3a, 0.7);
+    sep1.lineBetween(pX + 20, pY + 50, pX + pW - 20, pY + 50);
+    this.container.add(sep1);
 
-    // ─── TOTAL BET ROW ───
-    const rowY2 = rowY1 + rowH + 45;
-    const totalBet = this.anteBetEnabled
-      ? BET_PRESETS[this.betIndex] * this.anteBetMultiplier
-      : BET_PRESETS[this.betIndex];
-    this.buildRow(pX, rowY2, pW, rowH, 'TOTAL BET', totalBet, false);
+    // ── ROW LAYOUT ──
+    const rowH = 50;
+    const rowPad = 22;
+    const btnR = 24; // button radius
 
-    // ─── BET MAX BUTTON ───
-    const maxBtnW = pW * 0.55;
-    const maxBtnH = 48;
-    const maxBtnX = pX + (pW - maxBtnW) / 2;
-    const maxBtnY = rowY2 + rowH + 35;
+    // ═══ BET ROW ═══
+    const betRowY = pY + 75;
+    this.buildLabel(pX + pW / 2, betRowY - 12, 'BET');
+    const betResult = this.buildValueRow(pX, betRowY, pW, rowH, rowPad, btnR);
+    this.txtBetValue = betResult.txt;
+    this.btnBetMinus = betResult.minusGfx;
+    this.btnBetPlus = betResult.plusGfx;
 
-    const maxBtnGfx = this.scene.add.graphics();
+    // ═══ TOTAL BET ROW ═══
+    const totalRowY = betRowY + rowH + 45;
+    this.buildLabel(pX + pW / 2, totalRowY - 12, 'TOTAL BET');
+    const totalResult = this.buildValueRow(pX, totalRowY, pW, rowH, rowPad, btnR);
+    this.txtTotalValue = totalResult.txt;
+    this.btnTotalMinus = totalResult.minusGfx;
+    this.btnTotalPlus = totalResult.plusGfx;
+
+    // ═══ BET MAX BUTTON ═══
+    const maxW = pW * 0.5;
+    const maxH = 44;
+    const maxX = pX + (pW - maxW) / 2;
+    const maxY = totalRowY + rowH + 30;
+
+    const maxGfx = this.scene.add.graphics();
     // Shadow
-    maxBtnGfx.fillStyle(0x004422, 1);
-    maxBtnGfx.fillRoundedRect(maxBtnX, maxBtnY + 4, maxBtnW, maxBtnH, 12);
+    maxGfx.fillStyle(0x005522, 1);
+    maxGfx.fillRoundedRect(maxX, maxY + 3, maxW, maxH, 10);
     // Body
-    maxBtnGfx.fillStyle(0x00cc55, 1);
-    maxBtnGfx.fillRoundedRect(maxBtnX, maxBtnY, maxBtnW, maxBtnH, 12);
-    // Highlight
-    maxBtnGfx.fillStyle(0x44ff88, 0.35);
-    maxBtnGfx.fillRoundedRect(maxBtnX + 4, maxBtnY + 2, maxBtnW - 8, maxBtnH * 0.35, 8);
-    this.container.add(maxBtnGfx);
+    maxGfx.fillStyle(0x00b84a, 1);
+    maxGfx.fillRoundedRect(maxX, maxY, maxW, maxH, 10);
+    // Glass
+    maxGfx.fillStyle(0xffffff, 0.18);
+    maxGfx.fillRoundedRect(maxX + 3, maxY + 2, maxW - 6, maxH * 0.38, { tl: 8, tr: 8, bl: 0, br: 0 } as any);
+    this.container.add(maxGfx);
 
-    const maxHit = this.scene.add.rectangle(
-      maxBtnX + maxBtnW / 2, maxBtnY + maxBtnH / 2,
-      maxBtnW, maxBtnH, 0xffffff, 0
-    ).setInteractive({ useHandCursor: true });
-    maxHit.on('pointerdown', () => {
-      this.betIndex = BET_PRESETS.length - 1;
-      this.emitChange();
-    });
-    maxHit.on('pointerover', () => maxBtnGfx.setAlpha(0.8));
-    maxHit.on('pointerout', () => maxBtnGfx.setAlpha(1));
+    const maxHit = this.scene.add.rectangle(maxX + maxW / 2, maxY + maxH / 2, maxW, maxH, 0x000000, 0)
+      .setInteractive({ useHandCursor: true });
+    maxHit.on('pointerdown', () => { this.betIndex = BET_PRESETS.length - 1; this.emitChange(); });
+    maxHit.on('pointerover', () => { this.scene.tweens.add({ targets: maxGfx, scaleX: 1.03, scaleY: 1.03, duration: 100 }); });
+    maxHit.on('pointerout', () => { this.scene.tweens.add({ targets: maxGfx, scaleX: 1, scaleY: 1, duration: 100 }); });
     this.container.add(maxHit);
 
-    this.container.add(this.scene.add.text(
-      maxBtnX + maxBtnW / 2, maxBtnY + maxBtnH / 2, 'BET MAX', {
-        fontFamily: '"Luckiest Guy", cursive, sans-serif',
-        fontSize: '24px', color: '#ffffff',
-        stroke: '#004422', strokeThickness: 4,
-        shadow: { offsetX: 0, offsetY: 2, color: '#000', blur: 0, fill: true }
-      }
-    ).setOrigin(0.5));
-
-    // Initial display update
-    this.refreshDisplay();
-  }
-
-  private buildRow(pX: number, rowY: number, pW: number, rowH: number, label: string, value: number, isTop: boolean) {
-    const pad = 20;
-    const btnSize = rowH;
-    const fieldW = pW - pad * 2 - btnSize * 2 - 20;
-    const fieldX = pX + pad + btnSize + 10;
-
-    // Label
-    this.container.add(this.scene.add.text(pX + pW / 2, rowY - 18, label, {
-      fontFamily: '"Inter", sans-serif',
-      fontSize: '15px', color: '#8899bb', fontStyle: '800',
-      letterSpacing: 2
+    this.container.add(this.scene.add.text(maxX + maxW / 2, maxY + maxH / 2, 'BET MAX', {
+      fontFamily: '"Inter", Arial, sans-serif',
+      fontSize: '18px', color: '#ffffff', fontStyle: '800',
     }).setOrigin(0.5));
 
-    // Value field (dark pill)
-    const fieldGfx = this.scene.add.graphics();
-    fieldGfx.fillStyle(0x0a0a12, 1);
-    fieldGfx.fillRoundedRect(fieldX, rowY, fieldW, rowH, 12);
-    fieldGfx.lineStyle(2, 0x222233, 1);
-    fieldGfx.strokeRoundedRect(fieldX, rowY, fieldW, rowH, 12);
-    this.container.add(fieldGfx);
-
-    const valueTxt = this.scene.add.text(fieldX + fieldW / 2, rowY + rowH / 2, `$${value.toFixed(2)}`, {
-      fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      fontSize: '28px', color: '#ffffff',
-      shadow: { offsetX: 0, offsetY: 1, color: '#000', blur: 2, fill: true }
-    }).setOrigin(0.5);
-    this.container.add(valueTxt);
-
-    if (isTop) {
-      this.txtBetValue = valueTxt;
-    } else {
-      this.txtTotalValue = valueTxt;
-    }
-
-    // Minus button
-    const minusGfx = this.drawCircleButton(pX + pad + btnSize / 2, rowY + rowH / 2, btnSize / 2, false);
-    const minusHit = this.scene.add.rectangle(
-      pX + pad + btnSize / 2, rowY + rowH / 2, btnSize, btnSize, 0xffffff, 0
-    ).setInteractive({ useHandCursor: true });
-    minusHit.on('pointerdown', () => {
-      if (this.betIndex > 0) {
-        this.betIndex--;
-        this.emitChange();
-      }
-    });
-    this.container.add(minusHit);
-
-    // Plus button
-    const plusGfx = this.drawCircleButton(pX + pW - pad - btnSize / 2, rowY + rowH / 2, btnSize / 2, true);
-    const plusHit = this.scene.add.rectangle(
-      pX + pW - pad - btnSize / 2, rowY + rowH / 2, btnSize, btnSize, 0xffffff, 0
-    ).setInteractive({ useHandCursor: true });
-    plusHit.on('pointerdown', () => {
-      if (this.betIndex < BET_PRESETS.length - 1) {
-        this.betIndex++;
-        this.emitChange();
-      }
-    });
-    this.container.add(plusHit);
-
-    if (isTop) {
-      this.btnMinusGfx = minusGfx;
-      this.btnPlusGfx = plusGfx;
-    } else {
-      this.btnTotalMinusGfx = minusGfx;
-      this.btnTotalPlusGfx = plusGfx;
-    }
+    // Set initial values
+    this.refreshValues();
   }
 
-  private drawCircleButton(cx: number, cy: number, r: number, isPlus: boolean): Phaser.GameObjects.Graphics {
+  // ── Build a section label ──
+  private buildLabel(cx: number, cy: number, text: string) {
+    this.container.add(this.scene.add.text(cx, cy, text, {
+      fontFamily: '"Inter", Arial, sans-serif',
+      fontSize: '13px', color: '#889', fontStyle: '700',
+      letterSpacing: 2.5,
+    }).setOrigin(0.5));
+  }
+
+  // ── Build a value row: [−] [ value ] [+] ──
+  private buildValueRow(
+    pX: number, rowY: number, pW: number, rowH: number, pad: number, btnR: number
+  ): { txt: Phaser.GameObjects.Text; minusGfx: Phaser.GameObjects.Graphics; plusGfx: Phaser.GameObjects.Graphics } {
+    const btnDiameter = btnR * 2;
+    const fieldW = pW - pad * 2 - btnDiameter * 2 - 24;
+    const fieldX = pX + pad + btnDiameter + 12;
+
+    // Value field — dark recessed rectangle
+    const field = this.scene.add.graphics();
+    field.fillStyle(0x0b0b14, 1);
+    field.fillRoundedRect(fieldX, rowY, fieldW, rowH, 12);
+    field.lineStyle(1.5, 0x222233, 1);
+    field.strokeRoundedRect(fieldX, rowY, fieldW, rowH, 12);
+    this.container.add(field);
+
+    const txt = this.scene.add.text(fieldX + fieldW / 2, rowY + rowH / 2, '', {
+      fontFamily: '"Inter", Arial, sans-serif',
+      fontSize: '22px', color: '#ffffff', fontStyle: '700',
+    }).setOrigin(0.5);
+    this.container.add(txt);
+
+    // ── Minus button ──
+    const minusCx = pX + pad + btnR;
+    const minusCy = rowY + rowH / 2;
+    const minusGfx = this.drawRoundButton(minusCx, minusCy, btnR, false);
+    const minusHit = this.scene.add.circle(minusCx, minusCy, btnR + 4, 0x000000, 0)
+      .setInteractive({ useHandCursor: true });
+    minusHit.on('pointerdown', () => { if (this.betIndex > 0) { this.betIndex--; this.emitChange(); } });
+    this.container.add(minusHit);
+
+    // ── Plus button ──
+    const plusCx = pX + pW - pad - btnR;
+    const plusCy = rowY + rowH / 2;
+    const plusGfx = this.drawRoundButton(plusCx, plusCy, btnR, true);
+    const plusHit = this.scene.add.circle(plusCx, plusCy, btnR + 4, 0x000000, 0)
+      .setInteractive({ useHandCursor: true });
+    plusHit.on('pointerdown', () => { if (this.betIndex < BET_PRESETS.length - 1) { this.betIndex++; this.emitChange(); } });
+    this.container.add(plusHit);
+
+    return { txt, minusGfx, plusGfx };
+  }
+
+  // ── Draw a single round +/− button ──
+  private drawRoundButton(cx: number, cy: number, r: number, isPlus: boolean): Phaser.GameObjects.Graphics {
     const gfx = this.scene.add.graphics();
 
-    // Shadow
-    gfx.fillStyle(0x000000, 0.4);
-    gfx.fillCircle(cx, cy + 3, r);
-
     if (isPlus) {
-      // Green button
-      gfx.fillStyle(0x006622, 1);
+      // Green circle
+      gfx.fillStyle(0x007733, 1);
+      gfx.fillCircle(cx, cy + 2, r); // subtle shadow
+      gfx.fillStyle(0x00b84a, 1);
       gfx.fillCircle(cx, cy, r);
-      gfx.fillStyle(0x00cc55, 1);
-      gfx.fillCircle(cx, cy, r - 3);
-      // Highlight
-      gfx.fillStyle(0x44ff88, 0.3);
+      gfx.fillStyle(0x33dd77, 0.25);
       gfx.beginPath();
-      gfx.arc(cx, cy - r * 0.3, r * 0.5, Math.PI, 0, false);
+      gfx.arc(cx, cy - r * 0.28, r * 0.55, Math.PI, 0, false);
       gfx.fill();
     } else {
-      // Dark/grey button
-      gfx.fillStyle(0x222233, 1);
+      // Dark/slate circle
+      gfx.fillStyle(0x111118, 1);
+      gfx.fillCircle(cx, cy + 2, r);
+      gfx.fillStyle(0x2a2a38, 1);
       gfx.fillCircle(cx, cy, r);
-      gfx.fillStyle(0x3a3a4a, 1);
-      gfx.fillCircle(cx, cy, r - 3);
-      // Highlight
-      gfx.fillStyle(0xffffff, 0.12);
+      gfx.lineStyle(1.5, 0x3a3a4a, 1);
+      gfx.strokeCircle(cx, cy, r);
+      gfx.fillStyle(0xffffff, 0.08);
       gfx.beginPath();
-      gfx.arc(cx, cy - r * 0.3, r * 0.5, Math.PI, 0, false);
+      gfx.arc(cx, cy - r * 0.28, r * 0.55, Math.PI, 0, false);
       gfx.fill();
     }
 
-    // Icon
-    const arm = r * 0.4;
-    gfx.lineStyle(3.5, 0xffffff, 1);
+    // Icon (−/+)
+    const arm = r * 0.38;
+    gfx.lineStyle(3, 0xffffff, 1);
     gfx.lineBetween(cx - arm, cy, cx + arm, cy);
     if (isPlus) gfx.lineBetween(cx, cy - arm, cx, cy + arm);
 
