@@ -204,23 +204,23 @@ export class Game extends Phaser.Scene {
     this.gridFrame = this.add.graphics({ x: 0, y: 0 }).setDepth(2);
 
     // === LOGO (top-right like real Sugar Rush 1000) ===
-    this.logoText1 = this.add.text(0, 0, 'Sugar Rush', {
+    this.logoText1 = this.add.text(0, 0, 'SUGAR RUSH', {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      color: '#ff6699',
+      color: '#ff007f',
       fontStyle: 'normal',
       stroke: '#ffffff',
-      strokeThickness: 5,
-      shadow: { offsetX: 2, offsetY: 3, color: '#cc3366', blur: 4, fill: true }
-    }).setDepth(30).setOrigin(0.5);
+      strokeThickness: 8,
+      shadow: { offsetX: 3, offsetY: 5, color: '#cc0066', blur: 0, stroke: true, fill: true }
+    }).setDepth(30).setOrigin(1, 0.5);
 
     this.logoText2 = this.add.text(0, 0, '1000', {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      color: '#ffcc66',
+      color: '#ffaa00',
       fontStyle: 'normal',
-      stroke: '#ff6699',
-      strokeThickness: 4,
-      shadow: { offsetX: 2, offsetY: 3, color: '#cc6633', blur: 4, fill: true }
-    }).setDepth(30).setOrigin(0.5);
+      stroke: '#ffffff',
+      strokeThickness: 8,
+      shadow: { offsetX: 3, offsetY: 5, color: '#cc5500', blur: 0, stroke: true, fill: true }
+    }).setDepth(30).setOrigin(1, 0.5);
 
     // Buy buttons setup
     const btnStyle = { fontFamily: '"Luckiest Guy", cursive, sans-serif', fontStyle: 'normal', align: 'center', strokeThickness: 0, shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 0, fill: true } };
@@ -683,12 +683,22 @@ export class Game extends Phaser.Scene {
     this.drawToolbarIcons();
 
     // Logo
-    const logoX = w - Math.max(100, w * 0.10);
-    const logoY1 = Math.max(25, h * 0.06);
-    const logoFS1 = Math.min(36, w * 0.04);
-    const logoFS2 = Math.min(48, w * 0.055);
-    this.logoText1.setPosition(logoX, logoY1).setFontSize(logoFS1).setStroke('#ffffff', Math.max(3, logoFS1 * 0.08));
-    this.logoText2.setPosition(logoX, logoY1 + logoFS1 * 0.9).setFontSize(logoFS2).setStroke('#ff6699', Math.max(3, logoFS2 * 0.06));
+    const logoFS1 = Math.min(48, w * 0.05);
+    const logoFS2 = Math.min(56, w * 0.06);
+    const logoRight = w - toolPad; // Align to the right edge symmetrically with the left tools
+    
+    this.logoText1.setPosition(logoRight, toolY)
+                  .setFontSize(logoFS1)
+                  .setStroke('#ffffff', Math.max(12, logoFS1 * 0.35));
+                  
+    // Update text dimensions synchronously to calculate relative centering
+    this.logoText1.updateText();
+    this.logoText2.setFontSize(logoFS2).setStroke('#ffffff', Math.max(12, logoFS2 * 0.35)).updateText();
+
+    // Center "1000" under "SUGAR RUSH"
+    const centerOffset = (this.logoText1.width - this.logoText2.width) / 2;
+
+    this.logoText2.setPosition(logoRight - centerOffset, toolY + logoFS1 * 1.05);
 
     // Logo floating animation (only add once)
     if (!this.tweens.isTweening(this.logoText1)) {
