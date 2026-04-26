@@ -40,7 +40,8 @@ export class Game extends Phaser.Scene {
   private spinBtnHit!: Phaser.GameObjects.Rectangle;
   private spinBtnLabel!: Phaser.GameObjects.Text;
   private spinBtnRadius = 50;
-  private btnAuto!: Phaser.GameObjects.Rectangle;
+  private btnAutoHit!: Phaser.GameObjects.Rectangle;
+  private btnAutoGraphics!: Phaser.GameObjects.Graphics;
   private txtAuto!: Phaser.GameObjects.Text;
   private btnBetMinus!: Phaser.GameObjects.Graphics;
   private btnBetPlus!: Phaser.GameObjects.Graphics;
@@ -270,9 +271,9 @@ export class Game extends Phaser.Scene {
     this.spinBtnLabel = this.add.text(0, 0, '', { fontFamily: '"Luckiest Guy", cursive, sans-serif' }).setOrigin(0.5).setDepth(21);
 
     // Auto Play setup
-    this.btnAuto = this.add.rectangle(0, 0, 100, 30, 0x0a0618)
-      .setStrokeStyle(1.5, 0x331144, 0.6)
-      .setInteractive({ useHandCursor: true }).setDepth(21)
+    this.btnAutoGraphics = this.add.graphics().setDepth(21);
+    this.btnAutoHit = this.add.rectangle(0, 0, 100, 30, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true }).setDepth(22)
       .on('pointerdown', () => {
         if (this.fsActive || this.anyOverlayOpen()) return;
         if (!this.autoSpinActive) {
@@ -373,7 +374,8 @@ export class Game extends Phaser.Scene {
       this.anteBetIcon.setVisible(false);
       this.anteBetTxt.setVisible(false);
       
-      this.btnAuto.setVisible(false);
+      this.btnAutoHit.setVisible(false);
+      this.btnAutoGraphics.setVisible(false);
       this.txtAuto.setVisible(false);
       
       this.btnBetMinus.setVisible(false);
@@ -636,13 +638,6 @@ export class Game extends Phaser.Scene {
     this.txtBetLabel.setPosition(betX, pillY - pillH / 4).setFontSize(pillH * 0.28);
     this.txtBet.setPosition(betX, pillY + pillH / 8).setFontSize(pillH * 0.38);
 
-    // Bet Buttons
-    const bBtnSize = Math.max(24, pillH * 0.85);
-    this.btnBetMinusHit.setPosition(betX - betW / 2 - bBtnSize / 2 - 5, pillY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
-    this.drawBetButton(this.btnBetMinus, betX - betW / 2 - bBtnSize / 2 - 5, pillY, bBtnSize, false);
-    this.btnBetPlusHit.setPosition(betX + betW / 2 + bBtnSize / 2 + 5, pillY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
-    this.drawBetButton(this.btnBetPlus, betX + betW / 2 + bBtnSize / 2 + 5, pillY, bBtnSize, true);
-
     // Last Win Pill
     const winW = isMobile ? w * 0.22 : 200;
     const winX = isMobile ? w - winW / 2 - sidePad - (isMobilePortrait ? 0 : 80) : w * 0.68;
@@ -657,20 +652,39 @@ export class Game extends Phaser.Scene {
         this.txtLastWin.setVisible(false);
     }
 
-    // Spin Button
-    const spinSize = isMobile ? Math.max(70, w * 0.16) : 100;
-    const spinX = w - spinSize / 2 - Math.max(10, sidePad);
-    const spinY = isMobilePortrait ? safeH - spinSize / 2 - 20 : h - barH / 2 - 15;
+    // Spin Button Group
+    const spinSize = isMobile ? Math.max(70, w * 0.16) : Math.min(130, w * 0.1);
+    const rightColCenter = w - gridX / 2; // Perfect center of the right side margin
+    
+    const spinX = isMobilePortrait ? w - spinSize / 2 - 10 : rightColCenter;
+    const spinY = isMobilePortrait ? safeH - spinSize / 2 - 20 : h * 0.72; // Lower middle position
     this.spinBtnHit.setPosition(spinX, spinY).setSize(spinSize, spinSize);
     this.updateSpinButtonState();
 
-    // Auto Play
+    // Auto Play (below Spin)
     const autoW = 80;
     const autoH = 28;
     const autoX = spinX;
-    const autoY = spinY + spinSize / 2 + 14;
-    this.btnAuto.setPosition(autoX, autoY).setSize(autoW, autoH).setDisplaySize(autoW, autoH);
-    this.txtAuto.setPosition(autoX, autoY).setFontSize(14);
+    const autoY = spinY + spinSize / 2 + 20;
+    this.btnAutoHit.setPosition(autoX, autoY).setSize(autoW, autoH);
+    this.txtAuto.setPosition(autoX, autoY).setFontSize(14).setDepth(23);
+    this.updateAutoSpinDisplay();
+
+    // Bet Buttons (Flanking the Spin Button on Desktop!)
+    const bBtnSize = Math.max(24, pillH * 0.85);
+    if (!isMobilePortrait) {
+        const betBtnOffset = spinSize / 2 + bBtnSize / 2 + 10;
+        this.btnBetMinusHit.setPosition(spinX - betBtnOffset, spinY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
+        this.drawBetButton(this.btnBetMinus, spinX - betBtnOffset, spinY, bBtnSize, false);
+        this.btnBetPlusHit.setPosition(spinX + betBtnOffset, spinY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
+        this.drawBetButton(this.btnBetPlus, spinX + betBtnOffset, spinY, bBtnSize, true);
+    } else {
+        // Keeps it on the bottom bar for mobile
+        this.btnBetMinusHit.setPosition(betX - betW / 2 - bBtnSize / 2 - 5, pillY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
+        this.drawBetButton(this.btnBetMinus, betX - betW / 2 - bBtnSize / 2 - 5, pillY, bBtnSize, false);
+        this.btnBetPlusHit.setPosition(betX + betW / 2 + bBtnSize / 2 + 5, pillY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
+        this.drawBetButton(this.btnBetPlus, betX + betW / 2 + bBtnSize / 2 + 5, pillY, bBtnSize, true);
+    }
 
     // Toolbar icons at upper left
     const toolY = Math.max(35, h * 0.07);
@@ -944,15 +958,36 @@ export class Game extends Phaser.Scene {
     }
   }
 
-  private drawBetButton(gfx: Phaser.GameObjects.Graphics, cx: number, cy: number, size: number, isPlus: boolean) {
+  private drawBetButton(gfx: Phaser.GameObjects.Graphics, targetX: number, targetY: number, size: number, isPlus: boolean) {
     gfx.clear();
+    gfx.setPosition(targetX, targetY);
+    const cx = 0;
+    const cy = 0;
+    
+    // Drop shadow
+    gfx.fillStyle(0x000000, 0.3);
+    gfx.fillCircle(cx, cy + 3, size / 2);
+    
+    // Silver outer ring
     gfx.fillStyle(0xffffff, 1);
     gfx.fillCircle(cx, cy, size / 2);
-    gfx.lineStyle(2, 0x000000, 0.1);
-    gfx.strokeCircle(cx, cy, size / 2);
+    gfx.fillStyle(0xcccccc, 1);
+    gfx.fillCircle(cx, cy, size / 2 - 2);
     
+    // Pink inner circle
+    gfx.fillStyle(0xff0066, 1);
+    gfx.fillCircle(cx, cy, size / 2 - 4);
+    gfx.fillStyle(0xff3388, 1);
+    gfx.fillCircle(cx, cy, size / 2 - 6);
+    
+    // Inner glass
+    gfx.fillStyle(0xffffff, 0.25);
+    gfx.beginPath();
+    gfx.arc(cx, cy - size * 0.15, size * 0.3, Math.PI, 0, false);
+    gfx.fill();
+
     const arm = size * 0.25;
-    gfx.lineStyle(2.5, 0x000000, 0.8);
+    gfx.lineStyle(3, 0xffffff, 1);
     gfx.lineBetween(cx - arm, cy, cx + arm, cy);
     if (isPlus) gfx.lineBetween(cx, cy - arm, cx, cy + arm);
   }
@@ -961,77 +996,99 @@ export class Game extends Phaser.Scene {
   private updateSpinButtonState() {
     const spinSize = this.spinBtnHit.width;
     const iconSize = spinSize * 0.4;
-    const cx = this.spinBtnHit.x;
-    const cy = this.spinBtnHit.y;
     
     this.spinBtnLabel.setVisible(false);
     const gfx = this.spinBtnGraphics;
     gfx.clear();
+    gfx.setPosition(this.spinBtnHit.x, this.spinBtnHit.y);
+    const cx = 0;
+    const cy = 0;
     const r = spinSize / 2;
 
     if (this.autoSpinActive) {
       // === AUTO-SPIN STOP (Red) ===
-      gfx.fillStyle(0x000000, 0.3);
-      gfx.fillCircle(cx, cy + 5, r);
+      gfx.fillStyle(0x000000, 0.4);
+      gfx.fillCircle(cx, cy + 6, r);
+      
       gfx.fillStyle(0x660011, 1);
       gfx.fillCircle(cx, cy, r);
       gfx.fillStyle(0x991122, 1);
       gfx.fillCircle(cx, cy, r - 3);
       gfx.fillStyle(0xdd2244, 1);
       gfx.fillCircle(cx, cy, r - 6);
+      
       // Gloss
       gfx.fillStyle(0xff6688, 0.35);
       gfx.beginPath();
       gfx.arc(cx, cy - r * 0.25, r * 0.55, Math.PI, 0, false);
       gfx.fill();
+      
       // White stop square
       const sq = iconSize * 0.55;
       gfx.fillStyle(0xffffff, 1);
-      gfx.fillRoundedRect(cx - sq, cy - sq, sq * 2, sq * 2, 4);
+      gfx.fillRoundedRect(cx - sq, cy - sq, sq * 2, sq * 2, 6);
     } else if (this._spinLock) {
       // === SPINNING (Muted green) ===
-      gfx.fillStyle(0x000000, 0.3);
-      gfx.fillCircle(cx, cy + 5, r);
+      gfx.fillStyle(0x000000, 0.4);
+      gfx.fillCircle(cx, cy + 6, r);
       gfx.fillStyle(0x0a4420, 1);
       gfx.fillCircle(cx, cy, r);
       gfx.fillStyle(0x1a6633, 1);
       gfx.fillCircle(cx, cy, r - 3);
       gfx.fillStyle(0x228844, 1);
       gfx.fillCircle(cx, cy, r - 6);
+      
       // Loading dots
       gfx.fillStyle(0xffffff, 0.8);
-      gfx.fillCircle(cx - 14, cy, 5);
-      gfx.fillCircle(cx, cy, 5);
-      gfx.fillCircle(cx + 14, cy, 5);
+      gfx.fillCircle(cx - 16, cy, 6);
+      gfx.fillCircle(cx, cy, 6);
+      gfx.fillCircle(cx + 16, cy, 6);
     } else {
-      // === READY (Vibrant green) ===
-      // Green glow beneath
-      gfx.fillStyle(0x22cc44, 0.25);
-      gfx.fillCircle(cx, cy + 8, r + 6);
-      // Drop shadow
-      gfx.fillStyle(0x000000, 0.35);
-      gfx.fillCircle(cx, cy + 5, r);
-      // Dark green rim
-      gfx.fillStyle(0x0a5520, 1);
+      // === READY (Premium Play Button) ===
+      gfx.fillStyle(0x000000, 0.4);
+      gfx.fillCircle(cx, cy + 6, r);
+      
+      // Outer silver/chrome ring
+      gfx.fillStyle(0xeef1f5, 1);
       gfx.fillCircle(cx, cy, r);
-      // Mid green rim
-      gfx.fillStyle(0x1a8833, 1);
-      gfx.fillCircle(cx, cy, r - 3);
-      // Main vibrant green face
-      gfx.fillStyle(0x22cc44, 1);
-      gfx.fillCircle(cx, cy, r - 6);
-      // Top gloss highlight
-      gfx.fillStyle(0x66ff88, 0.3);
+      gfx.fillStyle(0xbac1cd, 1);
+      gfx.fillCircle(cx, cy, r - 4);
+      
+      // Outer pink candy ring
+      gfx.fillStyle(0xff3399, 1);
+      gfx.fillCircle(cx, cy, r - 7);
+      
+      // Deep inner shadow ring
+      gfx.fillStyle(0x990044, 1);
+      gfx.fillCircle(cx, cy, r - 10);
+      
+      // Main vibrant gradient (simulated with concentric circles)
+      gfx.fillStyle(0xff1177, 1);
+      gfx.fillCircle(cx, cy, r - 12);
+      gfx.fillStyle(0xff4499, 1);
+      gfx.fillCircle(cx, cy, r - 16);
+      gfx.fillStyle(0xff77bb, 1);
+      gfx.fillCircle(cx, cy, r - 22);
+
+      // Top glass highlight (Premium Gloss)
+      gfx.fillStyle(0xffffff, 0.35);
       gfx.beginPath();
-      gfx.arc(cx, cy - r * 0.25, r * 0.55, Math.PI, 0, false);
+      gfx.arc(cx, cy - r * 0.3, r * 0.5, Math.PI, 0, false);
       gfx.fill();
-      // White play triangle
+
+      // Bottom glass reflection
+      gfx.fillStyle(0xffffff, 0.15);
+      gfx.beginPath();
+      gfx.arc(cx, cy + r * 0.6, r * 0.3, 0, Math.PI, false);
+      gfx.fill();
+
+      // Bold White Play Triangle
       gfx.fillStyle(0xffffff, 1);
-      const s = iconSize;
+      const s = iconSize * 1.2;
       gfx.fillTriangle(
-        cx - s * 0.2, cy - s * 0.45,
-        cx - s * 0.2, cy + s * 0.45,
-        cx + s * 0.55, cy
+        cx - s * 0.25, cy - s * 0.5,
+        cx - s * 0.25, cy + s * 0.5,
+        cx + s * 0.65, cy
       );
     }
   }
@@ -1050,7 +1107,7 @@ export class Game extends Phaser.Scene {
     });
 
     // Auto play
-    this.btnAuto.on('pointerdown', () => {
+    this.btnAutoHit.on('pointerdown', () => {
       if (this.fsActive || this.anyOverlayOpen()) return;
       if (!this.autoSpinActive) {
         // Check balance before starting auto-spin
@@ -1101,6 +1158,7 @@ export class Game extends Phaser.Scene {
     addHover(this.btnSettings, this.btnSettings);
     addHover(this.btnFullscreen, this.btnFullscreen);
     addHover(this.spinBtnHit, this.spinBtnGraphics);
+    addHover(this.btnAutoHit, this.btnAutoGraphics);
 
     // Buy features (with confirmation) — also guard overlays
     this.buySuperHit.on('pointerdown', () => {
@@ -1193,17 +1251,49 @@ export class Game extends Phaser.Scene {
 
   /** Update auto-spin button display */
   private updateAutoSpinDisplay() {
+    const w = this.btnAutoHit.width;
+    const h = this.btnAutoHit.height;
+    const gfx = this.btnAutoGraphics;
+    
+    gfx.clear();
+    gfx.setPosition(this.btnAutoHit.x, this.btnAutoHit.y);
+    const cx = 0;
+    const cy = 0;
+
+    // Common Drop Shadow
+    gfx.fillStyle(0x000000, 0.3);
+    gfx.fillRoundedRect(cx - w/2, cy - h/2 + 4, w, h, h/2);
+
     if (this.autoSpinActive) {
-      const label = this.autoSpinRemaining > 0 ? `${this.autoSpinRemaining}` : '∞';
-      this.txtAuto.setText(label);
-      this.txtAuto.setColor('#ff4466');
-      this.btnAuto.setStrokeStyle(2, 0xff4466, 0.8);
-      this.btnAuto.setFillStyle(0x1a0a14, 1);
+      const label = this.autoSpinRemaining > 0 ? `STOP (${this.autoSpinRemaining})` : 'STOP';
+      this.txtAuto.setText(label).setColor('#ff0066').setShadow(0,0,'#000',0,false);
+      
+      // Active State (Bright White / Pink)
+      gfx.fillStyle(0xffffff, 1);
+      gfx.fillRoundedRect(cx - w/2, cy - h/2, w, h, h/2);
+      
+      gfx.lineStyle(3, 0xff0066, 1);
+      gfx.strokeRoundedRect(cx - w/2, cy - h/2, w, h, h/2);
+      
+      // Gloss highlight
+      gfx.fillStyle(0xffffff, 0.8);
+      gfx.fillRoundedRect(cx - w/2 + 3, cy - h/2 + 2, w - 6, h/2 - 2, (h/2 - 2));
     } else {
-      this.txtAuto.setText('AUTO');
-      this.txtAuto.setColor('#bbaacc');
-      this.btnAuto.setStrokeStyle(1.5, 0x331144, 0.6);
-      this.btnAuto.setFillStyle(0x0a0618, 1);
+      this.txtAuto.setText('AUTOPLAY').setColor('#ffffff').setShadow(0,2,'#000000',0,true);
+      
+      // Inactive State (Deep Purple / Chrome)
+      gfx.fillStyle(0x2a1144, 1);
+      gfx.fillRoundedRect(cx - w/2, cy - h/2, w, h, h/2);
+      
+      gfx.fillStyle(0x442266, 1);
+      gfx.fillRoundedRect(cx - w/2 + 2, cy - h/2 + 2, w - 4, h - 4, (h/2 - 2));
+      
+      gfx.lineStyle(2, 0xdd99ff, 1);
+      gfx.strokeRoundedRect(cx - w/2, cy - h/2, w, h, h/2);
+      
+      // Gloss highlight
+      gfx.fillStyle(0xffffff, 0.15);
+      gfx.fillRoundedRect(cx - w/2 + 3, cy - h/2 + 2, w - 6, h/2 - 2, (h/2 - 2));
     }
   }
 
