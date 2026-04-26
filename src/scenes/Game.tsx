@@ -88,7 +88,8 @@ export class Game extends Phaser.Scene {
   autoSpinRemaining = 0; // 0 = infinite when autoSpinActive
   autoSpinTimer: Phaser.Time.TimerEvent | null = null;
   fsActive = false;
-  soundEnabled = true;
+  musicEnabled = true;
+  sfxEnabled = true;
   lastWin = 0;
   private _winCountTween?: Phaser.Tweens.Tween;
   private _displayedWin = 0;
@@ -172,8 +173,9 @@ export class Game extends Phaser.Scene {
 
     // Start background music
     this.audio.playMusic('backgroundDefault');
-    // Enforce initial mute state
-    this.sound.mute = !this.soundEnabled;
+    // Enforce initial mute state via Audio channels
+    this.audio.setMusicMuted(!this.musicEnabled);
+    this.audio.setSfxMuted(!this.sfxEnabled);
 
     // Resize handler — debounced to prevent frame spikes during drag
     this.scale.on('resize', () => {
@@ -344,9 +346,14 @@ export class Game extends Phaser.Scene {
       }
     });
 
-    this.settings.setSoundCallback((enabled) => {
-      this.soundEnabled = enabled;
-      this.sound.mute = !enabled;
+    this.settings.setMusicCallback((enabled) => {
+      this.musicEnabled = enabled;
+      this.audio.setMusicMuted(!enabled);
+      this.drawToolbarIcons();
+    });
+    this.settings.setSfxCallback((enabled) => {
+      this.sfxEnabled = enabled;
+      this.audio.setSfxMuted(!enabled);
       this.drawToolbarIcons();
     });
     this.settings.setTurboCallback?.((enabled: boolean) => {
@@ -736,7 +743,7 @@ export class Game extends Phaser.Scene {
     const positions = [
       { obj: this.btnSettings, type: 'settings' },
       { obj: this.btnPaytable, type: 'info' },
-      { obj: this.soundToggle, type: this.soundEnabled ? 'sound_on' : 'sound_off' },
+      { obj: this.soundToggle, type: (this.musicEnabled || this.sfxEnabled) ? 'sound_on' : 'sound_off' },
       { obj: this.btnFullscreen, type: 'fullscreen' },
     ];
     for (const { obj, type } of positions) {
@@ -1169,12 +1176,15 @@ export class Game extends Phaser.Scene {
       this.audio.playSound('button');
     });
 
-    // Sound toggle
+    // Sound toggle (toggles BOTH music and sfx simultaneously)
     this.soundToggle.on('pointerdown', () => {
       if (this.anyOverlayOpen()) return;
-      this.soundEnabled = !this.soundEnabled;
+      const anyOn = this.musicEnabled || this.sfxEnabled;
+      this.musicEnabled = !anyOn;
+      this.sfxEnabled = !anyOn;
+      this.audio.setMusicMuted(anyOn);
+      this.audio.setSfxMuted(anyOn);
       this.drawToolbarIcons();
-      this.sound.mute = !this.soundEnabled;
     });
 
     // Paytable

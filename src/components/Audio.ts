@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 
 /**
- * Advanced Audio manager — handles crossfading, dynamic pitching, and global sound states.
+ * Advanced Audio manager — handles crossfading, dynamic pitching, and independent
+ * Music / SFX volume channels.
  * All public methods are wrapped in try/catch to prevent audio failures from crashing the game.
  */
 export class Audio {
@@ -19,6 +20,10 @@ export class Audio {
   private musicVolume = 0.35;
   private sfxVolumeDefault = 0.5;
 
+  // Independent mute states
+  private _musicMuted = false;
+  private _sfxMuted = false;
+
   // Throttle for win tick sound (M2: prevent 62 buffer instances in 2 seconds)
   private _lastTickTime = 0;
   private static readonly TICK_THROTTLE_MS = 80;
@@ -33,6 +38,41 @@ export class Audio {
       console.warn('[Audio] Failed to init reels audio:', err);
     }
   }
+
+  // ─── Mute API ───────────────────────────────────────────────
+
+  /** Get current music mute state */
+  public get musicMuted(): boolean { return this._musicMuted; }
+
+  /** Get current SFX mute state */
+  public get sfxMuted(): boolean { return this._sfxMuted; }
+
+  /** Toggle music mute on/off. Returns the new state. */
+  public setMusicMuted(muted: boolean) {
+    this._musicMuted = muted;
+    try {
+      if (this.currentMusic) {
+        if (muted) {
+          (this.currentMusic as any).setVolume?.(0);
+        } else {
+          (this.currentMusic as any).setVolume?.(this.musicVolume);
+        }
+      }
+    } catch { /* ignore */ }
+  }
+
+  /** Toggle SFX mute on/off. Returns the new state. */
+  public setSfxMuted(muted: boolean) {
+    this._sfxMuted = muted;
+    // Reels are considered SFX — stop if currently playing
+    try {
+      if (muted && this.audioReels?.isPlaying) {
+        this.audioReels.stop();
+      }
+    } catch { /* ignore */ }
+  }
+
+  // ─── Music ──────────────────────────────────────────────────
 
   /**
    * Crossfade to a new music track.
@@ -70,10 +110,11 @@ export class Audio {
         }));
       }
 
-      // Fade in new
+      // Fade in new — respect mute state
+      const targetVol = this._musicMuted ? 0 : this.musicVolume;
       this.fadeTweens.push(this.scene.tweens.add({
         targets: newMusic,
-        volume: this.musicVolume,
+        volume: targetVol,
         duration: crossfadeDuration,
         ease: 'Linear'
       }));
@@ -82,8 +123,11 @@ export class Audio {
     }
   }
 
+  // ─── SFX ────────────────────────────────────────────────────
+
   /** Normal sound effect throwaway playback */
   public playSound(key: string, config?: Phaser.Types.Sound.SoundConfig) {
+    if (this._sfxMuted) return; // Skip if SFX muted
     try {
       this.scene.sound.play(key, { volume: this.sfxVolumeDefault, ...config });
     } catch (err) {
@@ -93,6 +137,7 @@ export class Audio {
 
   /** Start reeling noise */
   public playReels() {
+    if (this._sfxMuted) return; // Skip if SFX muted
     try {
       if (this.audioReels && !this.audioReels.isPlaying) {
         this.audioReels.play();
@@ -151,6 +196,7 @@ export class Audio {
    * Throttled to max 12.5 sounds/sec to prevent WebAudio buffer explosion.
    */
   public playWinTick(progress: number, multiplier: number) {
+    if (this._sfxMuted) return; // Skip if SFX muted
     const now = performance.now();
     if (now - this._lastTickTime < Audio.TICK_THROTTLE_MS) return;
     this._lastTickTime = now;

@@ -1,18 +1,24 @@
 import Phaser from 'phaser';
 
 /**
- * Settings / Menu overlay with sound, turbo mode, and quality options.
+ * Settings / Menu overlay with separate Music & SFX toggles, turbo mode, and quality options.
  */
 export class SettingsOverlay {
   private scene: Phaser.Scene;
   private container!: Phaser.GameObjects.Container;
   private visible = false;
-  private onSoundToggle: ((enabled: boolean) => void) | null = null;
+  private onMusicToggle: ((enabled: boolean) => void) | null = null;
+  private onSfxToggle: ((enabled: boolean) => void) | null = null;
   private onTurboToggle: ((enabled: boolean) => void) | null = null;
   private onQualityChange: ((quality: string) => void) | null = null;
-  private soundEnabled = true;
+  private musicEnabled = true;
+  private sfxEnabled = true;
   private turboMode = false;
   private _resizeTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Legacy compat — old code calls setSoundCallback
+  private onSoundToggle: ((enabled: boolean) => void) | null = null;
+  private soundEnabled = true;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -53,7 +59,7 @@ export class SettingsOverlay {
 
     // Panel
     const panelW = Math.min(420, w * 0.85);
-    const panelH = 400;
+    const panelH = 460;
     const panelX = (w - panelW) / 2;
     const panelY = (h - panelH) / 2;
 
@@ -95,36 +101,37 @@ export class SettingsOverlay {
     };
     const rowH = 55;
 
-    // Sound toggle
-    this.addSettingsRow(panelX, yPos, panelW, 'Sound', labelStyle, () => {
-      this.soundEnabled = !this.soundEnabled;
-      return this.soundEnabled;
-    }, (isOn) => {
-      if (this.onSoundToggle) this.onSoundToggle(isOn);
+    // ─── GAME MUSIC toggle ───
+    this.addToggleRow(panelX, yPos, panelW, 'Game Music', labelStyle, this.musicEnabled, (isOn) => {
+      this.musicEnabled = isOn;
+      if (this.onMusicToggle) this.onMusicToggle(isOn);
     });
     yPos += rowH;
 
     // Separator
-    const sep1 = this.scene.add.graphics();
-    sep1.lineStyle(1, 0x1a2244, 0.5);
-    sep1.lineBetween(panelX + 20, yPos, panelX + panelW - 20, yPos);
-    this.container.add(sep1);
+    this.addSeparator(panelX, yPos, panelW);
+    yPos += 10;
+
+    // ─── GAME SOUNDS toggle ───
+    this.addToggleRow(panelX, yPos, panelW, 'Game Sounds', labelStyle, this.sfxEnabled, (isOn) => {
+      this.sfxEnabled = isOn;
+      if (this.onSfxToggle) this.onSfxToggle(isOn);
+    });
+    yPos += rowH;
+
+    // Separator
+    this.addSeparator(panelX, yPos, panelW);
     yPos += 10;
 
     // Turbo mode toggle
-    this.addSettingsRow(panelX, yPos, panelW, 'Turbo Spins', labelStyle, () => {
-      this.turboMode = !this.turboMode;
-      return this.turboMode;
-    }, (isOn) => {
+    this.addToggleRow(panelX, yPos, panelW, 'Turbo Spins', labelStyle, this.turboMode, (isOn) => {
+      this.turboMode = isOn;
       if (this.onTurboToggle) this.onTurboToggle(isOn);
     });
     yPos += rowH;
 
     // Separator
-    const sep2 = this.scene.add.graphics();
-    sep2.lineStyle(1, 0x1a2244, 0.5);
-    sep2.lineBetween(panelX + 20, yPos, panelX + panelW - 20, yPos);
-    this.container.add(sep2);
+    this.addSeparator(panelX, yPos, panelW);
     yPos += 10;
 
     // Quality selector
@@ -164,17 +171,24 @@ export class SettingsOverlay {
     }).setOrigin(0.5));
   }
 
-  private addSettingsRow(
+  private addSeparator(panelX: number, yPos: number, panelW: number) {
+    const sep = this.scene.add.graphics();
+    sep.lineStyle(1, 0x1a2244, 0.5);
+    sep.lineBetween(panelX + 20, yPos, panelX + panelW - 20, yPos);
+    this.container.add(sep);
+  }
+
+  private addToggleRow(
     panelX: number, yPos: number, panelW: number,
     label: string, style: Phaser.Types.GameObjects.Text.TextStyle,
-    toggleFn: () => boolean,
+    initialState: boolean,
     callbackFn: (state: boolean) => void
   ) {
     this.container.add(this.scene.add.text(panelX + 30, yPos + 8, label, style));
 
     const toggleBg = this.scene.add.graphics();
     const toggleX = panelX + panelW - 70;
-    let isOn = label === 'Sound' ? this.soundEnabled : this.turboMode;
+    let isOn = initialState;
 
     const drawToggle = () => {
       toggleBg.clear();
@@ -198,15 +212,26 @@ export class SettingsOverlay {
     const hitArea = this.scene.add.rectangle(toggleX + 22, yPos + 16, 50, 28)
       .setInteractive({ useHandCursor: true }).setAlpha(0.001);
     hitArea.on('pointerdown', () => {
-      isOn = toggleFn();
+      isOn = !isOn;
       drawToggle();
       callbackFn(isOn);
     });
     this.container.add(hitArea);
   }
 
+  // ─── Public Callbacks ───────────────────────────────────────
+
+  /** Legacy: old code that calls setSoundCallback will mute BOTH channels */
   public setSoundCallback(cb: (enabled: boolean) => void) {
     this.onSoundToggle = cb;
+  }
+
+  public setMusicCallback(cb: (enabled: boolean) => void) {
+    this.onMusicToggle = cb;
+  }
+
+  public setSfxCallback(cb: (enabled: boolean) => void) {
+    this.onSfxToggle = cb;
   }
 
   public setTurboCallback(cb: (enabled: boolean) => void) {
