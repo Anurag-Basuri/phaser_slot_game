@@ -238,8 +238,19 @@ export class SettingsOverlay {
     this.onTurboToggle = cb;
   }
 
+  public syncState(musicEnabled: boolean, sfxEnabled: boolean) {
+    this.musicEnabled = musicEnabled;
+    this.sfxEnabled = sfxEnabled;
+  }
+
   public isTurboMode(): boolean { return this.turboMode; }
   public show() {
+    if (this.container?.scene) {
+      this.container.removeAll(true);
+      this.container.destroy();
+    }
+    this.build();
+    
     this.visible = true;
     this.container.setVisible(true);
     this.container.setAlpha(0);

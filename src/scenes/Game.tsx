@@ -1184,6 +1184,7 @@ export class Game extends Phaser.Scene {
       this.sfxEnabled = !anyOn;
       this.audio.setMusicMuted(anyOn);
       this.audio.setSfxMuted(anyOn);
+      this.settings.syncState(!anyOn, !anyOn);
       this.drawToolbarIcons();
     });
 
