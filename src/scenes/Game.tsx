@@ -51,7 +51,7 @@ export class Game extends Phaser.Scene {
   private txtBet!: Phaser.GameObjects.Text;
   private txtBetLabel!: Phaser.GameObjects.Text;
   private bottomBar!: Phaser.GameObjects.Graphics;
-  private toolbarGfx!: Phaser.GameObjects.Graphics;
+
   private txtFSRemaining!: Phaser.GameObjects.Text;
   private buySuperHit!: Phaser.GameObjects.Rectangle;
   private buyRegularHit!: Phaser.GameObjects.Rectangle;
@@ -59,10 +59,10 @@ export class Game extends Phaser.Scene {
   private buySuperTxt2!: Phaser.GameObjects.Text;
   private buyRegularTxt1!: Phaser.GameObjects.Text;
   private buyRegularTxt2!: Phaser.GameObjects.Text;
-  private soundToggle!: Phaser.GameObjects.Text;
-  private btnPaytable!: Phaser.GameObjects.Text;
-  private btnSettings!: Phaser.GameObjects.Text;
-  private btnFullscreen!: Phaser.GameObjects.Text;
+  private soundToggle!: Phaser.GameObjects.Graphics;
+  private btnPaytable!: Phaser.GameObjects.Graphics;
+  private btnSettings!: Phaser.GameObjects.Graphics;
+  private btnFullscreen!: Phaser.GameObjects.Graphics;
   private txtLastWin!: Phaser.GameObjects.Text;
   private txtLastWinLabel!: Phaser.GameObjects.Text;
   private demoLabel!: Phaser.GameObjects.Text;
@@ -257,7 +257,7 @@ export class Game extends Phaser.Scene {
         this.audio.playSound('button');
       });
     this.anteBetIcon = this.add.text(0, 0, '⚡', { fontFamily: 'Arial' }).setOrigin(0.5).setDepth(21);
-    this.anteBetTxt = this.add.text(0, 0, T('ANTE BET', this.stakeEngine.isSocialMode()), { fontFamily: '"Luckiest Guy", cursive, sans-serif', color: '#ffffff' }).setOrigin(0, 0.5).setDepth(21);
+    this.anteBetTxt = this.add.text(0, 0, T('ANTE BET', this.stakeEngine.isSocialMode()), { fontFamily: '"Inter", "Arial", sans-serif', fontStyle: 'bold', color: '#ffffff' }).setOrigin(0, 0.5).setDepth(21);
 
     // Spin button setup (Authentic Pragmatic Circular Style)
     this.spinBtnGraphics = this.add.graphics().setDepth(20);
@@ -335,18 +335,13 @@ export class Game extends Phaser.Scene {
     }).setOrigin(0.5).setVisible(false).setDepth(20);
 
     // === TOOLBAR (Graphics-drawn icons instead of emoji) ===
-    this.toolbarGfx = this.add.graphics().setDepth(46);
-    this.soundToggle = this.add.text(0, 0, '', { fontSize: '1px' })
-      .setOrigin(0.5).setDepth(16).setAlpha(0.001);
-    this.btnPaytable = this.add.text(0, 0, '', { fontSize: '1px' })
-      .setOrigin(0.5).setDepth(16).setAlpha(0.001);
-    this.btnSettings = this.add.text(0, 0, '', { fontSize: '1px' })
-      .setOrigin(0.5).setDepth(16).setAlpha(0.001);
-    this.btnFullscreen = this.add.text(0, 0, '', { fontSize: '1px' })
-      .setOrigin(0.5).setDepth(16).setAlpha(0.001);
+    this.soundToggle = this.add.graphics().setDepth(50);
+    this.btnPaytable = this.add.graphics().setDepth(50);
+    this.btnSettings = this.add.graphics().setDepth(50);
+    this.btnFullscreen = this.add.graphics().setDepth(50);
     // Make hit areas interactive
     [this.soundToggle, this.btnPaytable, this.btnSettings, this.btnFullscreen].forEach(btn => {
-      btn.setInteractive(new Phaser.Geom.Circle(0, 0, 18), Phaser.Geom.Circle.Contains);
+      btn.setInteractive(new Phaser.Geom.Rectangle(-22, -22, 44, 44), Phaser.Geom.Rectangle.Contains);
       (btn as any).input!.cursor = 'pointer';
     });
 
@@ -575,7 +570,7 @@ export class Game extends Phaser.Scene {
       this.panelRegularGraphics.setPosition(buyX, buyY2);
       this.updateBuyText(this.buyRegularTxt1, this.buyRegularTxt2, buyX, buyY2, buyH, 'BUY');
     } else {
-      buyX = gridX - buyW / 2 - Math.max(20, w * 0.02);
+      buyX = gridX - buyW / 2 - Math.max(40, w * 0.04);
       if (buyX < buyW / 2 + 10) buyX = buyW / 2 + 10;
       
       const anteH = 45;
@@ -605,7 +600,8 @@ export class Game extends Phaser.Scene {
     const anteTargetW = anteW;
     
     this.anteBetHit.setPosition(anteTargetX, anteY).setSize(anteTargetW, anteH);
-    this.drawAnteBetButton(anteTargetX, anteY, anteTargetW, anteH);
+    this.anteBetBtn.setPosition(anteTargetX, anteY);
+    this.drawAnteBetButton(anteTargetW, anteH);
     this.anteBetIcon.setPosition(anteTargetX - 40, anteY).setFontSize(22).setOrigin(0.5);
     this.anteBetTxt.setPosition(anteTargetX - 25, anteY).setFontSize(16).setOrigin(0, 0.5);
 
@@ -676,10 +672,10 @@ export class Game extends Phaser.Scene {
     this.btnAuto.setPosition(autoX, autoY).setSize(autoW, autoH).setDisplaySize(autoW, autoH);
     this.txtAuto.setPosition(autoX, autoY).setFontSize(14);
 
-    // Toolbar — position hidden hit-area texts, then draw icons
-    const toolY = h - barH / 2;
-    const toolPad = isMobile ? 12 : sidePad + 10;
-    const toolGap = 38;
+    // Toolbar icons at upper left
+    const toolY = Math.max(35, h * 0.07);
+    const toolPad = isMobile ? 35 : Math.max(50, w * 0.035);
+    const toolGap = 55;
     this.btnSettings.setPosition(toolPad, toolY);
     this.btnPaytable.setPosition(toolPad + toolGap, toolY);
     this.soundToggle.setPosition(toolPad + toolGap * 2, toolY);
@@ -715,11 +711,9 @@ export class Game extends Phaser.Scene {
     }
   }
 
-  /** Draw vector toolbar icons into the shared toolbarGfx graphics object */
+  /** Draw vector toolbar icons into their own graphics objects */
   private drawToolbarIcons() {
-    if (!this.toolbarGfx) return;
-    this.toolbarGfx.clear();
-    const iconR = 15;
+    const iconR = 20;
     const positions = [
       { obj: this.btnSettings, type: 'settings' },
       { obj: this.btnPaytable, type: 'info' },
@@ -727,61 +721,124 @@ export class Game extends Phaser.Scene {
       { obj: this.btnFullscreen, type: 'fullscreen' },
     ];
     for (const { obj, type } of positions) {
-      const cx = obj.x, cy = obj.y;
-      // Dark circle background
-      this.toolbarGfx.fillStyle(0x000000, 0.45);
-      this.toolbarGfx.fillCircle(cx, cy, iconR);
-      this.toolbarGfx.lineStyle(1.5, 0xffffff, 0.25);
-      this.toolbarGfx.strokeCircle(cx, cy, iconR);
-      // Icon strokes
-      this.toolbarGfx.lineStyle(2, 0xffffff, 0.85);
-      const s = iconR * 0.45; // icon half-size
+      if (!obj) continue;
+      obj.clear();
+      const cx = 0, cy = 0;
+      
+      const size = iconR * 2.2;
+      const r = 12; // corner radius
+      const half = size / 2;
+
+      // Drop shadow
+      obj.fillStyle(0x000000, 0.4);
+      obj.fillRoundedRect(cx - half + 2, cy - half + 4, size, size, r);
+      
+      // Base dark neon purple
+      obj.fillStyle(0x1a0a24, 0.95);
+      obj.fillRoundedRect(cx - half, cy - half, size, size, r);
+      
+      // Top glass highlight
+      obj.fillStyle(0xffffff, 0.08);
+      obj.fillRoundedRect(cx - half + 1, cy - half + 1, size - 2, size * 0.45, {tl: r-1, tr: r-1, bl: 0, br: 0} as any);
+      
+      // Glow/Accent Border
+      const isSoundOff = type === 'sound_off';
+      obj.lineStyle(2, isSoundOff ? 0x663355 : 0xaa22ff, 0.8);
+      obj.strokeRoundedRect(cx - half, cy - half, size, size, r);
+      
+      // Inner rim highlight
+      obj.lineStyle(1.5, 0xffffff, 0.1);
+      obj.strokeRoundedRect(cx - half + 2, cy - half + 2, size - 4, size - 4, r - 2);
+
+      // Icon strokes - make them gold/white and thicker
+      const iconColor = isSoundOff ? 0x998899 : 0xffdd44;
+      const strokeC = isSoundOff ? 0xaaaaaa : 0xffffff;
+      
+      obj.lineStyle(2.5, strokeC, 1);
+      const s = iconR * 0.55; 
+
       if (type === 'settings') {
-        // Gear: circle + 4 ticks
-        this.toolbarGfx.strokeCircle(cx, cy, s * 0.55);
-        for (let a = 0; a < 4; a++) {
-          const angle = (a * Math.PI) / 2;
-          this.toolbarGfx.lineBetween(
-            cx + Math.cos(angle) * s * 0.4, cy + Math.sin(angle) * s * 0.4,
-            cx + Math.cos(angle) * s * 1.1, cy + Math.sin(angle) * s * 1.1
+        // High-quality gear
+        obj.lineStyle(3, strokeC, 1);
+        obj.strokeCircle(cx, cy, s * 0.5);
+        
+        // 8 gear teeth
+        obj.lineStyle(3.5, strokeC, 1);
+        for(let i=0; i<8; i++) {
+          const a = i * Math.PI / 4;
+          const innerR = s * 0.5;
+          const outerR = s * 0.85;
+          obj.lineBetween(
+            cx + Math.cos(a) * innerR, cy + Math.sin(a) * innerR,
+            cx + Math.cos(a) * outerR, cy + Math.sin(a) * outerR
           );
         }
       } else if (type === 'info') {
-        // "i" character
-        this.toolbarGfx.fillStyle(0xffffff, 0.85);
-        this.toolbarGfx.fillCircle(cx, cy - s * 0.7, 2);
-        this.toolbarGfx.fillRect(cx - 1.5, cy - s * 0.3, 3, s * 1.2);
+        // stylized 'i'
+        obj.fillStyle(strokeC, 1);
+        obj.fillCircle(cx, cy - s * 0.6, s * 0.2);
+        obj.fillRect(cx - s*0.15, cy - s * 0.2, s*0.3, s);
+        // Base serif
+        obj.fillRect(cx - s*0.35, cy + s * 0.8, s*0.7, s*0.2);
       } else if (type === 'sound_on') {
-        // Speaker + waves
-        this.toolbarGfx.fillStyle(0xffffff, 0.85);
-        this.toolbarGfx.fillRect(cx - s * 0.6, cy - s * 0.25, s * 0.4, s * 0.5);
-        this.toolbarGfx.fillTriangle(cx - s * 0.2, cy - s * 0.5, cx - s * 0.2, cy + s * 0.5, cx + s * 0.3, cy);
-        this.toolbarGfx.lineStyle(1.5, 0xffffff, 0.7);
-        this.toolbarGfx.beginPath();
-        this.toolbarGfx.arc(cx + s * 0.3, cy, s * 0.5, -0.6, 0.6, false);
-        this.toolbarGfx.strokePath();
+        // Simple double music note
+        obj.fillStyle(iconColor, 1);
+        // note heads
+        obj.fillCircle(cx - s * 0.4, cy + s * 0.5, s * 0.35);
+        obj.fillCircle(cx + s * 0.6, cy + s * 0.2, s * 0.35);
+        
+        // stems
+        obj.fillRect(cx - s * 0.15, cy - s * 0.4, s * 0.25, s * 0.9);
+        obj.fillRect(cx + s * 0.85, cy - s * 0.7, s * 0.25, s * 0.9);
+        
+        // beam
+        obj.beginPath();
+        obj.moveTo(cx - s * 0.15, cy - s * 0.4);
+        obj.lineTo(cx + s * 1.1, cy - s * 0.7);
+        obj.lineTo(cx + s * 1.1, cy - s * 0.35);
+        obj.lineTo(cx - s * 0.15, cy - s * 0.05);
+        obj.closePath();
+        obj.fillPath();
       } else if (type === 'sound_off') {
-        // Speaker + X
-        this.toolbarGfx.fillStyle(0x888888, 0.7);
-        this.toolbarGfx.fillRect(cx - s * 0.6, cy - s * 0.25, s * 0.4, s * 0.5);
-        this.toolbarGfx.fillTriangle(cx - s * 0.2, cy - s * 0.5, cx - s * 0.2, cy + s * 0.5, cx + s * 0.3, cy);
-        this.toolbarGfx.lineStyle(2, 0xff4466, 0.9);
-        this.toolbarGfx.lineBetween(cx + s * 0.2, cy - s * 0.5, cx + s * 0.9, cy + s * 0.5);
+        // Muted music note
+        obj.fillStyle(iconColor, 1);
+        obj.fillCircle(cx - s * 0.4, cy + s * 0.5, s * 0.35);
+        obj.fillCircle(cx + s * 0.6, cy + s * 0.2, s * 0.35);
+        
+        obj.fillRect(cx - s * 0.15, cy - s * 0.4, s * 0.25, s * 0.9);
+        obj.fillRect(cx + s * 0.85, cy - s * 0.7, s * 0.25, s * 0.9);
+        
+        obj.beginPath();
+        obj.moveTo(cx - s * 0.15, cy - s * 0.4);
+        obj.lineTo(cx + s * 1.1, cy - s * 0.7);
+        obj.lineTo(cx + s * 1.1, cy - s * 0.35);
+        obj.lineTo(cx - s * 0.15, cy - s * 0.05);
+        obj.closePath();
+        obj.fillPath();
+        
+        // Strike through
+        obj.lineStyle(3, 0xff3366, 1);
+        obj.lineBetween(cx - s * 0.8, cy - s * 0.8, cx + s * 1.0, cy + s * 0.8);
       } else if (type === 'fullscreen') {
-        // Four corner brackets
-        const b = s * 0.8, t = s * 0.35;
+        obj.lineStyle(2.5, strokeC, 1);
+        const b = s * 0.8, t = s * 0.4;
         // TL
-        this.toolbarGfx.lineBetween(cx - b, cy - b + t, cx - b, cy - b);
-        this.toolbarGfx.lineBetween(cx - b, cy - b, cx - b + t, cy - b);
+        obj.lineBetween(cx - b, cy - b + t, cx - b, cy - b);
+        obj.lineBetween(cx - b, cy - b, cx - b + t, cy - b);
         // TR
-        this.toolbarGfx.lineBetween(cx + b - t, cy - b, cx + b, cy - b);
-        this.toolbarGfx.lineBetween(cx + b, cy - b, cx + b, cy - b + t);
+        obj.lineBetween(cx + b - t, cy - b, cx + b, cy - b);
+        obj.lineBetween(cx + b, cy - b, cx + b, cy - b + t);
         // BL
-        this.toolbarGfx.lineBetween(cx - b, cy + b - t, cx - b, cy + b);
-        this.toolbarGfx.lineBetween(cx - b, cy + b, cx - b + t, cy + b);
+        obj.lineBetween(cx - b, cy + b - t, cx - b, cy + b);
+        obj.lineBetween(cx - b, cy + b, cx - b + t, cy + b);
         // BR
-        this.toolbarGfx.lineBetween(cx + b - t, cy + b, cx + b, cy + b);
-        this.toolbarGfx.lineBetween(cx + b, cy + b - t, cx + b, cy + b);
+        obj.lineBetween(cx + b - t, cy + b, cx + b, cy + b);
+        obj.lineBetween(cx + b, cy + b - t, cx + b, cy + b);
+        // inner arrows
+        obj.lineBetween(cx - b, cy - b, cx - b*0.3, cy - b*0.3);
+        obj.lineBetween(cx + b, cy - b, cx + b*0.3, cy - b*0.3);
+        obj.lineBetween(cx - b, cy + b, cx - b*0.3, cy + b*0.3);
+        obj.lineBetween(cx + b, cy + b, cx + b*0.3, cy + b*0.3);
       }
     }
   }
@@ -833,26 +890,47 @@ export class Game extends Phaser.Scene {
     gfx.strokeRoundedRect(-w / 2 - 2, -h / 2 - 2, w + 4, h + 4, r + 2);
   }
 
-  private drawAnteBetButton(cx: number, cy: number, bw: number, bh: number) {
+  private drawAnteBetButton(bw: number, bh: number) {
     this.anteBetBtn.clear();
-    const x = cx - bw / 2;
-    const y = cy - bh / 2;
+    const x = -bw / 2;
+    const y = -bh / 2;
     const rad = bh / 2;
 
     if (options.anteBetEnabled) {
-      // Active: translucent brown pill, orange bolt, white text
-      this.anteBetBtn.fillStyle(0x4a2c11, 0.8);
+      // Premium Active
+      this.anteBetBtn.fillStyle(0x000000, 0.4);
+      this.anteBetBtn.fillRoundedRect(x + 2, y + 4, bw, bh, rad);
+      
+      this.anteBetBtn.fillStyle(0x4a1800, 1);
       this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
-      this.anteBetBtn.lineStyle(2, 0xff8800, 0.8);
+      
+      this.anteBetBtn.fillStyle(0xff8800, 0.3);
+      this.anteBetBtn.fillRoundedRect(x + 2, y + 2, bw - 4, bh * 0.4, {tl: rad-2, tr: rad-2, bl: 0, br: 0} as any);
+      
+      this.anteBetBtn.lineStyle(2, 0xffa500, 1);
       this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, rad);
+      
+      this.anteBetBtn.lineStyle(4, 0xff8800, 0.3);
+      this.anteBetBtn.strokeRoundedRect(x - 2, y - 2, bw + 4, bh + 4, rad + 2);
+
       this.anteBetTxt.setColor('#ffffff').setShadow(0, 2, '#000000', 0, true, true);
-      this.anteBetIcon.setColor('#ff8800');
+      this.anteBetIcon.setColor('#ffaa00').setShadow(0, 0, '#ff6600', 4, true, true);
     } else {
-      // Inactive: highly translucent dark grey pill, dim orange bolt
-      this.anteBetBtn.fillStyle(0x000000, 0.6);
+      // Premium Inactive
+      this.anteBetBtn.fillStyle(0x000000, 0.4);
+      this.anteBetBtn.fillRoundedRect(x + 2, y + 4, bw, bh, rad);
+      
+      this.anteBetBtn.fillStyle(0x130f24, 0.85);
       this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
-      this.anteBetTxt.setColor('#888899').setShadow(0, 0, '#000000', 0, false, false);
-      this.anteBetIcon.setColor('#aa5522');
+      
+      this.anteBetBtn.fillStyle(0xffffff, 0.05);
+      this.anteBetBtn.fillRoundedRect(x + 2, y + 2, bw - 4, bh * 0.4, {tl: rad-2, tr: rad-2, bl: 0, br: 0} as any);
+
+      this.anteBetBtn.lineStyle(2, 0x332244, 1);
+      this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, rad);
+
+      this.anteBetTxt.setColor('#777788').setShadow(0, 0, '#000000', 0, false, false);
+      this.anteBetIcon.setColor('#554455').setShadow(0, 0, '#000', 0, false, false);
     }
   }
 
@@ -1029,7 +1107,6 @@ export class Game extends Phaser.Scene {
       if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
       options.anteBetEnabled = !options.anteBetEnabled;
       this.drawAnteBetButton(
-        this.anteBetHit.x, this.anteBetHit.y,
         this.anteBetHit.width, this.anteBetHit.height
       );
       this.updateBetDisplay();
@@ -1038,6 +1115,7 @@ export class Game extends Phaser.Scene {
 
     // Sound toggle
     this.soundToggle.on('pointerdown', () => {
+      if (this.anyOverlayOpen()) return;
       this.soundEnabled = !this.soundEnabled;
       this.drawToolbarIcons();
       this.sound.mute = !this.soundEnabled;
@@ -1045,16 +1123,19 @@ export class Game extends Phaser.Scene {
 
     // Paytable
     this.btnPaytable.on('pointerdown', () => {
-      if (!this.settings.isVisible()) this.paytable.toggle();
+      if (this.anyOverlayOpen()) return;
+      this.paytable.toggle();
     });
 
     // Settings
     this.btnSettings.on('pointerdown', () => {
-      if (!this.paytable.isVisible()) this.settings.toggle();
+      if (this.anyOverlayOpen()) return;
+      this.settings.toggle();
     });
 
     // Fullscreen
     this.btnFullscreen.on('pointerdown', () => {
+      if (this.anyOverlayOpen()) return;
       if (this.scale.isFullscreen) {
         this.scale.stopFullscreen();
       } else {
