@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 import {
   Grid, Audio, PaytableOverlay, SettingsOverlay,
   WinCelebration, ConfirmDialog, FreeSpinsIntro, ErrorManager,
-  AutoPlayOverlay
+  AutoPlayOverlay, BetOverlay
 } from '../components';
 import { getStakeEngine } from '../engine';
 import { SpinEventData, StakeEngineClient } from '../engine/StakeEngineClient';
@@ -25,6 +25,7 @@ export class Game extends Phaser.Scene {
   freeSpinsIntro!: FreeSpinsIntro;
   errorManager!: ErrorManager;
   autoPlayOverlay!: AutoPlayOverlay;
+  betOverlay!: BetOverlay;
 
   private stakeEngine!: StakeEngineClient;
   private skipScreensActive = false;
@@ -334,6 +335,15 @@ export class Game extends Phaser.Scene {
     this.paytable = new PaytableOverlay(this);
     this.settings = new SettingsOverlay(this);
     this.autoPlayOverlay = new AutoPlayOverlay(this);
+    this.betOverlay = new BetOverlay(this);
+
+    // Bet overlay callback — updates game bet index
+    this.betOverlay.setCallback((newIndex) => {
+      this.betPresetIndex = newIndex;
+      options.betAmount = BET_PRESETS[this.betPresetIndex];
+      this.updateBetDisplay();
+      this.audio.playSound('button');
+    });
 
     this.autoPlayOverlay.setCallbacks((spins, turbo, quick, skip) => {
       this.grid.turboMode = turbo || quick;
@@ -1203,14 +1213,16 @@ export class Game extends Phaser.Scene {
       }
     });
 
-    // Bet controls — guard with overlay check so bet can't change during confirm dialog
+    // Bet controls — open the bet overlay panel
     this.btnBetMinusHit.on('pointerdown', () => {
       if (this.anyOverlayOpen()) return;
-      this.changeBet(-1);
+      this.betOverlay.syncState(this.betPresetIndex, options.anteBetEnabled, options.anteBetCostMultiplier);
+      this.betOverlay.toggle();
     });
     this.btnBetPlusHit.on('pointerdown', () => {
       if (this.anyOverlayOpen()) return;
-      this.changeBet(1);
+      this.betOverlay.syncState(this.betPresetIndex, options.anteBetEnabled, options.anteBetCostMultiplier);
+      this.betOverlay.toggle();
     });
 
     // Premium Hover states builder
@@ -1542,7 +1554,7 @@ export class Game extends Phaser.Scene {
   }
 
   private anyOverlayOpen(): boolean {
-    return this.paytable.isVisible() || this.settings.isVisible() || this.confirmDialog.isVisible() || this.winCelebration.isVisible || this.freeSpinsIntro.isVisible || this.errorManager.isBlocking || this.autoPlayOverlay.isVisible();
+    return this.paytable.isVisible() || this.settings.isVisible() || this.confirmDialog.isVisible() || this.winCelebration.isVisible || this.freeSpinsIntro.isVisible || this.errorManager.isBlocking || this.autoPlayOverlay.isVisible() || this.betOverlay.isVisible();
   }
 
   private getEffectiveBet(): number {

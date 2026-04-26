@@ -1,4 +1,5 @@
 export { Audio } from './Audio';
+export { BetOverlay } from './BetOverlay';
 export { ConfirmDialog } from './ConfirmDialog';
 export { ErrorManager } from './ErrorManager';
 export { FreeSpinsIntro } from './FreeSpinsIntro';
