@@ -2,7 +2,8 @@ import Phaser from 'phaser';
 
 import {
   Grid, Audio, PaytableOverlay, SettingsOverlay,
-  WinCelebration, ConfirmDialog, FreeSpinsIntro, ErrorManager
+  WinCelebration, ConfirmDialog, FreeSpinsIntro, ErrorManager,
+  AutoPlayOverlay
 } from '../components';
 import { getStakeEngine } from '../engine';
 import { SpinEventData, StakeEngineClient } from '../engine/StakeEngineClient';
@@ -23,6 +24,7 @@ export class Game extends Phaser.Scene {
   confirmDialog!: ConfirmDialog;
   freeSpinsIntro!: FreeSpinsIntro;
   errorManager!: ErrorManager;
+  autoPlayOverlay!: AutoPlayOverlay;
 
   private stakeEngine!: StakeEngineClient;
 
@@ -273,28 +275,7 @@ export class Game extends Phaser.Scene {
     // Auto Play setup
     this.btnAutoGraphics = this.add.graphics().setDepth(21);
     this.btnAutoHit = this.add.rectangle(0, 0, 100, 30, 0xffffff, 0)
-      .setInteractive({ useHandCursor: true }).setDepth(22)
-      .on('pointerdown', () => {
-        if (this.fsActive || this.anyOverlayOpen()) return;
-        if (!this.autoSpinActive) {
-          const cost = this.getEffectiveBet();
-          if (this.valueMoney < cost) { this.errorManager.showToast('INSUFFICIENT FUNDS', '#ff4466'); return; }
-          
-          this.confirmDialog.show(
-            'AUTO PLAY',
-            'Start 100 automatic spins?',
-            () => {
-              this.autoSpinActive = true;
-              this.autoSpinRemaining = 100; // Hardcoded to 100 for now
-              this.updateAutoSpinDisplay();
-              if (!this._spinLock) this.time.delayedCall(50, () => { if (this.autoSpinActive && !this._spinLock) this.attemptSpin(0); });
-            },
-            () => { /* cancel */ }
-          );
-        } else {
-          this.stopAutoSpin();
-        }
-      });
+      .setInteractive({ useHandCursor: true }).setDepth(22);
     this.txtAuto = this.add.text(0, 0, 'AUTO', { fontFamily: '"Inter", "Arial", sans-serif', fontStyle: '900', color: '#ffffff', shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 0, fill: true } }).setOrigin(0.5).setDepth(21);
 
     // === BOTTOM BAR ===
@@ -349,6 +330,18 @@ export class Game extends Phaser.Scene {
     // === OVERLAYS ===
     this.paytable = new PaytableOverlay(this);
     this.settings = new SettingsOverlay(this);
+    this.autoPlayOverlay = new AutoPlayOverlay(this);
+
+    this.autoPlayOverlay.setCallbacks((spins, turbo, quick, skip) => {
+      this.grid.turboMode = turbo || quick;
+      this.autoSpinActive = true;
+      this.autoSpinRemaining = spins;
+      this.updateAutoSpinDisplay();
+      if (!this._spinLock) {
+        this.attemptSpin(0);
+      }
+    });
+
     this.settings.setSoundCallback((enabled) => {
       this.soundEnabled = enabled;
       this.sound.mute = !enabled;
@@ -1110,21 +1103,13 @@ export class Game extends Phaser.Scene {
     this.btnAutoHit.on('pointerdown', () => {
       if (this.fsActive || this.anyOverlayOpen()) return;
       if (!this.autoSpinActive) {
-        // Check balance before starting auto-spin
+        // Check balance before opening overlay
         const cost = this.getEffectiveBet();
         if (this.valueMoney < cost) {
           this.errorManager.showToast('INSUFFICIENT FUNDS', '#ff4466');
           return;
         }
-        this.autoSpinActive = true;
-        this.autoSpinRemaining = 0; // infinite
-        this.updateAutoSpinDisplay();
-        // Decouple from click event to prevent double-fire if spin already in flight
-        if (!this._spinLock) {
-          this.time.delayedCall(50, () => {
-            if (this.autoSpinActive && !this._spinLock) this.attemptSpin(0);
-          });
-        }
+        this.autoPlayOverlay.show();
       } else {
         this.stopAutoSpin();
       }
@@ -1458,7 +1443,7 @@ export class Game extends Phaser.Scene {
   }
 
   private anyOverlayOpen(): boolean {
-    return this.paytable.isVisible() || this.settings.isVisible() || this.confirmDialog.isVisible() || this.winCelebration.isVisible || this.freeSpinsIntro.isVisible || this.errorManager.isBlocking;
+    return this.paytable.isVisible() || this.settings.isVisible() || this.confirmDialog.isVisible() || this.winCelebration.isVisible || this.freeSpinsIntro.isVisible || this.errorManager.isBlocking || this.autoPlayOverlay.isVisible();
   }
 
   private getEffectiveBet(): number {

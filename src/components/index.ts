@@ -7,3 +7,4 @@ export { PaytableOverlay } from './PaytableOverlay';
 export { Progress } from './Progress';
 export { SettingsOverlay } from './SettingsOverlay';
 export { WinCelebration } from './WinCelebration';
+export { AutoPlayOverlay } from './AutoPlayOverlay';
