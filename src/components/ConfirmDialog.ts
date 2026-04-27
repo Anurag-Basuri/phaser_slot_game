@@ -105,6 +105,7 @@ export class ConfirmDialog {
 
     // Wire events
     confirmHit.on('pointerdown', () => {
+      (this.scene as any).audio.playSound('button');
       this.dismiss();
       onConfirm();
     });
@@ -120,6 +121,7 @@ export class ConfirmDialog {
     });
 
     cancelHit.on('pointerdown', () => {
+      (this.scene as any).audio.playSound('button');
       this.dismiss();
       onCancel();
     });

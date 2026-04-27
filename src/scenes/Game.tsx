@@ -218,7 +218,7 @@ export class Game extends Phaser.Scene {
       stroke: '#ffffff',
       strokeThickness: 8,
       shadow: { offsetX: 3, offsetY: 5, color: '#cc0066', blur: 0, stroke: true, fill: true }
-    }).setDepth(30).setOrigin(1, 0.5);
+    }).setDepth(30).setOrigin(0.5, 0.5);
 
     this.logoText2 = this.add.text(0, 0, '1000', {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
@@ -227,7 +227,7 @@ export class Game extends Phaser.Scene {
       stroke: '#ffffff',
       strokeThickness: 8,
       shadow: { offsetX: 3, offsetY: 5, color: '#cc5500', blur: 0, stroke: true, fill: true }
-    }).setDepth(30).setOrigin(1, 0.5);
+    }).setDepth(30).setOrigin(0.5, 0.5);
 
     // Buy buttons setup
     const btnStyle = { fontFamily: '"Luckiest Guy", cursive, sans-serif', fontStyle: 'normal', align: 'center', strokeThickness: 0, shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 0, fill: true } };
@@ -235,45 +235,28 @@ export class Game extends Phaser.Scene {
     // Super Buy
     this.panelSuperGraphics = this.add.graphics({ x: 0, y: 0 }).setDepth(20);
     this.buySuperHit = this.add.rectangle(0, 0, 100, 50, 0xffffff, 0)
-      .setInteractive({ useHandCursor: true }).setDepth(21)
-      .on('pointerdown', () => {
-          this.tweens.add({ targets: this.panelSuperGraphics, scaleX: 0.95, scaleY: 0.95, yoyo: true, duration: 80 });
-          this.requestPurchase(2, 500);
-      });
+      .setInteractive({ useHandCursor: true }).setDepth(21);
     this.buySuperTxt1 = this.add.text(0, 0, 'SUPER', { ...btnStyle, color: '#ffffff' }).setOrigin(0.5).setDepth(21);
-    this.buySuperTxt2 = this.add.text(0, 0, '500x', { ...btnStyle, color: '#ffe600', stroke: '#000000', strokeThickness: 4 }).setOrigin(0.5).setDepth(21);
+    this.buySuperTxt2 = this.add.text(0, 0, '500X', { ...btnStyle, color: '#ffe600', stroke: '#000000', strokeThickness: 4 }).setOrigin(0.5).setDepth(21);
 
     // Regular Buy
     this.panelRegularGraphics = this.add.graphics({ x: 0, y: 0 }).setDepth(20);
     this.buyRegularHit = this.add.rectangle(0, 0, 100, 50, 0xffffff, 0)
-      .setInteractive({ useHandCursor: true }).setDepth(21)
-      .on('pointerdown', () => {
-          this.tweens.add({ targets: this.panelRegularGraphics, scaleX: 0.95, scaleY: 0.95, yoyo: true, duration: 80 });
-          this.requestPurchase(1, 100);
-      });
+      .setInteractive({ useHandCursor: true }).setDepth(21);
     this.buyRegularTxt1 = this.add.text(0, 0, T('BUY', this.stakeEngine.isSocialMode()), { ...btnStyle, color: '#ffffff' }).setOrigin(0.5).setDepth(21);
-    this.buyRegularTxt2 = this.add.text(0, 0, '100x', { ...btnStyle, color: '#ffe600', stroke: '#000000', strokeThickness: 4 }).setOrigin(0.5).setDepth(21);
+    this.buyRegularTxt2 = this.add.text(0, 0, '100X', { ...btnStyle, color: '#ffe600', stroke: '#000000', strokeThickness: 4 }).setOrigin(0.5).setDepth(21);
 
     // Ante bet setup
     this.anteBetBtn = this.add.graphics().setDepth(20);
     this.anteBetHit = this.add.rectangle(0, 0, 100, 30, 0xffffff, 0)
-      .setInteractive({ useHandCursor: true }).setDepth(21)
-      .on('pointerdown', () => {
-        options.anteBetEnabled = !options.anteBetEnabled;
-        this.updateBetDisplay();
-        this.audio.playSound('button');
-      });
+      .setInteractive({ useHandCursor: true }).setDepth(21);
     this.anteBetIcon = this.add.text(0, 0, '⚡', { fontFamily: 'Arial' }).setOrigin(0.5).setDepth(21);
     this.anteBetTxt = this.add.text(0, 0, T('ANTE BET', this.stakeEngine.isSocialMode()), { fontFamily: '"Inter", "Arial", sans-serif', fontStyle: 'bold', color: '#ffffff' }).setOrigin(0, 0.5).setDepth(21);
 
     // Spin button setup (Authentic Pragmatic Circular Style)
     this.spinBtnGraphics = this.add.graphics().setDepth(20);
     this.spinBtnHit = this.add.rectangle(0, 0, 150, 150, 0xffffff, 0)
-      .setInteractive({ useHandCursor: true }).setDepth(21)
-      .on('pointerdown', () => {
-          this.tweens.add({ targets: this.spinBtnGraphics, scaleX: 0.9, scaleY: 0.9, yoyo: true, duration: 80 });
-          this.handleUniversalAction();
-      });
+      .setInteractive({ useHandCursor: true }).setDepth(21);
     this.spinBtnLabel = this.add.text(0, 0, '', { fontFamily: '"Luckiest Guy", cursive, sans-serif' }).setOrigin(0.5).setDepth(21);
 
     // Auto Play setup
@@ -567,16 +550,16 @@ export class Game extends Phaser.Scene {
     // ==========================================
     // 2. BUY PANELS & ANTE BET
     // ==========================================
-    const buyW = isMobilePortrait ? w * 0.44 : Math.min(180, w * 0.16);
-    const buyH = isMobilePortrait ? 70 : 100;
-    const buyGap = 10;
+    const buyW = isMobilePortrait ? w * 0.44 : Math.min(220, w * 0.18);
+    const buyH = isMobilePortrait ? 70 : 110;
+    const buyGap = 15;
     let buyX: number = 0;
     let buyY1: number = 0;
     let buyY2: number = 0;
 
     if (isMobilePortrait) {
       buyX = buyW / 2 + 10;
-      const anteH = 40;
+      const anteH = 45;
       const blockHeight = buyH * 2 + buyGap * 2 + anteH;
       const blockStartY = safeH - blockHeight - 15;
       
@@ -593,10 +576,11 @@ export class Game extends Phaser.Scene {
       this.panelRegularGraphics.setPosition(buyX, buyY2);
       this.updateBuyText(this.buyRegularTxt1, this.buyRegularTxt2, buyX, buyY2, buyH, 'BUY');
     } else {
-      buyX = gridX - buyW / 2 - Math.max(40, w * 0.04);
+      // Perfectly center the buttons horizontally in the available left margin (gridX is the left edge of the grid)
+      buyX = gridX / 2; 
       if (buyX < buyW / 2 + 10) buyX = buyW / 2 + 10;
       
-      const anteH = 45;
+      const anteH = 50;
       const blockHeight = buyH * 2 + buyGap * 2 + anteH;
       const blockStartY = gridY + (gridTotalSize - blockHeight) / 2;
       
@@ -616,9 +600,9 @@ export class Game extends Phaser.Scene {
 
     // Ante Bet
     const anteW = buyW;
-    const anteH = isMobilePortrait ? 40 : 45;
+    const anteH = isMobilePortrait ? 45 : 50;
     const anteX = buyX;
-    const anteY = buyY2 + buyH + buyGap + 20;
+    const anteY = buyY2 + buyH + buyGap + (isMobilePortrait ? 15 : 25);
     const anteTargetX = anteX;
     const anteTargetW = anteW;
     
@@ -738,22 +722,18 @@ export class Game extends Phaser.Scene {
     this.drawToolbarIcons();
 
     // Logo
-    const logoFS1 = Math.min(48, w * 0.05);
-    const logoFS2 = Math.min(56, w * 0.06);
-    const logoRight = w - toolPad; // Align to the right edge symmetrically with the left tools
+    const logoFS1 = Math.min(65, w * 0.065);
+    const logoFS2 = Math.min(75, w * 0.075);
+    // Align perfectly over the spin buttons column on desktop/landscape, or center on mobile portrait
+    const logoX = isMobilePortrait ? w / 2 : spinX; 
     
-    this.logoText1.setPosition(logoRight, toolY)
+    this.logoText1.setPosition(logoX, toolY)
                   .setFontSize(logoFS1)
                   .setStroke('#ffffff', Math.max(12, logoFS1 * 0.35));
                   
-    // Update text dimensions synchronously to calculate relative centering
-    this.logoText1.updateText();
-    this.logoText2.setFontSize(logoFS2).setStroke('#ffffff', Math.max(12, logoFS2 * 0.35)).updateText();
-
-    // Center "1000" under "SUGAR RUSH"
-    const centerOffset = (this.logoText1.width - this.logoText2.width) / 2;
-
-    this.logoText2.setPosition(logoRight - centerOffset, toolY + logoFS1 * 1.05);
+    this.logoText2.setPosition(logoX, toolY + logoFS1 * 0.95)
+                  .setFontSize(logoFS2)
+                  .setStroke('#ffffff', Math.max(12, logoFS2 * 0.35));
 
     // Logo floating animation (only add once)
     if (!this.tweens.isTweening(this.logoText1)) {
@@ -977,7 +957,7 @@ export class Game extends Phaser.Scene {
       this.anteBetBtn.fillStyle(0x000000, 0.4);
       this.anteBetBtn.fillRoundedRect(x + 2, y + 4, bw, bh, rad);
       
-      this.anteBetBtn.fillStyle(0x130f24, 0.85);
+      this.anteBetBtn.fillStyle(0x1a1528, 1);
       this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
       
       this.anteBetBtn.fillStyle(0xffffff, 0.05);
@@ -987,7 +967,8 @@ export class Game extends Phaser.Scene {
       this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, rad);
 
       this.anteBetTxt.setColor('#777788').setShadow(0, 0, '#000000', 0, false, false);
-      this.anteBetIcon.setColor('#554455').setShadow(0, 0, '#000', 0, false, false);
+      // Lightning bolt icon stays orange even when inactive (matches reference)
+      this.anteBetIcon.setColor('#ff6633').setShadow(0, 0, '#000', 0, false, false);
     }
   }
 
@@ -1205,8 +1186,8 @@ export class Game extends Phaser.Scene {
   }
 
   private wireInteractions() {
-    // Spin button — universal action button
     this.spinBtnHit.on('pointerdown', () => {
+      this.tweens.add({ targets: this.spinBtnGraphics, scaleX: 0.9, scaleY: 0.9, yoyo: true, duration: 80 });
       this.handleUniversalAction();
     });
 
@@ -1220,6 +1201,7 @@ export class Game extends Phaser.Scene {
     // Auto play
     this.btnAutoHit.on('pointerdown', () => {
       if (this.fsActive || this.anyOverlayOpen()) return;
+      this.audio.playSound('button');
       if (!this.autoSpinActive) {
         // Check balance before opening overlay
         const cost = this.getEffectiveBet();
@@ -1237,11 +1219,13 @@ export class Game extends Phaser.Scene {
     // Bet controls — open the bet overlay panel
     this.btnBetMinusHit.on('pointerdown', () => {
       if (this.anyOverlayOpen()) return;
+      this.audio.playSound('button');
       this.betOverlay.syncState(this.betPresetIndex, options.anteBetEnabled, options.anteBetCostMultiplier);
       this.betOverlay.toggle();
     });
     this.btnBetPlusHit.on('pointerdown', () => {
       if (this.anyOverlayOpen()) return;
+      this.audio.playSound('button');
       this.betOverlay.syncState(this.betPresetIndex, options.anteBetEnabled, options.anteBetCostMultiplier);
       this.betOverlay.toggle();
     });
@@ -1268,11 +1252,13 @@ export class Game extends Phaser.Scene {
 
     // Buy features (with confirmation) — also guard overlays
     this.buySuperHit.on('pointerdown', () => {
-      if (this.anyOverlayOpen()) return;
+      if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
+      this.tweens.add({ targets: [this.panelSuperGraphics, this.buySuperTxt1, this.buySuperTxt2], scaleX: 0.95, scaleY: 0.95, yoyo: true, duration: 80 });
       this.requestPurchase(2, 500);
     });
     this.buyRegularHit.on('pointerdown', () => {
-      if (this.anyOverlayOpen()) return;
+      if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
+      this.tweens.add({ targets: [this.panelRegularGraphics, this.buyRegularTxt1, this.buyRegularTxt2], scaleX: 0.95, scaleY: 0.95, yoyo: true, duration: 80 });
       this.requestPurchase(1, 100);
     });
 
@@ -1280,6 +1266,7 @@ export class Game extends Phaser.Scene {
     this.anteBetHit.on('pointerdown', () => {
       if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
       options.anteBetEnabled = !options.anteBetEnabled;
+      this.audio.playSound('button');
       this.drawAnteBetButton(
         this.anteBetHit.width, this.anteBetHit.height
       );
@@ -1297,23 +1284,28 @@ export class Game extends Phaser.Scene {
       this.audio.setSfxMuted(anyOn);
       this.settings.syncState(!anyOn, !anyOn);
       this.drawToolbarIcons();
+      // Only play the button sound if we just turned sounds ON
+      if (!anyOn) this.audio.playSound('button');
     });
 
     // Paytable
     this.btnPaytable.on('pointerdown', () => {
       if (this.anyOverlayOpen()) return;
+      this.audio.playSound('button');
       this.paytable.toggle();
     });
 
     // Settings
     this.btnSettings.on('pointerdown', () => {
       if (this.anyOverlayOpen()) return;
+      this.audio.playSound('button');
       this.settings.toggle();
     });
 
     // Fullscreen
     this.btnFullscreen.on('pointerdown', () => {
       if (this.anyOverlayOpen()) return;
+      this.audio.playSound('button');
       if (this.scale.isFullscreen) {
         this.scale.stopFullscreen();
       } else {
@@ -1327,6 +1319,7 @@ export class Game extends Phaser.Scene {
    * Priority: skip overlays > stop auto > spin
    */
   private handleUniversalAction() {
+    this.audio.playSound('button');
     // 1. Skip win celebration
     if (this.winCelebration.isVisible) {
       this.winCelebration.skip();

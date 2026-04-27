@@ -142,7 +142,10 @@ export class BetOverlay {
     const closeBtn = this.scene.add.text(pX + pW - 28, pY + 25, '✕', {
       fontSize: '20px', color: '#666', fontFamily: '"Inter", Arial, sans-serif', fontStyle: 'bold',
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    closeBtn.on('pointerdown', () => this.hide());
+    closeBtn.on('pointerdown', () => {
+      (this.scene as any).audio.playSound('button');
+      this.hide();
+    });
     closeBtn.on('pointerover', () => closeBtn.setColor('#ff006a'));
     closeBtn.on('pointerout', () => closeBtn.setColor('#666'));
     this.container.add(closeBtn);
@@ -203,7 +206,11 @@ export class BetOverlay {
 
     const maxHit = this.scene.add.rectangle(maxX + maxW / 2, maxY + maxH / 2, maxW, maxH, 0x000000, 0)
       .setInteractive({ useHandCursor: true });
-    maxHit.on('pointerdown', () => { this.betIndex = BET_PRESETS.length - 1; this.emitChange(); });
+    maxHit.on('pointerdown', () => { 
+      (this.scene as any).audio.playSound('button');
+      this.betIndex = BET_PRESETS.length - 1; 
+      this.emitChange(); 
+    });
     maxHit.on('pointerover', () => { this.scene.tweens.add({ targets: maxGfx, scaleX: 1.03, scaleY: 1.03, duration: 100 }); });
     maxHit.on('pointerout', () => { this.scene.tweens.add({ targets: maxGfx, scaleX: 1, scaleY: 1, duration: 100 }); });
     this.container.add(maxHit);
@@ -254,7 +261,13 @@ export class BetOverlay {
     const minusGfx = this.drawRoundButton(minusCx, minusCy, btnR, false);
     const minusHit = this.scene.add.circle(minusCx, minusCy, btnR + 4, 0x000000, 0)
       .setInteractive({ useHandCursor: true });
-    minusHit.on('pointerdown', () => { if (this.betIndex > 0) { this.betIndex--; this.emitChange(); } });
+    minusHit.on('pointerdown', () => { 
+      if (this.betIndex > 0) { 
+        (this.scene as any).audio.playSound('button');
+        this.betIndex--; 
+        this.emitChange(); 
+      } 
+    });
     this.container.add(minusHit);
 
     // ── Plus button ──
@@ -263,7 +276,13 @@ export class BetOverlay {
     const plusGfx = this.drawRoundButton(plusCx, plusCy, btnR, true);
     const plusHit = this.scene.add.circle(plusCx, plusCy, btnR + 4, 0x000000, 0)
       .setInteractive({ useHandCursor: true });
-    plusHit.on('pointerdown', () => { if (this.betIndex < BET_PRESETS.length - 1) { this.betIndex++; this.emitChange(); } });
+    plusHit.on('pointerdown', () => { 
+      if (this.betIndex < BET_PRESETS.length - 1) { 
+        (this.scene as any).audio.playSound('button');
+        this.betIndex++; 
+        this.emitChange(); 
+      } 
+    });
     this.container.add(plusHit);
 
     return { txt, minusGfx, plusGfx };

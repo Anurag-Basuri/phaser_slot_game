@@ -140,7 +140,10 @@ export class PaytableOverlay {
     const closeBtn = this.scene.add.text(logicalW - 35, 35, '✕', {
       fontSize: '22px', color: '#ffffff', fontFamily: this.FONT_BODY, fontStyle: 'bold'
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    closeBtn.on('pointerdown', () => this.hide());
+    closeBtn.on('pointerdown', () => {
+      (this.scene as any).audio.playSound('button');
+      this.hide();
+    });
     closeBtn.on('pointerover', () => closeBtn.setColor('#ff4488'));
     closeBtn.on('pointerout', () => closeBtn.setColor('#ffffff'));
     pageWrapper.add(closeBtn);
@@ -161,7 +164,10 @@ export class PaytableOverlay {
     const prevBtn = this.scene.add.text(navCenter - 120, navY, '◀', {
       fontSize: '28px', color: '#ff006a', fontStyle: 'bold',
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    prevBtn.on('pointerdown', () => this.changePage(-1));
+    prevBtn.on('pointerdown', () => {
+      (this.scene as any).audio.playSound('button');
+      this.changePage(-1);
+    });
     prevBtn.on('pointerover', () => prevBtn.setColor('#ff4488'));
     prevBtn.on('pointerout', () => prevBtn.setColor('#ff006a'));
     pageWrapper.add(prevBtn);
@@ -169,7 +175,10 @@ export class PaytableOverlay {
     const nextBtn = this.scene.add.text(navCenter + 120, navY, '▶', {
       fontSize: '28px', color: '#ff006a', fontStyle: 'bold',
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    nextBtn.on('pointerdown', () => this.changePage(1));
+    nextBtn.on('pointerdown', () => {
+      (this.scene as any).audio.playSound('button');
+      this.changePage(1);
+    });
     nextBtn.on('pointerover', () => nextBtn.setColor('#ff4488'));
     nextBtn.on('pointerout', () => nextBtn.setColor('#ff006a'));
     pageWrapper.add(nextBtn);

@@ -90,7 +90,10 @@ export class SettingsOverlay {
     const closeBtn = this.scene.add.text(panelX + panelW - 35, panelY + 30, '✕', {
       fontSize: '24px', color: '#8899aa', fontFamily: '"Inter", Arial, sans-serif', fontStyle: 'bold'
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    closeBtn.on('pointerdown', () => this.hide());
+    closeBtn.on('pointerdown', () => {
+      (this.scene as any).audio.playSound('button');
+      this.hide();
+    });
     closeBtn.on('pointerover', () => closeBtn.setColor('#ff006a'));
     closeBtn.on('pointerout', () => closeBtn.setColor('#8899aa'));
     this.container.add(closeBtn);
@@ -142,6 +145,7 @@ export class SettingsOverlay {
       fontSize: '16px', color: '#ffaa44', fontStyle: 'bold',
     }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
     qualityBtn.on('pointerdown', () => {
+      (this.scene as any).audio.playSound('button');
       currentQuality = (currentQuality + 1) % qualityOptions.length;
       qualityBtn.setText(qualityOptions[currentQuality]);
       if (this.onQualityChange) this.onQualityChange(qualityOptions[currentQuality]);
@@ -212,6 +216,7 @@ export class SettingsOverlay {
     const hitArea = this.scene.add.rectangle(toggleX + 22, yPos + 16, 50, 28)
       .setInteractive({ useHandCursor: true }).setAlpha(0.001);
     hitArea.on('pointerdown', () => {
+      (this.scene as any).audio.playSound('button');
       isOn = !isOn;
       drawToggle();
       callbackFn(isOn);

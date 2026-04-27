@@ -133,7 +133,10 @@ export class AutoPlayOverlay {
       color: '#ffffff',
       fontStyle: '100'
     }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
-    closeBtn.on('pointerdown', () => this.hide());
+    closeBtn.on('pointerdown', () => {
+      (this.scene as any).audio.playSound('button');
+      this.hide();
+    });
     this.container.add(closeBtn);
 
     // Title
@@ -236,6 +239,7 @@ export class AutoPlayOverlay {
     startHit.on('pointerout', () => startBtnGfx.setAlpha(1));
     
     startHit.on('pointerdown', () => {
+      (this.scene as any).audio.playSound('button');
       this.hide();
       if (this.onStartCallback) {
         this.onStartCallback(this.spins, this.turboSpin, this.quickSpin, this.skipScreens);
@@ -300,6 +304,7 @@ export class AutoPlayOverlay {
     const hit = this.scene.add.rectangle(x + size, y + size/2, size*3, size+10, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
     hit.on('pointerdown', () => {
+      (this.scene as any).audio.playSound('button');
       state = !state;
       draw();
       onChange(state);
