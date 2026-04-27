@@ -1,1 +1,1 @@
-from src.executables.executables import GameExecutables
+from src.executables.executables import Executables
