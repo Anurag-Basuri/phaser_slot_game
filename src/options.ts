@@ -8,12 +8,14 @@
  * - Min bet: 0.20, Max bet: 100.00
  */
 
-// Sugar Rush-style bet presets (total bet amounts)
+// Sugar Rush 1000–style bet presets (total bet amounts)
+// Official range: $0.20 min → $240.00 max
 export const BET_PRESETS = [
   0.20, 0.40, 0.60, 0.80, 1.00,
   2.00, 3.00, 4.00, 5.00,
   10.00, 15.00, 20.00, 25.00, 30.00,
   40.00, 50.00, 75.00, 100.00,
+  125.00, 150.00, 175.00, 200.00, 240.00,
 ];
 
 export default {
@@ -30,17 +32,16 @@ export default {
   anteBetCostMultiplier: 1.25,       // 25% extra cost
   anteBetScatterMultiplier: 2.0,     // 2x scatter chance when ante is on
 
-  // Sweet Cluster 1000 paytable: 7 symbols × 11 cluster tiers (5 through 15+)
-  // Values are multipliers of the bet amount
-  // Validated RTP: ~96% via Monte Carlo simulations
+  // Official Sugar Rush 1000 paytable: 7 symbols × 11 cluster tiers (5 through 15+)
+  // Values are multipliers of the bet amount (verified against Pragmatic Play reference)
   payvalues: [
-    [0.20, 0.25, 0.30, 0.40, 0.50, 1.00, 1.50, 2.50, 5.00, 10.00, 20.00],   // ID 0: Orange Gummy Bear
-    [0.25, 0.30, 0.40, 0.50, 0.75, 1.25, 2.00, 3.00, 6.00, 12.00, 25.00],   // ID 1: Purple Gummy Bear
-    [0.30, 0.40, 0.50, 0.75, 1.00, 1.50, 2.50, 3.50, 8.00, 15.00, 30.00],   // ID 2: Red Gummy Bear
-    [0.40, 0.50, 0.75, 1.00, 1.25, 2.00, 3.00, 5.00, 10.00, 20.00, 40.00],  // ID 3: Green Candy
-    [0.50, 0.75, 1.00, 1.25, 1.50, 3.00, 4.50, 10.00, 20.00, 40.00, 60.00], // ID 4: Purple Candy
-    [0.75, 1.00, 1.25, 1.50, 2.00, 4.00, 6.00, 12.50, 30.00, 60.00, 100.00],// ID 5: Orange Candy
-    [1.00, 1.50, 1.75, 2.00, 2.50, 5.00, 7.50, 15.00, 35.00, 70.00, 150.00] // ID 6: Pink Candy
+    [0.40, 0.60, 0.80, 1.00, 1.00, 2.00, 3.00,  5.00, 10.00,  20.00,  40.00],  // ID 0: Orange Gummy Bear
+    [0.50, 0.60, 0.80, 1.00, 1.50, 2.50, 4.00,  6.00, 12.00,  24.00,  50.00],  // ID 1: Purple Gummy Bear
+    [0.60, 0.80, 1.00, 1.50, 2.00, 3.00, 5.00,  7.00, 16.00,  30.00,  60.00],  // ID 2: Red Gummy Bear
+    [0.80, 1.00, 1.50, 2.00, 2.50, 4.00, 6.00, 10.00, 20.00,  40.00,  80.00],  // ID 3: Green Candy
+    [1.00, 1.50, 2.00, 2.50, 3.00, 6.00, 9.00, 20.00, 40.00,  80.00, 120.00],  // ID 4: Purple Candy
+    [1.50, 2.00, 2.50, 3.00, 4.00, 8.00,12.00, 25.00, 60.00, 120.00, 200.00],  // ID 5: Orange Candy
+    [2.00, 3.00, 3.50, 4.00, 5.00,10.00,15.00, 30.00, 70.00, 140.00, 300.00],  // ID 6: Pink Candy
   ],
 
   // Symbol spawn weights (higher = more common). Must sum to 100.

@@ -1276,7 +1276,6 @@ export class Game extends Phaser.Scene {
         this.anteBetHit.width, this.anteBetHit.height
       );
       this.updateBetDisplay();
-      this.audio.playSound('button');
     });
 
     // Sound toggle (toggles BOTH music and sfx simultaneously)
@@ -1673,21 +1672,22 @@ export class Game extends Phaser.Scene {
       const serverGrid = spinEvent ? (spinEvent.data as SpinEventData).grid : undefined;
 
       // Show free spins intro, then configure FS state and inject grid
-      this.freeSpinsIntro.play(10, () => {
+      // When buying, 3-7 scatters can hit randomly — determine FS count
+      const scatterCount = Phaser.Math.Between(3, 7);
+      const fsAwarded = options.freeSpinsByScatter[scatterCount] || 10;
+
+      this.freeSpinsIntro.play(fsAwarded, () => {
         // Set up free spins state AFTER the intro finishes
-        this.grid.freeSpinsRemaining = 10;
+        this.grid.freeSpinsRemaining = fsAwarded;
         if (triggerType === 2) {
           this.grid.isSuperFreeSpins = true;
-          // Super: pre-seed center multipliers
-          const seedPoints = [
-            { r: 3, c: 3, m: 16 }, { r: 2, c: 3, m: 8 }, { r: 4, c: 3, m: 8 },
-            { r: 3, c: 2, m: 8 }, { r: 3, c: 4, m: 8 },
-            { r: 2, c: 2, m: 4 }, { r: 2, c: 4, m: 4 }, { r: 4, c: 2, m: 4 }, { r: 4, c: 4, m: 4 }
-          ];
-          seedPoints.forEach(p => {
-            (this.grid as any).multipliers[p.r][p.c] = p.m;
-            (this.grid as any).drawMultiplierUI(p.r, p.c);
-          });
+          // Super Free Spins: x2 starting multipliers on ALL grid spots
+          for (let r = 0; r < options.gridSize; r++) {
+            for (let c = 0; c < options.gridSize; c++) {
+              (this.grid as any).multipliers[r][c] = 2;
+              (this.grid as any).drawMultiplierUI(r, c);
+            }
+          }
         }
         this.fsActive = true;
         this.txtFSRemaining.setText(`${this.grid.freeSpinsRemaining} FREE SPINS`).setVisible(true);
