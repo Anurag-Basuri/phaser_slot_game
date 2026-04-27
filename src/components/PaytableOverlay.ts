@@ -403,32 +403,32 @@ export class PaytableOverlay {
   private buildPage4_FreeSpins(parent: Phaser.GameObjects.Container, w: number, h: number) {
     const page = this.scene.add.container(0, 0).setVisible(false);
     const pad = 40;
-    let yPos = 75;
+    let yPos = 70;
 
     yPos = this.addSectionTitle(page, w / 2, yPos, 'FREE SPINS');
 
     // Rules card
-    this.drawCard(page, pad, yPos - 5, w - pad * 2, 160);
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 145);
     const fsRules = [
       '\u2022  3-7 Scatter symbols trigger 10-30 free spins.',
-      '\u2022  Multipliers persist across the entire bonus round.',
-      '\u2022  Re-trigger with 3+ Scatters during free spins.',
-      '\u2022  Special reels are in play during the feature.',
+      '\u2022  Multiplier spots persist across the entire bonus round.',
+      '\u2022  Re-trigger: 3+ Scatters during free spins award extra spins.',
+      '\u2022  Additional free spins are added to the remaining count.',
     ];
     fsRules.forEach((line, i) => {
-      page.add(this.scene.add.text(pad + 20, yPos + 10 + i * 34, line, {
-        fontSize: '15px', color: this.COL_BODY, fontFamily: this.FONT_BODY,
+      page.add(this.scene.add.text(pad + 20, yPos + 8 + i * 30, line, {
+        fontSize: '14px', color: this.COL_BODY, fontFamily: this.FONT_BODY,
         wordWrap: { width: w - pad * 2 - 50 }
       }));
     });
-    yPos += 175;
+    yPos += 155;
 
     // Scatter table card
-    this.drawCard(page, pad, yPos - 5, w - pad * 2, 185, true);
-    page.add(this.scene.add.text(w / 2, yPos + 8, 'SCATTER AWARDS', {
-      fontSize: '14px', color: '#ffffff', fontStyle: 'bold', fontFamily: this.FONT_BODY
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 175, true);
+    page.add(this.scene.add.text(w / 2, yPos + 6, 'SCATTER AWARDS', {
+      fontSize: '13px', color: '#ffffff', fontStyle: 'bold', fontFamily: this.FONT_BODY
     }).setOrigin(0.5));
-    yPos += 35;
+    yPos += 28;
 
     const scatterTable = [
       { count: '3 Scatters', spins: '10 Free Spins' },
@@ -441,19 +441,38 @@ export class PaytableOverlay {
       if (i % 2 === 0) {
         const bg = this.scene.add.graphics();
         bg.fillStyle(0xffffff, 0.03);
-        bg.fillRect(pad + 10, yPos - 2, w - pad * 2 - 20, 26);
+        bg.fillRect(pad + 10, yPos - 2, w - pad * 2 - 20, 24);
         page.add(bg);
       }
       page.add(this.scene.add.text(w / 2 - 60, yPos, row.count, {
-        fontSize: '15px', color: '#ffffff', fontStyle: 'bold', fontFamily: this.FONT_BODY
+        fontSize: '14px', color: '#ffffff', fontStyle: 'bold', fontFamily: this.FONT_BODY
       }).setOrigin(1, 0));
       page.add(this.scene.add.text(w / 2 - 20, yPos, '\u2192', {
-        fontSize: '15px', color: this.COL_ACCENT, fontFamily: this.FONT_BODY
+        fontSize: '14px', color: this.COL_ACCENT, fontFamily: this.FONT_BODY
       }).setOrigin(0.5, 0));
       page.add(this.scene.add.text(w / 2 + 20, yPos, row.spins, {
-        fontSize: '15px', color: this.COL_GOLD, fontStyle: 'bold', fontFamily: this.FONT_BODY
+        fontSize: '14px', color: this.COL_GOLD, fontStyle: 'bold', fontFamily: this.FONT_BODY
       }));
-      yPos += 28;
+      yPos += 26;
+    });
+    yPos += 15;
+
+    // Buy Free Spins card
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 125);
+    page.add(this.scene.add.text(w / 2, yPos + 6, 'BUY FREE SPINS', {
+      fontSize: '13px', color: this.COL_GOLD, fontStyle: 'bold', fontFamily: this.FONT_BODY
+    }).setOrigin(0.5));
+    const buyLines = [
+      '\u2022  Pay 100\u00d7 total bet to trigger FREE SPINS.',
+      '\u2022  Pay 500\u00d7 total bet to trigger SUPER FREE SPINS.',
+      '     In SUPER mode, all spots start with \u00d72 multipliers.',
+      '\u2022  On buy, 3-7 Scatters hit randomly (10-30 spins).',
+    ];
+    buyLines.forEach((line, i) => {
+      page.add(this.scene.add.text(pad + 20, yPos + 26 + i * 22, line, {
+        fontSize: '13px', color: this.COL_BODY, fontFamily: this.FONT_BODY,
+        wordWrap: { width: w - pad * 2 - 50 }
+      }));
     });
 
     parent.add(page);
@@ -466,7 +485,7 @@ export class PaytableOverlay {
   private buildPage5_GameRules(parent: Phaser.GameObjects.Container, w: number, h: number) {
     const page = this.scene.add.container(0, 0).setVisible(false);
     const pad = 40;
-    let yPos = 75;
+    let yPos = 70;
     yPos = this.addSectionTitle(page, w / 2, yPos, 'GAME RULES');
     this.drawCard(page, pad, yPos - 5, w - pad * 2, 50, true);
     page.add(this.scene.add.text(w / 2 - 40, yPos + 18, 'VOLATILITY', {
@@ -476,21 +495,22 @@ export class PaytableOverlay {
       fontSize: '16px', color: this.COL_GOLD
     }).setOrigin(0.5));
     yPos += 60;
-    this.drawCard(page, pad, yPos - 5, w - pad * 2, 175);
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 200);
     const rules = [
       '\u2022  Only the highest win per combination is paid.',
-      '\u2022  Multiple block wins are summed to total win.',
+      '\u2022  Multiple cluster wins are summed to total win.',
       '\u2022  All wins are multiplied by base bet.',
       '\u2022  Free spins win awarded after round completes.',
-      '\u2022  SPACE key starts/stops the spin.',
+      '\u2022  SPACE or ENTER key starts/stops the spin.',
+      '\u2022  Ante Bet: costs 25% more, doubles scatter chance.',
     ];
     rules.forEach((line, i) => {
-      page.add(this.scene.add.text(pad + 20, yPos + 8 + i * 30, line, {
+      page.add(this.scene.add.text(pad + 20, yPos + 8 + i * 28, line, {
         fontSize: '14px', color: this.COL_BODY, fontFamily: this.FONT_BODY,
         wordWrap: { width: w - pad * 2 - 50 }
       }));
     });
-    yPos += 185;
+    yPos += 210;
     this.drawCard(page, pad, yPos - 5, w - pad * 2, 95);
     page.add(this.scene.add.text(pad + 20, yPos + 8, 'RTP (Return to Player)', {
       fontSize: '13px', color: this.COL_MUTED, fontStyle: 'bold', fontFamily: this.FONT_BODY

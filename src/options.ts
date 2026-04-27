@@ -5,7 +5,7 @@
  * - Coin values: 0.01 → 0.50
  * - Bet levels:  1 → 10
  * - Total bet = coinValue × betLevel × 20 (fixed lines multiplier)
- * - Min bet: 0.20, Max bet: 100.00
+ * - Min bet: 0.20, Max bet: 240.00
  */
 
 // Sugar Rush 1000–style bet presets (total bet amounts)
