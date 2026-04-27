@@ -162,10 +162,15 @@ export class Game extends Phaser.Scene {
     this.buildUI();
     this.wireInteractions();
     
-    // Initialize grid before layoutAll so its internal graphics exist
+    // Initialize grid internals (mask, backgrounds) before layout
     this.grid.init();
 
+    // Layout sets correct offsetX/offsetY/cellSize on the grid
     this.layoutAll();
+
+    // NOW fill the grid with symbols — positions are correct
+    this.grid.fillEmpty();
+
     this.updateMoneyDisplay();
     this.updateBetDisplay();
 
