@@ -283,20 +283,29 @@ export class Game extends Phaser.Scene {
     this.txtAuto = this.add.text(0, 0, 'AUTO', { fontFamily: '"Inter", "Arial", sans-serif', fontStyle: '900', color: '#ffffff', shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 0, fill: true } }).setOrigin(0.5).setDepth(21);
 
     // === BOTTOM BAR ===
-    const tLabelStyle = { fontFamily: '"Inter", "Arial", sans-serif', fontStyle: 'bold', color: '#8888aa', alpha: 1 };
-    const tValStyle = { fontFamily: '"Inter", "Arial", sans-serif', fontStyle: '900', color: '#ffffff', shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 0, fill: true } };
+    const tLabelStyle: Phaser.Types.GameObjects.Text.TextStyle = {
+      fontFamily: '"Inter", "Arial", sans-serif',
+      fontStyle: '600',
+      color: '#99aadd',
+      letterSpacing: 1,
+    };
+    const tValStyle: Phaser.Types.GameObjects.Text.TextStyle = {
+      fontFamily: '"Inter", "Arial", sans-serif',
+      fontStyle: '800',
+      color: '#ffffff',
+    };
     
     // Bottom Bar Structural Graphic
     this.bottomBar = this.add.graphics().setDepth(45);
     
-    this.txtMoneyLabel = this.add.text(0, 0, T('BALANCE', this.stakeEngine.isSocialMode()), tLabelStyle).setDepth(50);
-    this.txtMoney = this.add.text(0, 0, '', tValStyle).setDepth(50);
+    this.txtMoneyLabel = this.add.text(0, 0, T('BALANCE', this.stakeEngine.isSocialMode()), tLabelStyle).setOrigin(0, 0.5).setDepth(50);
+    this.txtMoney = this.add.text(0, 0, '', tValStyle).setOrigin(1, 0.5).setDepth(50);
     
-    this.txtBetLabel = this.add.text(0, 0, T('BET', this.stakeEngine.isSocialMode()), tLabelStyle).setOrigin(0.5).setDepth(50);
-    this.txtBet = this.add.text(0, 0, '', tValStyle).setOrigin(0.5).setDepth(50);
+    this.txtBetLabel = this.add.text(0, 0, T('BET', this.stakeEngine.isSocialMode()), tLabelStyle).setOrigin(0, 0.5).setDepth(50);
+    this.txtBet = this.add.text(0, 0, '', tValStyle).setOrigin(1, 0.5).setDepth(50);
     
-    this.txtLastWinLabel = this.add.text(0, 0, T('LAST WIN', this.stakeEngine.isSocialMode()), tLabelStyle).setOrigin(1, 0.5).setDepth(50);
-    this.txtLastWin = this.add.text(0, 0, '', { ...tValStyle, color: '#ffee44' }).setOrigin(1, 0.5).setDepth(50);
+    this.txtLastWinLabel = this.add.text(0, 0, T('LAST WIN', this.stakeEngine.isSocialMode()), tLabelStyle).setOrigin(0, 0.5).setDepth(50);
+    this.txtLastWin = this.add.text(0, 0, '', { ...tValStyle, color: '#ffdd55' }).setOrigin(1, 0.5).setDepth(50);
     
     this.demoLabel = this.add.text(0, 0, '', {
       fontFamily: '"Luckiest Guy", cursive, sans-serif', color: '#ff4466'
@@ -623,42 +632,60 @@ export class Game extends Phaser.Scene {
     // 3. BOTTOM BAR & HUD
     // ==========================================
     this.bottomBar.clear();
-    // Dark gradient base
-    this.bottomBar.fillStyle(0x0a0618, 0.88);
-    this.bottomBar.fillRect(0, h - barH, w, barH);
-    // Candy-pink accent line at top
-    this.bottomBar.fillStyle(0xff006a, 0.35);
-    this.bottomBar.fillRect(0, h - barH, w, 2);
-    this.bottomBar.fillStyle(0xff006a, 0.08);
-    this.bottomBar.fillRect(0, h - barH + 2, w, 8);
+    const bb = this.bottomBar;
 
-    const pillH = barH * 0.65;
-    const pillY = h - barH / 2;
-    const sidePad = 20;
+    // Multi-layer dark bar with depth
+    // Deep base
+    bb.fillStyle(0x0a0512, 1);
+    bb.fillRect(0, h - barH, w, barH);
+    // Candy-pink accent line (top edge)
+    bb.fillStyle(0xff006a, 0.40);
+    bb.fillRect(0, h - barH, w, 2);
 
-    // Balance Pill
-    const balW = isMobile ? w * 0.35 : 240;
-    const balX = isMobile ? balW / 2 + sidePad : balW / 2 + sidePad + 120;
-    this.drawPill(this.bottomBar, balX, pillY, balW, pillH);
-    this.txtMoneyLabel.setPosition(balX - balW / 2 + 10, pillY - pillH / 4).setFontSize(pillH * 0.28).setOrigin(0, 0.5);
-    this.txtMoney.setPosition(balX + balW / 2 - 10, pillY + pillH / 8).setFontSize(pillH * 0.38).setOrigin(1, 0.5);
+    const txtY = h - barH / 2;
+    const sidePad = isMobile ? 15 : 40;
 
-    // Bet Pill
-    const betW = isMobile ? w * 0.22 : 180;
-    const betX = isMobile ? w / 2 : w * 0.45;
-    this.drawPill(this.bottomBar, betX, pillY, betW, pillH);
-    this.txtBetLabel.setPosition(betX, pillY - pillH / 4).setFontSize(pillH * 0.28);
-    this.txtBet.setPosition(betX, pillY + pillH / 8).setFontSize(pillH * 0.38);
+    // ── BALANCE ──
+    const balX = sidePad;
+    this.txtMoneyLabel
+      .setPosition(balX, txtY)
+      .setFontSize(Math.max(11, barH * 0.22))
+      .setOrigin(0, 0.5);
+    
+    // Position money text dynamically to the right of the label
+    // Using a fixed offset for layout, but it will look clean
+    const balValX = balX + (isMobile ? 65 : 85);
+    this.txtMoney
+      .setPosition(balValX, txtY)
+      .setFontSize(Math.max(15, barH * 0.32))
+      .setOrigin(0, 0.5);
 
-    // Last Win Pill
-    const winW = isMobile ? w * 0.22 : 200;
-    const winX = isMobile ? w - winW / 2 - sidePad - (isMobilePortrait ? 0 : 80) : w * 0.68;
+    // ── BET ──
+    const betX = isMobile ? w / 2 - 20 : w * 0.45;
+    this.txtBetLabel
+      .setPosition(betX, txtY)
+      .setFontSize(Math.max(11, barH * 0.22))
+      .setOrigin(0, 0.5);
+    
+    const betValX = betX + (isMobile ? 35 : 45);
+    this.txtBet
+      .setPosition(betValX, txtY)
+      .setFontSize(Math.max(15, barH * 0.32))
+      .setOrigin(0, 0.5);
+
+    // ── LAST WIN ──
+    const winX = isMobile ? w - sidePad - 120 : w * 0.68;
     if (!isMobilePortrait) {
         this.txtLastWinLabel.setVisible(true);
         this.txtLastWin.setVisible(true);
-        this.drawPill(this.bottomBar, winX, pillY, winW, pillH);
-        this.txtLastWinLabel.setPosition(winX - winW / 2 + 10, pillY - pillH / 4).setFontSize(pillH * 0.28).setOrigin(0, 0.5);
-        this.txtLastWin.setPosition(winX + winW / 2 - 10, pillY + pillH / 8).setFontSize(pillH * 0.38).setOrigin(1, 0.5);
+        this.txtLastWinLabel
+          .setPosition(winX, txtY)
+          .setFontSize(Math.max(11, barH * 0.22))
+          .setOrigin(0, 0.5);
+        this.txtLastWin
+          .setPosition(winX + (isMobile ? 65 : 85), txtY)
+          .setFontSize(Math.max(15, barH * 0.32))
+          .setOrigin(0, 0.5);
     } else {
         this.txtLastWinLabel.setVisible(false);
         this.txtLastWin.setVisible(false);
@@ -683,7 +710,7 @@ export class Game extends Phaser.Scene {
     this.updateAutoSpinDisplay();
 
     // Bet Buttons (Flanking the Spin Button on Desktop!)
-    const bBtnSize = Math.max(24, pillH * 0.85);
+    const bBtnSize = Math.max(24, barH * 0.45);
     if (!isMobilePortrait) {
         const betBtnOffset = spinSize / 2 + bBtnSize / 2 + 10;
         this.btnBetMinusHit.setPosition(spinX - betBtnOffset, spinY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
@@ -691,11 +718,13 @@ export class Game extends Phaser.Scene {
         this.btnBetPlusHit.setPosition(spinX + betBtnOffset, spinY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
         this.drawBetButton(this.btnBetPlus, spinX + betBtnOffset, spinY, bBtnSize, true);
     } else {
-        // Keeps it on the bottom bar for mobile
-        this.btnBetMinusHit.setPosition(betX - betW / 2 - bBtnSize / 2 - 5, pillY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
-        this.drawBetButton(this.btnBetMinus, betX - betW / 2 - bBtnSize / 2 - 5, pillY, bBtnSize, false);
-        this.btnBetPlusHit.setPosition(betX + betW / 2 + bBtnSize / 2 + 5, pillY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
-        this.drawBetButton(this.btnBetPlus, betX + betW / 2 + bBtnSize / 2 + 5, pillY, bBtnSize, true);
+        // Keeps it on the bottom bar for mobile, around the Bet text area
+        const mCenter = betX + 35; // Approximate visual center of the bet text
+        const mOffset = 75;
+        this.btnBetMinusHit.setPosition(mCenter - mOffset, txtY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
+        this.drawBetButton(this.btnBetMinus, mCenter - mOffset, txtY, bBtnSize, false);
+        this.btnBetPlusHit.setPosition(mCenter + mOffset, txtY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
+        this.drawBetButton(this.btnBetPlus, mCenter + mOffset, txtY, bBtnSize, true);
     }
 
     // Toolbar icons at upper left
@@ -877,14 +906,6 @@ export class Game extends Phaser.Scene {
         obj.lineBetween(cx + b, cy + b, cx + b*0.3, cy + b*0.3);
       }
     }
-  }
-
-  private drawPill(gfx: Phaser.GameObjects.Graphics, x: number, y: number, w: number, h: number) {
-    const r = h / 2;
-    gfx.fillStyle(0x0a0618, 0.55);
-    gfx.fillRoundedRect(x - w / 2, y - h / 2, w, h, r);
-    gfx.lineStyle(1.5, 0xffffff, 0.15);
-    gfx.strokeRoundedRect(x - w / 2, y - h / 2, w, h, r);
   }
 
   private updateBuyText(txt1: Phaser.GameObjects.Text, txt2: Phaser.GameObjects.Text, x: number, y: number, h: number, type: string) {
