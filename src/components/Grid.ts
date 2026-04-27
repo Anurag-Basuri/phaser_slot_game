@@ -559,94 +559,156 @@ export class Grid {
     const mult = this.multipliers[r][c];
     if (mult === 0) return;
 
-    // A multiplier of 1 means it's just "marked". Use the tier for x2 for styling the wrapper.
+    // A multiplier of 1 means it's just "marked". Use the tier for x2 for styling.
     const tier = this.getMultTier(Math.max(2, mult));
     const cx = this.getX(c);
     const cy = this.getY(r);
     
-    // Width scales down slightly for very large numbers, but mostly stays constant
-    const badgeW = this.cellSize * 0.88;
-    const badgeH = this.cellSize * 0.50;
+    // Badge dimensions — compact candy pill shape
+    const badgeW = this.cellSize * 0.85;
+    const badgeH = this.cellSize * 0.46;
+    const radius = badgeH * 0.42;
+    const tierColor = parseInt(tier.fill.replace('#', ''), 16);
+    const tierStroke = parseInt(tier.stroke.replace('#', ''), 16);
 
     if (!this.multiplierGraphics[r][c]) {
       const gfx = this.scene.add.graphics().setDepth(12);
       
-      // Base drop shadow
-      gfx.fillStyle(0x000000, 0.4);
-      gfx.fillRoundedRect(cx - badgeW/2 + 2, cy - badgeH/2 + 4, badgeW, badgeH, 6);
+      // 1. Outer glow ring (tier-colored, subtle)
+      gfx.fillStyle(tierColor, 0.20);
+      gfx.fillRoundedRect(cx - badgeW/2 - 3, cy - badgeH/2 - 3, badgeW + 6, badgeH + 6, radius + 3);
       
-      // Main wrapper block (golden yellow)
-      gfx.fillStyle(0xffcc00, 1);
-      gfx.fillRoundedRect(cx - badgeW/2, cy - badgeH/2, badgeW, badgeH, 6);
-
-      // Left and right "dimples" / wrapper folds
-      gfx.fillStyle(0xffaa00, 1);
-      gfx.fillRect(cx - badgeW/2, cy - badgeH/2 + 4, 8, badgeH - 8);
-      gfx.fillRect(cx + badgeW/2 - 8, cy - badgeH/2 + 4, 8, badgeH - 8);
-
-      // Inner highlight (top curved edge)
-      gfx.fillStyle(0xffeebb, 0.8);
-      gfx.fillRoundedRect(cx - badgeW/2 + 10, cy - badgeH/2 + 2, badgeW - 20, badgeH * 0.3, 4);
-
-      // Outer wrapper stroke (reddish orange)
-      gfx.lineStyle(2, 0xcc2200, 1);
-      gfx.strokeRoundedRect(cx - badgeW/2, cy - badgeH/2, badgeW, badgeH, 6);
+      // 2. Drop shadow
+      gfx.fillStyle(0x000000, 0.45);
+      gfx.fillRoundedRect(cx - badgeW/2 + 2, cy - badgeH/2 + 3, badgeW, badgeH, radius);
+      
+      // 3. Main body — dark base layer
+      gfx.fillStyle(0x1a0a2e, 0.92);
+      gfx.fillRoundedRect(cx - badgeW/2, cy - badgeH/2, badgeW, badgeH, radius);
+      
+      // 4. Inner gradient band — tier-colored horizontal stripe
+      gfx.fillStyle(tierColor, 0.35);
+      gfx.fillRoundedRect(cx - badgeW/2 + 3, cy - badgeH/2 + 3, badgeW - 6, badgeH - 6, radius - 2);
+      
+      // 5. Top highlight — glossy candy surface
+      gfx.fillStyle(0xffffff, 0.22);
+      gfx.fillRoundedRect(cx - badgeW/2 + 6, cy - badgeH/2 + 2, badgeW - 12, badgeH * 0.35, radius - 4);
+      
+      // 6. Left/right candy wrapper folds
+      const foldW = Math.max(4, badgeW * 0.07);
+      gfx.fillStyle(tierColor, 0.55);
+      gfx.fillRect(cx - badgeW/2, cy - badgeH/2 + 4, foldW, badgeH - 8);
+      gfx.fillRect(cx + badgeW/2 - foldW, cy - badgeH/2 + 4, foldW, badgeH - 8);
+      
+      // 7. Border stroke — tier-colored edge
+      gfx.lineStyle(1.5, tierStroke, 0.9);
+      gfx.strokeRoundedRect(cx - badgeW/2, cy - badgeH/2, badgeW, badgeH, radius);
+      
+      // 8. Inner bright accent line (top)
+      gfx.lineStyle(1, tierColor, 0.5);
+      gfx.strokeRoundedRect(cx - badgeW/2 + 2, cy - badgeH/2 + 2, badgeW - 4, badgeH - 4, radius - 2);
 
       this.multiplierGraphics[r][c] = gfx;
 
-      // Entrance animation for new wrappers
+      // Entrance animation — pop in with rotation
+      gfx.setScale(0);
+      gfx.setAlpha(0);
       this.scene.tweens.add({
         targets: gfx,
-        scaleX: { from: 0.5, to: 1 },
-        scaleY: { from: 0.5, to: 1 },
-        duration: 300,
-        ease: 'Back.easeOut'
+        scaleX: 1, scaleY: 1, alpha: 1,
+        duration: 350,
+        ease: 'Back.easeOut',
       });
     } else {
+      // Existing badge — pulse on upgrade with tier-color flash
+      const gfx = this.multiplierGraphics[r][c]!;
+      
+      // Redraw with new tier colors
+      gfx.clear();
+      gfx.fillStyle(tierColor, 0.25);
+      gfx.fillRoundedRect(cx - badgeW/2 - 3, cy - badgeH/2 - 3, badgeW + 6, badgeH + 6, radius + 3);
+      gfx.fillStyle(0x000000, 0.45);
+      gfx.fillRoundedRect(cx - badgeW/2 + 2, cy - badgeH/2 + 3, badgeW, badgeH, radius);
+      gfx.fillStyle(0x1a0a2e, 0.92);
+      gfx.fillRoundedRect(cx - badgeW/2, cy - badgeH/2, badgeW, badgeH, radius);
+      gfx.fillStyle(tierColor, 0.40);
+      gfx.fillRoundedRect(cx - badgeW/2 + 3, cy - badgeH/2 + 3, badgeW - 6, badgeH - 6, radius - 2);
+      gfx.fillStyle(0xffffff, 0.22);
+      gfx.fillRoundedRect(cx - badgeW/2 + 6, cy - badgeH/2 + 2, badgeW - 12, badgeH * 0.35, radius - 4);
+      const foldW = Math.max(4, badgeW * 0.07);
+      gfx.fillStyle(tierColor, 0.55);
+      gfx.fillRect(cx - badgeW/2, cy - badgeH/2 + 4, foldW, badgeH - 8);
+      gfx.fillRect(cx + badgeW/2 - foldW, cy - badgeH/2 + 4, foldW, badgeH - 8);
+      gfx.lineStyle(1.5, tierStroke, 0.9);
+      gfx.strokeRoundedRect(cx - badgeW/2, cy - badgeH/2, badgeW, badgeH, radius);
+      gfx.lineStyle(1, tierColor, 0.5);
+      gfx.strokeRoundedRect(cx - badgeW/2 + 2, cy - badgeH/2 + 2, badgeW - 4, badgeH - 4, radius - 2);
+      
+      // Satisfying scale pulse
       this.scene.tweens.add({
-        targets: this.multiplierGraphics[r][c],
-        scale: 1.2,
+        targets: gfx,
+        scaleX: 1.18, scaleY: 1.18,
         yoyo: true,
-        duration: 150,
-        ease: 'Sine.easeInOut'
+        duration: 180,
+        ease: 'Quad.easeOut',
       });
+      
+      // Shockwave ring on upgrade
+      if (!this.turboMode && this._activeEmitterCount < Grid.MAX_EMITTERS) {
+        const ring = this.scene.add.graphics().setDepth(11);
+        ring.lineStyle(2, tierColor, 0.6);
+        ring.strokeCircle(cx, cy, badgeW * 0.3);
+        ring.setScale(0.5);
+        ring.setAlpha(1);
+        this.scene.tweens.add({
+          targets: ring,
+          scaleX: 2.0, scaleY: 2.0, alpha: 0,
+          duration: 400,
+          ease: 'Quad.easeOut',
+          onComplete: () => ring.destroy(),
+        });
+      }
     }
 
     if (mult > 1) {
       if (!this.multiplierTexts[r][c]) {
-        const fontSize = mult >= 128 ? Math.max(14, this.cellSize * 0.30) : Math.max(18, this.cellSize * 0.38);
-        const txt = this.scene.add.text(cx, cy + 2, `x${mult}`, {
+        const fontSize = mult >= 128 ? Math.max(14, this.cellSize * 0.28) : Math.max(18, this.cellSize * 0.36);
+        const txt = this.scene.add.text(cx, cy + 1, `×${mult}`, {
           fontFamily: '"Luckiest Guy", cursive, sans-serif',
           fontSize: `${Math.round(fontSize)}px`,
-          color: tier.fill,
+          color: '#ffffff',
           stroke: tier.stroke,
-          strokeThickness: Math.max(3, this.cellSize * 0.08),
-          shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 0, stroke: true, fill: true }
+          strokeThickness: Math.max(3, this.cellSize * 0.07),
+          shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 4, stroke: true, fill: true }
         }).setOrigin(0.5).setDepth(13);
 
         this.multiplierTexts[r][c] = txt;
 
+        // Match the badge entrance timing
+        txt.setScale(0);
+        txt.setAlpha(0);
         this.scene.tweens.add({
           targets: txt,
-          scaleX: { from: 0.5, to: 1 },
-          scaleY: { from: 0.5, to: 1 },
-          duration: 300,
-          ease: 'Back.easeOut'
+          scaleX: 1, scaleY: 1, alpha: 1,
+          duration: 350,
+          delay: 50,
+          ease: 'Back.easeOut',
         });
       } else {
         const txt = this.multiplierTexts[r][c]!;
-        const fontSize = mult >= 128 ? Math.max(14, this.cellSize * 0.30) : Math.max(18, this.cellSize * 0.38);
-        txt.setText(`x${mult}`);
+        const fontSize = mult >= 128 ? Math.max(14, this.cellSize * 0.28) : Math.max(18, this.cellSize * 0.36);
+        txt.setText(`×${mult}`);
         txt.setFontSize(`${Math.round(fontSize)}px`);
-        txt.setColor(tier.fill);
-        txt.setStroke(tier.stroke, Math.max(3, this.cellSize * 0.08));
+        txt.setColor('#ffffff');
+        txt.setStroke(tier.stroke, Math.max(3, this.cellSize * 0.07));
         
+        // Punch scale on text
         this.scene.tweens.add({
           targets: txt,
-          scale: 1.3,
+          scaleX: 1.35, scaleY: 1.35,
           yoyo: true,
-          duration: 150,
-          ease: 'Sine.easeInOut'
+          duration: 180,
+          ease: 'Quad.easeOut',
         });
       }
     }
@@ -682,46 +744,74 @@ export class Grid {
       cluster.positions.forEach(pos => winPositions.add(`${pos.row},${pos.col}`));
     });
 
-    // Phase 1: Anticipation highlight — bulge + golden glow on winning cells
-    const anticipationDuration = this.turboMode ? 80 : 200;
+    // ──────── Phase 1: Anticipation — rhythmic bounce + connected glow ────────
+    const anticipationDuration = this.turboMode ? 80 : 250;
+    let staggerIndex = 0;
+    
     winPositions.forEach(key => {
       const [rr, cc] = key.split(',').map(Number);
       const sprite = this.sprites[rr]?.[cc];
-      if (sprite) {
-        // Bulge up
-        this.scene.tweens.add({
-          targets: sprite,
-          scaleX: sprite.scaleX * 1.3,
-          scaleY: sprite.scaleY * 1.3,
-          duration: anticipationDuration,
-          yoyo: true,
-          ease: 'Quad.easeOut',
-        });
-        // Golden highlight tint
-        sprite.setTint(0xffffcc);
-        this.scene.time.delayedCall(anticipationDuration, () => {
-          if (sprite && sprite.scene) sprite.clearTint();
-        });
+      if (!sprite) return;
+      
+      const staggerDelay = this.turboMode ? 0 : staggerIndex * 12;
+      staggerIndex++;
+      
+      const origSX = sprite.scaleX;
+      const origSY = sprite.scaleY;
 
-        // Cell glow flash behind the symbol
-        if (!this.turboMode && this._activeEmitterCount < Grid.MAX_EMITTERS) {
-          const glow = this.scene.add.graphics().setDepth(9);
-          glow.fillStyle(0xffdd44, 0.25);
-          glow.fillCircle(this.getX(cc), this.getY(rr), this.cellSize * 0.45);
-          glow.setAlpha(0);
-          this.scene.tweens.add({
-            targets: glow,
-            alpha: { from: 0, to: 0.6 },
-            yoyo: true,
-            duration: anticipationDuration * 0.8,
-            onComplete: () => glow.destroy(),
-          });
-        }
+      // Rhythmic bounce — quick squeeze then pop
+      this.scene.tweens.add({
+        targets: sprite,
+        scaleX: origSX * 0.85,
+        scaleY: origSY * 1.18,
+        duration: anticipationDuration * 0.35,
+        delay: staggerDelay,
+        ease: 'Quad.easeIn',
+        yoyo: true,
+        onYoyo: () => {
+          if (sprite && sprite.scene) {
+            // Pop out after squeeze
+            this.scene.tweens.add({
+              targets: sprite,
+              scaleX: origSX * 1.2,
+              scaleY: origSY * 1.2,
+              duration: anticipationDuration * 0.4,
+              yoyo: true,
+              ease: 'Quad.easeOut',
+            });
+          }
+        },
+      });
+
+      // Warm golden tint on winning symbols
+      sprite.setTint(0xfff5cc);
+      this.scene.time.delayedCall(anticipationDuration + staggerDelay, () => {
+        if (sprite && sprite.scene) sprite.clearTint();
+      });
+
+      // Radial cell highlight glow (symbol-colored)
+      if (!this.turboMode) {
+        const symId = sprite.getData('symId') ?? 0;
+        const symColors = [0xffaa44, 0xcc66ff, 0xff4466, 0x44ff88, 0xaa44ff, 0xff8844, 0xff66aa];
+        const glowColor = symColors[symId % symColors.length];
+        
+        const glow = this.scene.add.graphics().setDepth(9);
+        glow.fillStyle(glowColor, 0.18);
+        glow.fillCircle(this.getX(cc), this.getY(rr), this.cellSize * 0.42);
+        glow.setAlpha(0);
+        this.scene.tweens.add({
+          targets: glow,
+          alpha: { from: 0, to: 0.8 },
+          yoyo: true,
+          duration: anticipationDuration * 0.7,
+          delay: staggerDelay,
+          onComplete: () => glow.destroy(),
+        });
       }
     });
 
-    // Phase 2: After anticipation, process wins and explode
-    this.scene.time.delayedCall(anticipationDuration + 50, () => {
+    // ──────── Phase 2: Process wins and explode ────────
+    this.scene.time.delayedCall(anticipationDuration + 80, () => {
       let totalWin = 0;
       clusters.forEach(cluster => {
         const sizeIndex = Math.min(cluster.positions.length - 5, 10);
@@ -744,61 +834,86 @@ export class Grid {
           const r = pos.row;
           const c = pos.col;
           if (this.sprites[r][c]) {
-            // Explosion particles — capped to prevent GPU overload
-            if (this._activeEmitterCount < Grid.MAX_EMITTERS) {
-              const emitter = this.scene.add.particles(this.getX(c), this.getY(r), this.symbolKeys[cluster.symbolId], {
-                speed: { min: 100, max: 400 },
-                angle: { min: 0, max: 360 },
-                scale: { start: 0.30, end: 0 },
-                lifespan: 450,
-                quantity: 5,
-                blendMode: 'ADD'
-              });
-              emitter.explode(5);
-              this._activeEmitterCount++;
-              this.scene.time.delayedCall(550, () => { emitter.destroy(); this._activeEmitterCount--; });
-            }
-
-            // Secondary candy debris
             const sprite = this.sprites[r][c]!;
             const symId = sprite.getData('symId') ?? 0;
+
+            // Symbol color for colored effects
+            const symColors = [0xffaa44, 0xcc66ff, 0xff4466, 0x44ff88, 0xaa44ff, 0xff8844, 0xff66aa];
+            const burstColor = symColors[symId % symColors.length];
+
+            // Primary burst particles
+            if (this._activeEmitterCount < Grid.MAX_EMITTERS) {
+              const emitter = this.scene.add.particles(this.getX(c), this.getY(r), this.symbolKeys[cluster.symbolId], {
+                speed: { min: 120, max: 450 },
+                angle: { min: 0, max: 360 },
+                scale: { start: 0.28, end: 0 },
+                lifespan: 500,
+                quantity: 6,
+                blendMode: 'ADD',
+                alpha: { start: 0.9, end: 0 },
+              });
+              emitter.explode(6);
+              this._activeEmitterCount++;
+              this.scene.time.delayedCall(600, () => { emitter.destroy(); this._activeEmitterCount--; });
+            }
+
+            // Secondary candy debris (gravity affected)
             if (this._activeEmitterCount < Grid.MAX_EMITTERS && symId < 7) {
               const debrisEmitter = this.scene.add.particles(sprite.x, sprite.y, `candy_${symId}`, {
-                speed: { min: 60, max: 180 },
-                angle: { min: 0, max: 360 },
-                scale: { start: 0.12, end: 0 },
-                lifespan: 500,
-                quantity: 3,
-                gravityY: 350,
+                speed: { min: 50, max: 200 },
+                angle: { min: 200, max: 340 },
+                scale: { start: 0.14, end: 0 },
+                lifespan: 550,
+                quantity: 4,
+                gravityY: 400,
+                alpha: { start: 1, end: 0 },
               }).setDepth(15);
               debrisEmitter.explode();
               this._activeEmitterCount++;
-              this.scene.time.delayedCall(600, () => { debrisEmitter.destroy(); this._activeEmitterCount--; });
+              this.scene.time.delayedCall(650, () => { debrisEmitter.destroy(); this._activeEmitterCount--; });
             }
 
-            // Animate symbol destruction: shrink + spin + fade
+            // 2-stage destruction: squeeze inward → burst outward
             this.scene.tweens.add({
               targets: sprite,
-              scale: 0, alpha: 0, angle: Phaser.Math.Between(-120, 120),
-              duration: this.explodeDuration,
+              scaleX: sprite.scaleX * 1.3,
+              scaleY: sprite.scaleY * 0.6,
+              duration: this.explodeDuration * 0.35,
               ease: 'Quad.easeIn',
               onComplete: () => {
-                sprite.destroy();
-                this.sprites[r][c] = null;
+                if (!sprite || !sprite.scene) return;
+                this.scene.tweens.add({
+                  targets: sprite,
+                  scaleX: 0, scaleY: 0,
+                  alpha: 0,
+                  angle: Phaser.Math.Between(-90, 90),
+                  duration: this.explodeDuration * 0.65,
+                  ease: 'Quad.easeIn',
+                  onComplete: () => {
+                    sprite.destroy();
+                    this.sprites[r][c] = null;
+                  }
+                });
               }
             });
 
-            // Flash the cell white briefly for impact
+            // Colored cell flash for impact
             if (!this.turboMode) {
               const flash = this.scene.add.graphics().setDepth(11);
-              flash.fillStyle(0xffffff, 0.35);
-              flash.fillRect(
-                this.getX(c) - this.cellSize / 2,
-                this.getY(r) - this.cellSize / 2,
-                this.cellSize, this.cellSize
+              const halfCell = this.cellSize / 2;
+              // Colored flash
+              flash.fillStyle(burstColor, 0.30);
+              flash.fillRoundedRect(
+                this.getX(c) - halfCell, this.getY(r) - halfCell,
+                this.cellSize, this.cellSize, 4
               );
+              // White core flash
+              flash.fillStyle(0xffffff, 0.40);
+              flash.fillCircle(this.getX(c), this.getY(r), halfCell * 0.5);
+              
               this.scene.tweens.add({
-                targets: flash, alpha: 0, duration: 200,
+                targets: flash, alpha: 0, duration: 250,
+                ease: 'Quad.easeOut',
                 onComplete: () => flash.destroy(),
               });
             }
