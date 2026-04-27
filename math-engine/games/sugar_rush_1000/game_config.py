@@ -22,10 +22,7 @@ class GameConfig(Config):
         # No wild symbol in Sugar Rush 1000
         self.special_symbols = {
             "scatter": ["S"],
-            "wild": [],
         }
-
-        self.include_padding = False
 
         # Symbol ID mapping (frontend ↔ backend)
         self.symbol_ids = {
