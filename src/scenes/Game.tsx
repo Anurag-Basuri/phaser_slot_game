@@ -446,17 +446,17 @@ export class Game extends Phaser.Scene {
       const topSpace = Math.max(80, h * 0.1);
       const bottomSpace = 160; // Space for buy panels
       const availableH = safeH - topSpace - bottomSpace;
-      gridTotalSize = Math.min(w * 0.95, availableH * 0.95);
+      gridTotalSize = Math.min(w * 0.96, availableH * 0.96);
       gridX = (w - gridTotalSize) / 2;
       gridY = topSpace + (availableH - gridTotalSize) / 2 + 20;
     } else if (isMobileLandscape) {
-      gridTotalSize = Math.min(h * 0.75, w * 0.42);
+      gridTotalSize = Math.min(h * 0.80, w * 0.46);
       gridX = (w - gridTotalSize) / 2;
       gridY = (safeH - gridTotalSize) / 2;
     } else {
-      gridTotalSize = Math.min(w * 0.50, safeH * 0.78);
+      gridTotalSize = Math.min(w * 0.55, safeH * 0.85);
       gridX = (w - gridTotalSize) / 2;
-      gridY = (safeH - gridTotalSize) / 2 + 8;
+      gridY = (safeH - gridTotalSize) / 2 + 5;
     }
 
     this.grid.offsetX = gridX;

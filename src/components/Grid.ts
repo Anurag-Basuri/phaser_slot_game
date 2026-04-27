@@ -110,111 +110,136 @@ export class Grid {
   }
 
   /**
-   * Draw the Sugar Rush 1000 machine interior background.
-   * Vertical gradient from light blue to pink, with horizontal and vertical lines.
+   * Draw premium Sugar Rush grid interior.
+   * Multi-stop gradient (lavender → pink → peach), checkerboard tint,
+   * refined grid lines, and deep atmospheric vignette.
    */
   public drawCellBackgrounds() {
     this.cellBackgrounds.clear();
     const size = options.gridSize;
     const totalSize = this.cellSize * size;
-
-    // 1. Draw the vertical gradient using horizontal strips (safe in Phaser 3 Graphics)
-    const steps = 30;
-    const stripHeight = totalSize / steps;
-    for (let i = 0; i < steps; i++) {
-      const t = i / (steps - 1);
-      // Interpolate from sky blue (204, 238, 255) to pink (255, 204, 255)
-      const r = Math.round(204 + (255 - 204) * t);
-      const g = Math.round(238 + (204 - 238) * t);
-      const b = Math.round(255 + (255 - 255) * t);
-      const color = (r << 16) | (g << 8) | b;
-      
-      this.cellBackgrounds.fillStyle(color, 1);
-      this.cellBackgrounds.fillRect(this.offsetX, this.offsetY + i * stripHeight, totalSize, Math.ceil(stripHeight));
-    }
-
-    // 2. Draw light, playful grid lines (vertical and horizontal)
-    this.cellBackgrounds.lineStyle(2, 0xffffff, 0.4); 
-    
-    // Vertical lines
-    for (let c = 1; c < size; c++) {
-      const x = this.offsetX + c * this.cellSize;
-      this.cellBackgrounds.beginPath();
-      this.cellBackgrounds.moveTo(x, this.offsetY);
-      this.cellBackgrounds.lineTo(x, this.offsetY + totalSize);
-      this.cellBackgrounds.strokePath();
-      
-      // Depth shadow next to the line
-      this.cellBackgrounds.lineStyle(1, 0x4466aa, 0.1);
-      this.cellBackgrounds.beginPath();
-      this.cellBackgrounds.moveTo(x - 1, this.offsetY);
-      this.cellBackgrounds.lineTo(x - 1, this.offsetY + totalSize);
-      this.cellBackgrounds.strokePath();
-      this.cellBackgrounds.lineStyle(2, 0xffffff, 0.4); // reset
-    }
-
-    // Horizontal lines
-    for (let r = 1; r < size; r++) {
-      const y = this.offsetY + r * this.cellSize;
-      this.cellBackgrounds.beginPath();
-      this.cellBackgrounds.moveTo(this.offsetX, y);
-      this.cellBackgrounds.lineTo(this.offsetX + totalSize, y);
-      this.cellBackgrounds.strokePath();
-      
-      // Depth shadow next to the line
-      this.cellBackgrounds.lineStyle(1, 0x4466aa, 0.1);
-      this.cellBackgrounds.beginPath();
-      this.cellBackgrounds.moveTo(this.offsetX, y - 1);
-      this.cellBackgrounds.lineTo(this.offsetX + totalSize, y - 1);
-      this.cellBackgrounds.strokePath();
-      this.cellBackgrounds.lineStyle(2, 0xffffff, 0.4); // reset
-    }
-
-    // 3. Inner-shadow vignette (recessed look)
     const gx = this.offsetX;
     const gy = this.offsetY;
-    // Top edge shadow
-    for (let i = 0; i < 6; i++) {
-      this.cellBackgrounds.fillStyle(0x000000, 0.05 - i * 0.008);
-      this.cellBackgrounds.fillRect(gx, gy + i * 2, totalSize, 2);
+
+    // 1. Multi-stop vertical gradient (lavender → pink → peach)
+    const stops = [
+      { t: 0.0, r: 190, g: 210, b: 255 }, // Light lavender
+      { t: 0.35, r: 220, g: 200, b: 250 }, // Soft lilac
+      { t: 0.65, r: 255, g: 200, b: 230 }, // Warm pink
+      { t: 1.0, r: 255, g: 220, b: 210 }, // Soft peach
+    ];
+    const gradSteps = 40;
+    const stripH = totalSize / gradSteps;
+    for (let i = 0; i < gradSteps; i++) {
+      const t = i / (gradSteps - 1);
+      // Find bracketing stops
+      let s0 = stops[0], s1 = stops[1];
+      for (let j = 0; j < stops.length - 1; j++) {
+        if (t >= stops[j].t && t <= stops[j + 1].t) {
+          s0 = stops[j]; s1 = stops[j + 1]; break;
+        }
+      }
+      const localT = (t - s0.t) / (s1.t - s0.t || 1);
+      const cr = Math.round(s0.r + (s1.r - s0.r) * localT);
+      const cg = Math.round(s0.g + (s1.g - s0.g) * localT);
+      const cb = Math.round(s0.b + (s1.b - s0.b) * localT);
+      this.cellBackgrounds.fillStyle((cr << 16) | (cg << 8) | cb, 1);
+      this.cellBackgrounds.fillRect(gx, gy + i * stripH, totalSize, Math.ceil(stripH) + 1);
     }
-    // Bottom edge shadow
-    for (let i = 0; i < 6; i++) {
-      this.cellBackgrounds.fillStyle(0x000000, 0.05 - i * 0.008);
-      this.cellBackgrounds.fillRect(gx, gy + totalSize - 2 - i * 2, totalSize, 2);
+
+    // 2. Alternating cell tint (subtle checkerboard for depth)
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if ((r + c) % 2 === 0) {
+          this.cellBackgrounds.fillStyle(0xffffff, 0.06);
+        } else {
+          this.cellBackgrounds.fillStyle(0x000000, 0.03);
+        }
+        this.cellBackgrounds.fillRect(
+          gx + c * this.cellSize, gy + r * this.cellSize,
+          this.cellSize, this.cellSize
+        );
+      }
     }
-    // Left edge shadow
-    for (let i = 0; i < 6; i++) {
-      this.cellBackgrounds.fillStyle(0x000000, 0.05 - i * 0.008);
-      this.cellBackgrounds.fillRect(gx + i * 2, gy, 2, totalSize);
+
+    // 3. Grid lines — vertical lines more prominent (column separators), horizontal subtler
+    // Vertical column lines — thick and clear
+    for (let c = 1; c < size; c++) {
+      const x = gx + c * this.cellSize;
+      // Deep shadow
+      this.cellBackgrounds.lineStyle(2, 0x5555aa, 0.15);
+      this.cellBackgrounds.lineBetween(x + 1, gy, x + 1, gy + totalSize);
+      // Main white line
+      this.cellBackgrounds.lineStyle(2.5, 0xffffff, 0.45);
+      this.cellBackgrounds.lineBetween(x, gy, x, gy + totalSize);
     }
-    // Right edge shadow
+    // Horizontal row lines — thinner, subtle
+    for (let r = 1; r < size; r++) {
+      const y = gy + r * this.cellSize;
+      this.cellBackgrounds.lineStyle(1, 0x6666aa, 0.08);
+      this.cellBackgrounds.lineBetween(gx, y + 1, gx + totalSize, y + 1);
+      this.cellBackgrounds.lineStyle(1, 0xffffff, 0.20);
+      this.cellBackgrounds.lineBetween(gx, y, gx + totalSize, y);
+    }
+
+    // 4. Deep atmospheric vignette (recessed candy machine look)
+    const vigLayers = 10;
+    for (let i = 0; i < vigLayers; i++) {
+      const a = 0.08 - i * 0.007;
+      if (a <= 0) break;
+      const d = i * 2;
+      this.cellBackgrounds.fillStyle(0x000000, a);
+      // Top
+      this.cellBackgrounds.fillRect(gx, gy + d, totalSize, 2);
+      // Bottom
+      this.cellBackgrounds.fillRect(gx, gy + totalSize - d - 2, totalSize, 2);
+      // Left
+      this.cellBackgrounds.fillRect(gx + d, gy, 2, totalSize);
+      // Right
+      this.cellBackgrounds.fillRect(gx + totalSize - d - 2, gy, 2, totalSize);
+    }
+
+    // 5. Subtle warm glow at center (candy jar interior light)
+    const glowR = totalSize * 0.35;
+    const cx = gx + totalSize / 2;
+    const cy = gy + totalSize / 2;
     for (let i = 0; i < 6; i++) {
-      this.cellBackgrounds.fillStyle(0x000000, 0.05 - i * 0.008);
-      this.cellBackgrounds.fillRect(gx + totalSize - 2 - i * 2, gy, 2, totalSize);
+      const glowAlpha = 0.025 - i * 0.004;
+      if (glowAlpha <= 0) break;
+      this.cellBackgrounds.fillStyle(0xffddee, glowAlpha);
+      this.cellBackgrounds.fillCircle(cx, cy, glowR + i * 15);
     }
   }
 
-  /** Subtle idle shimmer — random candy gets a brief scale pulse */
+  /** Premium idle shimmer — random candy gets scale pulse + subtle rotation */
   private startIdleShimmer() {
     if (this._shimmerTimer) this._shimmerTimer.remove();
     this._shimmerTimer = this.scene.time.addEvent({
-      delay: 2500,
+      delay: 1800,
       loop: true,
       callback: () => {
         if (this.isProcessing) return;
-        const r = Phaser.Math.Between(0, options.gridSize - 1);
-        const c = Phaser.Math.Between(0, options.gridSize - 1);
-        const sprite = this.sprites[r]?.[c];
-        if (sprite && !this.scene.tweens.isTweening(sprite)) {
-          this.scene.tweens.add({
-            targets: sprite,
-            scaleX: sprite.scaleX * 1.12,
-            scaleY: sprite.scaleY * 1.12,
-            yoyo: true,
-            duration: 400,
-            ease: 'Sine.easeInOut',
-          });
+        // Pick 1-2 random cells for a more alive feel
+        const count = Phaser.Math.Between(1, 2);
+        for (let i = 0; i < count; i++) {
+          const r = Phaser.Math.Between(0, options.gridSize - 1);
+          const c = Phaser.Math.Between(0, options.gridSize - 1);
+          const sprite = this.sprites[r]?.[c];
+          if (sprite && !this.scene.tweens.isTweening(sprite)) {
+            const origScale = sprite.scaleX;
+            this.scene.tweens.add({
+              targets: sprite,
+              scaleX: origScale * 1.15,
+              scaleY: origScale * 1.15,
+              angle: Phaser.Math.Between(-3, 3),
+              yoyo: true,
+              duration: 350,
+              ease: 'Sine.easeInOut',
+              onComplete: () => {
+                if (sprite && sprite.scene) sprite.setAngle(0);
+              }
+            });
+          }
         }
       },
     });
@@ -276,7 +301,7 @@ export class Grid {
           const sprite = this.scene.add.sprite(this.getX(c), startY, this.symbolKeys[symId]);
           sprite.setData('symId', symId);
 
-          const scale = (this.cellSize * 0.68) / Math.max(sprite.width, sprite.height);
+          const scale = (this.cellSize * 0.82) / Math.max(sprite.width, sprite.height);
           sprite.setScale(Math.min(scale, 1));
           sprite.setDepth(10);
 
@@ -451,7 +476,7 @@ export class Grid {
         const sprite = this.sprites[r][c];
         if (sprite) {
           sprite.setPosition(this.getX(c), this.getY(r));
-          const scale = (this.cellSize * 0.68) / Math.max(sprite.width, sprite.height);
+          const scale = (this.cellSize * 0.82) / Math.max(sprite.width, sprite.height);
           sprite.setScale(Math.min(scale, 1));
         }
         // Redraw multiplier UI
@@ -622,8 +647,8 @@ export class Grid {
       cluster.positions.forEach(pos => winPositions.add(`${pos.row},${pos.col}`));
     });
 
-    // Phase 1: Anticipation highlight — briefly flash winning symbols white and bulge them
-    const anticipationDuration = this.turboMode ? 80 : 180;
+    // Phase 1: Anticipation highlight — bulge + golden glow on winning cells
+    const anticipationDuration = this.turboMode ? 80 : 200;
     winPositions.forEach(key => {
       const [rr, cc] = key.split(',').map(Number);
       const sprite = this.sprites[rr]?.[cc];
@@ -631,17 +656,32 @@ export class Grid {
         // Bulge up
         this.scene.tweens.add({
           targets: sprite,
-          scaleX: sprite.scaleX * 1.25,
-          scaleY: sprite.scaleY * 1.25,
+          scaleX: sprite.scaleX * 1.3,
+          scaleY: sprite.scaleY * 1.3,
           duration: anticipationDuration,
           yoyo: true,
           ease: 'Quad.easeOut',
         });
-        // White flash tint
-        sprite.setTint(0xffffff);
+        // Golden highlight tint
+        sprite.setTint(0xffffcc);
         this.scene.time.delayedCall(anticipationDuration, () => {
           if (sprite && sprite.scene) sprite.clearTint();
         });
+
+        // Cell glow flash behind the symbol
+        if (!this.turboMode && this._activeEmitterCount < Grid.MAX_EMITTERS) {
+          const glow = this.scene.add.graphics().setDepth(9);
+          glow.fillStyle(0xffdd44, 0.25);
+          glow.fillCircle(this.getX(cc), this.getY(rr), this.cellSize * 0.45);
+          glow.setAlpha(0);
+          this.scene.tweens.add({
+            targets: glow,
+            alpha: { from: 0, to: 0.6 },
+            yoyo: true,
+            duration: anticipationDuration * 0.8,
+            onComplete: () => glow.destroy(),
+          });
+        }
       }
     });
 
@@ -713,6 +753,21 @@ export class Grid {
               }
             });
 
+            // Flash the cell white briefly for impact
+            if (!this.turboMode) {
+              const flash = this.scene.add.graphics().setDepth(11);
+              flash.fillStyle(0xffffff, 0.35);
+              flash.fillRect(
+                this.getX(c) - this.cellSize / 2,
+                this.getY(r) - this.cellSize / 2,
+                this.cellSize, this.cellSize
+              );
+              this.scene.tweens.add({
+                targets: flash, alpha: 0, duration: 200,
+                onComplete: () => flash.destroy(),
+              });
+            }
+
             // Advance multiplier
             if (this.multipliers[r][c] === 0) {
               this.multipliers[r][c] = 1; // Mark the spot
@@ -746,6 +801,14 @@ export class Grid {
             this.finishRound();
           });
           return;
+        }
+      }
+
+      // Screen-shake on big clusters for premium impact feel
+      if (!this.turboMode && totalWin > 0) {
+        const shakeIntensity = Math.min(clusters.reduce((sum, cl) => sum + cl.positions.length, 0) * 0.3, 4);
+        if (shakeIntensity > 1.5) {
+          this.scene.cameras.main.shake(120, shakeIntensity * 0.001);
         }
       }
 
