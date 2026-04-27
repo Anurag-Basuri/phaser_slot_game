@@ -316,8 +316,8 @@ export class Grid {
           sprite.setDepth(10);
           sprite.setAlpha(0);
 
-          // Apply circular crop to wild/scatter to remove square backgrounds
-          if (symId === 7 || symId === 8) {
+          // Apply circular crop to scatter to remove square background
+          if (symId === 7) {
             const cropRadius = Math.min(sprite.width, sprite.height) / 2;
             sprite.setCrop(
               sprite.width / 2 - cropRadius,

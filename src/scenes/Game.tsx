@@ -192,8 +192,13 @@ export class Game extends Phaser.Scene {
       }, 80);
     });
 
-    // Keyboard support
-    this.input.keyboard?.on('keydown-SPACE', () => {
+    // Keyboard support — both SPACE and ENTER start/stop the spin (official spec)
+    this.input.keyboard?.on('keydown-SPACE', (e: KeyboardEvent) => {
+      e.preventDefault();
+      this.handleUniversalAction();
+    });
+    this.input.keyboard?.on('keydown-ENTER', (e: KeyboardEvent) => {
+      e.preventDefault();
       this.handleUniversalAction();
     });
   }

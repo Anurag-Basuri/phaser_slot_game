@@ -29,11 +29,7 @@ export class ClusterEvaluator {
       for (let c = 0; c < this.cols; c++) {
         if (!visited[r][c] && this.grid[r][c] !== -1) {
           const symbolId = this.grid[r][c];
-          // We ignore scatter (symbolId 8) for cluster logic usually, or handle separately
-          if (symbolId === 8) continue; 
-          
-          // If starting on a Wild, we won't evaluate it by itself as its own cluster.
-          // It only evaluates as part of adjacent regular symbols.
+          // Scatter symbols don't form clusters — they're handled separately
           if (symbolId === 7) continue;
           
           const clusterPositions = this.dfs(r, c, symbolId, visited);
@@ -69,7 +65,7 @@ export class ClusterEvaluator {
 
         if (this.isValid(nr, nc) && !visited[nr][nc]) {
           const neighborId = this.grid[nr][nc];
-          if (neighborId === targetSymbol || neighborId === 7) {
+          if (neighborId === targetSymbol) {
             visited[nr][nc] = true;
             stack.push({ row: nr, col: nc });
           }
