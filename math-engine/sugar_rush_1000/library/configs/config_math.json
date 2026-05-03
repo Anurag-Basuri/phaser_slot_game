@@ -1,0 +1,173 @@
+{
+  "game_id": "sugar_rush_1000",
+  "rtp": 0.9653,
+  "wincap": 25000.0,
+  "bet_modes": [
+    {
+      "name": "base",
+      "cost": 1.0,
+      "rtp": 0.9653,
+      "max_win": 25000.0,
+      "distributions": [
+        {
+          "criteria": "wincap",
+          "quota": 0.0001,
+          "win_criteria": 25000.0,
+          "conditions": {
+            "reel_weights": {
+              "basegame": {
+                "BR0": 1
+              },
+              "freegame": {
+                "FR0": 1
+              }
+            },
+            "force_wincap": true
+          }
+        },
+        {
+          "criteria": "freegame",
+          "quota": 0.049,
+          "win_criteria": null,
+          "conditions": {
+            "reel_weights": {
+              "basegame": {
+                "BR0": 1
+              },
+              "freegame": {
+                "FR0": 1
+              }
+            },
+            "scatter_triggers": {
+              "3": 20,
+              "4": 10,
+              "5": 2
+            },
+            "force_freegame": true
+          }
+        },
+        {
+          "criteria": "0",
+          "quota": 0.45,
+          "win_criteria": 0.0,
+          "conditions": {
+            "reel_weights": {
+              "basegame": {
+                "BR0": 1
+              }
+            }
+          }
+        },
+        {
+          "criteria": "basegame",
+          "quota": 0.5009,
+          "win_criteria": null,
+          "conditions": {
+            "reel_weights": {
+              "basegame": {
+                "BR0": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "ante",
+      "cost": 1.25,
+      "rtp": 0.9653,
+      "max_win": 25000.0,
+      "distributions": [
+        {
+          "criteria": "basegame",
+          "quota": 1.0,
+          "win_criteria": null,
+          "conditions": {
+            "reel_weights": {
+              "basegame": {
+                "BR0": 1
+              },
+              "freegame": {
+                "FR0": 1
+              }
+            },
+            "scatter_chance_override": 0.04
+          }
+        }
+      ]
+    },
+    {
+      "name": "bonus",
+      "cost": 100.0,
+      "rtp": 0.9653,
+      "max_win": 25000.0,
+      "distributions": [
+        {
+          "criteria": "wincap",
+          "quota": 0.001,
+          "win_criteria": 25000.0,
+          "conditions": {
+            "reel_weights": {
+              "basegame": {
+                "BR0": 1
+              },
+              "freegame": {
+                "FR0": 1
+              }
+            },
+            "force_wincap": true,
+            "force_freegame": true
+          }
+        },
+        {
+          "criteria": "freegame",
+          "quota": 0.999,
+          "win_criteria": null,
+          "conditions": {
+            "reel_weights": {
+              "basegame": {
+                "BR0": 1
+              },
+              "freegame": {
+                "FR0": 1
+              }
+            },
+            "scatter_triggers": {
+              "3": 20,
+              "4": 10,
+              "5": 2
+            },
+            "force_freegame": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "super",
+      "cost": 500.0,
+      "rtp": 0.9653,
+      "max_win": 25000.0,
+      "distributions": [
+        {
+          "criteria": "freegame",
+          "quota": 1.0,
+          "win_criteria": null,
+          "conditions": {
+            "reel_weights": {
+              "basegame": {
+                "BR0": 1
+              },
+              "freegame": {
+                "SF0": 1
+              }
+            },
+            "scatter_triggers": {
+              "3": 10
+            },
+            "force_freegame": true
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "game_id": "sugar_rush_1000",
+  "modes": [
+    {
+      "name": "base",
+      "cost": 1.0,
+      "rtp": 0.9653,
+      "maxWin": 25000.0
+    },
+    {
+      "name": "ante",
+      "cost": 1.25,
+      "rtp": 0.9653,
+      "maxWin": 25000.0
+    },
+    {
+      "name": "bonus",
+      "cost": 100.0,
+      "rtp": 0.9653,
+      "maxWin": 25000.0
+    },
+    {
+      "name": "super",
+      "cost": 500.0,
+      "rtp": 0.9653,
+      "maxWin": 25000.0
+    }
+  ],
+  "files": {
+    "index.json": "6b97be9d4b7fa49b614e007ce0257e8fd30572b8b846f88089a0cda72b4e12f3",
+    "books\\books_base.jsonl": "fc7eec7f848472680df140d9f2146dff0f562fd9d6560be46f7ae40a68b10e48",
+    "books_compressed\\books_ante.jsonl.zst": "4f4e7e5d86947b594224083de0a69dd76c118f5f96947b5d9b372af06d12e8d4",
+    "books_compressed\\books_base.jsonl.zst": "cb70c5c28d62f72f8076c5c382668da32630bdd4e1d7c293d9c3bb435975e2a9",
+    "books_compressed\\books_bonus.jsonl.zst": "ab5a65ba4b1651a959ff84d6fe3bf2cd266c1f65b3e685aa0afc33437d5d3cab",
+    "books_compressed\\books_super.jsonl.zst": "81093cca9e24247f69894a343919505f7393215d9bebc8fb3cc981e24a6dd865",
+    "configs\\config.json": "85c7dfc8810e5d06218c7acc8c3cce1f02c8882fd57ef791600e2131283d844f",
+    "configs\\config_fe.json": "c0d029e492cddfabb4b34d0f6fddde83a7876951b71624ced2d8ea2b5b01aa7d",
+    "configs\\config_math.json": "75011c5c1fe465ec5b2467c64ca50eab023af5b4eb83e2066c21154e74bc3dc4",
+    "lookup_tables\\lookUpTableIdToCriteria_base.csv": "4017a76e518ce7bc5f3b77f438dea26c52aa63d05a95b73585f3d00d35ddf1bb",
+    "lookup_tables\\lookUpTableSegmented_base.csv": "c66f24b0064730150a345859f7c590a48fb021d8012499dc3bd8660472ef94b4",
+    "lookup_tables\\lookUpTable_ante_0.csv": "1ba5a01af9b0a16a2bf932bb96304c239d89dfba1767b1fea09ee2022810b13c",
+    "lookup_tables\\lookUpTable_base_0.csv": "b190d3ea5b1d855902b4aa1b6fb225bfef177f68cb27fcd6cfc865354c57d6dc",
+    "lookup_tables\\lookUpTable_bonus_0.csv": "6468880b991a7b91d0d99bc89d109057b09961d6593ffcee1d0e89e9038561eb",
+    "lookup_tables\\lookUpTable_super_0.csv": "07ee2f53ffa51d8d25f8e388a32a444d67ec06dcd0b92542bd79f936d4440771"
+  }
+}
