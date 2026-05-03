@@ -7,6 +7,13 @@ Generates all output files required by the Stake ACP:
 - Index file (index.json) — mode registry
 - Force files — event tracking for optimization
 - Config files — frontend, backend, and math configs
+
+IMPORTANT: The Stake RGS requires the 3 minimum files to be FLAT
+in the same directory as index.json:
+  upload_dir/
+  ├── index.json
+  ├── books_<mode>.jsonl.zst
+  └── lookUpTable_<mode>_0.csv
 """
 
 import os
@@ -17,18 +24,26 @@ import zstandard as zstd
 
 
 class OutputFiles:
-    """Constructs filepaths and creates output directories."""
+    """Constructs filepaths and creates output directories.
+    
+    The RGS upload requires a flat directory structure:
+    - index.json, .jsonl.zst, and .csv files all sit together
+    - configs, forces, and debug books go in subdirectories
+    """
 
     def __init__(self, game_id: str):
         self.base_dir = "math"
-        self.books_dir = f"{self.base_dir}/books"
-        self.books_compressed_dir = f"{self.base_dir}/books_compressed"
+
+        # Mandatory files go FLAT alongside index.json
+        # (books_compressed and lookup_tables are in base_dir directly)
+
+        # Optional subdirectories for non-upload files
+        self.books_dir = f"{self.base_dir}/books"         # debug uncompressed
         self.configs_dir = f"{self.base_dir}/configs"
         self.forces_dir = f"{self.base_dir}/forces"
-        self.lookup_dir = f"{self.base_dir}/lookup_tables"
 
-        for d in [self.books_dir, self.books_compressed_dir,
-                  self.configs_dir, self.forces_dir, self.lookup_dir]:
+        for d in [self.base_dir, self.books_dir,
+                  self.configs_dir, self.forces_dir]:
             os.makedirs(d, exist_ok=True)
 
 
@@ -46,11 +61,14 @@ class WriteData:
         Writes zStandard compressed JSON-lines (.jsonl.zst).
         Required format: {"id": <int>, "events": <list>, "payoutMultiplier": <int>}
         payoutMultiplier is stored as uint64 (e.g., 1150 = 11.5x payout).
+        
+        File is written FLAT next to index.json as required by the RGS.
         """
-        filename = f"{self.out.books_compressed_dir}/books_{betmode_name}.jsonl.zst"
+        logic_filename = f"books_{betmode_name}.jsonl.zst"
+        filepath = f"{self.out.base_dir}/{logic_filename}"
 
         cctx = zstd.ZstdCompressor()
-        with open(filename, 'wb') as f:
+        with open(filepath, 'wb') as f:
             with cctx.stream_writer(f) as compressor:
                 for sim in simulations:
                     line = json.dumps({
@@ -60,13 +78,14 @@ class WriteData:
                     }) + "\n"
                     compressor.write(line.encode('utf-8'))
 
-        print(f"  Written: {filename} ({len(simulations)} simulations)")
-        return f"books_compressed/books_{betmode_name}.jsonl.zst"
+        print(f"  Written: {filepath} ({len(simulations)} simulations)")
+        return logic_filename
 
     def write_uncompressed_book(self, betmode_name: str, simulations: list) -> str:
         """
         Writes uncompressed JSON-lines (.jsonl) for debugging.
         Same format as compressed but human-readable.
+        Goes in books/ subdirectory (not uploaded to RGS).
         """
         filename = f"{self.out.books_dir}/books_{betmode_name}.jsonl"
 
@@ -90,29 +109,39 @@ class WriteData:
     def write_lookup_table(self, betmode_name: str, simulations: list) -> str:
         """
         Writes the primary lookup table CSV.
-        Format: simulation_number, weight (uint64), payout_multiplier (uint64)
-        All weights start at 1. The optimization algorithm modifies them.
+        
+        SDK Format: simulation_number, round_probability (uint64), payout_multiplier (uint64)
+        
+        Before optimization, all probabilities are set to 1 (equal weight).
+        The Rust optimizer modifies column 2 to achieve target RTP.
+        
+        The payoutMultiplier in column 3 MUST exactly match the value in the
+        .jsonl.zst books — the RGS hashes both to verify integrity.
+        
+        File is written FLAT next to index.json as required by the RGS.
         """
-        filename = f"{self.out.lookup_dir}/lookUpTable_{betmode_name}_0.csv"
+        csv_filename = f"lookUpTable_{betmode_name}_0.csv"
+        filepath = f"{self.out.base_dir}/{csv_filename}"
 
-        with open(filename, 'w', newline='') as f:
+        with open(filepath, 'w', newline='') as f:
             writer = csv.writer(f)
             for sim in simulations:
                 writer.writerow([
                     sim["id"],
-                    1,
+                    1,  # probability weight (modified by optimizer)
                     int(round(sim["payoutMultiplier"] * 100)),
                 ])
 
-        print(f"  Written: {filename}")
-        return f"lookup_tables/lookUpTable_{betmode_name}_0.csv"
+        print(f"  Written: {filepath}")
+        return csv_filename
 
     def write_lookup_id_to_criteria(self, betmode_name: str, simulations: list) -> None:
         """
         Writes lookUpTableIdToCriteria CSV.
         Maps each simulation ID to its assigned criteria.
+        Goes in base_dir (optional, not required for RGS upload).
         """
-        filename = f"{self.out.lookup_dir}/lookUpTableIdToCriteria_{betmode_name}.csv"
+        filename = f"{self.out.base_dir}/lookUpTableIdToCriteria_{betmode_name}.csv"
 
         with open(filename, 'w', newline='') as f:
             writer = csv.writer(f)
@@ -126,8 +155,9 @@ class WriteData:
         """
         Writes lookUpTableSegmented CSV.
         Shows the basegame/freegame win contribution per simulation.
+        Goes in base_dir (optional, not required for RGS upload).
         """
-        filename = f"{self.out.lookup_dir}/lookUpTableSegmented_{betmode_name}.csv"
+        filename = f"{self.out.base_dir}/lookUpTableSegmented_{betmode_name}.csv"
 
         with open(filename, 'w', newline='') as f:
             writer = csv.writer(f)
@@ -182,7 +212,21 @@ class WriteData:
     def write_index(self, modes_data: list) -> None:
         """
         Writes the required index.json file for RGS math upload.
-        Format: {"modes": [{"name": str, "cost": float, "events": str, "weights": str}]}
+        
+        SDK Format:
+        {
+            "modes": [
+                {
+                    "name": <string>,
+                    "cost": <float>,
+                    "events": "<logic_file>.jsonl.zst",
+                    "weights": "<lookup_table>.csv"
+                }
+            ]
+        }
+        
+        IMPORTANT: "events" and "weights" must be FLAT filenames,
+        not paths with subdirectories.
         """
         index_data = {"modes": modes_data}
         filename = f"{self.out.base_dir}/index.json"

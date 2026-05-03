@@ -14,8 +14,8 @@ import os
 import copy
 import concurrent.futures
 
-# Add parent dir to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+# Add parent dir (math-engine/) to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sugar_rush_1000.game_config import GameConfig
 from sugar_rush_1000.gamestate import GameState
@@ -162,7 +162,7 @@ def create_books(gamestate, config, num_sim_args, batching_size, num_threads, co
 
     print(f"\n{'='*60}")
     print(f"  All simulations complete!")
-    print(f"  Output: games/{config.game_id}/library/")
+    print(f"  Output: math/")
     print(f"{'='*60}")
 
     return writer

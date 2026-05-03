@@ -1804,9 +1804,12 @@ export class Game extends Phaser.Scene {
   }
 
   private handlePendingRound() {
-    // Stateless — pending round recovery is handled server-side.
-    // On auth, the Stake Engine returns any pending round in auth.round.
-    // The server's resync endpoint handles balance reconciliation.
+    // SDK disconnect recovery flow:
+    // On auth, the RGS returns any pending round in auth.round.
+    // If round.active is true, we should resume from round.event (last saved event index).
+    // For now, we end the round immediately — a full resume implementation
+    // would replay events from the saved index onward.
+    console.log('[Game] Pending round detected — ending to reconcile balance.');
     this.stakeEngine.endRound().catch(e => console.warn('[Game] endRound error:', e));
   }
 
@@ -1863,7 +1866,7 @@ export class Game extends Phaser.Scene {
 
       // If there's a pending round the server knows about, end it
       if (state.pendingRound) {
-        console.log('[Game] Server reports pending round:', state.pendingRound.roundId);
+        console.log('[Game] Server reports pending round:', state.pendingRound.betID);
         this.stakeEngine.endRound().catch(e => console.warn('[Game] endRound error:', e));
       }
 

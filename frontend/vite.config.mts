@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  base: './', // Required by Stake Engine — assets must use relative paths
   build: {
     assetsInlineLimit: 0,
     outDir: 'dist',

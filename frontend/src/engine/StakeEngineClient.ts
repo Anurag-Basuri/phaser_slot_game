@@ -2,83 +2,123 @@
  * Stake Engine RGS Client
  * Handles all communication with the Stake Engine Remote Gaming Server.
  *
- * API Endpoints:
+ * API Endpoints (per official SDK docs):
  *   /wallet/authenticate - Validates player session (must be called first)
  *   /wallet/play         - Initiates a bet/round, returns game outcome
  *   /wallet/balance      - Gets current player balance
  *   /wallet/end-round    - Completes a round after animations finish
+ *   /bet/event           - Saves animation progress for disconnect recovery
  *
  * Monetary values use 6-decimal integer precision: $1.00 = 1_000_000
  */
 
+// ── Auth Response ──
+// Matches the SDK's /wallet/authenticate response exactly
 export interface StakeAuthResponse {
   balance: { amount: number; currency: string };
-  minBet?: number;
-  maxBet?: number;
-  stepBet?: number;
-  round?: {
-    event: string; // Resume state for disconnect recovery
-    roundId: string;
+  config: {
+    minBet: number;
+    maxBet: number;
+    stepBet: number;
+    defaultBetLevel: number;
+    betLevels: number[];
+    jurisdiction?: {
+      socialCasino?: boolean;
+      disabledFullscreen?: boolean;
+      disabledTurbo?: boolean;
+      [key: string]: any;
+    };
   };
+  round?: StakeRound;
 }
 
+// ── Round structure ──
+// The round returned from /wallet/play or /wallet/authenticate
+export interface StakeRound {
+  betID: number;
+  amount: number;
+  active: boolean;
+  event?: string; // Last saved event index for disconnect recovery
+  state: RGSEvent[];
+}
+
+// ── Play Response ──
+// Matches the SDK's /wallet/play response exactly
 export interface StakePlayResponse {
   balance: { amount: number; currency: string };
-  round: {
-    betID: string | number;
-    amount: number;
-    active: boolean;
-    state: GameEvent[];
-  };
+  round: StakeRound;
 }
 
-export interface GameEvent {
-  type:
-    | 'spin'
-    | 'cascade'
-    | 'cluster_win'
-    | 'scatter_trigger'
-    | 'free_spin'
-    | 'multiplier_advance'
-    | 'round_end';
-  data:
-    | SpinEventData
-    | ClusterWinData
-    | ScatterData
-    | FreeSpinData
-    | MultiplierData
-    | RoundEndData;
+// ── RGS Event Types ──
+// These match the event types emitted by our math engine's events.py
+// The RGS returns the `events` array directly as `round.state`
+export interface RGSEvent {
+  index: number;
+  type: string;
+  [key: string]: any;
 }
 
-export interface SpinEventData {
-  grid: number[][]; // 7x7 grid of symbol IDs
+// Specific event data shapes for type safety
+export interface RevealEventData extends RGSEvent {
+  type: 'reveal';
+  board: SymbolCell[][];
+  paddingPositions: any[];
+  gameType: string;
+  anticipation: number[];
 }
 
-export interface ClusterWinData {
-  symbolId: number;
-  positions: { row: number; col: number }[];
-  payout: number;
-  clusterSize: number;
+export interface WinInfoEventData extends RGSEvent {
+  type: 'winInfo';
+  totalWin: number;
+  wins: ClusterWin[];
 }
 
-export interface ScatterData {
-  positions: { row: number; col: number }[];
-  freeSpinsAwarded: number;
+export interface ClusterWin {
+  symbol: string;
+  kind: number;
+  win: number;
+  positions: { reel: number; row: number }[];
+  meta: { multiplier?: number; [key: string]: any };
 }
 
-export interface FreeSpinData {
-  spinNumber: number;
+export interface SetTotalWinEventData extends RGSEvent {
+  type: 'setTotalWin';
+  amount: number;
+}
+
+export interface FSTriggerEventData extends RGSEvent {
+  type: 'fsTrigger';
   totalSpins: number;
+  scatterCount: number;
+  triggerType: 'basegame' | 'retrigger';
+}
+
+export interface TumbleBoardEventData extends RGSEvent {
+  type: 'tumbleBoard';
+  board: SymbolCell[][];
+}
+
+export interface MultiplierUpdateEventData extends RGSEvent {
+  type: 'multiplierUpdate';
   grid: number[][];
 }
 
-export interface MultiplierData {
-  positions: { row: number; col: number; multiplier: number }[];
+export interface FinalWinEventData extends RGSEvent {
+  type: 'finalWin';
+  amount: number;
 }
 
-export interface RoundEndData {
-  totalWin: number;
-  balance: number;
+export interface SymbolCell {
+  symbol: string;
+  id: number;
+  reel: number;
+  row: number;
+}
+
+// Legacy aliases for backward compatibility with Game.tsx
+export type GameEvent = RGSEvent;
+export interface SpinEventData {
+  grid: number[][];
 }
 
 export interface URLParams {
@@ -118,10 +158,13 @@ export class StakeEngineClient {
   private lang: string = 'en';
   private device: string = 'desktop';
   private authenticated: boolean = false;
-  private currentRoundId: string | null = null;
+  private currentRoundActive: boolean = false;
   private isDemo: boolean = false;
   private _isReplay: boolean = false;
   private _isSocial: boolean = false;
+
+  // Cached auth config for bet limits
+  private _authConfig: StakeAuthResponse['config'] | null = null;
 
   private replayData: any = null;
 
@@ -200,6 +243,11 @@ export class StakeEngineClient {
     return this.device;
   }
 
+  /** Get cached auth config (bet limits, jurisdiction) */
+  public getAuthConfig(): StakeAuthResponse['config'] | null {
+    return this._authConfig;
+  }
+
   /** Convert from Stake integer precision to display amount */
   public static toDisplayAmount(stakeAmount: number): number {
     return stakeAmount / PRECISION;
@@ -230,10 +278,17 @@ export class StakeEngineClient {
 
         // Non-retryable client errors (4xx except 429)
         if (response.status >= 400 && response.status < 500 && response.status !== 429) {
-          if (response.status === 401 || response.status === 403) {
-            throw new StakeError('AUTH', `Authentication rejected (${response.status})`, response.status);
+          // Parse RGS error codes: ERR_IS, ERR_ATE, ERR_IPB, etc.
+          const body = await response.json().catch(() => ({}));
+          const code = body?.code || body?.status || '';
+
+          if (code === 'ERR_IS' || code === 'ERR_ATE' || response.status === 401 || response.status === 403) {
+            throw new StakeError('AUTH', `Authentication error: ${code}`, response.status);
           }
-          throw new StakeError('REJECTED', `Request rejected (${response.status})`, response.status);
+          if (code === 'ERR_IPB') {
+            throw new StakeError('REJECTED', `Insufficient balance`, response.status);
+          }
+          throw new StakeError('REJECTED', `Request rejected: ${code || response.status}`, response.status);
         }
 
         // Retryable server errors (5xx, 429)
@@ -264,17 +319,24 @@ export class StakeEngineClient {
 
   /**
    * Authenticate the player session. Must be called before any other API call.
-   * Returns the player's balance and any pending round state for recovery.
+   * Returns the player's balance, config (bet limits), and any pending round.
+   *
+   * SDK spec: POST /wallet/authenticate { sessionID }
+   * Response: { balance, config: { minBet, maxBet, stepBet, betLevels, jurisdiction }, round }
    */
   public async authenticate(): Promise<StakeAuthResponse> {
     if (this._isReplay) {
       // Replay mode bypasses Authentication entirely. It requires no session token.
-      return { balance: { amount: 0, currency: 'USD' } };
+      return {
+        balance: { amount: 0, currency: 'USD' },
+        config: { minBet: 100000, maxBet: 1000000000, stepBet: 100000, defaultBetLevel: 1000000, betLevels: [] },
+      };
     }
 
     if (this.isDemo) {
       return {
         balance: { amount: 100_000 * PRECISION, currency: 'USD' },
+        config: { minBet: 100000, maxBet: 1000000000, stepBet: 100000, defaultBetLevel: 1000000, betLevels: [] },
       };
     }
 
@@ -285,21 +347,20 @@ export class StakeEngineClient {
         body: JSON.stringify({ sessionID: this.sessionID }),
       });
 
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(
-          `Authentication failed: ${error.code || response.status}`,
-        );
-      }
-
       const data = await response.json();
       this.authenticated = true;
 
+      // Cache the config for bet validation
+      this._authConfig = data.config || null;
+
+      // Check jurisdiction for social casino mode
+      if (data.config?.jurisdiction?.socialCasino) {
+        this._isSocial = true;
+      }
+
       return {
         balance: data.balance || { amount: 0, currency: 'USD' },
-        minBet: data.minBet,
-        maxBet: data.maxBet,
-        stepBet: data.stepBet,
+        config: data.config || { minBet: 100000, maxBet: 1000000000, stepBet: 100000, defaultBetLevel: 1000000, betLevels: [] },
         round: data.round || undefined,
       };
     } catch (error) {
@@ -311,6 +372,12 @@ export class StakeEngineClient {
   /**
    * Execute a game round (spin). Returns the complete outcome including
    * all cascades, cluster wins, and free spins pre-determined by the RGS.
+   *
+   * SDK spec: POST /wallet/play { sessionID, amount, mode }
+   * Response: { balance, round: { betID, amount, active, state: [...events] } }
+   *
+   * The `mode` field maps to bet mode names from our math config:
+   *   "base" (normal), "ante", "bonus" (buy FS), "super" (buy super FS)
    */
   public async play(
     betAmount: number,
@@ -328,6 +395,14 @@ export class StakeEngineClient {
       throw new Error('Must authenticate before playing');
     }
 
+    // Map feature type to SDK mode name
+    const modeMap: Record<number, string> = {
+      0: 'base',
+      1: 'bonus',
+      2: 'super',
+    };
+    const mode = modeMap[featureType] || 'base';
+
     try {
       const response = await this.fetchWithRetry(`${this.rgsUrl}/wallet/play`, {
         method: 'POST',
@@ -335,17 +410,12 @@ export class StakeEngineClient {
         body: JSON.stringify({
           sessionID: this.sessionID,
           amount: StakeEngineClient.toStakeAmount(betAmount),
-          feature: featureType, // 0 = normal, 1 = buy FS, 2 = buy super FS
+          mode: mode.toUpperCase(), // SDK convention: uppercase mode name
         }),
       });
 
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(`Play failed: ${error.code || response.status}`);
-      }
-
       const data = await response.json();
-      this.currentRoundId = String(data.round?.betID || '');
+      this.currentRoundActive = data.round?.active ?? false;
 
       return data as StakePlayResponse;
     } catch (error) {
@@ -356,6 +426,9 @@ export class StakeEngineClient {
 
   /**
    * Get the current player balance.
+   *
+   * SDK spec: POST /wallet/balance { sessionID }
+   * Response: { balance: { amount, currency } }
    */
   public async getBalance(): Promise<{ amount: number; currency: string }> {
     if (this.isDemo) {
@@ -372,7 +445,6 @@ export class StakeEngineClient {
       if (!response.ok) throw new Error('Balance fetch failed');
 
       const data = await response.json();
-      // The balance API typically returns the identical balance object format
       return data.balance || data;
     } catch (error) {
       console.error('[StakeEngine] Balance error:', error);
@@ -382,24 +454,59 @@ export class StakeEngineClient {
 
   /**
    * End the current round. Must be called after all animations complete.
+   *
+   * SDK spec: POST /wallet/end-round { sessionID }
+   * Response: { balance }
+   *
+   * NOTE: The SDK only requires sessionID — NOT roundId.
+   * The server knows which round is active for this session.
    */
-  public async endRound(): Promise<void> {
-    if (this.isDemo || !this.currentRoundId) return;
+  public async endRound(): Promise<{ balance?: { amount: number; currency: string } }> {
+    if (this.isDemo || !this.currentRoundActive) return {};
 
     try {
-      await this.fetchWithRetry(`${this.rgsUrl}/wallet/end-round`, {
+      const response = await this.fetchWithRetry(`${this.rgsUrl}/wallet/end-round`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionID: this.sessionID,
-          roundId: this.currentRoundId,
         }),
       });
 
-      this.currentRoundId = null;
+      this.currentRoundActive = false;
+      const data = await response.json().catch(() => ({}));
+      return data;
     } catch (error) {
       console.error('[StakeEngine] End round error:', error);
       // endRound failures are non-critical — the server will auto-close stale rounds
+      return {};
+    }
+  }
+
+  /**
+   * Save animation progress event for disconnect recovery.
+   *
+   * SDK spec: POST /bet/event { sessionID, event }
+   * Response: { event }
+   *
+   * Call this after processing each event in round.state so the player
+   * can resume from the correct animation point on reconnect.
+   */
+  public async saveEvent(eventIndex: string): Promise<void> {
+    if (this.isDemo || !this.currentRoundActive) return;
+
+    try {
+      await this.fetchWithRetry(`${this.rgsUrl}/bet/event`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionID: this.sessionID,
+          event: eventIndex,
+        }),
+      }, 1); // Only 1 attempt — non-critical
+    } catch (error) {
+      // Non-critical — best effort save
+      console.warn('[StakeEngine] Event save failed:', error);
     }
   }
 
@@ -410,7 +517,7 @@ export class StakeEngineClient {
    *
    * Returns the display-amount balance, or throws StakeError on failure.
    */
-  public async resync(): Promise<{ balance: number; currency: string; pendingRound?: { roundId: string; event: string } }> {
+  public async resync(): Promise<{ balance: number; currency: string; pendingRound?: StakeRound }> {
     if (this.isDemo) {
       // In demo mode, resync returns the starting balance (stateless)
       return { balance: 100_000, currency: 'USD' };
@@ -421,7 +528,7 @@ export class StakeEngineClient {
       return {
         balance: StakeEngineClient.toDisplayAmount(auth.balance.amount),
         currency: auth.balance.currency,
-        pendingRound: auth.round ? { roundId: auth.round.roundId, event: auth.round.event } : undefined,
+        pendingRound: auth.round || undefined,
       };
     } catch (err) {
       console.error('[StakeEngine] Resync failed:', err);
@@ -465,10 +572,10 @@ export class StakeEngineClient {
         currency: 'USD'
       },
       round: {
-        betID: `demo_${Date.now()}`,
+        betID: Date.now(),
         amount: StakeEngineClient.toStakeAmount(betAmount),
         active: false,
-        state: [{ type: 'spin', data: { grid } as SpinEventData }]
+        state: [{ index: 0, type: 'spin', grid } as any]
       }
     };
   }

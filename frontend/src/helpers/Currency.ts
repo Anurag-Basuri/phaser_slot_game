@@ -1,5 +1,6 @@
 /**
  * Available currency codes for Stake Engine
+ * Full list from official SDK documentation
  */
 export type Currency =
   | 'USD' // (United States Dollar)
@@ -21,12 +22,27 @@ export type Currency =
   | 'CLP' // (Chilean Peso)
   | 'ARS' // (Argentine Peso)
   | 'PEN' // (Peruvian Sol)
-  | 'XGC' // Stake US Gold Coin
-  | 'XSC'; // Stake US Stake Cash
+  | 'NGN' // (Nigerian Naira)
+  | 'SAR' // (Saudi Arabia Riyal)
+  | 'ILS' // (Israel Shekel)
+  | 'AED' // (United Arab Emirates Dirham)
+  | 'TWD' // (Taiwan New Dollar)
+  | 'NOK' // (Norway Krone)
+  | 'KWD' // (Kuwaiti Dinar)
+  | 'JOD' // (Jordanian Dinar)
+  | 'CRC' // (Costa Rica Colon)
+  | 'TND' // (Tunisian Dinar)
+  | 'SGD' // (Singapore Dollar)
+  | 'MYR' // (Malaysia Ringgit)
+  | 'OMR' // (Oman Rial)
+  | 'QAR' // (Qatar Riyal)
+  | 'BHD' // (Bahraini Dinar)
+  | 'XGC' // Stake Gold Coin
+  | 'XSC'; // Stake Cash
 
 /**
  * Currency metadata: symbol, default decimals, symbol placement
- * 
+ * Exact match to SDK documentation
  */
 export const CurrencyMeta: Record<
   Currency | string,
@@ -51,6 +67,21 @@ export const CurrencyMeta: Record<
   CLP: { symbol: 'CLP', decimals: 0, symbolAfter: true },
   ARS: { symbol: 'ARS', decimals: 2, symbolAfter: true },
   PEN: { symbol: 'S/', decimals: 2, symbolAfter: true },
+  NGN: { symbol: '₦', decimals: 2 },
+  SAR: { symbol: 'SAR', decimals: 2, symbolAfter: true },
+  ILS: { symbol: 'ILS', decimals: 2, symbolAfter: true },
+  AED: { symbol: 'AED', decimals: 2, symbolAfter: true },
+  TWD: { symbol: 'NT$', decimals: 2 },
+  NOK: { symbol: 'kr', decimals: 2 },
+  KWD: { symbol: 'KD', decimals: 2 },
+  JOD: { symbol: 'JD', decimals: 2 },
+  CRC: { symbol: '₡', decimals: 2 },
+  TND: { symbol: 'TND', decimals: 2, symbolAfter: true },
+  SGD: { symbol: 'SG$', decimals: 2 },
+  MYR: { symbol: 'RM', decimals: 2 },
+  OMR: { symbol: 'OMR', decimals: 2, symbolAfter: true },
+  QAR: { symbol: 'QAR', decimals: 2, symbolAfter: true },
+  BHD: { symbol: 'BD', decimals: 2 },
   XGC: { symbol: 'GC', decimals: 2 },
   XSC: { symbol: 'SC', decimals: 2 },
 };
