@@ -3,8 +3,8 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from games.sugar_rush_1000.game_config import GameConfig
-from games.sugar_rush_1000.gamestate import GameState
+from sugar_rush_1000.game_config import GameConfig
+from sugar_rush_1000.gamestate import GameState
 
 def run_rtp_test():
     print("--- 🍬 Sugar Rush 1000 RTP Test ---")
