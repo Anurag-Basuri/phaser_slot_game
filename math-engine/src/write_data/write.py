@@ -20,7 +20,7 @@ class OutputFiles:
     """Constructs filepaths and creates output directories."""
 
     def __init__(self, game_id: str):
-        self.base_dir = f"games/{game_id}/library"
+        self.base_dir = "math"
         self.books_dir = f"{self.base_dir}/books"
         self.books_compressed_dir = f"{self.base_dir}/books_compressed"
         self.configs_dir = f"{self.base_dir}/configs"
@@ -61,7 +61,7 @@ class WriteData:
                     compressor.write(line.encode('utf-8'))
 
         print(f"  Written: {filename} ({len(simulations)} simulations)")
-        return f"books_{betmode_name}.jsonl.zst"
+        return f"books_compressed/books_{betmode_name}.jsonl.zst"
 
     def write_uncompressed_book(self, betmode_name: str, simulations: list) -> str:
         """
@@ -105,7 +105,7 @@ class WriteData:
                 ])
 
         print(f"  Written: {filename}")
-        return f"lookUpTable_{betmode_name}_0.csv"
+        return f"lookup_tables/lookUpTable_{betmode_name}_0.csv"
 
     def write_lookup_id_to_criteria(self, betmode_name: str, simulations: list) -> None:
         """

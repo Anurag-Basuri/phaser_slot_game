@@ -113,8 +113,7 @@ class GameConfig(Config):
         # Multiplier cap
         self.max_multiplier = 1024
 
-        # Reelstrip paths
-        self.reels_path = "games/sugar_rush_1000/reels"
+        self.reels_path = "sugar_rush_1000/reels"
         reels = {"BR0": "BR0.csv", "FR0": "FR0.csv", "SF0": "SF0.csv"}
         self.reels = {}
         for r, f in reels.items():

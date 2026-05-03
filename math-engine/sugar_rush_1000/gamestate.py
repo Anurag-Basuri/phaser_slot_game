@@ -5,8 +5,8 @@ Combines GameStateOverride + GameExecutables via multiple inheritance.
 Implements the run_spin() and run_freespin() entry points.
 """
 
-from games.sugar_rush_1000.game_override import GameStateOverride
-from games.sugar_rush_1000.game_executables import GameExecutables
+from sugar_rush_1000.game_override import GameStateOverride
+from sugar_rush_1000.game_executables import GameExecutables
 from src.events.events import set_total_event
 
 

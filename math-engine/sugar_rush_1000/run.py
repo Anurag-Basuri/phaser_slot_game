@@ -17,8 +17,8 @@ import concurrent.futures
 # Add parent dir to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from games.sugar_rush_1000.game_config import GameConfig
-from games.sugar_rush_1000.gamestate import GameState
+from sugar_rush_1000.game_config import GameConfig
+from sugar_rush_1000.gamestate import GameState
 from src.write_data.write import WriteData
 
 
