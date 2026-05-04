@@ -1633,8 +1633,21 @@ export class Game extends Phaser.Scene {
     try {
       const result = await this.stakeEngine.play(cost, triggerType);
       const stateEvents = result.round?.state || [];
-      const spinEvent = stateEvents.find((e: any) => e.type === 'spin');
-      const serverGrid = spinEvent ? (spinEvent.data as SpinEventData).grid : undefined;
+      const revealEvent = stateEvents.find((e: any) => e.type === 'reveal');
+
+      let serverGrid: number[][] | undefined;
+      if (revealEvent && revealEvent.board) {
+        serverGrid = this.parseRevealBoard(revealEvent.board);
+      } else {
+        const spinEvent = stateEvents.find((e: any) => e.type === 'spin');
+        serverGrid = spinEvent?.grid || spinEvent?.data?.grid;
+      }
+      
+      // Update balance from server response (authoritative)
+      if (result.balance && !this.stakeEngine.isDemoMode()) {
+        this.valueMoney = StakeEngineClient.toDisplayAmount(result.balance.amount);
+        this.updateMoneyDisplay();
+      }
 
       // Show free spins intro, then configure FS state and inject grid
       // When buying, 3-7 scatters can hit randomly — determine FS count
