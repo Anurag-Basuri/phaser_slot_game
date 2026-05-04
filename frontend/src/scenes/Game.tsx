@@ -1710,6 +1710,31 @@ export class Game extends Phaser.Scene {
     }
   }
 
+  /**
+   * Parse a 'reveal' event board from the RGS into a number[][] of symbol IDs.
+   * RGS format: board[row][col] = {symbol: "L3", id: 0, reel: col, row: row}
+   * Frontend needs: number[][] where each value is the symbol ID (0-7).
+   */
+  private parseRevealBoard(board: any[][]): number[][] {
+    const size = 7;
+    const grid: number[][] = [];
+    for (let r = 0; r < size; r++) {
+      const row: number[] = [];
+      for (let c = 0; c < size; c++) {
+        const cell = board?.[r]?.[c];
+        if (cell && typeof cell === 'object' && typeof cell.id === 'number') {
+          row.push(cell.id);
+        } else if (typeof cell === 'number') {
+          row.push(cell); // Already a number (demo mode)
+        } else {
+          row.push(0); // Fallback
+        }
+      }
+      grid.push(row);
+    }
+    return grid;
+  }
+
   async attemptSpin(triggerType: number) {
     if (this._spinLock || this._recovering || this.fsActive || this.anyOverlayOpen()) return;
 
@@ -1731,9 +1756,27 @@ export class Game extends Phaser.Scene {
       try {
         const result = await this.stakeEngine.play(cost, triggerType);
 
+        // RGS returns round.state as the events array from our math engine.
+        // The first 'reveal' event contains the board state.
         const stateEvents = result.round?.state || [];
-        const spinEvent = stateEvents.find((e: any) => e.type === 'spin');
-        const serverGrid = spinEvent ? (spinEvent.data as SpinEventData).grid : undefined;
+        const revealEvent = stateEvents.find((e: any) => e.type === 'reveal');
+
+        let serverGrid: number[][] | undefined;
+        if (revealEvent && revealEvent.board) {
+          // Production RGS: board is {symbol, id, reel, row}[][]
+          serverGrid = this.parseRevealBoard(revealEvent.board);
+        } else {
+          // Demo mode fallback: look for legacy 'spin' event with flat grid
+          const spinEvent = stateEvents.find((e: any) => e.type === 'spin');
+          serverGrid = spinEvent?.grid || spinEvent?.data?.grid;
+        }
+
+        // Update balance from server response (authoritative)
+        if (result.balance && !this.stakeEngine.isDemoMode()) {
+          this.valueMoney = StakeEngineClient.toDisplayAmount(result.balance.amount);
+          this.updateMoneyDisplay();
+        }
+
         this.grid.injectServerResult(serverGrid);
       } catch (err) {
         console.error('[Game] Play error:', err);
@@ -1781,8 +1824,16 @@ export class Game extends Phaser.Scene {
     // We fetch replayData state bypassing normal play triggers
     const replayData = await this.stakeEngine.fetchReplay();
     const stateEvents = replayData.state || [];
-    const spinEvent = stateEvents.find((e: any) => e.type === 'spin');
-    const serverGrid = spinEvent ? (spinEvent.data as SpinEventData).grid : undefined;
+
+    // Parse reveal event (production format: {symbol, id, reel, row}[][])
+    const revealEvent = stateEvents.find((e: any) => e.type === 'reveal');
+    let serverGrid: number[][] | undefined;
+    if (revealEvent && revealEvent.board) {
+      serverGrid = this.parseRevealBoard(revealEvent.board);
+    } else {
+      const spinEvent = stateEvents.find((e: any) => e.type === 'spin');
+      serverGrid = spinEvent?.grid || spinEvent?.data?.grid;
+    }
     
     // Reset Grid context
     this._spinLock = true;
@@ -1793,11 +1844,11 @@ export class Game extends Phaser.Scene {
     this.audio.playReels();
     this.grid.prepareSpin();
     
-    // Check if free spins trigger was embedded to seed early
-    const fsEvent = stateEvents.find((e: any) => e.type === 'free_spins_awarded');
+    // Check if free spins trigger was embedded (SDK event format)
+    const fsEvent = stateEvents.find((e: any) => e.type === 'fsTrigger');
     if (fsEvent) {
-       this.grid.isSuperFreeSpins = fsEvent.data.super;
-       this.grid.freeSpinsRemaining = fsEvent.data.count;
+       this.grid.isSuperFreeSpins = fsEvent.triggerType === 'super';
+       this.grid.freeSpinsRemaining = fsEvent.totalSpins || 0;
     }
 
     this.grid.injectServerResult(serverGrid);

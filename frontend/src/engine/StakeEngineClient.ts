@@ -162,6 +162,7 @@ export class StakeEngineClient {
   private isDemo: boolean = false;
   private _isReplay: boolean = false;
   private _isSocial: boolean = false;
+  private _demoBalance: number = 100_000;
 
   // Cached auth config for bet limits
   private _authConfig: StakeAuthResponse['config'] | null = null;
@@ -547,9 +548,10 @@ export class StakeEngineClient {
     const gridSize = 7;
     const symbolWeights = [18, 16, 15, 14, 13, 12, 9, 3];
     const totalWeight = symbolWeights.reduce((a, b) => a + b, 0);
+    const symbolNames = ['L3', 'L2', 'L1', 'H4', 'H3', 'H2', 'H1', 'S'];
 
     const pickSymbol = (): number => {
-      if (Math.random() < 0.02) return 8; // scatter
+      if (Math.random() < 0.02) return 7; // scatter (ID 7, not 8)
       let roll = Math.random() * totalWeight;
       for (let i = 0; i < symbolWeights.length; i++) {
         roll -= symbolWeights[i];
@@ -558,24 +560,44 @@ export class StakeEngineClient {
       return symbolWeights.length - 1;
     };
 
-    const grid: number[][] = [];
+    // Generate board in the same format as the RGS 'reveal' event
+    const board: any[][] = [];
     for (let r = 0; r < gridSize; r++) {
-      grid[r] = [];
+      board[r] = [];
       for (let c = 0; c < gridSize; c++) {
-        grid[r][c] = pickSymbol();
+        const id = pickSymbol();
+        board[r][c] = {
+          symbol: symbolNames[id],
+          id: id,
+          reel: c,
+          row: r,
+        };
       }
     }
 
+    // Calculate a simple demo balance
+    const currentBalance = this._demoBalance !== undefined
+      ? this._demoBalance - betAmount
+      : 100_000 - betAmount;
+    this._demoBalance = Math.max(0, currentBalance);
+
     return {
       balance: {
-        amount: StakeEngineClient.toStakeAmount(100_000),
+        amount: StakeEngineClient.toStakeAmount(this._demoBalance),
         currency: 'USD'
       },
       round: {
         betID: Date.now(),
         amount: StakeEngineClient.toStakeAmount(betAmount),
         active: false,
-        state: [{ index: 0, type: 'spin', grid } as any]
+        state: [{
+          index: 0,
+          type: 'reveal',
+          board: board,
+          paddingPositions: [],
+          gameType: 'basegame',
+          anticipation: [0, 0, 0, 0, 0, 0, 0],
+        } as any]
       }
     };
   }
