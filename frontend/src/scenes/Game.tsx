@@ -417,7 +417,7 @@ export class Game extends Phaser.Scene {
     }
   }
 
-  /** Proportional layout engine — handles three responsive modes */
+  /** Proportional layout engine — handles all responsive modes */
   private layoutAll() {
     const w = this.scale.width;
     const h = this.scale.height;
@@ -427,14 +427,14 @@ export class Game extends Phaser.Scene {
     const bgScaleY = h / this.bgImage.height;
     this.bgImage.setPosition(w / 2, h / 2).setScale(Math.max(bgScaleX, bgScaleY)).setVisible(true);
 
-    // Determine screen mode
+    // Determine layout mode
     const isPortrait = h > w;
     const isMobile = w < 768;
-    const isMobilePortrait = isPortrait && isMobile;
-    const isMobileLandscape = !isPortrait && h < 500;
+    // We stack elements vertically if in portrait, OR if landscape but very narrow
+    const isStacked = isPortrait || (w < 650);
 
     // Height of the bottom bar
-    const barH = isMobilePortrait ? Math.max(70, h * 0.12) : Math.max(50, h * 0.08);
+    const barH = isStacked ? Math.max(65, h * 0.1) : Math.max(50, h * 0.08);
     const safeH = h - barH;
 
     // ==========================================
@@ -444,18 +444,17 @@ export class Game extends Phaser.Scene {
     let gridX: number;
     let gridY: number;
 
-    if (isMobilePortrait) {
-      const topSpace = Math.max(80, h * 0.1);
-      const bottomSpace = 160; // Space for buy panels
+    if (isStacked) {
+      // In stacked mode, we need space at top (logo) and bottom (buy/spin buttons)
+      const topSpace = Math.max(160, h * 0.18); 
+      const bottomSpace = isPortrait ? 270 : 130; 
       const availableH = safeH - topSpace - bottomSpace;
-      gridTotalSize = Math.min(w * 0.96, availableH * 0.96);
+      gridTotalSize = Math.min(w * 0.94, availableH * 0.96);
       gridX = (w - gridTotalSize) / 2;
-      gridY = topSpace + (availableH - gridTotalSize) / 2 + 20;
-    } else if (isMobileLandscape) {
-      gridTotalSize = Math.min(h * 0.80, w * 0.46);
-      gridX = (w - gridTotalSize) / 2;
-      gridY = (safeH - gridTotalSize) / 2;
+      gridY = topSpace + (availableH - gridTotalSize) / 2;
     } else {
+      // In column mode, grid takes up the middle, leaving side columns
+      // Maximize grid height to 85% of safeH, or width to 55% of w
       gridTotalSize = Math.min(w * 0.55, safeH * 0.85);
       gridX = (w - gridTotalSize) / 2;
       gridY = (safeH - gridTotalSize) / 2 + 5;
@@ -483,16 +482,12 @@ export class Game extends Phaser.Scene {
     const frameY = gridY - pipeHeight;
 
     // 1. Bottom Tray (Cyan metallic base)
-    f.fillStyle(0x7ac9d9, 1); // Base cyan
+    f.fillStyle(0x7ac9d9, 1);
     f.fillRoundedRect(frameX - 10, gridY + gridTotalSize, frameW + 20, trayHeight, 15);
-    
-    // Bottom tray highlight/shadow
     f.fillStyle(0xaae8f9, 0.5); // Highlight
     f.fillRoundedRect(frameX - 8, gridY + gridTotalSize + 2, frameW + 16, trayHeight * 0.2, 8);
-
-    // Bottom dark base
-    f.fillStyle(0x2b3b6b, 1);
-    f.fillRect(frameX - 5, gridY + gridTotalSize + trayHeight - 20, frameW + 10, 20); // simplified to fillRect to avoid partial corner type issues
+    f.fillStyle(0x2b3b6b, 1); // Dark base
+    f.fillRect(frameX - 5, gridY + gridTotalSize + trayHeight - 20, frameW + 10, 20);
     
     // Tray holes
     f.fillStyle(0x1a2542, 1);
@@ -514,9 +509,7 @@ export class Game extends Phaser.Scene {
     f.fillStyle(0x8bdcf0, 1);
     f.fillRect(frameX, gridY, sideWidth, gridTotalSize);
     f.fillRect(gridX + gridTotalSize, gridY, sideWidth, gridTotalSize);
-
-    // Pillar inner shadow
-    f.fillStyle(0x000000, 0.15);
+    f.fillStyle(0x000000, 0.15); // shadow
     f.fillRect(frameX + sideWidth - 4, gridY, 4, gridTotalSize);
     f.fillRect(gridX + gridTotalSize, gridY, 4, gridTotalSize);
 
@@ -529,17 +522,14 @@ export class Game extends Phaser.Scene {
     }
 
     // 3. Top Pipe (Cyan with stripes/frosting)
-    f.fillStyle(0xaae8f9, 1); // Light cyan
+    f.fillStyle(0xaae8f9, 1);
     f.fillRoundedRect(frameX, frameY, frameW, pipeHeight, 10);
-
-    // Pipe shading
-    f.fillStyle(0x000000, 0.1);
+    f.fillStyle(0x000000, 0.1); // shadow
     f.fillRect(frameX, frameY + pipeHeight * 0.7, frameW, pipeHeight * 0.3);
 
     // Frosting drips
     f.fillStyle(0xffffff, 1);
     f.fillRoundedRect(frameX - 5, frameY - 5, frameW + 10, pipeHeight, 10);
-    // Use fixed seeded pattern for drips so it doesn't flicker on resize
     const dripHeights = [15, 25, 12, 30, 18, 14, 28, 16, 22, 10, 24, 15];
     for(let i=0; i<12; i++) {
        let dripX = frameX + 10 + i * ((frameW - 20)/11);
@@ -547,80 +537,65 @@ export class Game extends Phaser.Scene {
        f.fillRoundedRect(dripX - 8, frameY + pipeHeight - 10, 16, dripHeight, 8);
     }
     
-    // Sprinkles on frosting
+    // Sprinkles
     const colors = [0xff44aa, 0x44ffaa, 0xffaa44, 0x44aaff];
     const sprinklePos = [0.1, 0.15, 0.25, 0.3, 0.4, 0.45, 0.55, 0.6, 0.7, 0.75, 0.85, 0.9];
     for(let i=0; i<12; i++) {
        f.fillStyle(colors[i % colors.length], 1);
        let sx = frameX + sprinklePos[i] * frameW;
        let sy = frameY + (i % 2 === 0 ? 0 : 5);
-       f.fillRoundedRect(sx, sy, 8, 4, 2); // horizontal sprinkle
+       f.fillRoundedRect(sx, sy, 8, 4, 2);
     }
 
     // ==========================================
     // 2. BUY PANELS & ANTE BET
     // ==========================================
-    const buyW = isMobilePortrait ? w * 0.44 : Math.min(220, w * 0.18);
-    const buyH = isMobilePortrait ? 70 : 110;
-    const buyGap = 15;
+    const buyW = isStacked ? w * 0.42 : Math.min(220, gridX * 0.85);
+    const buyH = isStacked ? 60 : Math.min(110, safeH * 0.15);
+    const buyGap = isStacked ? 10 : 15;
+    
     let buyX: number = 0;
     let buyY1: number = 0;
     let buyY2: number = 0;
 
-    if (isMobilePortrait) {
+    if (isStacked) {
       buyX = buyW / 2 + 10;
       const anteH = 45;
       const blockHeight = buyH * 2 + buyGap * 2 + anteH;
-      const blockStartY = safeH - blockHeight - 15;
+      const blockStartY = safeH - blockHeight - 20;
       
       buyY1 = blockStartY + buyH / 2;
       buyY2 = buyY1 + buyH + buyGap;
-      
-      this.drawBuyPanel(this.panelSuperGraphics, buyW, buyH, true);
-      this.buySuperHit.setPosition(buyX, buyY1).setSize(buyW, buyH);
-      this.panelSuperGraphics.setPosition(buyX, buyY1);
-      this.updateBuyText(this.buySuperTxt1, this.buySuperTxt2, buyX, buyY1, buyH, 'SUPER');
-
-      this.drawBuyPanel(this.panelRegularGraphics, buyW, buyH, false);
-      this.buyRegularHit.setPosition(buyX, buyY2).setSize(buyW, buyH);
-      this.panelRegularGraphics.setPosition(buyX, buyY2);
-      this.updateBuyText(this.buyRegularTxt1, this.buyRegularTxt2, buyX, buyY2, buyH, 'BUY');
     } else {
-      // Perfectly center the buttons horizontally in the available left margin (gridX is the left edge of the grid)
       buyX = gridX / 2; 
-      if (buyX < buyW / 2 + 10) buyX = buyW / 2 + 10;
-      
       const anteH = 50;
       const blockHeight = buyH * 2 + buyGap * 2 + anteH;
       const blockStartY = gridY + (gridTotalSize - blockHeight) / 2;
       
       buyY1 = blockStartY + buyH / 2;
       buyY2 = buyY1 + buyH + buyGap;
-      
-      this.drawBuyPanel(this.panelSuperGraphics, buyW, buyH, true);
-      this.buySuperHit.setPosition(buyX, buyY1).setSize(buyW, buyH);
-      this.panelSuperGraphics.setPosition(buyX, buyY1);
-      this.updateBuyText(this.buySuperTxt1, this.buySuperTxt2, buyX, buyY1, buyH, 'SUPER');
-
-      this.drawBuyPanel(this.panelRegularGraphics, buyW, buyH, false);
-      this.buyRegularHit.setPosition(buyX, buyY2).setSize(buyW, buyH);
-      this.panelRegularGraphics.setPosition(buyX, buyY2);
-      this.updateBuyText(this.buyRegularTxt1, this.buyRegularTxt2, buyX, buyY2, buyH, 'BUY');
     }
+
+    this.drawBuyPanel(this.panelSuperGraphics, buyW, buyH, true);
+    this.buySuperHit.setPosition(buyX, buyY1).setSize(buyW, buyH);
+    this.panelSuperGraphics.setPosition(buyX, buyY1);
+    this.updateBuyText(this.buySuperTxt1, this.buySuperTxt2, buyX, buyY1, buyH, 'SUPER');
+
+    this.drawBuyPanel(this.panelRegularGraphics, buyW, buyH, false);
+    this.buyRegularHit.setPosition(buyX, buyY2).setSize(buyW, buyH);
+    this.panelRegularGraphics.setPosition(buyX, buyY2);
+    this.updateBuyText(this.buyRegularTxt1, this.buyRegularTxt2, buyX, buyY2, buyH, 'BUY');
 
     // Ante Bet
     const anteW = buyW;
-    const anteH = isMobilePortrait ? 45 : 50;
-    const anteX = buyX;
-    const anteY = buyY2 + buyH + buyGap + (isMobilePortrait ? 15 : 25);
-    const anteTargetX = anteX;
-    const anteTargetW = anteW;
+    const anteH = isStacked ? 45 : 50;
+    const anteY = buyY2 + buyH + buyGap + (isStacked ? 15 : 25);
     
-    this.anteBetHit.setPosition(anteTargetX, anteY).setSize(anteTargetW, anteH);
-    this.anteBetBtn.setPosition(anteTargetX, anteY);
-    this.drawAnteBetButton(anteTargetW, anteH);
-    this.anteBetIcon.setPosition(anteTargetX - 40, anteY).setFontSize(22).setOrigin(0.5);
-    this.anteBetTxt.setPosition(anteTargetX - 25, anteY).setFontSize(16).setOrigin(0, 0.5);
+    this.anteBetHit.setPosition(buyX, anteY).setSize(anteW, anteH);
+    this.anteBetBtn.setPosition(buyX, anteY);
+    this.drawAnteBetButton(anteW, anteH);
+    this.anteBetIcon.setPosition(buyX - 40, anteY).setFontSize(22).setOrigin(0.5);
+    this.anteBetTxt.setPosition(buyX - 25, anteY).setFontSize(16).setOrigin(0, 0.5);
 
     // ==========================================
     // 3. BOTTOM BAR & HUD
@@ -628,11 +603,8 @@ export class Game extends Phaser.Scene {
     this.bottomBar.clear();
     const bb = this.bottomBar;
 
-    // Multi-layer dark bar with depth
-    // Deep base
     bb.fillStyle(0x0a0512, 1);
     bb.fillRect(0, h - barH, w, barH);
-    // Candy-pink accent line (top edge)
     bb.fillStyle(0xff006a, 0.40);
     bb.fillRect(0, h - barH, w, 2);
 
@@ -641,109 +613,97 @@ export class Game extends Phaser.Scene {
 
     // ── BALANCE ──
     const balX = sidePad;
-    this.txtMoneyLabel
-      .setPosition(balX, txtY)
-      .setFontSize(Math.max(11, barH * 0.22))
-      .setOrigin(0, 0.5);
-    
-    // Position money text dynamically to the right of the label
-    // Using a fixed offset for layout, but it will look clean
-    const balValX = balX + (isMobile ? 65 : 85);
-    this.txtMoney
-      .setPosition(balValX, txtY)
-      .setFontSize(Math.max(15, barH * 0.32))
-      .setOrigin(0, 0.5);
+    this.txtMoneyLabel.setPosition(balX, txtY).setFontSize(Math.max(11, barH * 0.22)).setOrigin(0, 0.5);
+    const balValX = balX + (isMobile ? 75 : 85);
+    this.txtMoney.setPosition(balValX, txtY).setFontSize(Math.max(14, barH * 0.3)).setOrigin(0, 0.5);
 
     // ── BET ──
-    const betX = isMobile ? w / 2 - 20 : w * 0.45;
-    this.txtBetLabel
-      .setPosition(betX, txtY)
-      .setFontSize(Math.max(11, barH * 0.22))
-      .setOrigin(0, 0.5);
-    
-    const betValX = betX + (isMobile ? 35 : 45);
-    this.txtBet
-      .setPosition(betValX, txtY)
-      .setFontSize(Math.max(15, barH * 0.32))
-      .setOrigin(0, 0.5);
+    const betX = isMobile ? w - 160 : w * 0.40;
+    this.txtBetLabel.setPosition(betX, txtY).setFontSize(Math.max(11, barH * 0.22)).setOrigin(0, 0.5);
+    const betValX = betX + (isMobile ? 30 : 45);
+    this.txtBet.setPosition(betValX, txtY).setFontSize(Math.max(14, barH * 0.3)).setOrigin(0, 0.5);
 
     // ── LAST WIN ──
-    const winX = isMobile ? w - sidePad - 120 : w * 0.68;
-    if (!isMobilePortrait) {
-        this.txtLastWinLabel.setVisible(true);
-        this.txtLastWin.setVisible(true);
-        this.txtLastWinLabel
-          .setPosition(winX, txtY)
-          .setFontSize(Math.max(11, barH * 0.22))
-          .setOrigin(0, 0.5);
-        this.txtLastWin
-          .setPosition(winX + (isMobile ? 65 : 85), txtY)
-          .setFontSize(Math.max(15, barH * 0.32))
-          .setOrigin(0, 0.5);
+    const winX = w * 0.65;
+    if (!isStacked) {
+        this.txtLastWinLabel.setVisible(true).setPosition(winX, txtY).setFontSize(Math.max(11, barH * 0.22)).setOrigin(0, 0.5);
+        this.txtLastWin.setVisible(true).setPosition(winX + 85, txtY).setFontSize(Math.max(15, barH * 0.32)).setOrigin(0, 0.5);
     } else {
         this.txtLastWinLabel.setVisible(false);
         this.txtLastWin.setVisible(false);
     }
 
-    // Spin Button Group
-    const spinSize = isMobile ? Math.max(70, w * 0.16) : Math.min(130, w * 0.1);
-    const rightColCenter = w - gridX / 2; // Perfect center of the right side margin
+    // ==========================================
+    // 4. SPIN BUTTON GROUP
+    // ==========================================
+    const rightColCenter = w - gridX / 2;
+    const spinSize = isStacked ? Math.max(70, w * 0.18) : Math.min(140, gridX * 0.65);
     
-    const spinX = isMobilePortrait ? w - spinSize / 2 - 10 : rightColCenter;
-    const spinY = isMobilePortrait ? safeH - spinSize / 2 - 20 : h * 0.72; // Lower middle position
+    // Position spin button in bottom right for stacked, or middle right for columns
+    const spinX = isStacked ? w - spinSize / 2 - 10 : rightColCenter;
+    const spinY = isStacked ? safeH - spinSize / 2 - 35 : safeH / 2;
+    
     this.spinBtnHit.setPosition(spinX, spinY).setSize(spinSize, spinSize);
     this.updateSpinButtonState();
 
-    // Auto Play (below Spin)
+    // Auto Play
     const autoW = 80;
     const autoH = 28;
-    const autoX = spinX;
-    const autoY = spinY + spinSize / 2 + 20;
-    this.btnAutoHit.setPosition(autoX, autoY).setSize(autoW, autoH);
-    this.txtAuto.setPosition(autoX, autoY).setFontSize(14).setDepth(23);
+    const autoY = spinY + spinSize / 2 + 18;
+    this.btnAutoHit.setPosition(spinX, autoY).setSize(autoW, autoH);
+    this.txtAuto.setPosition(spinX, autoY).setFontSize(14).setDepth(23);
     this.updateAutoSpinDisplay();
 
-    // Bet Buttons (Flanking the Spin Button on Desktop!)
+    // Bet (+/-) Buttons
     const bBtnSize = Math.max(24, barH * 0.45);
-    if (!isMobilePortrait) {
+    if (!isStacked) {
+        // Flank the spin button
         const betBtnOffset = spinSize / 2 + bBtnSize / 2 + 10;
         this.btnBetMinusHit.setPosition(spinX - betBtnOffset, spinY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
         this.drawBetButton(this.btnBetMinus, spinX - betBtnOffset, spinY, bBtnSize, false);
         this.btnBetPlusHit.setPosition(spinX + betBtnOffset, spinY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
         this.drawBetButton(this.btnBetPlus, spinX + betBtnOffset, spinY, bBtnSize, true);
     } else {
-        // Keeps it on the bottom bar for mobile, around the Bet text area
-        const mCenter = betX + 35; // Approximate visual center of the bet text
-        const mOffset = 75;
+        // Position on bottom bar
+        const mCenter = betValX + 15; 
+        const mOffset = 55;
         this.btnBetMinusHit.setPosition(mCenter - mOffset, txtY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
         this.drawBetButton(this.btnBetMinus, mCenter - mOffset, txtY, bBtnSize, false);
         this.btnBetPlusHit.setPosition(mCenter + mOffset, txtY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
         this.drawBetButton(this.btnBetPlus, mCenter + mOffset, txtY, bBtnSize, true);
     }
 
-    // Toolbar icons at upper left
-    const toolY = Math.max(35, h * 0.07);
-    const toolPad = isMobile ? 35 : Math.max(50, w * 0.035);
-    const toolGap = 55;
+    // ==========================================
+    // 5. TOOLBAR ICONS (Top Left)
+    // ==========================================
+    const toolY = Math.max(30, h * 0.06);
+    const toolPad = isMobile ? 25 : Math.max(40, w * 0.03);
+    const toolGap = isMobile ? 45 : 55;
+    
     this.btnSettings.setPosition(toolPad, toolY);
     this.btnPaytable.setPosition(toolPad + toolGap, toolY);
     this.soundToggle.setPosition(toolPad + toolGap * 2, toolY);
     this.btnFullscreen.setPosition(toolPad + toolGap * 3, toolY);
     this.drawToolbarIcons();
 
-    // Logo
-    const logoFS1 = Math.min(65, w * 0.065);
-    const logoFS2 = Math.min(75, w * 0.075);
-    // Align perfectly over the spin buttons column on desktop/landscape, or center on mobile portrait
-    const logoX = isMobilePortrait ? w / 2 : spinX; 
+    // ==========================================
+    // 6. LOGO
+    // ==========================================
+    const logoFS1 = isStacked ? Math.min(45, w * 0.08) : Math.min(65, gridX * 0.25);
+    const logoFS2 = isStacked ? Math.min(55, w * 0.09) : Math.min(75, gridX * 0.3);
     
-    this.logoText1.setPosition(logoX, toolY)
+    // Center logo in stacked mode, put it above spin button in column mode
+    // Also avoid overlapping with the toolbar icons by pushing it down slightly if needed
+    const logoX = isStacked ? w / 2 : rightColCenter; 
+    const logoY = isStacked ? Math.max(toolY + 15, h * 0.05) : Math.max(toolY + 20, spinY - spinSize/2 - logoFS1 - logoFS2 - 40);
+    
+    this.logoText1.setPosition(logoX, logoY)
                   .setFontSize(logoFS1)
-                  .setStroke('#ffffff', Math.max(12, logoFS1 * 0.35));
+                  .setStroke('#ffffff', Math.max(8, logoFS1 * 0.3));
                   
-    this.logoText2.setPosition(logoX, toolY + logoFS1 * 0.95)
+    this.logoText2.setPosition(logoX, logoY + logoFS1 * 0.85)
                   .setFontSize(logoFS2)
-                  .setStroke('#ffffff', Math.max(12, logoFS2 * 0.35));
+                  .setStroke('#ffffff', Math.max(8, logoFS2 * 0.3));
 
     // Logo floating animation (only add once)
     if (!this.tweens.isTweening(this.logoText1)) {
