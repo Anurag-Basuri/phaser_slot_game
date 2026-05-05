@@ -54,7 +54,7 @@ class Executables(Tumble, ClusterWins):
         conditions = self.get_current_distribution_conditions()
 
         # Check if we need to force scatter symbols
-        if conditions.get("force_freegame", False):
+        if conditions.get("force_freegame", False) and self.gametype == self.config.basegame_type:
             scatter_triggers = conditions.get("scatter_triggers", {})
             if scatter_triggers:
                 # Pick how many scatters to force based on weighted distribution
@@ -68,8 +68,9 @@ class Executables(Tumble, ClusterWins):
         self.create_board_reelstrips()
 
         # If this board randomly has too many scatters for non-FS criteria,
-        # and the criteria doesn't want free spins, regenerate
-        if not conditions.get("force_freegame", False) and not conditions.get("force_wincap", False):
+        # and the criteria doesn't want free spins, regenerate.
+        # But if we are IN free spins, scatters are fine to land naturally.
+        if self.gametype == self.config.basegame_type and not conditions.get("force_freegame", False) and not conditions.get("force_wincap", False):
             scatter_count = self.count_special_symbols("scatter")
             max_attempts = 50
             attempts = 0

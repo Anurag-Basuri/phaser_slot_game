@@ -58,6 +58,15 @@ class Tumble(Board):
                 self.reel_positions[c] = (self.reel_positions[c] - 1) % reel_len
                 sym_name = reel_data[self.reel_positions[c]]
 
+                # Prevent special symbols (like scatters) from dropping during tumbles
+                scatter_names = self.config.special_symbols.get("scatter", [])
+                max_skip = reel_len
+                skipped = 0
+                while sym_name in scatter_names and skipped < max_skip:
+                    self.reel_positions[c] = (self.reel_positions[c] - 1) % reel_len
+                    sym_name = reel_data[self.reel_positions[c]]
+                    skipped += 1
+
                 # Create new Symbol object
                 sym = Symbol(self.config, sym_name, reel=c, row=-1)
 
