@@ -157,6 +157,7 @@ export class StakeEngineClient {
   private sessionID: string = '';
   private lang: string = 'en';
   private device: string = 'desktop';
+  private currency: string = 'USD';
   private authenticated: boolean = false;
   private currentRoundActive: boolean = false;
   private isDemo: boolean = false;
@@ -184,6 +185,7 @@ export class StakeEngineClient {
     this.sessionID = params.get('sessionID') || params.get('session_id') || '';
     this.lang = params.get('lang') || 'en';
     this.device = params.get('device') || 'desktop';
+    this.currency = params.get('currency') || 'USD';
     this.rgsUrl = params.get('rgs_url') || '';
 
     // If no params found, run in demo/offline mode
@@ -345,11 +347,19 @@ export class StakeEngineClient {
       const response = await this.fetchWithRetry(`${this.rgsUrl}/wallet/authenticate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionID: this.sessionID }),
+        body: JSON.stringify({
+          sessionID: this.sessionID,
+          language: this.lang,
+        }),
       });
 
       const data = await response.json();
       this.authenticated = true;
+
+      // Cache currency from auth response if available
+      if (data.balance?.currency) {
+        this.currency = data.balance.currency;
+      }
 
       // Cache the config for bet validation
       this._authConfig = data.config || null;
@@ -412,6 +422,7 @@ export class StakeEngineClient {
           sessionID: this.sessionID,
           amount: StakeEngineClient.toStakeAmount(betAmount),
           mode: mode, // Must match math engine bet mode names exactly (lowercase)
+          currency: this.currency,
         }),
       });
 
