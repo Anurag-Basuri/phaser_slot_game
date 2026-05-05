@@ -411,7 +411,7 @@ export class StakeEngineClient {
         body: JSON.stringify({
           sessionID: this.sessionID,
           amount: StakeEngineClient.toStakeAmount(betAmount),
-          mode: mode.toUpperCase(), // SDK convention: uppercase mode name
+          mode: mode, // Must match math engine bet mode names exactly (lowercase)
         }),
       });
 

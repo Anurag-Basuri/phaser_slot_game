@@ -430,11 +430,11 @@ export class Game extends Phaser.Scene {
     // Determine layout mode
     const isPortrait = h > w;
     const isMobile = w < 768;
-    // We stack elements vertically if in portrait, OR if landscape but very narrow
     const isStacked = isPortrait || (w < 650);
+    const isLandscapeMobile = !isPortrait && h < 500;
 
     // Height of the bottom bar
-    const barH = isStacked ? Math.max(65, h * 0.1) : Math.max(50, h * 0.08);
+    const barH = isStacked ? Math.max(55, h * 0.08) : Math.max(45, h * 0.07);
     const safeH = h - barH;
 
     // ==========================================
@@ -445,17 +445,21 @@ export class Game extends Phaser.Scene {
     let gridY: number;
 
     if (isStacked) {
-      // In stacked mode, we need space at top (logo) and bottom (buy/spin buttons)
-      const topSpace = Math.max(160, h * 0.18); 
-      const bottomSpace = isPortrait ? 270 : 130; 
+      const topSpace = Math.max(100, h * 0.12);
+      const bottomSpace = isPortrait ? Math.max(200, h * 0.22) : 100;
       const availableH = safeH - topSpace - bottomSpace;
-      gridTotalSize = Math.min(w * 0.94, availableH * 0.96);
+      gridTotalSize = Math.min(w * 0.92, availableH);
+      gridTotalSize = Math.max(gridTotalSize, 150); // minimum
       gridX = (w - gridTotalSize) / 2;
       gridY = topSpace + (availableH - gridTotalSize) / 2;
+    } else if (isLandscapeMobile) {
+      // Short landscape: grid takes center, maximize height
+      gridTotalSize = Math.min(safeH * 0.92, w * 0.45);
+      gridX = (w - gridTotalSize) / 2;
+      gridY = (safeH - gridTotalSize) / 2;
     } else {
-      // In column mode, grid takes up the middle, leaving side columns
-      // Maximize grid height to 85% of safeH, or width to 55% of w
-      gridTotalSize = Math.min(w * 0.55, safeH * 0.85);
+      // Desktop column mode
+      gridTotalSize = Math.min(w * 0.50, safeH * 0.88);
       gridX = (w - gridTotalSize) / 2;
       gridY = (safeH - gridTotalSize) / 2 + 5;
     }
@@ -550,9 +554,9 @@ export class Game extends Phaser.Scene {
     // ==========================================
     // 2. BUY PANELS & ANTE BET
     // ==========================================
-    const buyW = isStacked ? w * 0.42 : Math.min(220, gridX * 0.85);
-    const buyH = isStacked ? 60 : Math.min(110, safeH * 0.15);
-    const buyGap = isStacked ? 10 : 15;
+    const buyW = isStacked ? w * 0.42 : isLandscapeMobile ? Math.min(150, gridX * 0.8) : Math.min(200, gridX * 0.75);
+    const buyH = isStacked ? 55 : isLandscapeMobile ? 50 : Math.min(100, safeH * 0.14);
+    const buyGap = isStacked ? 8 : 12;
     
     let buyX: number = 0;
     let buyY1: number = 0;
@@ -560,18 +564,17 @@ export class Game extends Phaser.Scene {
 
     if (isStacked) {
       buyX = buyW / 2 + 10;
-      const anteH = 45;
+      const anteH = 40;
       const blockHeight = buyH * 2 + buyGap * 2 + anteH;
-      const blockStartY = safeH - blockHeight - 20;
-      
+      const blockStartY = safeH - blockHeight - 15;
       buyY1 = blockStartY + buyH / 2;
       buyY2 = buyY1 + buyH + buyGap;
     } else {
-      buyX = gridX / 2; 
-      const anteH = 50;
+      buyX = gridX / 2;
+      buyX = Math.max(buyX, buyW / 2 + 10);
+      const anteH = 45;
       const blockHeight = buyH * 2 + buyGap * 2 + anteH;
       const blockStartY = gridY + (gridTotalSize - blockHeight) / 2;
-      
       buyY1 = blockStartY + buyH / 2;
       buyY2 = buyY1 + buyH + buyGap;
     }
@@ -588,14 +591,14 @@ export class Game extends Phaser.Scene {
 
     // Ante Bet
     const anteW = buyW;
-    const anteH = isStacked ? 45 : 50;
-    const anteY = buyY2 + buyH + buyGap + (isStacked ? 15 : 25);
+    const anteH = isStacked ? 40 : 45;
+    const anteY = buyY2 + buyH / 2 + buyGap + anteH / 2 + 10;
     
     this.anteBetHit.setPosition(buyX, anteY).setSize(anteW, anteH);
     this.anteBetBtn.setPosition(buyX, anteY);
     this.drawAnteBetButton(anteW, anteH);
-    this.anteBetIcon.setPosition(buyX - 40, anteY).setFontSize(22).setOrigin(0.5);
-    this.anteBetTxt.setPosition(buyX - 25, anteY).setFontSize(16).setOrigin(0, 0.5);
+    this.anteBetIcon.setPosition(buyX - 40, anteY).setFontSize(isLandscapeMobile ? 16 : 22).setOrigin(0.5);
+    this.anteBetTxt.setPosition(buyX - 25, anteY).setFontSize(isLandscapeMobile ? 12 : 16).setOrigin(0, 0.5);
 
     // ==========================================
     // 3. BOTTOM BAR & HUD
@@ -609,25 +612,25 @@ export class Game extends Phaser.Scene {
     bb.fillRect(0, h - barH, w, 2);
 
     const txtY = h - barH / 2;
-    const sidePad = isMobile ? 15 : 40;
+    const sidePad = isMobile ? 10 : 30;
+    const labelFS = Math.max(10, barH * 0.2);
+    const valFS = Math.max(13, barH * 0.28);
 
-    // ── BALANCE ──
+    // ── BALANCE (left side) ──
     const balX = sidePad;
-    this.txtMoneyLabel.setPosition(balX, txtY).setFontSize(Math.max(11, barH * 0.22)).setOrigin(0, 0.5);
-    const balValX = balX + (isMobile ? 75 : 85);
-    this.txtMoney.setPosition(balValX, txtY).setFontSize(Math.max(14, barH * 0.3)).setOrigin(0, 0.5);
+    this.txtMoneyLabel.setPosition(balX, txtY - 8).setFontSize(labelFS).setOrigin(0, 0.5);
+    this.txtMoney.setPosition(balX, txtY + 8).setFontSize(valFS).setOrigin(0, 0.5);
 
-    // ── BET ──
-    const betX = isMobile ? w - 160 : w * 0.40;
-    this.txtBetLabel.setPosition(betX, txtY).setFontSize(Math.max(11, barH * 0.22)).setOrigin(0, 0.5);
-    const betValX = betX + (isMobile ? 30 : 45);
-    this.txtBet.setPosition(betValX, txtY).setFontSize(Math.max(14, barH * 0.3)).setOrigin(0, 0.5);
+    // ── BET (right side on mobile, center on desktop) ──
+    const betX = isStacked ? w * 0.45 : w * 0.38;
+    this.txtBetLabel.setPosition(betX, txtY - 8).setFontSize(labelFS).setOrigin(0, 0.5);
+    this.txtBet.setPosition(betX, txtY + 8).setFontSize(valFS).setOrigin(0, 0.5);
 
-    // ── LAST WIN ──
-    const winX = w * 0.65;
-    if (!isStacked) {
-        this.txtLastWinLabel.setVisible(true).setPosition(winX, txtY).setFontSize(Math.max(11, barH * 0.22)).setOrigin(0, 0.5);
-        this.txtLastWin.setVisible(true).setPosition(winX + 85, txtY).setFontSize(Math.max(15, barH * 0.32)).setOrigin(0, 0.5);
+    // ── LAST WIN (desktop only) ──
+    const winX = w * 0.62;
+    if (!isStacked && !isLandscapeMobile) {
+        this.txtLastWinLabel.setVisible(true).setPosition(winX, txtY - 8).setFontSize(labelFS).setOrigin(0, 0.5);
+        this.txtLastWin.setVisible(true).setPosition(winX, txtY + 8).setFontSize(valFS).setOrigin(0, 0.5);
     } else {
         this.txtLastWinLabel.setVisible(false);
         this.txtLastWin.setVisible(false);
@@ -636,37 +639,36 @@ export class Game extends Phaser.Scene {
     // ==========================================
     // 4. SPIN BUTTON GROUP
     // ==========================================
-    const rightColCenter = w - gridX / 2;
-    const spinSize = isStacked ? Math.max(70, w * 0.18) : Math.min(140, gridX * 0.65);
+    const rightMargin = w - gridX - gridTotalSize;
+    const rightColCenter = gridX + gridTotalSize + rightMargin / 2;
+    const spinSize = isStacked ? Math.max(60, w * 0.15) : isLandscapeMobile ? Math.min(80, rightMargin * 0.5) : Math.min(120, rightMargin * 0.55);
     
-    // Position spin button in bottom right for stacked, or middle right for columns
     const spinX = isStacked ? w - spinSize / 2 - 10 : rightColCenter;
-    const spinY = isStacked ? safeH - spinSize / 2 - 35 : safeH / 2;
+    const spinY = isStacked ? safeH - spinSize / 2 - 25 : safeH * 0.55;
     
     this.spinBtnHit.setPosition(spinX, spinY).setSize(spinSize, spinSize);
     this.updateSpinButtonState();
 
     // Auto Play
-    const autoW = 80;
-    const autoH = 28;
-    const autoY = spinY + spinSize / 2 + 18;
-    this.btnAutoHit.setPosition(spinX, autoY).setSize(autoW, autoH);
-    this.txtAuto.setPosition(spinX, autoY).setFontSize(14).setDepth(23);
+    const autoY = spinY + spinSize / 2 + 15;
+    this.btnAutoHit.setPosition(spinX, autoY).setSize(80, 28);
+    this.txtAuto.setPosition(spinX, autoY).setFontSize(isLandscapeMobile ? 11 : 14).setDepth(23);
     this.updateAutoSpinDisplay();
 
     // Bet (+/-) Buttons
-    const bBtnSize = Math.max(24, barH * 0.45);
+    const bBtnSize = Math.max(20, barH * 0.4);
     if (!isStacked) {
-        // Flank the spin button
-        const betBtnOffset = spinSize / 2 + bBtnSize / 2 + 10;
-        this.btnBetMinusHit.setPosition(spinX - betBtnOffset, spinY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
-        this.drawBetButton(this.btnBetMinus, spinX - betBtnOffset, spinY, bBtnSize, false);
-        this.btnBetPlusHit.setPosition(spinX + betBtnOffset, spinY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
-        this.drawBetButton(this.btnBetPlus, spinX + betBtnOffset, spinY, bBtnSize, true);
+        const betBtnOffset = spinSize / 2 + bBtnSize / 2 + 8;
+        // Clamp to screen edges
+        const minusX = Math.max(bBtnSize, spinX - betBtnOffset);
+        const plusX = Math.min(w - bBtnSize, spinX + betBtnOffset);
+        this.btnBetMinusHit.setPosition(minusX, spinY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
+        this.drawBetButton(this.btnBetMinus, minusX, spinY, bBtnSize, false);
+        this.btnBetPlusHit.setPosition(plusX, spinY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
+        this.drawBetButton(this.btnBetPlus, plusX, spinY, bBtnSize, true);
     } else {
-        // Position on bottom bar
-        const mCenter = betValX + 15; 
-        const mOffset = 55;
+        const mCenter = w - 80;
+        const mOffset = 50;
         this.btnBetMinusHit.setPosition(mCenter - mOffset, txtY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
         this.drawBetButton(this.btnBetMinus, mCenter - mOffset, txtY, bBtnSize, false);
         this.btnBetPlusHit.setPosition(mCenter + mOffset, txtY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
@@ -676,9 +678,9 @@ export class Game extends Phaser.Scene {
     // ==========================================
     // 5. TOOLBAR ICONS (Top Left)
     // ==========================================
-    const toolY = Math.max(30, h * 0.06);
-    const toolPad = isMobile ? 25 : Math.max(40, w * 0.03);
-    const toolGap = isMobile ? 45 : 55;
+    const toolY = Math.max(25, safeH * 0.04);
+    const toolPad = isMobile ? 25 : 35;
+    const toolGap = isLandscapeMobile ? 38 : isMobile ? 42 : 50;
     
     this.btnSettings.setPosition(toolPad, toolY);
     this.btnPaytable.setPosition(toolPad + toolGap, toolY);
@@ -689,21 +691,21 @@ export class Game extends Phaser.Scene {
     // ==========================================
     // 6. LOGO
     // ==========================================
-    const logoFS1 = isStacked ? Math.min(45, w * 0.08) : Math.min(65, gridX * 0.25);
-    const logoFS2 = isStacked ? Math.min(55, w * 0.09) : Math.min(75, gridX * 0.3);
+    // Scale logo to fit in the right column without clipping
+    const maxLogoWidth = rightMargin * 0.9;
+    const logoFS1 = isStacked ? Math.min(40, w * 0.07) : Math.min(55, maxLogoWidth * 0.11);
+    const logoFS2 = isStacked ? Math.min(50, w * 0.08) : Math.min(65, maxLogoWidth * 0.13);
     
-    // Center logo in stacked mode, put it above spin button in column mode
-    // Also avoid overlapping with the toolbar icons by pushing it down slightly if needed
     const logoX = isStacked ? w / 2 : rightColCenter; 
-    const logoY = isStacked ? Math.max(toolY + 15, h * 0.05) : Math.max(toolY + 20, spinY - spinSize/2 - logoFS1 - logoFS2 - 40);
+    const logoY = isStacked ? toolY + 10 : Math.max(toolY + 20, gridY);
     
     this.logoText1.setPosition(logoX, logoY)
                   .setFontSize(logoFS1)
-                  .setStroke('#ffffff', Math.max(8, logoFS1 * 0.3));
+                  .setStroke('#ffffff', Math.max(6, logoFS1 * 0.25));
                   
-    this.logoText2.setPosition(logoX, logoY + logoFS1 * 0.85)
+    this.logoText2.setPosition(logoX, logoY + logoFS1 * 0.9)
                   .setFontSize(logoFS2)
-                  .setStroke('#ffffff', Math.max(8, logoFS2 * 0.3));
+                  .setStroke('#ffffff', Math.max(6, logoFS2 * 0.25));
 
     // Logo floating animation (only add once)
     if (!this.tweens.isTweening(this.logoText1)) {
