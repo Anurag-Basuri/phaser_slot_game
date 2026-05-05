@@ -291,7 +291,7 @@ export class Game extends Phaser.Scene {
         this.layoutAll();
         this.audio.playSound('button');
       });
-    this.btnFeaturesMenuIcon = this.add.text(0, 0, '★', { fontSize: '24px', color: '#ffffff' }).setOrigin(0.5).setDepth(21);
+    this.btnFeaturesMenuIcon = this.add.text(0, 0, '⋮', { fontSize: '32px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5).setDepth(21);
 
     // Spin button setup (Authentic Pragmatic Circular Style)
     this.spinBtnGraphics = this.add.graphics().setDepth(20);
@@ -765,10 +765,9 @@ export class Game extends Phaser.Scene {
     this.updateAutoSpinDisplay();
 
     // Bet (+/-) Buttons
-    let bBtnSize = Math.max(30, barH * 0.55); // Increased base size
+    // Scale bet buttons proportionally, getting bigger on large screens
+    let bBtnSize = isStacked ? Math.max(30, Math.min(50, w * 0.08)) : Math.max(40, Math.min(70, rightMargin * 0.15));
     if (!isStacked) {
-        // Desktop / Column mode
-        bBtnSize = Math.max(35, rightMargin * 0.12); // Make them much larger on desktop
         const betBtnOffset = spinSize / 2 + bBtnSize / 2 + 15; // Increased gap
         // Clamp to screen edges
         const minusX = Math.max(bBtnSize, spinX - betBtnOffset);
@@ -798,13 +797,13 @@ export class Game extends Phaser.Scene {
     // ==========================================
     // 6. LOGO
     // ==========================================
-    // Scale logo to fit in the right column without clipping
-    const maxLogoWidth = rightMargin * 0.9;
-    const logoFS1 = isStacked ? Math.min(40, w * 0.07) : Math.min(55, maxLogoWidth * 0.11);
-    const logoFS2 = isStacked ? Math.min(50, w * 0.08) : Math.min(65, maxLogoWidth * 0.13);
+    // Scale logo to fit in the right column without clipping, allowing much larger sizes
+    const maxLogoWidth = rightMargin * 0.95;
+    const logoFS1 = isStacked ? Math.min(45, w * 0.08) : Math.max(30, Math.min(100, maxLogoWidth * 0.15));
+    const logoFS2 = isStacked ? Math.min(55, w * 0.10) : Math.max(40, Math.min(120, maxLogoWidth * 0.18));
     
     // Hide logo if there's fundamentally no space for it
-    if (isLandscapeMobile || logoFS1 < 20 || safeH < 400) {
+    if (isLandscapeMobile || logoFS1 <= 25 || rightMargin < 120 || safeH < 450) {
       this.logoText1.setVisible(false);
       this.logoText2.setVisible(false);
     } else {

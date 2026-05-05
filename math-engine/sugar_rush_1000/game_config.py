@@ -110,8 +110,13 @@ class GameConfig(Config):
         # Min cluster size for a win
         self.min_cluster_size = 5
 
-        # Multiplier cap
-        self.max_multiplier = 1024
+        # Multiplier cap (32x keeps max theoretical under wincap while
+        # preventing excessive RTP from compounding during long FS sessions)
+        self.max_multiplier = 32
+
+        # Probability of random multiplier candy spots appearing each spin
+        # (Sugar Rush 1000 signature mechanic)
+        self.multiplier_seed_chance = 0.10
 
         self.reels_path = "sugar_rush_1000/reels"
         reels = {"BR0": "BR0.csv", "FR0": "FR0.csv", "SF0": "SF0.csv"}
@@ -151,20 +156,20 @@ class GameConfig(Config):
                         },
                     ),
                     Distribution(
-                        criteria="freegame", quota=0.035,
+                        criteria="freegame", quota=0.01,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
-                            "scatter_triggers": {3: 20, 4: 10, 5: 2},
+                            "scatter_triggers": {3: 20, 4: 10, 5: 5, 6: 2},
                             "force_freegame": True,
                         },
                     ),
                     Distribution(
-                        criteria="0", quota=0.60,
+                        criteria="0", quota=0.67,
                         win_criteria=0.0,
                         conditions={"reel_weights": {self.basegame_type: {"BR0": 1}}},
                     ),
                     Distribution(
-                        criteria="basegame", quota=0.36495,
+                        criteria="basegame", quota=0.31995,
                         conditions={"reel_weights": {self.basegame_type: {"BR0": 1}}},
                     ),
                 ],
@@ -182,7 +187,7 @@ class GameConfig(Config):
                 ante_scatter_multiplier=2.0,
                 distributions=[
                     Distribution(
-                        criteria="wincap", quota=0.0001,
+                        criteria="wincap", quota=0.0002,
                         win_criteria=self.wincap,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
@@ -190,16 +195,16 @@ class GameConfig(Config):
                         },
                     ),
                     Distribution(
-                        criteria="freegame", quota=0.065,
+                        criteria="freegame", quota=0.08,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
-                            "scatter_triggers": {3: 15, 4: 10, 5: 5},
+                            "scatter_triggers": {3: 15, 4: 10, 5: 5, 6: 2},
                             "force_freegame": True,
                             "scatter_chance_override": self.scatter_chance_ante,
                         },
                     ),
                     Distribution(
-                        criteria="0", quota=0.55,
+                        criteria="0", quota=0.47,
                         win_criteria=0.0,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}},
@@ -207,7 +212,7 @@ class GameConfig(Config):
                         },
                     ),
                     Distribution(
-                        criteria="basegame", quota=0.3849,
+                        criteria="basegame", quota=0.4498,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
                             "scatter_chance_override": self.scatter_chance_ante,

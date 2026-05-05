@@ -3,6 +3,12 @@ Sugar Rush 1000 — Game Executables
 
 Sugar Rush-specific logic that extends the base Executables.
 Handles the multiplier grid, cascade loop, and super free spins.
+
+Key mechanic: In Sugar Rush 1000, when winning symbols explode during a
+cascade, random multiplier spots (x2, x4, x8, ...) appear on the vacated
+positions. These multipliers apply to ALL future wins landing on those
+spots and double each time they're triggered again. During free spins,
+multipliers persist across all spins, enabling massive win potential.
 """
 
 from src.executables.executables import Executables
@@ -28,20 +34,55 @@ class GameExecutables(Executables):
             for c in range(size):
                 self.grid_multipliers[r][c] = 2
 
+    def seed_random_multipliers(self) -> None:
+        """
+        Sugar Rush 1000 mechanic: At the start of each base game spin,
+        there is a chance that random multiplier candy spots are placed
+        on the grid. This creates the medium-to-large win potential that
+        drives the game's volatility profile.
+
+        - 40% chance of multiplier seeding per spin
+        - When active, 2-5 random spots get x2 multipliers
+        - During free spins, this is called once per spin to add NEW spots
+          (existing multipliers are preserved)
+        """
+        chance = getattr(self.config, 'multiplier_seed_chance', 0.40)
+        if self._rng.random() < chance:
+            size = self.config.grid_size
+            num_spots = self._rng.randint(1, 3)
+
+            # Collect positions that don't already have multipliers
+            available = []
+            for r in range(size):
+                for c in range(size):
+                    if self.grid_multipliers[r][c] == 0:
+                        available.append((r, c))
+
+            if available:
+                num_spots = min(num_spots, len(available))
+                chosen = self._rng.sample(available, num_spots)
+
+                # Weighted multiplier values — heavily skewed toward x2
+                mult_weights = {2: 80, 4: 15, 8: 4, 16: 1}
+                mult_options = list(mult_weights.keys())
+                mult_probs = list(mult_weights.values())
+
+                for r, c in chosen:
+                    mult_val = self._rng.choices(mult_options, weights=mult_probs, k=1)[0]
+                    self.grid_multipliers[r][c] = mult_val
+
     def advance_multiplier(self, r: int, c: int) -> None:
         """
         Advances the multiplier at position (r, c).
-        Progression: 0 → 1 (marked) → 2 → 4 → 8 → 16 → ... → 1024
+        Progression: 0 → 2 → 4 → 8 → 16 → 32 → 64 → ... → 1024
 
-        When a winning symbol explodes, it marks its spot.
-        If a subsequent win explodes on that same marked spot,
-        a ×2 multiplier is added. Each subsequent win doubles it.
+        In Sugar Rush 1000, the first cascade hit on a spot immediately
+        activates a ×2 multiplier. Each subsequent hit doubles it.
+        There is no intermediate "mark" step.
         """
         current = self.grid_multipliers[r][c]
         if current == 0:
-            self.grid_multipliers[r][c] = 1  # Mark the spot
-        elif current == 1:
-            self.grid_multipliers[r][c] = 2  # Activate multiplier
+            self.grid_multipliers[r][c] = 2  # Immediate x2 activation
         else:
             self.grid_multipliers[r][c] = min(self.config.max_multiplier, current * 2)
 
@@ -76,17 +117,23 @@ class GameExecutables(Executables):
     def evaluate_tumble_spin(self) -> None:
         """
         Full cascade loop for Sugar Rush 1000:
-        1. Detect clusters (BFS)
-        2. Apply multipliers to each cluster's win
-        3. If no wins → break
-        4. Add win to WinManager
-        5. Emit events (winInfo, setWin, multiplierUpdate)
-        6. Check wincap (25,000×)
-        7. Advance multipliers on exploded positions
-        8. Tumble board (gravity + reel refill)
-        9. Emit tumble event
-        10. Go to step 1
+        1. Seed random multiplier spots (Sugar Rush candy mechanic)
+        2. Detect clusters (BFS)
+        3. Apply multipliers to each cluster's win
+        4. If no wins → break
+        5. Add win to WinManager
+        6. Emit events (winInfo, setWin, multiplierUpdate)
+        7. Check wincap (25,000×)
+        8. Advance multipliers on exploded positions
+        9. Tumble board (gravity + reel refill)
+        10. Emit tumble event
+        11. Go to step 2
         """
+        # Seed random multiplier spots before the cascade begins
+        # Only in base game — free spins accumulate multipliers organically
+        if self.gametype == self.config.basegame_type:
+            self.seed_random_multipliers()
+
         cascade_depth = 0
 
         while True:
