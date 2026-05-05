@@ -93,10 +93,12 @@ class GameState(GameStateOverride, GameExecutables):
             # Update spin counter + emit event
             self.update_freespin()
 
-            # Reset multiplier grid each FS spin — multipliers build
-            # within cascades of a single spin but don't carry over
-            size = self.config.grid_size
-            self.grid_multipliers = [[0] * size for _ in range(size)]
+            # Multiplier grid handling per free spin:
+            # - base/ante: RESET each spin (multipliers build within cascades only)
+            # - bonus/super: PERSIST across spins (that's what 100x/500x cost buys)
+            if self.current_betmode_name in ("base", "ante"):
+                size = self.config.grid_size
+                self.grid_multipliers = [[0] * size for _ in range(size)]
 
             # Draw new board (emits reveal event)
             self.draw_board(emit_event=True)
