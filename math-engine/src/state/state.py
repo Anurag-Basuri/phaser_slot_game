@@ -202,7 +202,7 @@ class GeneralGameState:
         Distribution criteria are pre-assigned to each simulation number.
         Bails after MAX_REPEATS to prevent infinite loops.
         """
-        MAX_REPEATS = 500
+        MAX_REPEATS = 50
         self._repeat_count += 1
 
         # Safety valve: accept after too many retries
