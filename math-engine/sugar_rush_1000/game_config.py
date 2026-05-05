@@ -40,52 +40,52 @@ class GameConfig(Config):
         self.id_to_symbol = {v: k for k, v in self.symbol_ids.items()}
 
         # ──────────────────────────────────────────────────────
-        # PAYTABLE — Official Sugar Rush 1000 (verified)
+        # PAYTABLE — Official Sugar Rush 1000 (Pragmatic Play reference)
         # Values are multipliers of bet amount per cluster size
-        # Doubled from original to match Pragmatic Play reference
+        # Verified against official game info screen
         # ──────────────────────────────────────────────────────
         self.pay_group = {
             # H1: Pink Candy (ID 6) — highest paying
-            ((5, 5), "H1"): 2.00, ((6, 6), "H1"): 3.00, ((7, 7), "H1"): 3.50,
-            ((8, 8), "H1"): 4.00, ((9, 9), "H1"): 5.00, ((10, 10), "H1"): 10.00,
-            ((11, 11), "H1"): 15.00, ((12, 12), "H1"): 30.00,
-            ((13, 13), "H1"): 70.00, ((14, 14), "H1"): 140.00, ((15, 49), "H1"): 300.00,
+            ((5, 5), "H1"): 1.00, ((6, 6), "H1"): 1.50, ((7, 7), "H1"): 1.75,
+            ((8, 8), "H1"): 2.00, ((9, 9), "H1"): 2.50, ((10, 10), "H1"): 5.00,
+            ((11, 11), "H1"): 7.50, ((12, 12), "H1"): 15.00,
+            ((13, 13), "H1"): 35.00, ((14, 14), "H1"): 70.00, ((15, 49), "H1"): 150.00,
 
             # H2: Orange Candy (ID 5)
-            ((5, 5), "H2"): 1.50, ((6, 6), "H2"): 2.00, ((7, 7), "H2"): 2.50,
-            ((8, 8), "H2"): 3.00, ((9, 9), "H2"): 4.00, ((10, 10), "H2"): 8.00,
-            ((11, 11), "H2"): 12.00, ((12, 12), "H2"): 25.00,
-            ((13, 13), "H2"): 60.00, ((14, 14), "H2"): 120.00, ((15, 49), "H2"): 200.00,
+            ((5, 5), "H2"): 0.75, ((6, 6), "H2"): 1.00, ((7, 7), "H2"): 1.25,
+            ((8, 8), "H2"): 1.50, ((9, 9), "H2"): 2.00, ((10, 10), "H2"): 4.00,
+            ((11, 11), "H2"): 6.00, ((12, 12), "H2"): 12.50,
+            ((13, 13), "H2"): 30.00, ((14, 14), "H2"): 60.00, ((15, 49), "H2"): 100.00,
 
             # H3: Purple Candy (ID 4)
-            ((5, 5), "H3"): 1.00, ((6, 6), "H3"): 1.50, ((7, 7), "H3"): 2.00,
-            ((8, 8), "H3"): 2.50, ((9, 9), "H3"): 3.00, ((10, 10), "H3"): 6.00,
-            ((11, 11), "H3"): 9.00, ((12, 12), "H3"): 20.00,
-            ((13, 13), "H3"): 40.00, ((14, 14), "H3"): 80.00, ((15, 49), "H3"): 120.00,
+            ((5, 5), "H3"): 0.50, ((6, 6), "H3"): 0.75, ((7, 7), "H3"): 1.00,
+            ((8, 8), "H3"): 1.25, ((9, 9), "H3"): 1.50, ((10, 10), "H3"): 3.00,
+            ((11, 11), "H3"): 4.50, ((12, 12), "H3"): 10.00,
+            ((13, 13), "H3"): 20.00, ((14, 14), "H3"): 40.00, ((15, 49), "H3"): 60.00,
 
             # H4: Green Candy (ID 3)
-            ((5, 5), "H4"): 0.80, ((6, 6), "H4"): 1.00, ((7, 7), "H4"): 1.50,
-            ((8, 8), "H4"): 2.00, ((9, 9), "H4"): 2.50, ((10, 10), "H4"): 4.00,
-            ((11, 11), "H4"): 6.00, ((12, 12), "H4"): 10.00,
-            ((13, 13), "H4"): 20.00, ((14, 14), "H4"): 40.00, ((15, 49), "H4"): 80.00,
+            ((5, 5), "H4"): 0.40, ((6, 6), "H4"): 0.50, ((7, 7), "H4"): 0.75,
+            ((8, 8), "H4"): 1.00, ((9, 9), "H4"): 1.25, ((10, 10), "H4"): 2.00,
+            ((11, 11), "H4"): 3.00, ((12, 12), "H4"): 5.00,
+            ((13, 13), "H4"): 10.00, ((14, 14), "H4"): 20.00, ((15, 49), "H4"): 40.00,
 
             # L1: Red Gummy Bear (ID 2)
-            ((5, 5), "L1"): 0.60, ((6, 6), "L1"): 0.80, ((7, 7), "L1"): 1.00,
-            ((8, 8), "L1"): 1.50, ((9, 9), "L1"): 2.00, ((10, 10), "L1"): 3.00,
-            ((11, 11), "L1"): 5.00, ((12, 12), "L1"): 7.00,
-            ((13, 13), "L1"): 16.00, ((14, 14), "L1"): 30.00, ((15, 49), "L1"): 60.00,
+            ((5, 5), "L1"): 0.30, ((6, 6), "L1"): 0.40, ((7, 7), "L1"): 0.50,
+            ((8, 8), "L1"): 0.75, ((9, 9), "L1"): 1.00, ((10, 10), "L1"): 1.50,
+            ((11, 11), "L1"): 2.50, ((12, 12), "L1"): 3.50,
+            ((13, 13), "L1"): 8.00, ((14, 14), "L1"): 15.00, ((15, 49), "L1"): 30.00,
 
             # L2: Purple Gummy Bear (ID 1)
-            ((5, 5), "L2"): 0.50, ((6, 6), "L2"): 0.60, ((7, 7), "L2"): 0.80,
-            ((8, 8), "L2"): 1.00, ((9, 9), "L2"): 1.50, ((10, 10), "L2"): 2.50,
-            ((11, 11), "L2"): 4.00, ((12, 12), "L2"): 6.00,
-            ((13, 13), "L2"): 12.00, ((14, 14), "L2"): 24.00, ((15, 49), "L2"): 50.00,
+            ((5, 5), "L2"): 0.25, ((6, 6), "L2"): 0.30, ((7, 7), "L2"): 0.40,
+            ((8, 8), "L2"): 0.50, ((9, 9), "L2"): 0.75, ((10, 10), "L2"): 1.25,
+            ((11, 11), "L2"): 2.00, ((12, 12), "L2"): 3.00,
+            ((13, 13), "L2"): 6.00, ((14, 14), "L2"): 12.00, ((15, 49), "L2"): 25.00,
 
             # L3: Orange Gummy Bear (ID 0) — lowest paying
-            ((5, 5), "L3"): 0.40, ((6, 6), "L3"): 0.60, ((7, 7), "L3"): 0.80,
-            ((8, 8), "L3"): 1.00, ((9, 9), "L3"): 1.00, ((10, 10), "L3"): 2.00,
-            ((11, 11), "L3"): 3.00, ((12, 12), "L3"): 5.00,
-            ((13, 13), "L3"): 10.00, ((14, 14), "L3"): 20.00, ((15, 49), "L3"): 40.00,
+            ((5, 5), "L3"): 0.20, ((6, 6), "L3"): 0.30, ((7, 7), "L3"): 0.40,
+            ((8, 8), "L3"): 0.50, ((9, 9), "L3"): 0.50, ((10, 10), "L3"): 1.00,
+            ((11, 11), "L3"): 1.50, ((12, 12), "L3"): 2.50,
+            ((13, 13), "L3"): 5.00, ((14, 14), "L3"): 10.00, ((15, 49), "L3"): 20.00,
         }
         # SDK utility: unfolds range-based pay_group into flat self.paytable
         self.paytable = self.convert_range_table(self.pay_group)
@@ -121,6 +121,15 @@ class GameConfig(Config):
 
         # ──────────────────────────────────────────────────────
         # BET MODES
+        #
+        # Distribution quotas control the mix of outcomes:
+        # - "wincap": forces 25,000x wins (very rare)
+        # - "freegame": forces free spin triggers
+        # - "0": forces zero-win spins
+        # - "basegame": normal play (wins + losses naturally)
+        #
+        # The Rust optimizer later adjusts per-sim probabilities
+        # in the lookup CSV to hit the exact target RTP.
         # ──────────────────────────────────────────────────────
         self.bet_modes = [
             # 1. Standard Base Game
@@ -134,7 +143,7 @@ class GameConfig(Config):
                 is_buybonus=False,
                 distributions=[
                     Distribution(
-                        criteria="wincap", quota=0.0001,
+                        criteria="wincap", quota=0.00005,
                         win_criteria=self.wincap,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
@@ -142,7 +151,7 @@ class GameConfig(Config):
                         },
                     ),
                     Distribution(
-                        criteria="freegame", quota=0.049,
+                        criteria="freegame", quota=0.035,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
                             "scatter_triggers": {3: 20, 4: 10, 5: 2},
@@ -150,12 +159,12 @@ class GameConfig(Config):
                         },
                     ),
                     Distribution(
-                        criteria="0", quota=0.45,
+                        criteria="0", quota=0.60,
                         win_criteria=0.0,
                         conditions={"reel_weights": {self.basegame_type: {"BR0": 1}}},
                     ),
                     Distribution(
-                        criteria="basegame", quota=0.5009,
+                        criteria="basegame", quota=0.36495,
                         conditions={"reel_weights": {self.basegame_type: {"BR0": 1}}},
                     ),
                 ],
@@ -173,7 +182,32 @@ class GameConfig(Config):
                 ante_scatter_multiplier=2.0,
                 distributions=[
                     Distribution(
-                        criteria="basegame", quota=1.0,
+                        criteria="wincap", quota=0.0001,
+                        win_criteria=self.wincap,
+                        conditions={
+                            "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
+                            "force_wincap": True,
+                        },
+                    ),
+                    Distribution(
+                        criteria="freegame", quota=0.065,
+                        conditions={
+                            "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
+                            "scatter_triggers": {3: 15, 4: 10, 5: 5},
+                            "force_freegame": True,
+                            "scatter_chance_override": self.scatter_chance_ante,
+                        },
+                    ),
+                    Distribution(
+                        criteria="0", quota=0.55,
+                        win_criteria=0.0,
+                        conditions={
+                            "reel_weights": {self.basegame_type: {"BR0": 1}},
+                            "scatter_chance_override": self.scatter_chance_ante,
+                        },
+                    ),
+                    Distribution(
+                        criteria="basegame", quota=0.3849,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
                             "scatter_chance_override": self.scatter_chance_ante,
@@ -193,7 +227,7 @@ class GameConfig(Config):
                 is_buybonus=True,
                 distributions=[
                     Distribution(
-                        criteria="wincap", quota=0.1,
+                        criteria="wincap", quota=0.002,
                         win_criteria=self.wincap,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
@@ -201,15 +235,7 @@ class GameConfig(Config):
                         },
                     ),
                     Distribution(
-                        criteria="0", quota=0.1,
-                        win_criteria=0.0,
-                        conditions={
-                            "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
-                            "force_freegame": True,
-                        },
-                    ),
-                    Distribution(
-                        criteria="freegame", quota=0.8,
+                        criteria="freegame", quota=0.998,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
                             "force_freegame": True,
@@ -229,7 +255,7 @@ class GameConfig(Config):
                 is_buybonus=True,
                 distributions=[
                     Distribution(
-                        criteria="wincap", quota=0.1,
+                        criteria="wincap", quota=0.005,
                         win_criteria=self.wincap,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"SF0": 1}},
@@ -237,15 +263,7 @@ class GameConfig(Config):
                         },
                     ),
                     Distribution(
-                        criteria="0", quota=0.1,
-                        win_criteria=0.0,
-                        conditions={
-                            "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"SF0": 1}},
-                            "force_freegame": True,
-                        },
-                    ),
-                    Distribution(
-                        criteria="freegame", quota=0.8,
+                        criteria="freegame", quota=0.995,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"SF0": 1}},
                             "force_freegame": True,
