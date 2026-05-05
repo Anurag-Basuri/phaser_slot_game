@@ -77,6 +77,14 @@ export class Game extends Phaser.Scene {
   private anteBetTxt!: Phaser.GameObjects.Text;
   private anteBetIcon!: Phaser.GameObjects.Text;
 
+  // Features Menu (for small screens)
+  private btnFeaturesMenuGraphics!: Phaser.GameObjects.Graphics;
+  private btnFeaturesMenuHit!: Phaser.GameObjects.Rectangle;
+  private btnFeaturesMenuIcon!: Phaser.GameObjects.Text;
+  private featuresMenuPopupBg!: Phaser.GameObjects.Graphics;
+  private featuresMenuHitOverlay!: Phaser.GameObjects.Rectangle;
+  private isFeaturesMenuOpen = false;
+
   // Replay UI
   private replayBtnHit!: Phaser.GameObjects.Rectangle;
   private replayBtnTxt!: Phaser.GameObjects.Text;
@@ -263,6 +271,28 @@ export class Game extends Phaser.Scene {
     this.anteBetIcon = this.add.text(0, 0, '⚡', { fontFamily: 'Arial' }).setOrigin(0.5).setDepth(21);
     this.anteBetTxt = this.add.text(0, 0, T('ANTE BET', this.stakeEngine.isSocialMode()), { fontFamily: '"Inter", "Arial", sans-serif', fontStyle: 'bold', color: '#ffffff' }).setOrigin(0, 0.5).setDepth(21);
 
+    // Features Menu UI (for small screens)
+    this.featuresMenuHitOverlay = this.add.rectangle(0, 0, w, h, 0x000000, 0.5)
+      .setInteractive()
+      .setDepth(60)
+      .setVisible(false)
+      .on('pointerdown', () => {
+        this.isFeaturesMenuOpen = false;
+        this.layoutAll();
+      });
+    
+    this.featuresMenuPopupBg = this.add.graphics().setDepth(61).setVisible(false);
+    
+    this.btnFeaturesMenuGraphics = this.add.graphics().setDepth(20);
+    this.btnFeaturesMenuHit = this.add.rectangle(0, 0, 50, 50, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true }).setDepth(21)
+      .on('pointerdown', () => {
+        this.isFeaturesMenuOpen = !this.isFeaturesMenuOpen;
+        this.layoutAll();
+        this.audio.playSound('button');
+      });
+    this.btnFeaturesMenuIcon = this.add.text(0, 0, '★', { fontSize: '24px', color: '#ffffff' }).setOrigin(0.5).setDepth(21);
+
     // Spin button setup (Authentic Pragmatic Circular Style)
     this.spinBtnGraphics = this.add.graphics().setDepth(20);
     this.spinBtnHit = this.add.rectangle(0, 0, 150, 150, 0xffffff, 0)
@@ -437,6 +467,11 @@ export class Game extends Phaser.Scene {
     const barH = isStacked ? Math.max(55, h * 0.08) : Math.max(45, h * 0.07);
     const safeH = h - barH;
 
+    // Toolbar dimensions (used by multiple elements for alignment)
+    const toolY = Math.max(25, safeH * 0.04);
+    const toolPad = isMobile ? 25 : 35;
+    const toolGap = isLandscapeMobile ? 38 : isMobile ? 42 : 50;
+
     // ==========================================
     // 1. GRID SCALING & POSITIONING
     // ==========================================
@@ -554,51 +589,125 @@ export class Game extends Phaser.Scene {
     // ==========================================
     // 2. BUY PANELS & ANTE BET
     // ==========================================
-    const buyW = isStacked ? w * 0.42 : isLandscapeMobile ? Math.min(150, gridX * 0.8) : Math.min(200, gridX * 0.75);
-    const buyH = isStacked ? 55 : isLandscapeMobile ? 50 : Math.min(100, safeH * 0.14);
-    const buyGap = isStacked ? 8 : 12;
+    const availableWidthForFeatures = gridX;
+    const availableHeightForFeatures = safeH - (gridY + gridTotalSize);
     
+    const useFeaturesMenu = isLandscapeMobile || (isStacked && availableHeightForFeatures < 170) || (!isStacked && availableWidthForFeatures < 160);
+
+    let buyW = isStacked ? w * 0.42 : Math.min(200, gridX * 0.75);
+    let buyH = isStacked ? 55 : Math.min(100, safeH * 0.14);
+    let buyGap = isStacked ? 8 : 12;
+    let anteW = buyW;
+    let anteH = isStacked ? 40 : 45;
+
     let buyX: number = 0;
     let buyY1: number = 0;
     let buyY2: number = 0;
+    let anteY: number = 0;
 
-    if (isStacked) {
-      buyX = buyW / 2 + 10;
-      const anteH = 40;
-      const blockHeight = buyH * 2 + buyGap * 2 + anteH;
-      const blockStartY = safeH - blockHeight - 15;
-      buyY1 = blockStartY + buyH / 2;
-      buyY2 = buyY1 + buyH + buyGap;
+    if (useFeaturesMenu) {
+      // Show the toggle button
+      this.btnFeaturesMenuGraphics.setVisible(true).clear();
+      this.btnFeaturesMenuHit.setVisible(true);
+      this.btnFeaturesMenuIcon.setVisible(true);
+      
+      const toggleX = isLandscapeMobile ? 35 : w * 0.15;
+      const toggleY = isLandscapeMobile ? safeH / 2 : toolY + 60;
+      
+      this.btnFeaturesMenuHit.setPosition(toggleX, toggleY).setSize(50, 50);
+      this.btnFeaturesMenuGraphics.fillStyle(0xff006a, 1).fillRoundedRect(toggleX - 25, toggleY - 25, 50, 50, 15);
+      this.btnFeaturesMenuGraphics.lineStyle(3, 0xffffff, 1).strokeRoundedRect(toggleX - 25, toggleY - 25, 50, 50, 15);
+      this.btnFeaturesMenuIcon.setPosition(toggleX, toggleY);
+
+      if (this.isFeaturesMenuOpen) {
+        // Position inside popup
+        this.featuresMenuHitOverlay.setVisible(true).setPosition(w/2, h/2).setSize(w, h);
+        this.featuresMenuPopupBg.setVisible(true).clear();
+        
+        buyW = Math.min(220, w * 0.8);
+        buyH = 60;
+        anteW = buyW;
+        anteH = 45;
+        buyGap = 15;
+
+        const popupW = buyW + 40;
+        const popupH = buyH * 2 + anteH + buyGap * 3 + 20;
+        const popupX = w / 2;
+        const popupY = h / 2;
+
+        this.featuresMenuPopupBg.fillStyle(0x1a0a24, 0.95).fillRoundedRect(popupX - popupW/2, popupY - popupH/2, popupW, popupH, 20);
+        this.featuresMenuPopupBg.lineStyle(3, 0xff006a, 1).strokeRoundedRect(popupX - popupW/2, popupY - popupH/2, popupW, popupH, 20);
+
+        buyX = popupX;
+        buyY1 = popupY - popupH/2 + 20 + buyH/2;
+        buyY2 = buyY1 + buyH + buyGap;
+        anteY = buyY2 + buyH/2 + buyGap + anteH/2;
+
+      } else {
+        this.featuresMenuHitOverlay.setVisible(false);
+        this.featuresMenuPopupBg.setVisible(false);
+      }
     } else {
-      buyX = gridX / 2;
-      buyX = Math.max(buyX, buyW / 2 + 10);
-      const anteH = 45;
-      const blockHeight = buyH * 2 + buyGap * 2 + anteH;
-      const blockStartY = gridY + (gridTotalSize - blockHeight) / 2;
-      buyY1 = blockStartY + buyH / 2;
-      buyY2 = buyY1 + buyH + buyGap;
+      // Normal placement
+      this.isFeaturesMenuOpen = false;
+      this.featuresMenuHitOverlay.setVisible(false);
+      this.featuresMenuPopupBg.setVisible(false);
+      this.btnFeaturesMenuGraphics.setVisible(false);
+      this.btnFeaturesMenuHit.setVisible(false);
+      this.btnFeaturesMenuIcon.setVisible(false);
+
+      if (isStacked) {
+        buyX = buyW / 2 + 10;
+        const blockHeight = buyH * 2 + buyGap * 2 + anteH;
+        const blockStartY = safeH - blockHeight - 15;
+        buyY1 = blockStartY + buyH / 2;
+        buyY2 = buyY1 + buyH + buyGap;
+      } else {
+        buyX = gridX / 2;
+        buyX = Math.max(buyX, buyW / 2 + 10);
+        const blockHeight = buyH * 2 + buyGap * 2 + anteH;
+        const blockStartY = gridY + (gridTotalSize - blockHeight) / 2;
+        buyY1 = blockStartY + buyH / 2;
+        buyY2 = buyY1 + buyH + buyGap;
+      }
+      anteY = buyY2 + buyH / 2 + buyGap + anteH / 2 + 10;
     }
 
-    this.drawBuyPanel(this.panelSuperGraphics, buyW, buyH, true);
-    this.buySuperHit.setPosition(buyX, buyY1).setSize(buyW, buyH);
-    this.panelSuperGraphics.setPosition(buyX, buyY1);
-    this.updateBuyText(this.buySuperTxt1, this.buySuperTxt2, buyX, buyY1, buyH, 'SUPER');
+    const showFeatures = !useFeaturesMenu || this.isFeaturesMenuOpen;
+    const featuresDepthBase = (useFeaturesMenu && this.isFeaturesMenuOpen) ? 62 : 20;
 
-    this.drawBuyPanel(this.panelRegularGraphics, buyW, buyH, false);
-    this.buyRegularHit.setPosition(buyX, buyY2).setSize(buyW, buyH);
-    this.panelRegularGraphics.setPosition(buyX, buyY2);
-    this.updateBuyText(this.buyRegularTxt1, this.buyRegularTxt2, buyX, buyY2, buyH, 'BUY');
-
-    // Ante Bet
-    const anteW = buyW;
-    const anteH = isStacked ? 40 : 45;
-    const anteY = buyY2 + buyH / 2 + buyGap + anteH / 2 + 10;
+    this.panelSuperGraphics.setVisible(showFeatures).setDepth(featuresDepthBase);
+    this.buySuperHit.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
+    this.buySuperTxt1.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
+    this.buySuperTxt2.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
     
-    this.anteBetHit.setPosition(buyX, anteY).setSize(anteW, anteH);
-    this.anteBetBtn.setPosition(buyX, anteY);
-    this.drawAnteBetButton(anteW, anteH);
-    this.anteBetIcon.setPosition(buyX - 40, anteY).setFontSize(isLandscapeMobile ? 16 : 22).setOrigin(0.5);
-    this.anteBetTxt.setPosition(buyX - 25, anteY).setFontSize(isLandscapeMobile ? 12 : 16).setOrigin(0, 0.5);
+    this.panelRegularGraphics.setVisible(showFeatures).setDepth(featuresDepthBase);
+    this.buyRegularHit.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
+    this.buyRegularTxt1.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
+    this.buyRegularTxt2.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
+    
+    this.anteBetBtn.setVisible(showFeatures).setDepth(featuresDepthBase);
+    this.anteBetHit.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
+    this.anteBetTxt.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
+    this.anteBetIcon.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
+
+    if (showFeatures) {
+      this.drawBuyPanel(this.panelSuperGraphics, buyW, buyH, true);
+      this.buySuperHit.setPosition(buyX, buyY1).setSize(buyW, buyH);
+      this.panelSuperGraphics.setPosition(buyX, buyY1);
+      this.updateBuyText(this.buySuperTxt1, this.buySuperTxt2, buyX, buyY1, buyH, 'SUPER');
+
+      this.drawBuyPanel(this.panelRegularGraphics, buyW, buyH, false);
+      this.buyRegularHit.setPosition(buyX, buyY2).setSize(buyW, buyH);
+      this.panelRegularGraphics.setPosition(buyX, buyY2);
+      this.updateBuyText(this.buyRegularTxt1, this.buyRegularTxt2, buyX, buyY2, buyH, 'BUY');
+      
+      this.anteBetHit.setPosition(buyX, anteY).setSize(anteW, anteH);
+      this.anteBetBtn.setPosition(buyX, anteY);
+      this.drawAnteBetButton(anteW, anteH);
+      this.anteBetIcon.setPosition(buyX - 40, anteY).setFontSize(22).setOrigin(0.5);
+      this.anteBetTxt.setPosition(buyX - 25, anteY).setFontSize(16).setOrigin(0, 0.5);
+    }
 
     // ==========================================
     // 3. BOTTOM BAR & HUD
@@ -656,9 +765,11 @@ export class Game extends Phaser.Scene {
     this.updateAutoSpinDisplay();
 
     // Bet (+/-) Buttons
-    const bBtnSize = Math.max(20, barH * 0.4);
+    let bBtnSize = Math.max(30, barH * 0.55); // Increased base size
     if (!isStacked) {
-        const betBtnOffset = spinSize / 2 + bBtnSize / 2 + 8;
+        // Desktop / Column mode
+        bBtnSize = Math.max(35, rightMargin * 0.12); // Make them much larger on desktop
+        const betBtnOffset = spinSize / 2 + bBtnSize / 2 + 15; // Increased gap
         // Clamp to screen edges
         const minusX = Math.max(bBtnSize, spinX - betBtnOffset);
         const plusX = Math.min(w - bBtnSize, spinX + betBtnOffset);
@@ -678,10 +789,6 @@ export class Game extends Phaser.Scene {
     // ==========================================
     // 5. TOOLBAR ICONS (Top Left)
     // ==========================================
-    const toolY = Math.max(25, safeH * 0.04);
-    const toolPad = isMobile ? 25 : 35;
-    const toolGap = isLandscapeMobile ? 38 : isMobile ? 42 : 50;
-    
     this.btnSettings.setPosition(toolPad, toolY);
     this.btnPaytable.setPosition(toolPad + toolGap, toolY);
     this.soundToggle.setPosition(toolPad + toolGap * 2, toolY);
@@ -696,27 +803,36 @@ export class Game extends Phaser.Scene {
     const logoFS1 = isStacked ? Math.min(40, w * 0.07) : Math.min(55, maxLogoWidth * 0.11);
     const logoFS2 = isStacked ? Math.min(50, w * 0.08) : Math.min(65, maxLogoWidth * 0.13);
     
-    const logoX = isStacked ? w / 2 : rightColCenter; 
-    const logoY = isStacked ? toolY + 10 : Math.max(toolY + 20, gridY);
-    
-    this.logoText1.setPosition(logoX, logoY)
-                  .setFontSize(logoFS1)
-                  .setStroke('#ffffff', Math.max(6, logoFS1 * 0.25));
-                  
-    this.logoText2.setPosition(logoX, logoY + logoFS1 * 0.9)
-                  .setFontSize(logoFS2)
-                  .setStroke('#ffffff', Math.max(6, logoFS2 * 0.25));
+    // Hide logo if there's fundamentally no space for it
+    if (isLandscapeMobile || logoFS1 < 20 || safeH < 400) {
+      this.logoText1.setVisible(false);
+      this.logoText2.setVisible(false);
+    } else {
+      this.logoText1.setVisible(true);
+      this.logoText2.setVisible(true);
 
-    // Logo floating animation (only add once)
-    if (!this.tweens.isTweening(this.logoText1)) {
-      this.tweens.add({
-        targets: [this.logoText1, this.logoText2],
-        y: '+=3',
-        yoyo: true,
-        repeat: -1,
-        duration: 2500,
-        ease: 'Sine.easeInOut',
-      });
+      const logoX = isStacked ? w / 2 : rightColCenter; 
+      const logoY = isStacked ? toolY + 10 : Math.max(toolY + 20, gridY);
+      
+      this.logoText1.setPosition(logoX, logoY)
+                    .setFontSize(logoFS1)
+                    .setStroke('#ffffff', Math.max(6, logoFS1 * 0.25));
+                    
+      this.logoText2.setPosition(logoX, logoY + logoFS1 * 0.9)
+                    .setFontSize(logoFS2)
+                    .setStroke('#ffffff', Math.max(6, logoFS2 * 0.25));
+
+      // Logo floating animation (only add once)
+      if (!this.tweens.isTweening(this.logoText1)) {
+        this.tweens.add({
+          targets: [this.logoText1, this.logoText2],
+          y: '+=3',
+          yoyo: true,
+          repeat: -1,
+          duration: 2500,
+          ease: 'Sine.easeInOut',
+        });
+      }
     }
 
     // FS Counter
