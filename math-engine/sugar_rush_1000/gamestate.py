@@ -95,7 +95,7 @@ class GameState(GameStateOverride, GameExecutables):
 
             # Multiplier grid handling per free spin:
             # - base/ante: RESET each spin (multipliers build within cascades only)
-            # - bonus/super: PERSIST across spins (that's what 100x/500x cost buys)
+            # - bonus/super: PERSIST across spins (buy feature value)
             if self.current_betmode_name in ("base", "ante"):
                 size = self.config.grid_size
                 self.grid_multipliers = [[0] * size for _ in range(size)]

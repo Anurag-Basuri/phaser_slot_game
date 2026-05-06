@@ -135,8 +135,13 @@ class GameExecutables(Executables):
             self.seed_random_multipliers()
 
         cascade_depth = 0
+        max_cascade_depth = 50  # Safety limit to prevent runaway cascades
 
         while True:
+            # Safety: break if cascade depth exceeded
+            if cascade_depth >= max_cascade_depth:
+                break
+
             # 1. Detect clusters
             self.win_data = self.get_cluster_data(record_wins=True)
 
