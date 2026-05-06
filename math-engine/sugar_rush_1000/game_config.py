@@ -96,12 +96,12 @@ class GameConfig(Config):
             self.basegame_type: {3: 10, 4: 12, 5: 15, 6: 20, 7: 30},
             self.freegame_type: {3: 10, 4: 12, 5: 15, 6: 20, 7: 30},
         }
-        # Bonus (100x): fewer FS to control persistent multiplier compounding
+        # Bonus (100x): slightly fewer FS to control value with 32x cap
         self.freespin_triggers_bonus = {
-            self.basegame_type: {3: 10, 4: 11, 5: 13, 6: 16, 7: 20},
-            self.freegame_type: {3: 10, 4: 11, 5: 13, 6: 16, 7: 20},
+            self.basegame_type: {3: 10, 4: 12, 5: 15, 6: 20, 7: 30},
+            self.freegame_type: {3: 10, 4: 12, 5: 15, 6: 20, 7: 30},
         }
-        # Super (500x): more FS to justify the 5x premium over bonus
+        # Super (500x): more FS to reach 96.5% RTP with 128x cap
         self.freespin_triggers_super = {
             self.basegame_type: {3: 16, 4: 18, 5: 22, 6: 27, 7: 34},
             self.freegame_type: {3: 16, 4: 18, 5: 22, 6: 27, 7: 34},
@@ -124,6 +124,8 @@ class GameConfig(Config):
         # Multiplier cap (128x balances persistent multiplier value in
         # bonus/super while keeping simulations tractable)
         self.max_multiplier = 128
+        # Bonus-specific lower cap to prevent excessive compounding
+        self.bonus_max_multiplier = 32
 
         # Probability of random multiplier candy spots appearing each spin
         # (Sugar Rush 1000 signature mechanic)
@@ -248,7 +250,7 @@ class GameConfig(Config):
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
                             "force_wincap": True, "force_freegame": True,
-                            "scatter_triggers": {3: 60, 4: 25, 5: 15},
+                            "scatter_triggers": {3: 70, 4: 20, 5: 10},
                             "freespin_triggers_override": self.freespin_triggers_bonus,
                         },
                     ),
@@ -257,7 +259,7 @@ class GameConfig(Config):
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
                             "force_freegame": True,
-                            "scatter_triggers": {3: 60, 4: 25, 5: 15},
+                            "scatter_triggers": {3: 70, 4: 20, 5: 10},
                             "freespin_triggers_override": self.freespin_triggers_bonus,
                         },
                     ),

@@ -74,17 +74,23 @@ class GameExecutables(Executables):
     def advance_multiplier(self, r: int, c: int) -> None:
         """
         Advances the multiplier at position (r, c).
-        Progression: 0 → 2 → 4 → 8 → 16 → 32 → 64 → ... → 1024
+        Progression: 0 → 2 → 4 → 8 → ... → cap
 
         In Sugar Rush 1000, the first cascade hit on a spot immediately
         activates a ×2 multiplier. Each subsequent hit doubles it.
-        There is no intermediate "mark" step.
+        Uses per-mode multiplier cap (bonus=32x, others=128x).
         """
+        # Select per-mode cap
+        if self.current_betmode_name == "bonus":
+            cap = getattr(self.config, 'bonus_max_multiplier', self.config.max_multiplier)
+        else:
+            cap = self.config.max_multiplier
+
         current = self.grid_multipliers[r][c]
         if current == 0:
             self.grid_multipliers[r][c] = 2  # Immediate x2 activation
         else:
-            self.grid_multipliers[r][c] = min(self.config.max_multiplier, current * 2)
+            self.grid_multipliers[r][c] = min(cap, current * 2)
 
     def apply_cluster_multipliers(self, win_data: dict) -> dict:
         """
