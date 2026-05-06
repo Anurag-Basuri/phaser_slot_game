@@ -177,12 +177,12 @@ class GameConfig(Config):
                         },
                     ),
                     Distribution(
-                        criteria="0", quota=0.60,
+                        criteria="0", quota=0.58,
                         win_criteria=0.0,
                         conditions={"reel_weights": {self.basegame_type: {"BR0": 1}}},
                     ),
                     Distribution(
-                        criteria="basegame", quota=0.3899,
+                        criteria="basegame", quota=0.4099,
                         conditions={"reel_weights": {self.basegame_type: {"BR0": 1}}},
                     ),
                 ],
@@ -250,7 +250,7 @@ class GameConfig(Config):
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
                             "force_wincap": True, "force_freegame": True,
-                            "scatter_triggers": {3: 70, 4: 20, 5: 10},
+                            "scatter_triggers": {3: 50, 4: 40, 5: 10},
                             "freespin_triggers_override": self.freespin_triggers_bonus,
                         },
                     ),
@@ -259,7 +259,7 @@ class GameConfig(Config):
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
                             "force_freegame": True,
-                            "scatter_triggers": {3: 70, 4: 20, 5: 10},
+                            "scatter_triggers": {3: 50, 4: 40, 5: 10},
                             "freespin_triggers_override": self.freespin_triggers_bonus,
                         },
                     ),
