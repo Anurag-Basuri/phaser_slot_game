@@ -1666,12 +1666,16 @@ export class Game extends Phaser.Scene {
   }
 
   updateBetDisplay() {
+    const baseBet = BET_PRESETS[this.betPresetIndex];
     const effectiveBet = this.getEffectiveBet();
-    const formatted = DisplayBalance({ amount: effectiveBet, currency: this.currency });
-    const label = options.anteBetEnabled
-      ? `${formatted} ⚡`
-      : formatted;
-    this.txtBet.setText(label);
+    const formattedEffective = DisplayBalance({ amount: effectiveBet, currency: this.currency });
+    
+    if (options.anteBetEnabled) {
+      const formattedBase = DisplayBalance({ amount: baseBet, currency: this.currency });
+      this.txtBet.setText(`${formattedBase} (REAL COST ${formattedEffective})`).setFontSize(16);
+    } else {
+      this.txtBet.setText(formattedEffective).setFontSize(24);
+    }
   }
 
   updateLastWinDisplay() {
@@ -1724,10 +1728,12 @@ export class Game extends Phaser.Scene {
       return;
     }
 
+    const baseBet = this.getEffectiveBet();
+    const formattedBase = DisplayBalance({ amount: baseBet, currency: this.currency });
     const formattedCost = DisplayBalance({ amount: cost, currency: this.currency });
     this.confirmDialog.show(
       label,
-      `Cost: ${formattedCost}`,
+      `Bet: ${formattedBase}\nReal Cost: ${formattedCost}`,
       () => this.executePurchase(triggerType, cost),
       () => { /* cancelled */ }
     );
