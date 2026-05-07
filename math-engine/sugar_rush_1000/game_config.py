@@ -125,8 +125,8 @@ class GameConfig(Config):
         self.max_multiplier = 128
         # Bonus-specific lower cap to prevent excessive compounding
         self.bonus_max_multiplier = 32
-        # Super-specific cap (112x)
-        self.super_max_multiplier = 112
+        # Super-specific cap (116x — interpolated between 112x@92.2% and 128x@110%)
+        self.super_max_multiplier = 116
 
         # Probability of random multiplier candy spots appearing each spin
         # (Sugar Rush 1000 signature mechanic)
@@ -218,7 +218,7 @@ class GameConfig(Config):
                         },
                     ),
                     Distribution(
-                        criteria="0", quota=0.65,
+                        criteria="0", quota=0.64,
                         win_criteria=0.0,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}},
@@ -226,7 +226,7 @@ class GameConfig(Config):
                         },
                     ),
                     Distribution(
-                        criteria="basegame", quota=0.3349,
+                        criteria="basegame", quota=0.345,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
                             "scatter_chance_override": self.scatter_chance_ante,
@@ -292,7 +292,7 @@ class GameConfig(Config):
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"SF0": 1}},
                             "force_freegame": True,
-                            "scatter_triggers": {3: 70, 4: 20, 5: 10},
+                            "scatter_triggers": {3: 50, 4: 40, 5: 10},
                             "freespin_triggers_override": self.freespin_triggers_super,
                         },
                     ),
