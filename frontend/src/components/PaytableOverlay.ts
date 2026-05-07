@@ -522,8 +522,8 @@ export class PaytableOverlay {
       fontSize: '14px', color: this.COL_GOLD, fontFamily: this.FONT_BODY, fontStyle: 'bold'
     }));
     yPos += 105;
-    page.add(this.scene.add.text(w / 2, yPos + 5, 'Malfunction voids all pays and plays.', {
-      fontSize: '12px', color: this.COL_MUTED, fontStyle: 'italic', fontFamily: this.FONT_BODY
+    page.add(this.scene.add.text(w / 2, yPos + 5, 'Malfunction voids all pays and plays. A consistent internet connection is required.\nIn the event of a disconnection, reload the game to finish any uncompleted bets.\nThe expected return is calculated over many spins. Animations are not representative\nof any physical device, and are for illustrative purposes only. TM and © 2025 Stake Engine.', {
+      fontSize: '11px', color: this.COL_MUTED, fontStyle: 'italic', fontFamily: this.FONT_BODY, align: 'center', lineSpacing: 2
     }).setOrigin(0.5, 0));
     parent.add(page);
     this.pages.push(page);

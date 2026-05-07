@@ -138,8 +138,19 @@ export class Game extends Phaser.Scene {
         this.valueMoney = StakeEngineClient.toDisplayAmount(auth.balance.amount);
         this.currency = auth.balance.currency;
 
+        if (auth.config && auth.config.betLevels && auth.config.betLevels.length > 0) {
+          BET_PRESETS.length = 0;
+          for (let i = 0; i < auth.config.betLevels.length; i++) {
+            BET_PRESETS.push(StakeEngineClient.toDisplayAmount(auth.config.betLevels[i]));
+          }
+          const defaultDisplay = StakeEngineClient.toDisplayAmount(auth.config.defaultBetLevel);
+          this.betPresetIndex = BET_PRESETS.indexOf(defaultDisplay);
+          if (this.betPresetIndex === -1) this.betPresetIndex = 0;
+          options.betAmount = BET_PRESETS[this.betPresetIndex];
+        }
+
         if (auth.round) {
-          this.handlePendingRound();
+          this.handlePendingRound(auth.round);
         }
       } catch (err) {
         console.error('[Game] Auth failed:', err);
@@ -1950,13 +1961,33 @@ export class Game extends Phaser.Scene {
     this.grid.injectServerResult(serverGrid);
   }
 
-  private handlePendingRound() {
+  private handlePendingRound(round: any) {
     // SDK disconnect recovery flow:
     // On auth, the RGS returns any pending round in auth.round.
-    // If round.active is true, we should resume from round.event (last saved event index).
-    // For now, we end the round immediately — a full resume implementation
-    // would replay events from the saved index onward.
-    console.log('[Game] Pending round detected — ending to reconcile balance.');
+    const totalAmount = StakeEngineClient.toDisplayAmount(round.amount);
+    
+    // Stake Requirement: Restore player's previously selected bet amount on refresh.
+    let bestDist = Infinity;
+    let bestIdx = this.betPresetIndex;
+    for (let i = 0; i < BET_PRESETS.length; i++) {
+        const bp = BET_PRESETS[i];
+        const distBase = Math.abs(totalAmount - bp);
+        const distAnte = Math.abs(totalAmount - bp * 1.25);
+        const distBonus = Math.abs(totalAmount - bp * 100);
+        const distSuper = Math.abs(totalAmount - bp * 500);
+        
+        const minThis = Math.min(distBase, distAnte, distBonus, distSuper);
+        if (minThis < bestDist) {
+            bestDist = minThis;
+            bestIdx = i;
+        }
+    }
+    
+    this.betPresetIndex = bestIdx;
+    options.betAmount = BET_PRESETS[this.betPresetIndex];
+    this.updateBetDisplay();
+
+    console.log(`[Game] Pending round detected — restored bet amount to ${options.betAmount} (total cost: ${totalAmount})`);
     this.stakeEngine.endRound().catch(e => console.warn('[Game] endRound error:', e));
   }
 
