@@ -186,8 +186,12 @@ export class StakeEngineClient {
     this.lang = params.get('lang') || 'en';
     this.device = params.get('device') || 'desktop';
     this.currency = params.get('currency') || 'USD';
-    const rawRgs = params.get('rgs_url') || '';
-    this.rgsUrl = rawRgs.replace(/\/+$/, ''); // Strip trailing slashes
+    let rawRgs = params.get('rgs_url') || '';
+    rawRgs = rawRgs.replace(/\/+$/, ''); // Strip trailing slashes
+    if (rawRgs && !rawRgs.startsWith('http')) {
+      rawRgs = 'https://' + rawRgs;
+    }
+    this.rgsUrl = rawRgs;
 
     // If no params found, run in demo/offline mode
     if (!this.sessionID || !this.rgsUrl) {
@@ -350,7 +354,6 @@ export class StakeEngineClient {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionID: this.sessionID,
-          session_id: this.sessionID, // Include snake_case as per Stake API standard
           language: this.lang,
         }),
       });
@@ -422,7 +425,6 @@ export class StakeEngineClient {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionID: this.sessionID,
-          session_id: this.sessionID, // Include snake_case
           amount: StakeEngineClient.toStakeAmount(betAmount),
           mode: mode, // Must match math engine bet mode names exactly (lowercase)
           currency: this.currency,

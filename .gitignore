@@ -48,3 +48,5 @@ yarn-error.log*
 sweet_cluster_1000.zip
 bundle/
 *.zip
+frontend_upload.zip
+math_engine_upload.zip
