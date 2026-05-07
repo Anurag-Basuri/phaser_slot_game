@@ -121,7 +121,7 @@ export class Boot extends Phaser.Scene {
     const subFontSize = Math.min(18, w * 0.025);
     const subtitle = this.add.text(w / 2, h * 0.54, '7×7 Cluster Pays  •  Cascading Reels  •  Up to 25,000× Win', {
       fontSize: `${subFontSize}px`,
-      fontFamily: 'Arial, sans-serif',
+      fontFamily: '"Outfit", sans-serif',
       color: '#ffffff',
       stroke: '#333333',
       strokeThickness: 3,
@@ -255,7 +255,7 @@ export class Boot extends Phaser.Scene {
     const footerFontSize = Math.min(13, w * 0.018);
     this.add.text(w / 2, h * 0.93, 'RTP: 96.53%  |  High Volatility  |  Cluster Pays  |  v1.0.0', {
       fontSize: `${footerFontSize}px`,
-      fontFamily: 'Arial, sans-serif',
+      fontFamily: '"Outfit", sans-serif',
       color: '#ffffff',
       stroke: '#000000',
       strokeThickness: 3,
@@ -265,7 +265,7 @@ export class Boot extends Phaser.Scene {
     // === PRAGMATIC PLAY STYLE BRANDING ===
     this.add.text(w / 2, h * 0.97, 'Powered by Stake Engine', {
       fontSize: `${Math.max(10, footerFontSize - 2)}px`,
-      fontFamily: 'Arial, sans-serif',
+      fontFamily: '"Outfit", sans-serif',
       color: '#dddddd',
       stroke: '#000000',
       strokeThickness: 2,

@@ -161,7 +161,7 @@ export class PaytableOverlay {
     const navY = logicalH - 38;
     const navCenter = logicalW / 2;
 
-    const prevBtn = this.scene.add.text(navCenter - 120, navY, '◀', {
+    const prevBtn = this.scene.add.text(navCenter - 120, navY, '< PREV', {
       fontSize: '28px', color: '#ff006a', fontStyle: 'bold',
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     prevBtn.on('pointerdown', () => {
@@ -172,7 +172,7 @@ export class PaytableOverlay {
     prevBtn.on('pointerout', () => prevBtn.setColor('#ff006a'));
     pageWrapper.add(prevBtn);
 
-    const nextBtn = this.scene.add.text(navCenter + 120, navY, '▶', {
+    const nextBtn = this.scene.add.text(navCenter + 120, navY, 'NEXT >', {
       fontSize: '28px', color: '#ff006a', fontStyle: 'bold',
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     nextBtn.on('pointerdown', () => {
@@ -563,25 +563,25 @@ export class PaytableOverlay {
     yPos += 40;
 
     const uiInfo = [
-      '☰  opens the SETTINGS menu that contains settings which',
-      '     affect the way the game is being played.',
+      '[SETTINGS] opens the SETTINGS menu that contains settings which',
+      'affect the way the game is being played.',
       '',
-      '▶▶▶  cycles through spin speed settings: normal speed,',
-      '       quick spin and turbo spin.',
+      '[QUICK SPIN] cycles through spin speed settings: normal speed,',
+      'quick spin and turbo spin.',
       '',
-      '🔊  toggles sound and music on and off.',
+      '[SOUND] toggles sound and music on and off.',
       '',
-      'ℹ  opens the Information page.',
+      '[INFO] opens the Information page.',
       '',
       'BALANCE and BET labels show the current balance and',
       'current total bet.',
       '',
-      '⊕  and  ⊖  change up or down the current bet.',
+      '[+] and [-] change up or down the current bet.',
       '',
-      '▶  starts the game.',
+      '[SPIN] starts the game.',
       '',
-      'AUTOPLAY  opens the automatic play menu.',
-      'Click the  AUTOPLAY  button again to stop it.',
+      'AUTOPLAY opens the automatic play menu.',
+      'Click the AUTOPLAY button again to stop it.',
     ];
 
     uiInfo.forEach((line) => {
@@ -735,3 +735,4 @@ export class PaytableOverlay {
     if (this.visible) this.hide(); else this.show();
   }
 }
+

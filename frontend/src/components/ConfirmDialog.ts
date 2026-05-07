@@ -57,12 +57,12 @@ export class ConfirmDialog {
     // Subtitle
     this.container.add(this.scene.add.text(w / 2, py + 110, subtitle, {
       fontSize: '20px', color: '#ffe600', fontStyle: 'bold',
-      fontFamily: 'monospace',
+      fontFamily: '"Outfit", sans-serif',
     }).setOrigin(0.5));
 
     // Warning text
     this.container.add(this.scene.add.text(w / 2, py + 150, 'This amount will be deducted from your balance.', {
-      fontSize: '12px', color: '#8888aa', fontFamily: 'monospace',
+      fontSize: '12px', color: '#8888aa', fontFamily: '"Outfit", sans-serif',
     }).setOrigin(0.5));
 
     // Buttons

@@ -36,13 +36,11 @@ export class Game extends Phaser.Scene {
   private logoText1!: Phaser.GameObjects.Text;
   private logoText2!: Phaser.GameObjects.Text;
   private gridFrame!: Phaser.GameObjects.Graphics;
-  
-  private spinBtnGraphics!: Phaser.GameObjects.Graphics;
+  private spinBtnImage!: Phaser.GameObjects.Image;
   private panelSuperGraphics!: Phaser.GameObjects.Graphics;
   private panelRegularGraphics!: Phaser.GameObjects.Graphics;
   
   private spinBtnHit!: Phaser.GameObjects.Rectangle;
-  private spinBtnLabel!: Phaser.GameObjects.Text;
   private spinBtnRadius = 50;
   private btnAutoHit!: Phaser.GameObjects.Rectangle;
   private btnAutoGraphics!: Phaser.GameObjects.Graphics;
@@ -65,9 +63,13 @@ export class Game extends Phaser.Scene {
   private buyRegularTxt1!: Phaser.GameObjects.Text;
   private buyRegularTxt2!: Phaser.GameObjects.Text;
   private soundToggle!: Phaser.GameObjects.Graphics;
+  private iconSound!: Phaser.GameObjects.Image;
   private btnPaytable!: Phaser.GameObjects.Graphics;
+  private iconPaytable!: Phaser.GameObjects.Image;
   private btnSettings!: Phaser.GameObjects.Graphics;
+  private iconSettings!: Phaser.GameObjects.Image;
   private btnFullscreen!: Phaser.GameObjects.Graphics;
+  private iconFullscreen!: Phaser.GameObjects.Image;
   private txtLastWin!: Phaser.GameObjects.Text;
   private txtLastWinLabel!: Phaser.GameObjects.Text;
   private demoLabel!: Phaser.GameObjects.Text;
@@ -75,7 +77,7 @@ export class Game extends Phaser.Scene {
   private anteBetBtn!: Phaser.GameObjects.Graphics;
   private anteBetHit!: Phaser.GameObjects.Rectangle;
   private anteBetTxt!: Phaser.GameObjects.Text;
-  private anteBetIcon!: Phaser.GameObjects.Text;
+  private anteBetIcon!: Phaser.GameObjects.Image;
 
   // Features Menu (for small screens)
   private btnFeaturesMenuGraphics!: Phaser.GameObjects.Graphics;
@@ -279,7 +281,7 @@ export class Game extends Phaser.Scene {
     this.anteBetBtn = this.add.graphics().setDepth(20);
     this.anteBetHit = this.add.rectangle(0, 0, 100, 30, 0xffffff, 0)
       .setInteractive({ useHandCursor: true }).setDepth(21);
-    this.anteBetIcon = this.add.text(0, 0, '⚡', { fontFamily: 'Arial' }).setOrigin(0.5).setDepth(21);
+    this.anteBetIcon = this.add.text(0, 0, '⚡', { fontFamily: '"Outfit", sans-serif' }).setOrigin(0.5).setDepth(21);
     this.anteBetTxt = this.add.text(0, 0, T('ANTE BET', this.stakeEngine.isSocialMode()), { fontFamily: '"Inter", "Arial", sans-serif', fontStyle: 'bold', color: '#ffffff' }).setOrigin(0, 0.5).setDepth(21);
 
     // Features Menu UI (for small screens)
@@ -306,6 +308,7 @@ export class Game extends Phaser.Scene {
 
     // Spin button setup (Authentic Pragmatic Circular Style)
     this.spinBtnGraphics = this.add.graphics().setDepth(20);
+    this.spinBtnImage = this.add.image(0, 0, 'btn_spin').setDepth(20).setScale(0.85);
     this.spinBtnHit = this.add.rectangle(0, 0, 150, 150, 0xffffff, 0)
       .setInteractive({ useHandCursor: true }).setDepth(21);
     this.spinBtnLabel = this.add.text(0, 0, '', { fontFamily: '"Luckiest Guy", cursive, sans-serif' }).setOrigin(0.5).setDepth(21);
@@ -368,6 +371,10 @@ export class Game extends Phaser.Scene {
     this.btnPaytable = this.add.graphics().setDepth(50);
     this.btnSettings = this.add.graphics().setDepth(50);
     this.btnFullscreen = this.add.graphics().setDepth(50);
+    this.iconSound = this.add.image(0, 0, 'icon_sound').setDepth(51).setOrigin(0.5);
+    this.iconPaytable = this.add.image(0, 0, 'icon_info').setDepth(51).setOrigin(0.5);
+    this.iconSettings = this.add.image(0, 0, 'icon_settings').setDepth(51).setOrigin(0.5);
+    this.iconFullscreen = this.add.image(0, 0, 'icon_fullscreen').setDepth(51).setOrigin(0.5);
     // Make hit areas interactive
     [this.soundToggle, this.btnPaytable, this.btnSettings, this.btnFullscreen].forEach(btn => {
       btn.setInteractive(new Phaser.Geom.Rectangle(-22, -22, 44, 44), Phaser.Geom.Rectangle.Contains);
@@ -446,7 +453,7 @@ export class Game extends Phaser.Scene {
       this.logoText1.setVisible(false);
       this.logoText2.setVisible(false);
 
-      this.spinBtnGraphics.setVisible(false);
+      this.spinBtnImage.setVisible(false);
       this.spinBtnHit.setVisible(false);
       this.spinBtnLabel.setVisible(false);
 
@@ -867,7 +874,6 @@ export class Game extends Phaser.Scene {
       if (!obj) continue;
       obj.clear();
       const cx = 0, cy = 0;
-      
       const size = iconR * 2.2;
       const r = 12; // corner radius
       const half = size / 2;
@@ -889,100 +895,8 @@ export class Game extends Phaser.Scene {
       obj.lineStyle(2, isSoundOff ? 0x663355 : 0xaa22ff, 0.8);
       obj.strokeRoundedRect(cx - half, cy - half, size, size, r);
       
-      // Inner rim highlight
-      obj.lineStyle(1.5, 0xffffff, 0.1);
-      obj.strokeRoundedRect(cx - half + 2, cy - half + 2, size - 4, size - 4, r - 2);
-
-      // Icon strokes - make them gold/white and thicker
-      const iconColor = isSoundOff ? 0x998899 : 0xffdd44;
-      const strokeC = isSoundOff ? 0xaaaaaa : 0xffffff;
-      
-      obj.lineStyle(2.5, strokeC, 1);
-      const s = iconR * 0.55; 
-
-      if (type === 'settings') {
-        // High-quality gear
-        obj.lineStyle(3, strokeC, 1);
-        obj.strokeCircle(cx, cy, s * 0.5);
-        
-        // 8 gear teeth
-        obj.lineStyle(3.5, strokeC, 1);
-        for(let i=0; i<8; i++) {
-          const a = i * Math.PI / 4;
-          const innerR = s * 0.5;
-          const outerR = s * 0.85;
-          obj.lineBetween(
-            cx + Math.cos(a) * innerR, cy + Math.sin(a) * innerR,
-            cx + Math.cos(a) * outerR, cy + Math.sin(a) * outerR
-          );
-        }
-      } else if (type === 'info') {
-        // stylized 'i'
-        obj.fillStyle(strokeC, 1);
-        obj.fillCircle(cx, cy - s * 0.6, s * 0.2);
-        obj.fillRect(cx - s*0.15, cy - s * 0.2, s*0.3, s);
-        // Base serif
-        obj.fillRect(cx - s*0.35, cy + s * 0.8, s*0.7, s*0.2);
-      } else if (type === 'sound_on') {
-        // Simple double music note
-        obj.fillStyle(iconColor, 1);
-        // note heads
-        obj.fillCircle(cx - s * 0.4, cy + s * 0.5, s * 0.35);
-        obj.fillCircle(cx + s * 0.6, cy + s * 0.2, s * 0.35);
-        
-        // stems
-        obj.fillRect(cx - s * 0.15, cy - s * 0.4, s * 0.25, s * 0.9);
-        obj.fillRect(cx + s * 0.85, cy - s * 0.7, s * 0.25, s * 0.9);
-        
-        // beam
-        obj.beginPath();
-        obj.moveTo(cx - s * 0.15, cy - s * 0.4);
-        obj.lineTo(cx + s * 1.1, cy - s * 0.7);
-        obj.lineTo(cx + s * 1.1, cy - s * 0.35);
-        obj.lineTo(cx - s * 0.15, cy - s * 0.05);
-        obj.closePath();
-        obj.fillPath();
-      } else if (type === 'sound_off') {
-        // Muted music note
-        obj.fillStyle(iconColor, 1);
-        obj.fillCircle(cx - s * 0.4, cy + s * 0.5, s * 0.35);
-        obj.fillCircle(cx + s * 0.6, cy + s * 0.2, s * 0.35);
-        
-        obj.fillRect(cx - s * 0.15, cy - s * 0.4, s * 0.25, s * 0.9);
-        obj.fillRect(cx + s * 0.85, cy - s * 0.7, s * 0.25, s * 0.9);
-        
-        obj.beginPath();
-        obj.moveTo(cx - s * 0.15, cy - s * 0.4);
-        obj.lineTo(cx + s * 1.1, cy - s * 0.7);
-        obj.lineTo(cx + s * 1.1, cy - s * 0.35);
-        obj.lineTo(cx - s * 0.15, cy - s * 0.05);
-        obj.closePath();
-        obj.fillPath();
-        
-        // Strike through
-        obj.lineStyle(3, 0xff3366, 1);
-        obj.lineBetween(cx - s * 0.8, cy - s * 0.8, cx + s * 1.0, cy + s * 0.8);
-      } else if (type === 'fullscreen') {
-        obj.lineStyle(2.5, strokeC, 1);
-        const b = s * 0.8, t = s * 0.4;
-        // TL
-        obj.lineBetween(cx - b, cy - b + t, cx - b, cy - b);
-        obj.lineBetween(cx - b, cy - b, cx - b + t, cy - b);
-        // TR
-        obj.lineBetween(cx + b - t, cy - b, cx + b, cy - b);
-        obj.lineBetween(cx + b, cy - b, cx + b, cy - b + t);
-        // BL
-        obj.lineBetween(cx - b, cy + b - t, cx - b, cy + b);
-        obj.lineBetween(cx - b, cy + b, cx - b + t, cy + b);
-        // BR
-        obj.lineBetween(cx + b - t, cy + b, cx + b, cy + b);
-        obj.lineBetween(cx + b, cy + b - t, cx + b, cy + b);
-        // inner arrows
-        obj.lineBetween(cx - b, cy - b, cx - b*0.3, cy - b*0.3);
-        obj.lineBetween(cx + b, cy - b, cx + b*0.3, cy - b*0.3);
-        obj.lineBetween(cx - b, cy + b, cx - b*0.3, cy + b*0.3);
-        obj.lineBetween(cx + b, cy + b, cx + b*0.3, cy + b*0.3);
-      }
+      if (type === 'sound_on' && this.iconSound) this.iconSound.setTexture('icon_sound').setAlpha(1);
+      if (type === 'sound_off' && this.iconSound) this.iconSound.setTexture('icon_sound_off').setAlpha(0.6);
     }
   }
 
@@ -1107,102 +1021,17 @@ export class Game extends Phaser.Scene {
   /** Update spin button visual and all UI interactivity to reflect current state */
   private updateSpinButtonState() {
     this.updateUIInteractivity();
-    const spinSize = this.spinBtnHit.width;
-    const iconSize = spinSize * 0.4;
-    
-    this.spinBtnLabel.setVisible(false);
-    const gfx = this.spinBtnGraphics;
-    gfx.clear();
-    gfx.setPosition(this.spinBtnHit.x, this.spinBtnHit.y);
-    const cx = 0;
-    const cy = 0;
-    const r = spinSize / 2;
-
+    if (!this.spinBtnImage) return;
+    this.spinBtnImage.setPosition(this.spinBtnHit.x, this.spinBtnHit.y);
     if (this.autoSpinActive) {
-      // === AUTO-SPIN STOP (Red) ===
-      gfx.fillStyle(0x000000, 0.4);
-      gfx.fillCircle(cx, cy + 6, r);
-      
-      gfx.fillStyle(0x660011, 1);
-      gfx.fillCircle(cx, cy, r);
-      gfx.fillStyle(0x991122, 1);
-      gfx.fillCircle(cx, cy, r - 3);
-      gfx.fillStyle(0xdd2244, 1);
-      gfx.fillCircle(cx, cy, r - 6);
-      
-      // Gloss
-      gfx.fillStyle(0xff6688, 0.35);
-      gfx.beginPath();
-      gfx.arc(cx, cy - r * 0.25, r * 0.55, Math.PI, 0, false);
-      gfx.fill();
-      
-      // White stop square
-      const sq = iconSize * 0.55;
-      gfx.fillStyle(0xffffff, 1);
-      gfx.fillRoundedRect(cx - sq, cy - sq, sq * 2, sq * 2, 6);
+      this.spinBtnImage.setTint(0xff4444);
+      this.spinBtnImage.setAlpha(1);
     } else if (this._spinLock) {
-      // === SPINNING (Muted green) ===
-      gfx.fillStyle(0x000000, 0.4);
-      gfx.fillCircle(cx, cy + 6, r);
-      gfx.fillStyle(0x0a4420, 1);
-      gfx.fillCircle(cx, cy, r);
-      gfx.fillStyle(0x1a6633, 1);
-      gfx.fillCircle(cx, cy, r - 3);
-      gfx.fillStyle(0x228844, 1);
-      gfx.fillCircle(cx, cy, r - 6);
-      
-      // Loading dots
-      gfx.fillStyle(0xffffff, 0.8);
-      gfx.fillCircle(cx - 16, cy, 6);
-      gfx.fillCircle(cx, cy, 6);
-      gfx.fillCircle(cx + 16, cy, 6);
+      this.spinBtnImage.setTint(0x888888);
+      this.spinBtnImage.setAlpha(0.6);
     } else {
-      // === READY (Premium Play Button) ===
-      gfx.fillStyle(0x000000, 0.4);
-      gfx.fillCircle(cx, cy + 6, r);
-      
-      // Outer silver/chrome ring
-      gfx.fillStyle(0xeef1f5, 1);
-      gfx.fillCircle(cx, cy, r);
-      gfx.fillStyle(0xbac1cd, 1);
-      gfx.fillCircle(cx, cy, r - 4);
-      
-      // Outer pink candy ring
-      gfx.fillStyle(0xff3399, 1);
-      gfx.fillCircle(cx, cy, r - 7);
-      
-      // Deep inner shadow ring
-      gfx.fillStyle(0x990044, 1);
-      gfx.fillCircle(cx, cy, r - 10);
-      
-      // Main vibrant gradient (simulated with concentric circles)
-      gfx.fillStyle(0xff1177, 1);
-      gfx.fillCircle(cx, cy, r - 12);
-      gfx.fillStyle(0xff4499, 1);
-      gfx.fillCircle(cx, cy, r - 16);
-      gfx.fillStyle(0xff77bb, 1);
-      gfx.fillCircle(cx, cy, r - 22);
-
-      // Top glass highlight (Premium Gloss)
-      gfx.fillStyle(0xffffff, 0.35);
-      gfx.beginPath();
-      gfx.arc(cx, cy - r * 0.3, r * 0.5, Math.PI, 0, false);
-      gfx.fill();
-
-      // Bottom glass reflection
-      gfx.fillStyle(0xffffff, 0.15);
-      gfx.beginPath();
-      gfx.arc(cx, cy + r * 0.6, r * 0.3, 0, Math.PI, false);
-      gfx.fill();
-
-      // Bold White Play Triangle
-      gfx.fillStyle(0xffffff, 1);
-      const s = iconSize * 1.2;
-      gfx.fillTriangle(
-        cx - s * 0.25, cy - s * 0.5,
-        cx - s * 0.25, cy + s * 0.5,
-        cx + s * 0.65, cy
-      );
+      this.spinBtnImage.clearTint();
+      this.spinBtnImage.setAlpha(1);
     }
   }
 
@@ -1285,7 +1114,7 @@ export class Game extends Phaser.Scene {
 
   private wireInteractions() {
     this.spinBtnHit.on('pointerdown', () => {
-      this.tweens.add({ targets: this.spinBtnGraphics, scaleX: 0.9, scaleY: 0.9, yoyo: true, duration: 80 });
+      this.tweens.add({ targets: this.spinBtnImage, scaleX: 0.9, scaleY: 0.9, yoyo: true, duration: 80 });
       this.handleUniversalAction();
     });
 
@@ -1345,7 +1174,7 @@ export class Game extends Phaser.Scene {
     addHover(this.btnPaytable, this.btnPaytable);
     addHover(this.btnSettings, this.btnSettings);
     addHover(this.btnFullscreen, this.btnFullscreen);
-    addHover(this.spinBtnHit, this.spinBtnGraphics);
+    addHover(this.spinBtnHit, this.spinBtnImage);
     addHover(this.btnAutoHit, this.btnAutoGraphics);
 
     // Buy features (with confirmation) — also guard overlays
@@ -2064,3 +1893,7 @@ export class Game extends Phaser.Scene {
     }
   }
 }
+
+
+
+
