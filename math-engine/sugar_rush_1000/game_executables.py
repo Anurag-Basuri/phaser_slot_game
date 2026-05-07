@@ -83,6 +83,8 @@ class GameExecutables(Executables):
         # Select per-mode cap
         if self.current_betmode_name == "bonus":
             cap = getattr(self.config, 'bonus_max_multiplier', self.config.max_multiplier)
+        elif self.current_betmode_name == "super":
+            cap = getattr(self.config, 'super_max_multiplier', self.config.max_multiplier)
         else:
             cap = self.config.max_multiplier
 
