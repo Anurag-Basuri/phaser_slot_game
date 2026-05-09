@@ -319,7 +319,7 @@ export class PremiumUI {
     const colorInt = parseInt(color.replace('#', '0x'));
     glow.fillStyle(colorInt, strength);
     glow.fillCircle(0, 0, 100);
-    glow.setDepth((target.depth ?? 0) - 1);
+    glow.setDepth(((target as any).depth ?? 0) - 1);
 
     // Add pulse animation
     scene.tweens.add({

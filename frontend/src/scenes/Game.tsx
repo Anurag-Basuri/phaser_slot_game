@@ -41,6 +41,7 @@ export class Game extends Phaser.Scene {
   private panelRegularGraphics!: Phaser.GameObjects.Graphics;
   
   private spinBtnHit!: Phaser.GameObjects.Rectangle;
+  private spinBtnLabel!: Phaser.GameObjects.Text;
   private spinBtnRadius = 50;
   private btnAutoHit!: Phaser.GameObjects.Rectangle;
   private btnAutoGraphics!: Phaser.GameObjects.Graphics;
@@ -77,7 +78,7 @@ export class Game extends Phaser.Scene {
   private anteBetBtn!: Phaser.GameObjects.Graphics;
   private anteBetHit!: Phaser.GameObjects.Rectangle;
   private anteBetTxt!: Phaser.GameObjects.Text;
-  private anteBetIcon!: Phaser.GameObjects.Image;
+  private anteBetIcon!: Phaser.GameObjects.Text;
 
   // Features Menu (for small screens)
   private btnFeaturesMenuGraphics!: Phaser.GameObjects.Graphics;
@@ -241,8 +242,8 @@ export class Game extends Phaser.Scene {
     // === GRID FRAME (subtle overlay for cell delineation) ===
     this.gridFrame = this.add.graphics({ x: 0, y: 0 }).setDepth(2);
 
-    // === LOGO (top-right like real Sugar Rush 1000) ===
-    this.logoText1 = this.add.text(0, 0, 'SUGAR RUSH', {
+    // === LOGO (top-right like real Sugar Blast 1000) ===
+    this.logoText1 = this.add.text(0, 0, 'SUGAR BLAST', {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
       color: '#ff007f',
       fontStyle: 'normal',
@@ -307,7 +308,6 @@ export class Game extends Phaser.Scene {
     this.btnFeaturesMenuIcon = this.add.text(0, 0, '⋮', { fontSize: '32px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5).setDepth(21);
 
     // Spin button setup (Authentic Pragmatic Circular Style)
-    this.spinBtnGraphics = this.add.graphics().setDepth(20);
     this.spinBtnImage = this.add.image(0, 0, 'btn_spin').setDepth(20).setScale(0.85);
     this.spinBtnHit = this.add.rectangle(0, 0, 150, 150, 0xffffff, 0)
       .setInteractive({ useHandCursor: true }).setDepth(21);
@@ -377,7 +377,7 @@ export class Game extends Phaser.Scene {
     this.iconFullscreen = this.add.image(0, 0, 'icon_fullscreen').setDepth(51).setOrigin(0.5);
     // Make hit areas interactive
     [this.soundToggle, this.btnPaytable, this.btnSettings, this.btnFullscreen].forEach(btn => {
-      btn.setInteractive(new Phaser.Geom.Rectangle(-22, -22, 44, 44), Phaser.Geom.Rectangle.Contains);
+      btn.setInteractive(new Phaser.Geom.Circle(0, 0, 24), Phaser.Geom.Circle.Contains);
       (btn as any).input!.cursor = 'pointer';
     });
 
@@ -800,6 +800,12 @@ export class Game extends Phaser.Scene {
     this.btnPaytable.setPosition(toolPad + toolGap, toolY);
     this.soundToggle.setPosition(toolPad + toolGap * 2, toolY);
     this.btnFullscreen.setPosition(toolPad + toolGap * 3, toolY);
+    // Reposition icon images on top of their parent toolbar buttons
+    const iconScale = isLandscapeMobile ? 0.65 : isMobile ? 0.75 : 0.85;
+    this.iconSettings.setPosition(toolPad, toolY).setScale(iconScale);
+    this.iconPaytable.setPosition(toolPad + toolGap, toolY).setScale(iconScale);
+    this.iconSound.setPosition(toolPad + toolGap * 2, toolY).setScale(iconScale);
+    this.iconFullscreen.setPosition(toolPad + toolGap * 3, toolY).setScale(iconScale);
     this.drawToolbarIcons();
 
     // ==========================================
@@ -851,42 +857,58 @@ export class Game extends Phaser.Scene {
     }
   }
 
-  /** Draw vector toolbar icons into their own graphics objects */
+  /** Draw premium circular toolbar icons with neon glow */
   private drawToolbarIcons() {
     const iconR = 20;
     const positions = [
-      { obj: this.btnSettings, type: 'settings' },
-      { obj: this.btnPaytable, type: 'info' },
-      { obj: this.soundToggle, type: (this.musicEnabled || this.sfxEnabled) ? 'sound_on' : 'sound_off' },
-      { obj: this.btnFullscreen, type: 'fullscreen' },
+      { obj: this.btnSettings, icon: this.iconSettings, type: 'settings' },
+      { obj: this.btnPaytable, icon: this.iconPaytable, type: 'info' },
+      { obj: this.soundToggle, icon: this.iconSound, type: (this.musicEnabled || this.sfxEnabled) ? 'sound_on' : 'sound_off' },
+      { obj: this.btnFullscreen, icon: this.iconFullscreen, type: 'fullscreen' },
     ];
-    for (const { obj, type } of positions) {
+    for (const { obj, icon, type } of positions) {
       if (!obj) continue;
       obj.clear();
       const cx = 0, cy = 0;
-      const size = iconR * 2.2;
-      const r = 12; // corner radius
-      const half = size / 2;
+      const radius = iconR + 2;
+      const isSoundOff = type === 'sound_off';
+      const accentColor = isSoundOff ? 0x663355 : 0xff006a;
+
+      // Outer neon glow pulse
+      obj.fillStyle(accentColor, 0.12);
+      obj.fillCircle(cx, cy, radius + 8);
+      obj.fillStyle(accentColor, 0.06);
+      obj.fillCircle(cx, cy, radius + 14);
 
       // Drop shadow
-      obj.fillStyle(0x000000, 0.4);
-      obj.fillRoundedRect(cx - half + 2, cy - half + 4, size, size, r);
-      
-      // Base dark neon purple
-      obj.fillStyle(0x1a0a24, 0.95);
-      obj.fillRoundedRect(cx - half, cy - half, size, size, r);
-      
-      // Top glass highlight
-      obj.fillStyle(0xffffff, 0.08);
-      obj.fillRoundedRect(cx - half + 1, cy - half + 1, size - 2, size * 0.45, {tl: r-1, tr: r-1, bl: 0, br: 0} as any);
-      
-      // Glow/Accent Border
-      const isSoundOff = type === 'sound_off';
-      obj.lineStyle(2, isSoundOff ? 0x663355 : 0xaa22ff, 0.8);
-      obj.strokeRoundedRect(cx - half, cy - half, size, size, r);
-      
-      if (type === 'sound_on' && this.iconSound) this.iconSound.setTexture('icon_sound').setAlpha(1);
-      if (type === 'sound_off' && this.iconSound) this.iconSound.setTexture('icon_sound_off').setAlpha(0.6);
+      obj.fillStyle(0x000000, 0.5);
+      obj.fillCircle(cx, cy + 3, radius);
+
+      // Base dark circle
+      obj.fillGradientStyle(0x1a0a2e, 0x1a0a2e, 0x0d0518, 0x0d0518, 1);
+      obj.fillCircle(cx, cy, radius);
+
+      // Glass top hemisphere highlight
+      obj.beginPath();
+      obj.arc(cx, cy, radius, Math.PI, 0, false);
+      obj.closePath();
+      obj.fillStyle(0xffffff, 0.1);
+      obj.fillPath();
+
+      // Bright accent border ring
+      obj.lineStyle(2, accentColor, isSoundOff ? 0.4 : 0.9);
+      obj.strokeCircle(cx, cy, radius);
+
+      // Inner white rim for depth
+      obj.lineStyle(1, 0xffffff, 0.15);
+      obj.strokeCircle(cx, cy, radius - 2);
+
+      // Update icon state
+      if (icon) {
+        icon.setAlpha(isSoundOff ? 0.4 : 0.9);
+      }
+      if (type === 'sound_on' && this.iconSound) this.iconSound.setTexture('icon_sound');
+      if (type === 'sound_off' && this.iconSound) this.iconSound.setTexture('icon_sound_off');
     }
   }
 
@@ -1106,7 +1128,9 @@ export class Game extends Phaser.Scene {
     // ─── Settings & Paytable ─── (disabled during active spin only)
     const menuDisabled = spinning || inFS;
     this.btnSettings.setAlpha(menuDisabled ? 0.35 : 1);
+    this.iconSettings.setAlpha(menuDisabled ? 0.35 : 0.9);
     this.btnPaytable.setAlpha(menuDisabled ? 0.35 : 1);
+    this.iconPaytable.setAlpha(menuDisabled ? 0.35 : 0.9);
     if (menuDisabled) {
       this.btnSettings.disableInteractive();
       this.btnPaytable.disableInteractive();
@@ -1182,10 +1206,10 @@ export class Game extends Phaser.Scene {
     addHover(this.buySuperHit, [this.panelSuperGraphics, this.buySuperTxt1, this.buySuperTxt2]);
     addHover(this.buyRegularHit, [this.panelRegularGraphics, this.buyRegularTxt1, this.buyRegularTxt2]);
     addHover(this.anteBetHit, [this.anteBetBtn, this.anteBetTxt, this.anteBetIcon]);
-    addHover(this.soundToggle, this.soundToggle);
-    addHover(this.btnPaytable, this.btnPaytable);
-    addHover(this.btnSettings, this.btnSettings);
-    addHover(this.btnFullscreen, this.btnFullscreen);
+    addHover(this.soundToggle, [this.soundToggle, this.iconSound]);
+    addHover(this.btnPaytable, [this.btnPaytable, this.iconPaytable]);
+    addHover(this.btnSettings, [this.btnSettings, this.iconSettings]);
+    addHover(this.btnFullscreen, [this.btnFullscreen, this.iconFullscreen]);
     addHover(this.spinBtnHit, this.spinBtnImage);
     addHover(this.btnAutoHit, this.btnAutoGraphics);
 

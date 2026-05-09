@@ -300,9 +300,9 @@ export class WinCelebration {
             frequency: 150 - index * 25,
             blendMode: 'NORMAL',
             emitZone: {
-              type: 'random',
+              type: 'random' as const,
               source: new Phaser.Geom.Circle(0, 0, 50),
-            },
+            } as any,
           },
         );
         this.container.addAt(emitter, 1);
