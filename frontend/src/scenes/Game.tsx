@@ -526,83 +526,66 @@ export class Game extends Phaser.Scene {
     // === GRID PANEL IMAGE ===
     this.gridPanel.setVisible(false); // Hide the old background image
 
-    // === PREMIUM CANDY MACHINE FRAME ===
+    // === PREMIUM GLASSMORPHIC GRID FRAME ===
     this.gridFrame.clear();
     const f = this.gridFrame;
 
-    const pipeHeight = Math.max(20, gridTotalSize * 0.04);
-    const sideWidth = Math.max(15, gridTotalSize * 0.03);
-    const trayHeight = Math.max(50, gridTotalSize * 0.1);
-    const frameW = gridTotalSize + sideWidth * 2;
-    const frameH = gridTotalSize + pipeHeight + trayHeight;
-    const frameX = gridX - sideWidth;
-    const frameY = gridY - pipeHeight;
+    const framePadding = Math.max(12, gridTotalSize * 0.02);
+    const frameW = gridTotalSize + framePadding * 2;
+    const frameH = gridTotalSize + framePadding * 2;
+    const frameX = gridX - framePadding;
+    const frameY = gridY - framePadding;
 
-    // 1. Bottom Tray (Cyan metallic base)
-    f.fillStyle(0x7ac9d9, 1);
-    f.fillRoundedRect(frameX - 10, gridY + gridTotalSize, frameW + 20, trayHeight, 15);
-    f.fillStyle(0xaae8f9, 0.5); // Highlight
-    f.fillRoundedRect(frameX - 8, gridY + gridTotalSize + 2, frameW + 16, trayHeight * 0.2, 8);
-    f.fillStyle(0x2b3b6b, 1); // Dark base
-    f.fillRect(frameX - 5, gridY + gridTotalSize + trayHeight - 20, frameW + 10, 20);
+    // Dark semi-transparent background plate
+    f.fillStyle(0x0a0515, 0.7);
+    f.fillRoundedRect(frameX, frameY, frameW, frameH, 20);
+
+    // Inner glow / neon border
+    f.lineStyle(3, 0xff006a, 0.9);
+    f.strokeRoundedRect(frameX, frameY, frameW, frameH, 20);
+
+    // Subtle outer glow effect using multiple transparent strokes
+    f.lineStyle(6, 0xff006a, 0.3);
+    f.strokeRoundedRect(frameX - 2, frameY - 2, frameW + 4, frameH + 4, 22);
     
-    // Tray holes
-    f.fillStyle(0x1a2542, 1);
-    for(let i=0; i<7; i++) {
-       let holeX = gridX + (i + 0.5) * (gridTotalSize/7);
-       f.fillEllipse(holeX, gridY + gridTotalSize + trayHeight * 0.35, Math.min(25, gridTotalSize/7 * 0.6), 8);
-    }
+    f.lineStyle(12, 0xff006a, 0.1);
+    f.strokeRoundedRect(frameX - 5, frameY - 5, frameW + 10, frameH + 10, 25);
 
-    // Capsule indents on dark base
-    f.fillStyle(0x151d33, 1);
-    for(let i=0; i<5; i++) {
-       let capW = Math.min(40, frameW / 7);
-       let spacing = (frameW - (capW * 5)) / 6;
-       let capX = frameX + spacing + (capW + spacing) * i;
-       f.fillRoundedRect(capX, gridY + gridTotalSize + trayHeight - 15, capW, 10, 5);
-    }
-
-    // 2. Side Pillars (Cyan)
-    f.fillStyle(0x8bdcf0, 1);
-    f.fillRect(frameX, gridY, sideWidth, gridTotalSize);
-    f.fillRect(gridX + gridTotalSize, gridY, sideWidth, gridTotalSize);
-    f.fillStyle(0x000000, 0.15); // shadow
-    f.fillRect(frameX + sideWidth - 4, gridY, 4, gridTotalSize);
-    f.fillRect(gridX + gridTotalSize, gridY, 4, gridTotalSize);
-
-    // Rivets on side pillars
-    f.fillStyle(0x4a8b9e, 1);
-    for(let i=0; i<6; i++) {
-       let ry = gridY + 20 + i * ((gridTotalSize - 40)/5);
-       f.fillCircle(frameX + sideWidth/2, ry, sideWidth * 0.2);
-       f.fillCircle(gridX + gridTotalSize + sideWidth/2, ry, sideWidth * 0.2);
-    }
-
-    // 3. Top Pipe (Cyan with stripes/frosting)
-    f.fillStyle(0xaae8f9, 1);
-    f.fillRoundedRect(frameX, frameY, frameW, pipeHeight, 10);
-    f.fillStyle(0x000000, 0.1); // shadow
-    f.fillRect(frameX, frameY + pipeHeight * 0.7, frameW, pipeHeight * 0.3);
-
-    // Frosting drips
-    f.fillStyle(0xffffff, 1);
-    f.fillRoundedRect(frameX - 5, frameY - 5, frameW + 10, pipeHeight, 10);
-    const dripHeights = [15, 25, 12, 30, 18, 14, 28, 16, 22, 10, 24, 15];
-    for(let i=0; i<12; i++) {
-       let dripX = frameX + 10 + i * ((frameW - 20)/11);
-       let dripHeight = dripHeights[i] * (pipeHeight / 20);
-       f.fillRoundedRect(dripX - 8, frameY + pipeHeight - 10, 16, dripHeight, 8);
-    }
+    // Chrome/Silver accents on the corners
+    const cornerSize = Math.max(15, gridTotalSize * 0.04);
+    f.lineStyle(4, 0xffffff, 1);
     
-    // Sprinkles
-    const colors = [0xff44aa, 0x44ffaa, 0xffaa44, 0x44aaff];
-    const sprinklePos = [0.1, 0.15, 0.25, 0.3, 0.4, 0.45, 0.55, 0.6, 0.7, 0.75, 0.85, 0.9];
-    for(let i=0; i<12; i++) {
-       f.fillStyle(colors[i % colors.length], 1);
-       let sx = frameX + sprinklePos[i] * frameW;
-       let sy = frameY + (i % 2 === 0 ? 0 : 5);
-       f.fillRoundedRect(sx, sy, 8, 4, 2);
-    }
+    // Top-left
+    f.beginPath();
+    f.moveTo(frameX + cornerSize, frameY);
+    f.lineTo(frameX + 10, frameY);
+    f.arc(frameX + 10, frameY + 10, 10, -Math.PI/2, Math.PI, true);
+    f.lineTo(frameX, frameY + cornerSize);
+    f.strokePath();
+
+    // Top-right
+    f.beginPath();
+    f.moveTo(frameX + frameW - cornerSize, frameY);
+    f.lineTo(frameX + frameW - 10, frameY);
+    f.arc(frameX + frameW - 10, frameY + 10, 10, -Math.PI/2, 0, false);
+    f.lineTo(frameX + frameW, frameY + cornerSize);
+    f.strokePath();
+
+    // Bottom-left
+    f.beginPath();
+    f.moveTo(frameX, frameY + frameH - cornerSize);
+    f.lineTo(frameX, frameY + frameH - 10);
+    f.arc(frameX + 10, frameY + frameH - 10, 10, Math.PI, Math.PI/2, true);
+    f.lineTo(frameX + cornerSize, frameY + frameH);
+    f.strokePath();
+
+    // Bottom-right
+    f.beginPath();
+    f.moveTo(frameX + frameW, frameY + frameH - cornerSize);
+    f.lineTo(frameX + frameW, frameY + frameH - 10);
+    f.arc(frameX + frameW - 10, frameY + frameH - 10, 10, 0, Math.PI/2, false);
+    f.lineTo(frameX + frameW - cornerSize, frameY + frameH);
+    f.strokePath();
 
     // ==========================================
     // 2. BUY PANELS & ANTE BET
@@ -733,10 +716,17 @@ export class Game extends Phaser.Scene {
     this.bottomBar.clear();
     const bb = this.bottomBar;
 
-    bb.fillStyle(0x0a0512, 1);
+    // Dark sleek glassmorphic background
+    bb.fillStyle(0x0a0515, 0.85);
     bb.fillRect(0, h - barH, w, barH);
-    bb.fillStyle(0xff006a, 0.40);
+    
+    // Top accent border gradient simulation
+    bb.fillStyle(0xff006a, 0.8);
     bb.fillRect(0, h - barH, w, 2);
+    
+    // Subtle internal highlight line
+    bb.fillStyle(0xffffff, 0.08);
+    bb.fillRect(0, h - barH + 2, w, 1);
 
     const txtY = h - barH / 2;
     const sidePad = isMobile ? 10 : 30;
@@ -911,76 +901,88 @@ export class Game extends Phaser.Scene {
   private drawBuyPanel(gfx: Phaser.GameObjects.Graphics, w: number, h: number, isSuper: boolean) {
     gfx.clear();
     const r = 16;
-    const accent = isSuper ? 0xffb700 : 0xff006a;
-    const accentDark = isSuper ? 0x994400 : 0x660033;
+    const accentTop = isSuper ? 0xffcc00 : 0xff3388;
+    const accentMid = isSuper ? 0xff8800 : 0xff0055;
+    const accentDark = isSuper ? 0x662200 : 0x440022;
+    const baseDark = 0x110518;
+    
+    // Soft outer glow
+    gfx.fillStyle(accentMid, 0.15);
+    gfx.fillRoundedRect(-w / 2 - 8, -h / 2 - 8, w + 16, h + 16, r + 4);
     
     // Drop shadow
-    gfx.fillStyle(0x000000, 0.3);
-    gfx.fillRoundedRect(-w / 2 + 3, -h / 2 + 5, w, h, r);
+    gfx.fillStyle(0x000000, 0.4);
+    gfx.fillRoundedRect(-w / 2 + 2, -h / 2 + 6, w, h, r);
     
-    // Base solid background (bottom half color)
-    gfx.fillStyle(accentDark, 1);
+    // Base gradient background
+    gfx.fillGradientStyle(baseDark, baseDark, accentDark, accentDark, 0.95);
     gfx.fillRoundedRect(-w / 2, -h / 2, w, h, r);
 
-    // Top half solid color
-    gfx.fillStyle(accent, 1);
+    // Top half vibrant gradient
+    gfx.fillGradientStyle(accentTop, accentTop, accentMid, accentMid, 1);
     gfx.fillRoundedRect(-w / 2, -h / 2, w, h * 0.55, {tl: r, tr: r, bl: 0, br: 0} as any);
 
-    // Inner bright glass highlight (Top rim)
-    gfx.fillStyle(0xffffff, 0.25);
-    gfx.fillRoundedRect(-w / 2 + 2, -h / 2 + 2, w - 4, h * 0.15, {tl: r-2, tr: r-2, bl: 0, br: 0} as any);
+    // Glass reflection (Top rim)
+    gfx.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.35, 0.35, 0, 0);
+    gfx.fillRoundedRect(-w / 2 + 2, -h / 2 + 2, w - 4, h * 0.25, {tl: r-2, tr: r-2, bl: 0, br: 0} as any);
+
+    // Side highlights for 3D bevel
+    gfx.lineStyle(2, 0xffffff, 0.15);
+    gfx.strokeRoundedRect(-w / 2 + 1, -h / 2 + 1, w - 2, h - 2, r - 1);
 
     // Outer thick colored border
-    gfx.lineStyle(3, accent, 1);
+    gfx.lineStyle(3, accentMid, 1);
     gfx.strokeRoundedRect(-w / 2, -h / 2, w, h, r);
     
     // Extra white outer ring for pop
-    gfx.lineStyle(2, 0xffffff, 0.8);
-    gfx.strokeRoundedRect(-w / 2 - 2, -h / 2 - 2, w + 4, h + 4, r + 2);
+    gfx.lineStyle(1.5, 0xffffff, 0.8);
+    gfx.strokeRoundedRect(-w / 2 - 1, -h / 2 - 1, w + 2, h + 2, r + 1);
   }
 
   private drawAnteBetButton(bw: number, bh: number) {
     this.anteBetBtn.clear();
     const x = -bw / 2;
     const y = -bh / 2;
-    const rad = bh / 2;
+    const rad = Math.min(18, bh / 2);
 
     if (options.anteBetEnabled) {
-      // Premium Active
-      this.anteBetBtn.fillStyle(0x000000, 0.4);
+      // Premium Active - Golden Glass
+      this.anteBetBtn.fillStyle(0x000000, 0.5);
       this.anteBetBtn.fillRoundedRect(x + 2, y + 4, bw, bh, rad);
       
-      this.anteBetBtn.fillStyle(0x4a1800, 1);
+      this.anteBetBtn.fillGradientStyle(0xffa500, 0xffa500, 0x994400, 0x994400, 1);
       this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
       
-      this.anteBetBtn.fillStyle(0xff8800, 0.3);
-      this.anteBetBtn.fillRoundedRect(x + 2, y + 2, bw - 4, bh * 0.4, {tl: rad-2, tr: rad-2, bl: 0, br: 0} as any);
+      this.anteBetBtn.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.4, 0.4, 0, 0);
+      this.anteBetBtn.fillRoundedRect(x + 2, y + 2, bw - 4, bh * 0.45, {tl: rad-2, tr: rad-2, bl: 0, br: 0} as any);
       
-      this.anteBetBtn.lineStyle(2, 0xffa500, 1);
+      this.anteBetBtn.lineStyle(2, 0xffffff, 0.6);
+      this.anteBetBtn.strokeRoundedRect(x + 1, y + 1, bw - 2, bh - 2, rad - 1);
+      
+      this.anteBetBtn.lineStyle(3, 0xffeebb, 1);
       this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, rad);
-      
-      this.anteBetBtn.lineStyle(4, 0xff8800, 0.3);
-      this.anteBetBtn.strokeRoundedRect(x - 2, y - 2, bw + 4, bh + 4, rad + 2);
+
+      this.anteBetBtn.lineStyle(6, 0xffaa00, 0.25);
+      this.anteBetBtn.strokeRoundedRect(x - 3, y - 3, bw + 6, bh + 6, rad + 3);
 
       this.anteBetTxt.setColor('#ffffff').setShadow(0, 2, '#000000', 0, true, true);
-      this.anteBetIcon.setColor('#ffaa00').setShadow(0, 0, '#ff6600', 4, true, true);
+      this.anteBetIcon.setColor('#ffffff').setShadow(0, 0, '#ffcc00', 6, true, true);
     } else {
-      // Premium Inactive
-      this.anteBetBtn.fillStyle(0x000000, 0.4);
+      // Premium Inactive - Dark Glass
+      this.anteBetBtn.fillStyle(0x000000, 0.5);
       this.anteBetBtn.fillRoundedRect(x + 2, y + 4, bw, bh, rad);
       
-      this.anteBetBtn.fillStyle(0x1a1528, 1);
+      this.anteBetBtn.fillGradientStyle(0x2a1a3a, 0x2a1a3a, 0x110518, 0x110518, 0.95);
       this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
       
-      this.anteBetBtn.fillStyle(0xffffff, 0.05);
+      this.anteBetBtn.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.1, 0.1, 0, 0);
       this.anteBetBtn.fillRoundedRect(x + 2, y + 2, bw - 4, bh * 0.4, {tl: rad-2, tr: rad-2, bl: 0, br: 0} as any);
 
-      this.anteBetBtn.lineStyle(2, 0x332244, 1);
+      this.anteBetBtn.lineStyle(2, 0x442266, 1);
       this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, rad);
 
-      this.anteBetTxt.setColor('#777788').setShadow(0, 0, '#000000', 0, false, false);
-      // Lightning bolt icon stays orange even when inactive (matches reference)
-      this.anteBetIcon.setColor('#ff6633').setShadow(0, 0, '#000', 0, false, false);
+      this.anteBetTxt.setColor('#8877aa').setShadow(0, 0, '#000000', 0, false, false);
+      this.anteBetIcon.setColor('#ff8844').setShadow(0, 0, '#000', 0, false, false);
     }
   }
 
@@ -990,32 +992,42 @@ export class Game extends Phaser.Scene {
     const cx = 0;
     const cy = 0;
     
+    // Soft outer glow
+    gfx.fillStyle(0xff006a, 0.15);
+    gfx.fillCircle(cx, cy, size / 2 + 6);
+
     // Drop shadow
-    gfx.fillStyle(0x000000, 0.3);
-    gfx.fillCircle(cx, cy + 3, size / 2);
+    gfx.fillStyle(0x000000, 0.5);
+    gfx.fillCircle(cx, cy + 4, size / 2);
     
-    // Silver outer ring
-    gfx.fillStyle(0xffffff, 1);
+    // Silver metallic outer ring gradient
+    gfx.fillGradientStyle(0xffffff, 0xffffff, 0xaaaaaa, 0xaaaaaa, 1);
     gfx.fillCircle(cx, cy, size / 2);
-    gfx.fillStyle(0xcccccc, 1);
+    
+    // Inner metallic groove
+    gfx.fillStyle(0x444444, 1);
     gfx.fillCircle(cx, cy, size / 2 - 2);
     
-    // Pink inner circle
-    gfx.fillStyle(0xff0066, 1);
-    gfx.fillCircle(cx, cy, size / 2 - 4);
-    gfx.fillStyle(0xff3388, 1);
-    gfx.fillCircle(cx, cy, size / 2 - 6);
+    // Deep ruby / pink inner gradient
+    gfx.fillGradientStyle(0xff3388, 0xff3388, 0xaa0033, 0xaa0033, 1);
+    gfx.fillCircle(cx, cy, size / 2 - 3);
     
-    // Inner glass
-    gfx.fillStyle(0xffffff, 0.25);
+    // Glossy top hemisphere reflection
     gfx.beginPath();
-    gfx.arc(cx, cy - size * 0.15, size * 0.3, Math.PI, 0, false);
-    gfx.fill();
-
+    gfx.arc(cx, cy, size / 2 - 3, Math.PI, 0, false);
+    gfx.closePath();
+    gfx.fillStyle(0xffffff, 0.25);
+    gfx.fillPath();
+    
+    // Icon (plus/minus)
+    gfx.fillStyle(0xffffff, 1);
     const arm = size * 0.25;
-    gfx.lineStyle(3, 0xffffff, 1);
-    gfx.lineBetween(cx - arm, cy, cx + arm, cy);
-    if (isPlus) gfx.lineBetween(cx, cy - arm, cx, cy + arm);
+    if (isPlus) {
+      gfx.fillRoundedRect(cx - 2, cy - arm, 4, arm * 2, 2);
+      gfx.fillRoundedRect(cx - arm, cy - 2, arm * 2, 4, 2);
+    } else {
+      gfx.fillRoundedRect(cx - arm, cy - 2, arm * 2, 4, 2);
+    }
   }
 
   /** Update spin button visual and all UI interactivity to reflect current state */
