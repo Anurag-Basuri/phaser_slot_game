@@ -78,17 +78,19 @@ export class Boot extends Phaser.Scene {
     });
 
     // ═══════════════════════════════════════════════════
-    // PREMIUM TITLE — "SUGAR RUSH"
+    // PREMIUM TITLE — "SUGAR BLAST"
     // ═══════════════════════════════════════════════════
-    const titleFontSize = Math.min(76, w * 0.095);
+    const titleShadowSettings = { offsetX: 0, offsetY: 4, color: '#000000', blur: 6, stroke: true, fill: true };
 
-    // Stack layers for 3D depth effect
     const titleShadow = this.add
-      .text(w / 2, h * 0.27 + 10, 'SUGAR RUSH', {
-        fontSize: `${titleFontSize}px`,
-        fontFamily: Theme.fonts.display,
+      .text(w / 2, h * 0.27 + 10, 'SUGAR BLAST', {
+        fontSize: '84px',
+        fontFamily: '"Luckiest Guy", cursive, sans-serif',
         fontStyle: 'bold',
-        color: '#6600aa',
+        color: '#ff006a',
+        stroke: '#ff006a',
+        strokeThickness: 24,
+        shadow: titleShadowSettings
       })
       .setOrigin(0.5)
       .setAlpha(0)
@@ -96,13 +98,13 @@ export class Boot extends Phaser.Scene {
       .setDepth(5);
 
     const titleMain = this.add
-      .text(w / 2, h * 0.27, 'SUGAR RUSH', {
-        fontSize: `${titleFontSize}px`,
-        fontFamily: Theme.fonts.display,
+      .text(w / 2, h * 0.27, 'SUGAR BLAST', {
+        fontSize: '84px',
+        fontFamily: '"Luckiest Guy", cursive, sans-serif',
         fontStyle: 'bold',
-        color: Theme.colors.primary,
-        stroke: '#ffffff',
-        strokeThickness: Math.max(5, Math.floor(titleFontSize * 0.08)),
+        color: '#ffffff',
+        stroke: '#ff006a',
+        strokeThickness: 8,
         shadow: {
           offsetX: 0,
           offsetY: 6,
@@ -245,7 +247,7 @@ export class Boot extends Phaser.Scene {
 
     // Outer glow effect
     const btnGlow = this.add.graphics().setDepth(0);
-    btnGlow.fillStyle(Theme.colors.primary, 0.5);
+    btnGlow.fillStyle(0xff006a, 0.5);
     btnGlow.fillRoundedRect(
       -btnW / 2 - 18,
       -btnH / 2 - 18,
@@ -261,10 +263,10 @@ export class Boot extends Phaser.Scene {
     btnBg.fillStyle(0x000000, 0.5);
     btnBg.fillRoundedRect(-btnW / 2, -btnH / 2 + 8, btnW, btnH, btnRadius);
     // Base color
-    btnBg.fillStyle(Theme.colors.primary, 1);
+    btnBg.fillStyle(0xff006a, 1);
     btnBg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, btnRadius);
     // Top highlight (glossy effect)
-    btnBg.fillStyle(Theme.colors.primaryLight, 0.9);
+    btnBg.fillStyle(0xff4d94, 0.9);
     btnBg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH * 0.45, btnRadius);
     // Rim highlight
     btnBg.fillStyle(0xffffff, 0.3);
@@ -276,7 +278,7 @@ export class Boot extends Phaser.Scene {
       btnRadius - 3,
     );
     // Border
-    btnBg.lineStyle(2.5, Theme.colors.primaryLight, 0.95);
+    btnBg.lineStyle(2.5, 0xff4d94, 0.95);
     btnBg.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, btnRadius);
     btnContainer.add(btnBg);
 

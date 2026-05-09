@@ -162,7 +162,7 @@ export class SettingsOverlay {
     infoBox.strokeRoundedRect(panelX + 30, yPos - 15, panelW - 60, 95, 12);
     this.container.add(infoBox);
 
-    this.container.add(this.scene.add.text(w / 2, yPos, 'Sugar Rush 1000', {
+    this.container.add(this.scene.add.text(w / 2, yPos, 'Sugar Blast 1000', {
       fontSize: '22px', color: '#ff006a', fontFamily: '"Luckiest Guy", cursive, sans-serif'
     }).setOrigin(0.5).setShadow(0, 2, '#000', 2, true, true));
     yPos += 28;

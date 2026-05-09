@@ -123,6 +123,18 @@ export class Grid {
     const gx = this.offsetX;
     const gy = this.offsetY;
 
+    // Update mask geometry to match new layout
+    if (this.gridMask) {
+      this.gridMask.clear();
+      this.gridMask.fillStyle(0x000000, 1);
+      this.gridMask.fillRect(
+        gx - 5,
+        gy - 5,
+        totalSize + 10,
+        totalSize + 10
+      );
+    }
+
     // 1. Rich multi-stop vertical gradient (lavender → lilac → rose → peach)
     const stops = [
       { t: 0.0,  r: 200, g: 215, b: 255 }, // Soft lavender

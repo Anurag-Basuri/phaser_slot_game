@@ -325,9 +325,9 @@ export class FreeSpinsIntro {
         gravityY: 150,
         frequency: 350,
         emitZone: {
-          type: 'random',
+          type: 'random' as const,
           source: new Phaser.Geom.Rectangle(-30, 0, 60, 0),
-        },
+        } as any,
       });
       container.add(emitter);
       emitters.push(emitter);
