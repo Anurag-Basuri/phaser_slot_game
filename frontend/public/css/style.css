@@ -1,91 +1,158 @@
+/* ═══════════════════════════════════════════════════════════════ */
+/* PREMIUM GOOGLE FONTS INTEGRATION                                 */
+/* ═══════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+
+/* Legacy fonts for brand text */
 @font-face {
-    font-family: 'PT Serif';
-    src: url(../fonts/PTSerif-Regular.ttf);
-    font-weight: bold;
+  font-family: 'PT Serif';
+  src: url(../fonts/PTSerif-Regular.ttf);
+  font-weight: bold;
 }
 
 @font-face {
-    font-family: 'Luckiest Guy';
-    src: url(../fonts/LuckiestGuy-Regular.ttf);
-    font-weight: bold;
+  font-family: 'Luckiest Guy';
+  src: url(../fonts/LuckiestGuy-Regular.ttf);
+  font-weight: bold;
 }
 
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
-html, body {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background-color: #050a14;
-    touch-action: none;
+:root {
+  /* ═══════════════════ DESIGN SYSTEM ═══════════════════ */
+  /* Colors */
+  --color-primary: #ff006a;
+  --color-primary-dark: #cc0055;
+  --color-primary-light: #ff4d94;
+  --color-secondary: #ffe600;
+  --color-accent: #00d9ff;
+  --color-gold: #ffe600;
+  --color-dark-bg: #0a0f1a;
+  --color-card-bg: #12131f;
+  --color-border: #2a2a3a;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #d0d0e0;
+  --color-text-muted: #888899;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #ff006a 0%, #ff4d94 100%);
+  --gradient-accent: linear-gradient(135deg, #00d9ff 0%, #00a3cc 100%);
+  --gradient-gold: linear-gradient(135deg, #ffe600 0%, #ffcc00 100%);
+
+  /* Typography */
+  --font-sans:
+    'Outfit', 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
+  --font-display:
+    'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'Orbitron', monospace;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 12px 48px rgba(0, 0, 0, 0.6);
+
+  /* Border radius */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--color-dark-bg);
+  touch-action: none;
+  font-family: var(--font-sans);
 }
 
 body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: var(--font-sans);
 }
 
 canvas {
-    display: block;
-    max-width: 100vw;
-    max-height: 100vh;
-    image-rendering: auto;
-    outline: none;
+  display: block;
+  max-width: 100vw;
+  max-height: 100vh;
+  image-rendering: crisp-edges;
+  outline: none;
 }
 
-/* Loading spinner fallback */
+/* ═══════════════════ LOADING OVERLAY ═══════════════════ */
 .loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: #050a14;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    transition: opacity 0.5s ease;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #0a0f1a 0%, #1a0f2e 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .loading-overlay.hidden {
-    opacity: 0;
-    pointer-events: none;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .stake-loader-img {
-    width: 120px;
-    height: auto;
-    margin-bottom: 20px;
+  width: 140px;
+  height: auto;
+  margin-bottom: 30px;
+  animation: fadeInScale 0.8s ease-out;
 }
 
 .loading-text {
-    color: #ffffff;
-    font-size: 18px;
-    font-weight: bold;
-    letter-spacing: 2px;
-    font-family: 'Luckiest Guy', sans-serif;
+  color: var(--color-text-primary);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  font-family: var(--font-display);
+  animation: fadeInScale 1s ease-out 0.2s both;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* Fullscreen adjustments */
 :fullscreen canvas,
 :-webkit-full-screen canvas {
-    width: 100vw !important;
-    height: 100vh !important;
+  width: 100vw !important;
+  height: 100vh !important;
 }
 
 /* Scrollbar removal */
 ::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
