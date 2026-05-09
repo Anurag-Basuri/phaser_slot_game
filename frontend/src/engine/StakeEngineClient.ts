@@ -567,7 +567,6 @@ export class StakeEngineClient {
     const symbolNames = ['L3', 'L2', 'L1', 'H4', 'H3', 'H2', 'H1', 'S'];
 
     const pickSymbol = (): number => {
-      if (Math.random() < 0.02) return 7; // scatter (ID 7, not 8)
       let roll = Math.random() * totalWeight;
       for (let i = 0; i < symbolWeights.length; i++) {
         roll -= symbolWeights[i];
@@ -576,18 +575,39 @@ export class StakeEngineClient {
       return symbolWeights.length - 1;
     };
 
-    // Generate board in the same format as the RGS 'reveal' event
+    // Generate random board
     const board: any[][] = [];
     for (let r = 0; r < gridSize; r++) {
       board[r] = [];
       for (let c = 0; c < gridSize; c++) {
         const id = pickSymbol();
-        board[r][c] = {
-          symbol: symbolNames[id],
-          id: id,
-          reel: c,
-          row: r,
-        };
+        board[r][c] = { symbol: symbolNames[id], id: id, reel: c, row: r };
+      }
+    }
+
+    // Force a cluster of 5 randomly to guarantee some action
+    if (Math.random() < 0.8) {
+      const startR = Math.floor(Math.random() * 5) + 1;
+      const startC = Math.floor(Math.random() * 5) + 1;
+      const clusterSymId = Math.floor(Math.random() * 6);
+      board[startR][startC] = { symbol: symbolNames[clusterSymId], id: clusterSymId, reel: startC, row: startR };
+      board[startR+1][startC] = { symbol: symbolNames[clusterSymId], id: clusterSymId, reel: startC, row: startR+1 };
+      board[startR-1][startC] = { symbol: symbolNames[clusterSymId], id: clusterSymId, reel: startC, row: startR-1 };
+      board[startR][startC+1] = { symbol: symbolNames[clusterSymId], id: clusterSymId, reel: startC+1, row: startR };
+      board[startR][startC-1] = { symbol: symbolNames[clusterSymId], id: clusterSymId, reel: startC-1, row: startR };
+    }
+
+    // If a feature was bought, inject 3 to 4 scatters to trigger Free Spins
+    if (featureType > 0) {
+      const numScatters = Math.floor(Math.random() * 2) + 3; // 3 or 4 scatters
+      let placed = 0;
+      while (placed < numScatters) {
+        const r = Math.floor(Math.random() * gridSize);
+        const c = Math.floor(Math.random() * gridSize);
+        if (board[r][c].id !== 7) {
+          board[r][c] = { symbol: 'S', id: 7, reel: c, row: r };
+          placed++;
+        }
       }
     }
 
@@ -611,7 +631,7 @@ export class StakeEngineClient {
           type: 'reveal',
           board: board,
           paddingPositions: [],
-          gameType: 'basegame',
+          gameType: featureType > 0 ? 'freespins' : 'basegame',
           anticipation: [0, 0, 0, 0, 0, 0, 0],
         } as any]
       }
