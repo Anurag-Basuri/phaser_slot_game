@@ -308,7 +308,7 @@ export class Game extends Phaser.Scene {
     this.btnFeaturesMenuIcon = this.add.text(0, 0, '⋮', { fontSize: '32px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5).setDepth(21);
 
     // Spin button setup (Authentic Pragmatic Circular Style)
-    this.spinBtnImage = this.add.image(0, 0, 'btn_spin').setDepth(20).setScale(0.85);
+    this.spinBtnImage = this.add.graphics().setDepth(20) as any; // Procedural spin button
     this.spinBtnHit = this.add.rectangle(0, 0, 150, 150, 0xffffff, 0)
       .setInteractive({ useHandCursor: true }).setDepth(21);
     this.spinBtnLabel = this.add.text(0, 0, '', { fontFamily: '"Luckiest Guy", cursive, sans-serif' }).setOrigin(0.5).setDepth(21);
@@ -763,12 +763,9 @@ export class Game extends Phaser.Scene {
     const spinX = isStacked ? w - spinSize / 2 - 10 : rightColCenter;
     const spinY = isStacked ? safeH - spinSize / 2 - 25 : safeH * 0.55;
     
-    this.spinBtnHit.setPosition(spinX, spinY).setSize(spinSize, spinSize);
-    if (this.spinBtnImage) {
-        const intrinsicWidth = this.spinBtnImage.width || 200;
-        const targetScale = spinSize / intrinsicWidth;
-        this.spinBtnImage.setScale(targetScale);
-    }
+    this.spinBtnHit.setPosition(spinX, spinY).setSize(spinSize * 1.2, spinSize * 1.2);
+    this.spinBtnImage.setPosition(spinX, spinY);
+    this.drawSpinButton(0, 0, spinSize);
     this.updateSpinButtonState();
 
     // Auto Play
@@ -779,7 +776,7 @@ export class Game extends Phaser.Scene {
 
     // Bet (+/-) Buttons
     // Scale bet buttons proportionally, getting bigger on large screens
-    let bBtnSize = isStacked ? Math.max(30, Math.min(50, w * 0.08)) : Math.max(40, Math.min(70, rightMargin * 0.15));
+    let bBtnSize = isStacked ? Math.max(35, Math.min(60, w * 0.10)) : Math.max(45, Math.min(80, rightMargin * 0.18));
     if (!isStacked) {
         const betBtnOffset = spinSize / 2 + bBtnSize / 2 + 15; // Increased gap
         // Clamp to screen edges
@@ -805,42 +802,46 @@ export class Game extends Phaser.Scene {
     this.btnPaytable.setPosition(toolPad + toolGap, toolY);
     this.soundToggle.setPosition(toolPad + toolGap * 2, toolY);
     this.btnFullscreen.setPosition(toolPad + toolGap * 3, toolY);
+    
     // Reposition icon images on top of their parent toolbar buttons
-    const iconScale = isLandscapeMobile ? 0.65 : isMobile ? 0.75 : 0.85;
-    this.iconSettings.setPosition(toolPad, toolY).setScale(iconScale);
-    this.iconPaytable.setPosition(toolPad + toolGap, toolY).setScale(iconScale);
-    this.iconSound.setPosition(toolPad + toolGap * 2, toolY).setScale(iconScale);
-    this.iconFullscreen.setPosition(toolPad + toolGap * 3, toolY).setScale(iconScale);
+    const targetSize = isMobile ? 20 : 24;
+    [this.iconSettings, this.iconPaytable, this.iconSound, this.iconFullscreen].forEach((icon, i) => {
+        icon.setPosition(toolPad + toolGap * i, toolY).setDisplaySize(targetSize, targetSize);
+        (icon as any)._baseScaleX = icon.scaleX;
+        (icon as any)._baseScaleY = icon.scaleY;
+    });
     this.drawToolbarIcons();
 
     // ==========================================
-    // 6. LOGO
+    // 6. LOGO — positioned above spin button, hide if tight
     // ==========================================
-    // Scale logo to fit in the right column without clipping, allowing much larger sizes
-    const maxLogoWidth = rightMargin * 0.95;
-    const logoFS1 = isStacked ? Math.min(45, w * 0.08) : Math.max(30, Math.min(100, maxLogoWidth * 0.15));
-    const logoFS2 = isStacked ? Math.min(55, w * 0.10) : Math.max(40, Math.min(120, maxLogoWidth * 0.18));
-    
-    // Hide logo if there's fundamentally no space for it
-    if (isLandscapeMobile || logoFS1 <= 25 || rightMargin < 120 || safeH < 450) {
+    const maxLogoWidth = rightMargin * 0.9;
+    const logoFS1 = isStacked ? Math.min(32, w * 0.06) : Math.max(18, Math.min(50, maxLogoWidth * 0.12));
+    const logoFS2 = isStacked ? Math.min(40, w * 0.07) : Math.max(22, Math.min(60, maxLogoWidth * 0.14));
+
+    // Hide logo if there is not enough room
+    const logoSpaceAboveSpin = spinY - gridY;
+    if (isLandscapeMobile || isStacked || rightMargin < 150 || logoSpaceAboveSpin < 80) {
       this.logoText1.setVisible(false);
       this.logoText2.setVisible(false);
     } else {
       this.logoText1.setVisible(true);
       this.logoText2.setVisible(true);
 
-      const logoX = isStacked ? w / 2 : rightColCenter; 
-      const logoY = isStacked ? toolY + 10 : Math.max(toolY + 20, gridY);
-      
+      const logoX = rightColCenter;
+      const logoRegionTop = gridY;
+      const logoRegionBot = spinY - spinSize / 2 - 10;
+      const logoBlockH = logoFS1 + logoFS2 * 0.9;
+      const logoY = logoRegionTop + Math.max(0, (logoRegionBot - logoRegionTop - logoBlockH) / 2) + logoFS1 * 0.5;
+
       this.logoText1.setPosition(logoX, logoY)
                     .setFontSize(logoFS1)
-                    .setStroke('#ffffff', Math.max(6, logoFS1 * 0.25));
-                    
-      this.logoText2.setPosition(logoX, logoY + logoFS1 * 0.9)
-                    .setFontSize(logoFS2)
-                    .setStroke('#ffffff', Math.max(6, logoFS2 * 0.25));
+                    .setStroke('#ffffff', Math.max(8, logoFS1 * 0.35));
 
-      // Logo floating animation (only add once)
+      this.logoText2.setPosition(logoX, logoY + logoFS1 * 0.85)
+                    .setFontSize(logoFS2)
+                    .setStroke('#ffffff', Math.max(8, logoFS2 * 0.35));
+
       if (!this.tweens.isTweening(this.logoText1)) {
         this.tweens.add({
           targets: [this.logoText1, this.logoText2],
@@ -864,7 +865,8 @@ export class Game extends Phaser.Scene {
 
   /** Draw premium circular toolbar icons with neon glow */
   private drawToolbarIcons() {
-    const iconR = 20;
+    const isMobile = this.scale.width < 768;
+    const iconR = isMobile ? 16 : 20;
     const positions = [
       { obj: this.btnSettings, icon: this.iconSettings, type: 'settings' },
       { obj: this.btnPaytable, icon: this.iconPaytable, type: 'info' },
@@ -1018,58 +1020,147 @@ export class Game extends Phaser.Scene {
     gfx.setPosition(targetX, targetY);
     const cx = 0;
     const cy = 0;
-    
-    // Soft outer glow
-    gfx.fillStyle(0xff006a, 0.15);
-    gfx.fillCircle(cx, cy, size / 2 + 6);
+
+    // Dark opaque backdrop circle so button pops against any background
+    gfx.fillStyle(0x0a0515, 0.6);
+    gfx.fillCircle(cx, cy, size / 2 + 8);
+
+    // Neon glow ring
+    gfx.lineStyle(2, 0xff006a, 0.8);
+    gfx.strokeCircle(cx, cy, size / 2 + 8);
 
     // Drop shadow
-    gfx.fillStyle(0x000000, 0.5);
-    gfx.fillCircle(cx, cy + 4, size / 2);
-    
-    // Silver metallic outer ring gradient
-    gfx.fillGradientStyle(0xffffff, 0xffffff, 0xaaaaaa, 0xaaaaaa, 1);
+    gfx.fillStyle(0x000000, 0.7);
+    gfx.fillCircle(cx, cy + 4, size / 2 + 2);
+
+    // Gold outer ring (matches spin button)
+    gfx.fillGradientStyle(0xddaa33, 0xeebb44, 0xaa7722, 0x886611, 1);
     gfx.fillCircle(cx, cy, size / 2);
-    
-    // Inner metallic groove
-    gfx.fillStyle(0x444444, 1);
+
+    // Silver inner ring
+    gfx.fillGradientStyle(0xcccccc, 0xeeeeee, 0x999999, 0x777777, 1);
     gfx.fillCircle(cx, cy, size / 2 - 2);
-    
+
     // Deep ruby / pink inner gradient
-    gfx.fillGradientStyle(0xff3388, 0xff3388, 0xaa0033, 0xaa0033, 1);
-    gfx.fillCircle(cx, cy, size / 2 - 3);
-    
-    // Glossy top hemisphere reflection
+    gfx.fillGradientStyle(0xff2266, 0xff2266, 0xaa0033, 0xaa0033, 1);
+    gfx.fillCircle(cx, cy, size / 2 - 4);
+
+    // Glossy top hemisphere
     gfx.beginPath();
-    gfx.arc(cx, cy, size / 2 - 3, Math.PI, 0, false);
+    gfx.arc(cx, cy, size / 2 - 4, Math.PI, 0, false);
     gfx.closePath();
-    gfx.fillStyle(0xffffff, 0.25);
+    gfx.fillStyle(0xffffff, 0.35);
     gfx.fillPath();
-    
-    // Icon (plus/minus)
+
+    // Inner white rim
+    gfx.lineStyle(1.5, 0xffffff, 0.4);
+    gfx.strokeCircle(cx, cy, size / 2 - 4);
+
+    // Icon (plus/minus) — thicker for visibility
     gfx.fillStyle(0xffffff, 1);
     const arm = size * 0.25;
+    const thick = Math.max(4, size * 0.1);
     if (isPlus) {
-      gfx.fillRoundedRect(cx - 2, cy - arm, 4, arm * 2, 2);
-      gfx.fillRoundedRect(cx - arm, cy - 2, arm * 2, 4, 2);
+      gfx.fillRoundedRect(cx - thick / 2, cy - arm, thick, arm * 2, 2);
+      gfx.fillRoundedRect(cx - arm, cy - thick / 2, arm * 2, thick, 2);
     } else {
-      gfx.fillRoundedRect(cx - arm, cy - 2, arm * 2, 4, 2);
+      gfx.fillRoundedRect(cx - arm, cy - thick / 2, arm * 2, thick, 2);
     }
   }
 
-  /** Update spin button visual and all UI interactivity to reflect current state */
+  /** Draw a fully procedural premium spin button — no PNG needed */
+  private drawSpinButton(x: number, y: number, size: number) {
+    const g = this.spinBtnImage as any as Phaser.GameObjects.Graphics;
+    if (!g || !g.clear) return;
+    g.clear();
+    const r = size / 2;
+
+    // Outer soft neon glow
+    g.fillStyle(0xff006a, 0.10);
+    g.fillCircle(x, y, r + 18);
+    g.fillStyle(0xff006a, 0.05);
+    g.fillCircle(x, y, r + 28);
+
+    // Drop shadow
+    g.fillStyle(0x000000, 0.5);
+    g.fillCircle(x, y + 4, r + 4);
+
+    // Gold outer ring
+    g.fillGradientStyle(0xddaa33, 0xeebb44, 0xaa7722, 0x886611, 1);
+    g.fillCircle(x, y, r + 4);
+
+    // Silver inner ring
+    g.fillGradientStyle(0xcccccc, 0xeeeeee, 0x999999, 0x777777, 1);
+    g.fillCircle(x, y, r - 1);
+
+    // Gold inner border
+    g.fillGradientStyle(0xddaa33, 0xeebb44, 0xaa7722, 0x886611, 1);
+    g.fillCircle(x, y, r - 4);
+
+    // Main ruby/pink gradient face
+    g.fillGradientStyle(0xff4488, 0xff2266, 0xcc0044, 0xaa0033, 1);
+    g.fillCircle(x, y, r - 7);
+
+    // Glossy top hemisphere highlight
+    g.beginPath();
+    g.arc(x, y, r - 7, Math.PI, 0, false);
+    g.closePath();
+    g.fillStyle(0xffffff, 0.22);
+    g.fillPath();
+
+    // Inner rim highlight
+    g.lineStyle(1.5, 0xffffff, 0.15);
+    g.strokeCircle(x, y, r - 7);
+
+    // Play triangle icon
+    const triSize = r * 0.45;
+    const triX = x + triSize * 0.15; // slight offset right for visual centering
+    g.fillStyle(0xffffff, 0.95);
+    g.beginPath();
+    g.moveTo(triX - triSize * 0.5, y - triSize * 0.6);
+    g.lineTo(triX + triSize * 0.65, y);
+    g.lineTo(triX - triSize * 0.5, y + triSize * 0.6);
+    g.closePath();
+    g.fillPath();
+
+    // Triangle shadow for depth
+    g.fillStyle(0x000000, 0.15);
+    g.beginPath();
+    g.moveTo(triX - triSize * 0.5, y - triSize * 0.6 + 3);
+    g.lineTo(triX + triSize * 0.65, y + 3);
+    g.lineTo(triX - triSize * 0.5, y + triSize * 0.6 + 3);
+    g.closePath();
+    g.fillPath();
+
+    // Re-draw white triangle on top of shadow
+    g.fillStyle(0xffffff, 0.95);
+    g.beginPath();
+    g.moveTo(triX - triSize * 0.5, y - triSize * 0.6);
+    g.lineTo(triX + triSize * 0.65, y);
+    g.lineTo(triX - triSize * 0.5, y + triSize * 0.6);
+    g.closePath();
+    g.fillPath();
+
+    // Sparkle dots on the gold ring
+    const sparkleR = 2;
+    g.fillStyle(0xffffff, 0.7);
+    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 3) {
+      const sx = x + Math.cos(angle) * (r + 1);
+      const sy = y + Math.sin(angle) * (r + 1);
+      g.fillCircle(sx, sy, sparkleR);
+    }
+  }
+
+    /** Update spin button visual and all UI interactivity to reflect current state */
   private updateSpinButtonState() {
     this.updateUIInteractivity();
     if (!this.spinBtnImage) return;
-    this.spinBtnImage.setPosition(this.spinBtnHit.x, this.spinBtnHit.y);
+    // Spin button is now procedurally drawn, just update alpha for state
     if (this.autoSpinActive) {
-      this.spinBtnImage.setTint(0xff4444);
       this.spinBtnImage.setAlpha(1);
     } else if (this._spinLock) {
-      this.spinBtnImage.setTint(0x888888);
-      this.spinBtnImage.setAlpha(0.6);
+      this.spinBtnImage.setAlpha(0.5);
     } else {
-      this.spinBtnImage.clearTint();
       this.spinBtnImage.setAlpha(1);
     }
   }
@@ -1155,7 +1246,7 @@ export class Game extends Phaser.Scene {
 
   private wireInteractions() {
     this.spinBtnHit.on('pointerdown', () => {
-      this.tweens.add({ targets: this.spinBtnImage, scaleX: 0.9, scaleY: 0.9, yoyo: true, duration: 80 });
+      this.tweens.add({ targets: this.spinBtnImage, scaleX: this.spinBtnImage.scaleX * 0.9, scaleY: this.spinBtnImage.scaleY * 0.9, yoyo: true, duration: 80 });
       this.handleUniversalAction();
     });
 
@@ -1201,10 +1292,22 @@ export class Game extends Phaser.Scene {
     // Premium Hover states builder
     const addHover = (hit: Phaser.GameObjects.GameObject, target: any) => {
       hit.on('pointerover', () => {
-        this.tweens.add({ targets: target, scaleX: 1.1, scaleY: 1.1, duration: 150, ease: 'Back.easeOut' });
+        const targets = Array.isArray(target) ? target : [target];
+        targets.forEach(t => {
+           if (t._baseScaleX === undefined) {
+              t._baseScaleX = t.scaleX;
+              t._baseScaleY = t.scaleY;
+           }
+           this.tweens.add({ targets: t, scaleX: t._baseScaleX * 1.1, scaleY: t._baseScaleY * 1.1, duration: 150, ease: 'Back.easeOut' });
+        });
       });
       hit.on('pointerout', () => {
-        this.tweens.add({ targets: target, scaleX: 1.0, scaleY: 1.0, duration: 150, ease: 'Back.easeIn' });
+        const targets = Array.isArray(target) ? target : [target];
+        targets.forEach(t => {
+           if (t._baseScaleX !== undefined) {
+             this.tweens.add({ targets: t, scaleX: t._baseScaleX, scaleY: t._baseScaleY, duration: 150, ease: 'Back.easeIn' });
+           }
+        });
       });
     };
 
