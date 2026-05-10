@@ -24,7 +24,7 @@ export class PaytableOverlay {
   private dotIndicators: Phaser.GameObjects.Graphics[] = [];
 
   private readonly FONT_BODY = '"Inter", "Arial", sans-serif';
-  private readonly FONT_TITLE = '"Luckiest Guy", cursive, sans-serif';
+  private readonly FONT_TITLE = '"Outfit", "Inter", sans-serif';
   private readonly COL_BODY = '#d0d0e0';
   private readonly COL_MUTED = '#8888aa';
   private readonly COL_ACCENT = '#ff006a';
@@ -56,7 +56,7 @@ export class PaytableOverlay {
   /** Add a section title with underline accent */
   private addSectionTitle(page: Phaser.GameObjects.Container, x: number, y: number, text: string): number {
     page.add(this.scene.add.text(x, y, text, {
-      fontSize: '20px', fontFamily: this.FONT_TITLE, color: '#ffffff'
+      fontSize: '22px', fontFamily: this.FONT_TITLE, color: '#ffffff', fontStyle: '700'
     }).setOrigin(0.5));
     const g = this.scene.add.graphics();
     const lw = Math.min(text.length * 11, 300);
@@ -122,6 +122,7 @@ export class PaytableOverlay {
     // Inner rim
     panel.lineStyle(1, 0xffffff, 0.05);
     panel.strokeRoundedRect(2, 2, logicalW - 4, logicalH - 4, 18);
+    panel.setInteractive(new Phaser.Geom.Rectangle(0, 0, logicalW, logicalH), Phaser.Geom.Rectangle.Contains);
     pageWrapper.add(panel);
 
     const scale = Math.min(w / logicalW, h / logicalH, 1);
@@ -133,8 +134,8 @@ export class PaytableOverlay {
 
     // Title
     const isSocial = getStakeEngine().isSocialMode();
-    pageWrapper.add(this.scene.add.text(logicalW / 2, 30, T('GAME RULES', isSocial), {
-      fontSize: '24px', fontFamily: this.FONT_TITLE, color: '#ffffff'
+    pageWrapper.add(this.scene.add.text(logicalW / 2, 32, T('GAME RULES', isSocial), {
+      fontSize: '26px', fontFamily: this.FONT_TITLE, color: '#ffffff', fontStyle: '800'
     }).setOrigin(0.5));
 
     // Close button — circle with X
@@ -544,8 +545,8 @@ export class PaytableOverlay {
     let yPos = 75;
 
     page.add(this.scene.add.text(w / 2, yPos, 'HOW TO PLAY', {
-      fontSize: '22px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      color: '#ffffff',
+      fontSize: '24px', fontFamily: '"Outfit", "Inter", sans-serif',
+      color: '#ffffff', fontStyle: '800',
     }).setOrigin(0.5));
     yPos += 45;
 
@@ -563,8 +564,8 @@ export class PaytableOverlay {
 
     yPos += 15;
     page.add(this.scene.add.text(w / 2, yPos, 'MAIN GAME INTERFACE', {
-      fontSize: '18px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      color: '#ffffff',
+      fontSize: '20px', fontFamily: '"Outfit", "Inter", sans-serif',
+      color: '#ffffff', fontStyle: '700',
     }).setOrigin(0.5));
     yPos += 40;
 
@@ -606,8 +607,8 @@ export class PaytableOverlay {
     let yPos = 75;
 
     page.add(this.scene.add.text(w / 2, yPos, 'SETTINGS MENU', {
-      fontSize: '22px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      color: '#ffffff',
+      fontSize: '24px', fontFamily: '"Outfit", "Inter", sans-serif',
+      color: '#ffffff', fontStyle: '800',
     }).setOrigin(0.5));
     yPos += 40;
 
@@ -626,8 +627,8 @@ export class PaytableOverlay {
 
     yPos += 20;
     page.add(this.scene.add.text(w / 2, yPos, 'INFORMATION SCREEN', {
-      fontSize: '18px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      color: '#ffffff', fontStyle: 'bold',
+      fontSize: '20px', fontFamily: '"Outfit", "Inter", sans-serif',
+      color: '#ffffff', fontStyle: '700',
     }).setOrigin(0.5));
     yPos += 35;
 
@@ -641,8 +642,8 @@ export class PaytableOverlay {
     yPos += 35;
 
     page.add(this.scene.add.text(w / 2, yPos, 'BET MENU', {
-      fontSize: '18px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      color: '#ffffff', fontStyle: 'bold',
+      fontSize: '20px', fontFamily: '"Outfit", "Inter", sans-serif',
+      color: '#ffffff', fontStyle: '700',
     }).setOrigin(0.5));
     yPos += 32;
 
@@ -658,9 +659,8 @@ export class PaytableOverlay {
 
     // MAX WIN
     page.add(this.scene.add.text(w / 2, yPos, 'MAX WIN', {
-      fontSize: '18px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      color: '#ffe600', fontStyle: 'bold',
-      stroke: '#000', strokeThickness: 2,
+      fontSize: '22px', fontFamily: '"Outfit", "Inter", sans-serif',
+      color: '#ffe600', fontStyle: '800',
     }).setOrigin(0.5));
     yPos += 30;
 
