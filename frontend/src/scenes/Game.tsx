@@ -105,6 +105,7 @@ export class Game extends Phaser.Scene {
   lastWin = 0;
   private _winCountTween?: Phaser.Tweens.Tween;
   private _displayedWin = 0;
+  private winPillGlow!: Phaser.GameObjects.Graphics;
 
   // Spin lock — prevents double-trigger across pointer + keyboard
   private _spinLock = false;
@@ -276,7 +277,7 @@ export class Game extends Phaser.Scene {
     this.buyRegularHit = this.add.rectangle(0, 0, 100, 50, 0xffffff, 0)
       .setInteractive({ useHandCursor: true }).setDepth(21);
     this.buyRegularTxt1 = this.add.text(0, 0, T('BUY', this.stakeEngine.isSocialMode()), { ...btnStyle, color: '#ffffff' }).setOrigin(0.5).setDepth(21);
-    this.buyRegularTxt2 = this.add.text(0, 0, '100X', { ...btnStyle, color: '#ffe600', stroke: '#000000', strokeThickness: 4 }).setOrigin(0.5).setDepth(21);
+    this.buyRegularTxt2 = this.add.text(0, 0, '1000X', { ...btnStyle, color: '#ffe600', stroke: '#000000', strokeThickness: 4 }).setOrigin(0.5).setDepth(21);
 
     // Ante bet setup
     this.anteBetBtn = this.add.graphics().setDepth(20);
@@ -321,19 +322,20 @@ export class Game extends Phaser.Scene {
 
     // === BOTTOM BAR ===
     const tLabelStyle: Phaser.Types.GameObjects.Text.TextStyle = {
-      fontFamily: '"Inter", "Arial", sans-serif',
-      fontStyle: '600',
-      color: '#99aadd',
-      letterSpacing: 1,
+      fontFamily: '"Outfit", "Inter", sans-serif',
+      fontStyle: '500',
+      color: '#8899bb',
+      letterSpacing: 2,
     };
     const tValStyle: Phaser.Types.GameObjects.Text.TextStyle = {
       fontFamily: '"Inter", "Arial", sans-serif',
-      fontStyle: '800',
+      fontStyle: '700',
       color: '#ffffff',
     };
     
     // Bottom Bar Structural Graphic
     this.bottomBar = this.add.graphics().setDepth(45);
+    this.winPillGlow = this.add.graphics().setDepth(46).setAlpha(0);
     
     this.txtMoneyLabel = this.add.text(0, 0, T('BALANCE', this.stakeEngine.isSocialMode()), tLabelStyle).setOrigin(0, 0.5).setDepth(50);
     this.txtMoney = this.add.text(0, 0, '', tValStyle).setOrigin(1, 0.5).setDepth(50);
@@ -342,7 +344,9 @@ export class Game extends Phaser.Scene {
     this.txtBet = this.add.text(0, 0, '', tValStyle).setOrigin(1, 0.5).setDepth(50);
     
     this.txtLastWinLabel = this.add.text(0, 0, T('LAST WIN', this.stakeEngine.isSocialMode()), tLabelStyle).setOrigin(0, 0.5).setDepth(50);
-    this.txtLastWin = this.add.text(0, 0, '', { ...tValStyle, color: '#ffdd55' }).setOrigin(1, 0.5).setDepth(50);
+    this.txtLastWin = this.add.text(0, 0, '', { ...tValStyle, color: '#44ff88' }).setOrigin(1, 0.5).setDepth(50);
+    // Initialize LAST WIN to $0.00 so the pill is never empty
+    this.txtLastWin.setText(DisplayBalance({ amount: 0, currency: 'USD' }));
     
     this.demoLabel = this.add.text(0, 0, '', {
       fontFamily: '"Luckiest Guy", cursive, sans-serif', color: '#ff4466'
@@ -616,8 +620,15 @@ export class Game extends Phaser.Scene {
       const toggleY = isLandscapeMobile ? safeH / 2 : toolY + 60;
       
       this.btnFeaturesMenuHit.setPosition(toggleX, toggleY).setSize(50, 50);
-      this.btnFeaturesMenuGraphics.fillStyle(0xff006a, 1).fillRoundedRect(toggleX - 25, toggleY - 25, 50, 50, 15);
-      this.btnFeaturesMenuGraphics.lineStyle(3, 0xffffff, 1).strokeRoundedRect(toggleX - 25, toggleY - 25, 50, 50, 15);
+      // Glassmorphic toggle pill
+      this.btnFeaturesMenuGraphics.fillStyle(0x000000, 0.5);
+      this.btnFeaturesMenuGraphics.fillRoundedRect(toggleX - 22, toggleY - 22 + 3, 44, 44, 14);
+      this.btnFeaturesMenuGraphics.fillGradientStyle(0xff006a, 0xff006a, 0x880033, 0x880033, 1);
+      this.btnFeaturesMenuGraphics.fillRoundedRect(toggleX - 22, toggleY - 22, 44, 44, 14);
+      this.btnFeaturesMenuGraphics.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.3, 0.3, 0, 0);
+      this.btnFeaturesMenuGraphics.fillRoundedRect(toggleX - 20, toggleY - 20, 40, 18, {tl: 12, tr: 12, bl: 0, br: 0} as any);
+      this.btnFeaturesMenuGraphics.lineStyle(2, 0xffffff, 0.6);
+      this.btnFeaturesMenuGraphics.strokeRoundedRect(toggleX - 22, toggleY - 22, 44, 44, 14);
       this.btnFeaturesMenuIcon.setPosition(toggleX, toggleY);
 
       if (this.isFeaturesMenuOpen) {
@@ -636,8 +647,15 @@ export class Game extends Phaser.Scene {
         const popupX = w / 2;
         const popupY = h / 2;
 
-        this.featuresMenuPopupBg.fillStyle(0x1a0a24, 0.95).fillRoundedRect(popupX - popupW/2, popupY - popupH/2, popupW, popupH, 20);
-        this.featuresMenuPopupBg.lineStyle(3, 0xff006a, 1).strokeRoundedRect(popupX - popupW/2, popupY - popupH/2, popupW, popupH, 20);
+        // Premium popup backdrop
+        this.featuresMenuPopupBg.fillStyle(0x000000, 0.6);
+        this.featuresMenuPopupBg.fillRoundedRect(popupX - popupW/2 + 4, popupY - popupH/2 + 6, popupW, popupH, 22);
+        this.featuresMenuPopupBg.fillGradientStyle(0x1a0a24, 0x1a0a24, 0x0d0512, 0x0d0512, 0.98);
+        this.featuresMenuPopupBg.fillRoundedRect(popupX - popupW/2, popupY - popupH/2, popupW, popupH, 20);
+        this.featuresMenuPopupBg.lineStyle(2, 0xff006a, 0.8);
+        this.featuresMenuPopupBg.strokeRoundedRect(popupX - popupW/2, popupY - popupH/2, popupW, popupH, 20);
+        this.featuresMenuPopupBg.lineStyle(1, 0xffffff, 0.15);
+        this.featuresMenuPopupBg.strokeRoundedRect(popupX - popupW/2 + 2, popupY - popupH/2 + 2, popupW - 4, popupH - 4, 18);
 
         buyX = popupX;
         buyY1 = popupY - popupH/2 + 20 + buyH/2;
@@ -716,50 +734,75 @@ export class Game extends Phaser.Scene {
     this.bottomBar.clear();
     const bb = this.bottomBar;
 
-    bb.fillGradientStyle(0x0a0515, 0x0a0515, 0x110518, 0x110518, 0.95);
+    // Dark glass backdrop
+    bb.fillGradientStyle(0x080312, 0x080312, 0x0d0518, 0x0d0518, 0.97);
     bb.fillRect(0, h - barH, w, barH);
     
-    bb.fillStyle(0xff006a, 0.8);
-    bb.fillRect(0, h - barH, w, 2);
+    // Top accent line
+    bb.fillGradientStyle(0xff006a, 0xff3388, 0xff006a, 0xff3388, 0.9);
+    bb.fillRect(0, h - barH, w, 1.5);
 
     const txtY = h - barH / 2;
-    const sidePad = isMobile ? 5 : 20;
-    const labelFS = Math.max(10, barH * 0.22);
-    const valFS = Math.max(13, barH * 0.32);
+    const sidePad = isMobile ? 8 : 24;
+    const labelFS = Math.max(9, barH * 0.20);
+    const valFS = Math.max(12, barH * 0.30);
+    const pillInnerPad = isMobile ? 12 : 18;
 
     const drawPill = (x: number, width: number) => {
-      const pillY = h - barH + 6;
-      const pillH = barH - 12;
-      bb.fillStyle(0x000000, 0.6);
-      bb.fillRoundedRect(x, pillY, width, pillH, pillH/2);
-      bb.lineStyle(1.5, 0xffffff, 0.15);
-      bb.strokeRoundedRect(x, pillY, width, pillH, pillH/2);
+      const pillY = h - barH + 5;
+      const pillH = barH - 10;
+      // Pill shadow
+      bb.fillStyle(0x000000, 0.35);
+      bb.fillRoundedRect(x + 1, pillY + 2, width, pillH, pillH / 2);
+      // Pill bg
+      bb.fillGradientStyle(0x0f0820, 0x0f0820, 0x1a0d2a, 0x1a0d2a, 0.8);
+      bb.fillRoundedRect(x, pillY, width, pillH, pillH / 2);
+      // Pill border
+      bb.lineStyle(1, 0xffffff, 0.1);
+      bb.strokeRoundedRect(x, pillY, width, pillH, pillH / 2);
     };
 
-    // ── BALANCE ──
-    const balW = isStacked ? (w - 20) * 0.33 : Math.max(140, w * 0.18);
-    drawPill(sidePad, balW);
-    const balX = sidePad + balW / 2;
-    this.txtMoneyLabel.setPosition(balX, txtY - 7).setFontSize(labelFS).setOrigin(0.5, 0.5);
-    this.txtMoney.setPosition(balX, txtY + 9).setFontSize(valFS).setOrigin(0.5, 0.5);
+    // Calculate pill widths — evenly distributed with gaps
+    const gap = isMobile ? 6 : 16;
+    const totalGaps = gap * 2 + sidePad * 2;
+    const availW = w - totalGaps;
+    const balW = isStacked ? availW * 0.36 : Math.max(160, availW * 0.30);
+    const betW = isStacked ? availW * 0.28 : Math.max(130, availW * 0.22);
+    const winW = isStacked ? availW * 0.36 : Math.max(160, availW * 0.30);
 
-    // ── BET ──
-    const betW = isStacked ? (w - 20) * 0.3 : Math.max(120, w * 0.15);
-    const betStartX = isStacked ? w / 2 - betW / 2 : sidePad + balW + 20;
-    drawPill(betStartX, betW);
-    const betX = betStartX + betW / 2;
-    this.txtBetLabel.setPosition(betX, txtY - 7).setFontSize(labelFS).setOrigin(0.5, 0.5);
-    this.txtBet.setPosition(betX, txtY + 9).setFontSize(valFS).setOrigin(0.5, 0.5);
+    // ── BALANCE pill ──
+    const balStart = sidePad;
+    drawPill(balStart, balW);
+    this.txtMoneyLabel.setPosition(balStart + pillInnerPad, txtY).setFontSize(labelFS).setOrigin(0, 0.5);
+    this.txtMoney.setPosition(balStart + balW - pillInnerPad, txtY).setFontSize(valFS).setOrigin(1, 0.5);
 
-    // ── LAST WIN (Always visible now) ──
+    // ── BET pill (tappable — opens bet overlay) ──
+    const betStart = balStart + balW + gap;
+    drawPill(betStart, betW);
+    this.txtBetLabel.setPosition(betStart + pillInnerPad, txtY).setFontSize(labelFS).setOrigin(0, 0.5);
+    this.txtBet.setPosition(betStart + betW - pillInnerPad, txtY).setFontSize(valFS).setOrigin(1, 0.5);
+    // Bet pill hit zone
+    if (!(this as any)._betPillHit) {
+      (this as any)._betPillHit = this.add.rectangle(0, 0, 10, 10, 0xffffff, 0)
+        .setInteractive({ useHandCursor: true }).setDepth(51)
+        .on('pointerdown', () => {
+          if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
+          this.audio.playSound('button');
+          this.betOverlay.syncState(this.betPresetIndex, options.anteBetEnabled, options.anteBetCostMultiplier);
+          this.betOverlay.toggle();
+        });
+    }
+    (this as any)._betPillHit.setPosition(betStart + betW / 2, txtY).setSize(betW, barH - 4);
+
+    // ── LAST WIN pill ──
     this.txtLastWinLabel.setVisible(true);
     this.txtLastWin.setVisible(true);
-    const winW = isStacked ? (w - 20) * 0.33 : Math.max(140, w * 0.18);
-    const winStartX = w - sidePad - winW;
-    drawPill(winStartX, winW);
-    const winX = winStartX + winW / 2;
-    this.txtLastWinLabel.setPosition(winX, txtY - 7).setFontSize(labelFS).setOrigin(0.5, 0.5);
-    this.txtLastWin.setPosition(winX, txtY + 9).setFontSize(valFS).setOrigin(0.5, 0.5);
+    const winStart = w - sidePad - winW;
+    drawPill(winStart, winW);
+    this.txtLastWinLabel.setPosition(winStart + pillInnerPad, txtY).setFontSize(labelFS).setOrigin(0, 0.5);
+    this.txtLastWin.setPosition(winStart + winW - pillInnerPad, txtY).setFontSize(valFS).setOrigin(1, 0.5);
+    // Cache win pill bounds for glow effect
+    (this as any)._winPillBounds = { x: winStart, w: winW, y: h - barH + 5, h: barH - 10 };
 
     // ==========================================
     // 4. SPIN BUTTON GROUP
@@ -928,52 +971,54 @@ export class Game extends Phaser.Scene {
   }
 
   private updateBuyText(txt1: Phaser.GameObjects.Text, txt2: Phaser.GameObjects.Text, x: number, y: number, h: number, type: string) {
-    const fsTitle = Math.min(20, h * 0.20);
-    const fsSub = Math.min(28, h * 0.32);
+    const fsTitle = Math.min(18, h * 0.22);
+    const fsSub = Math.min(32, h * 0.38);
     const title = type === 'SUPER' ? 'SUPER\nFREE SPINS' : 'BUY\nFREE SPINS';
-    txt1.setText(title).setPosition(x, y - h * 0.18).setFontSize(fsTitle).setLineSpacing(-2);
-    txt2.setPosition(x, y + h * 0.22).setFontSize(fsSub);
+    txt1.setText(title).setPosition(x, y - h * 0.15).setFontSize(fsTitle).setLineSpacing(-4);
+    txt1.setColor('#ffffff').setShadow(0, 2, '#000000', 4, true, true);
+    txt2.setPosition(x, y + h * 0.28).setFontSize(fsSub);
+    txt2.setColor('#ffe600').setStroke('#000000', 5).setShadow(0, 3, '#000000', 0, false, true);
   }
 
   private drawBuyPanel(gfx: Phaser.GameObjects.Graphics, w: number, h: number, isSuper: boolean) {
     gfx.clear();
-    const r = 16;
-    const accentTop = isSuper ? 0xffcc00 : 0xff3388;
-    const accentMid = isSuper ? 0xff8800 : 0xff0055;
-    const accentDark = isSuper ? 0x662200 : 0x440022;
-    const baseDark = 0x110518;
-    
-    // Soft outer glow
-    gfx.fillStyle(accentMid, 0.15);
-    gfx.fillRoundedRect(-w / 2 - 8, -h / 2 - 8, w + 16, h + 16, r + 4);
-    
+    const r = 14;
+    const accentTop = isSuper ? 0xffcc00 : 0xff2288;
+    const accentBot = isSuper ? 0xcc6600 : 0xcc0044;
+    const accentMid = isSuper ? 0xff9900 : 0xff0066;
+    const darkBase = isSuper ? 0x332200 : 0x330015;
+
+    // Outer glow
+    gfx.fillStyle(accentMid, 0.2);
+    gfx.fillRoundedRect(-w/2 - 6, -h/2 - 6, w + 12, h + 12, r + 3);
+
     // Drop shadow
+    gfx.fillStyle(0x000000, 0.5);
+    gfx.fillRoundedRect(-w/2 + 3, -h/2 + 5, w, h, r);
+
+    // Main body gradient
+    gfx.fillGradientStyle(accentTop, accentTop, accentBot, accentBot, 1);
+    gfx.fillRoundedRect(-w/2, -h/2, w, h, r);
+
+    // Dark bottom band
+    gfx.fillGradientStyle(darkBase, darkBase, darkBase, darkBase, 0.85);
+    gfx.fillRoundedRect(-w/2, -h/2 + h * 0.5, w, h * 0.5, {tl: 0, tr: 0, bl: r, br: r} as any);
+
+    // Division line between top color and bottom dark
     gfx.fillStyle(0x000000, 0.4);
-    gfx.fillRoundedRect(-w / 2 + 2, -h / 2 + 6, w, h, r);
-    
-    // Base gradient background
-    gfx.fillGradientStyle(baseDark, baseDark, accentDark, accentDark, 0.95);
-    gfx.fillRoundedRect(-w / 2, -h / 2, w, h, r);
+    gfx.fillRect(-w/2 + 4, -h/2 + h * 0.5 - 1, w - 8, 2);
 
-    // Top half vibrant gradient
-    gfx.fillGradientStyle(accentTop, accentTop, accentMid, accentMid, 1);
-    gfx.fillRoundedRect(-w / 2, -h / 2, w, h * 0.55, {tl: r, tr: r, bl: 0, br: 0} as any);
+    // Glass highlight on top
+    gfx.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.45, 0.45, 0, 0);
+    gfx.fillRoundedRect(-w/2 + 3, -h/2 + 2, w - 6, h * 0.22, {tl: r - 2, tr: r - 2, bl: 0, br: 0} as any);
 
-    // Glass reflection (Top rim)
-    gfx.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.35, 0.35, 0, 0);
-    gfx.fillRoundedRect(-w / 2 + 2, -h / 2 + 2, w - 4, h * 0.25, {tl: r-2, tr: r-2, bl: 0, br: 0} as any);
+    // Border
+    gfx.lineStyle(2.5, accentMid, 1);
+    gfx.strokeRoundedRect(-w/2, -h/2, w, h, r);
 
-    // Side highlights for 3D bevel
-    gfx.lineStyle(2, 0xffffff, 0.15);
-    gfx.strokeRoundedRect(-w / 2 + 1, -h / 2 + 1, w - 2, h - 2, r - 1);
-
-    // Outer thick colored border
-    gfx.lineStyle(3, accentMid, 1);
-    gfx.strokeRoundedRect(-w / 2, -h / 2, w, h, r);
-    
-    // Extra white outer ring for pop
-    gfx.lineStyle(1.5, 0xffffff, 0.8);
-    gfx.strokeRoundedRect(-w / 2 - 1, -h / 2 - 1, w + 2, h + 2, r + 1);
+    // Bright outer rim
+    gfx.lineStyle(1.5, 0xffffff, 0.5);
+    gfx.strokeRoundedRect(-w/2 - 1.5, -h/2 - 1.5, w + 3, h + 3, r + 1);
   }
 
   private drawAnteBetButton(bw: number, bh: number) {
@@ -983,20 +1028,17 @@ export class Game extends Phaser.Scene {
     const rad = Math.min(18, bh / 2);
 
     if (options.anteBetEnabled) {
-      // Premium Active - Golden Glass
-      this.anteBetBtn.fillStyle(0x000000, 0.5);
+      // Active state - bright amber
+      this.anteBetBtn.fillStyle(0x000000, 0.4);
       this.anteBetBtn.fillRoundedRect(x + 2, y + 4, bw, bh, rad);
       
-      this.anteBetBtn.fillGradientStyle(0xffa500, 0xffa500, 0x994400, 0x994400, 1);
+      this.anteBetBtn.fillGradientStyle(0xffbb33, 0xffbb33, 0x885500, 0x885500, 1);
       this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
       
-      this.anteBetBtn.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.4, 0.4, 0, 0);
-      this.anteBetBtn.fillRoundedRect(x + 2, y + 2, bw - 4, bh * 0.45, {tl: rad-2, tr: rad-2, bl: 0, br: 0} as any);
+      this.anteBetBtn.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.35, 0.35, 0, 0);
+      this.anteBetBtn.fillRoundedRect(x + 2, y + 2, bw - 4, bh * 0.4, {tl: rad-2, tr: rad-2, bl: 0, br: 0} as any);
       
-      this.anteBetBtn.lineStyle(2, 0xffffff, 0.6);
-      this.anteBetBtn.strokeRoundedRect(x + 1, y + 1, bw - 2, bh - 2, rad - 1);
-      
-      this.anteBetBtn.lineStyle(3, 0xffeebb, 1);
+      this.anteBetBtn.lineStyle(2, 0xffeebb, 0.9);
       this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, rad);
 
       this.anteBetBtn.lineStyle(6, 0xffaa00, 0.25);
@@ -1338,7 +1380,7 @@ export class Game extends Phaser.Scene {
     this.buyRegularHit.on('pointerdown', () => {
       if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
       this.tweens.add({ targets: [this.panelRegularGraphics, this.buyRegularTxt1, this.buyRegularTxt2], scaleX: 0.95, scaleY: 0.95, yoyo: true, duration: 80 });
-      this.requestPurchase(1, 100);
+      this.requestPurchase(1, 1000);
     });
 
     // Ante Bet toggle
@@ -1653,17 +1695,44 @@ export class Game extends Phaser.Scene {
     const baseBet = BET_PRESETS[this.betPresetIndex];
     return options.anteBetEnabled ? baseBet * options.anteBetCostMultiplier : baseBet;
   }
+  private _prevBalance = -1;
   updateMoneyDisplay() {
-    this.txtMoney.setText(DisplayBalance({ amount: this.valueMoney, currency: this.currency }));
+    const newBal = this.valueMoney;
+    const decreased = this._prevBalance >= 0 && newBal < this._prevBalance;
+    this._prevBalance = newBal;
+
+    this.txtMoney.setText(DisplayBalance({ amount: newBal, currency: this.currency }));
     this.tweens.killTweensOf(this.txtMoney);
-    this.txtMoney.setScale(1.3);
-    this.tweens.add({
-      targets: this.txtMoney,
-      scaleX: 1,
-      scaleY: 1,
-      duration: 300,
-      ease: 'Back.easeOut'
-    });
+
+    if (decreased) {
+      // Flash red briefly on deduction
+      this.txtMoney.setColor('#ff4466');
+      this.txtMoney.setScale(0.9);
+      this.tweens.add({
+        targets: this.txtMoney,
+        scaleX: 1,
+        scaleY: 1,
+        duration: 400,
+        ease: 'Back.easeOut',
+        onComplete: () => {
+          this.txtMoney.setColor('#ffffff');
+        }
+      });
+    } else {
+      // Pop on increase
+      this.txtMoney.setColor('#44ff88');
+      this.txtMoney.setScale(1.25);
+      this.tweens.add({
+        targets: this.txtMoney,
+        scaleX: 1,
+        scaleY: 1,
+        duration: 350,
+        ease: 'Back.easeOut',
+        onComplete: () => {
+          this.txtMoney.setColor('#ffffff');
+        }
+      });
+    }
   }
 
   updateBetDisplay() {
@@ -1680,35 +1749,65 @@ export class Game extends Phaser.Scene {
   }
 
   updateLastWinDisplay() {
-    // Rolling counter animation instead of instant update
     const target = this.lastWin;
     if (this._winCountTween) {
       this._winCountTween.stop();
     }
+
+    // Kill any lingering pulse tweens
+    this.tweens.killTweensOf([this.txtLastWin, this.txtLastWinLabel]);
+    this.txtLastWin.setScale(1);
+    this.txtLastWinLabel.setScale(1);
+
+    // Hide win glow
+    this.tweens.killTweensOf(this.winPillGlow);
+    this.winPillGlow.setAlpha(0);
+
     if (target <= 0) {
       this._displayedWin = 0;
       this.txtLastWin.setText(DisplayBalance({ amount: 0, currency: this.currency }));
-      this.txtLastWin.setColor('#ffffff').setShadow(0, 0, '#000', 0, false, false);
+      this.txtLastWin.setColor('#44ff88').setShadow(0, 0, '#000', 0, false, false);
       return;
     }
 
+    const effectiveBet = this.getEffectiveBet();
+    const isBigWin = target >= effectiveBet * 10;
     const start = this._displayedWin;
     const delta = target - start;
     const duration = Math.min(1500, Math.max(500, Math.abs(delta) * 15));
-    
-    // Golden glow for wins
-    this.txtLastWin.setColor('#ffea00').setShadow(0, 2, '#ffaa00', 8, true, true);
-    
-    // Pulse while counting
+
+    // Golden glow text
+    this.txtLastWin.setColor('#ffea00').setShadow(0, 2, '#ffaa00', 6, true, true);
+
+    // Pulse text while counting
     this.tweens.add({
       targets: [this.txtLastWin, this.txtLastWinLabel],
-      scaleX: 1.15,
-      scaleY: 1.15,
+      scaleX: 1.12,
+      scaleY: 1.12,
       yoyo: true,
       repeat: -1,
-      duration: 150,
+      duration: 200,
       ease: 'Sine.easeInOut'
     });
+
+    // Big win: glow the pill itself
+    if (isBigWin) {
+      const b = (this as any)._winPillBounds;
+      if (b) {
+        this.winPillGlow.clear();
+        this.winPillGlow.fillStyle(0xffaa00, 0.25);
+        this.winPillGlow.fillRoundedRect(b.x - 4, b.y - 4, b.w + 8, b.h + 8, (b.h + 8) / 2);
+        this.winPillGlow.setAlpha(0);
+        this.tweens.add({
+          targets: this.winPillGlow,
+          alpha: { from: 0, to: 1 },
+          yoyo: true,
+          repeat: -1,
+          duration: 400,
+          ease: 'Sine.easeInOut'
+        });
+      }
+    }
 
     this._winCountTween = this.tweens.addCounter({
       from: 0,
@@ -1723,18 +1822,36 @@ export class Game extends Phaser.Scene {
       onComplete: () => {
         this._displayedWin = target;
         this.txtLastWin.setText(DisplayBalance({ amount: target, currency: this.currency }));
-        
-        // Stop pulsing and do a final celebratory pop
+
+        // Stop pulsing
         this.tweens.killTweensOf([this.txtLastWin, this.txtLastWinLabel]);
         this.txtLastWin.setScale(1);
         this.txtLastWinLabel.setScale(1);
-        this.tweens.add({ 
-          targets: this.txtLastWin, 
-          scaleX: 1.4, 
-          scaleY: 1.4, 
-          duration: 300, 
-          yoyo: true, 
-          ease: 'Back.easeOut' 
+
+        // Final celebratory pop
+        this.tweens.add({
+          targets: this.txtLastWin,
+          scaleX: 1.3,
+          scaleY: 1.3,
+          duration: 250,
+          yoyo: true,
+          ease: 'Back.easeOut'
+        });
+
+        // Settle win glow
+        if (isBigWin) {
+          this.tweens.killTweensOf(this.winPillGlow);
+          this.tweens.add({
+            targets: this.winPillGlow,
+            alpha: 0.5,
+            duration: 600,
+            ease: 'Sine.easeOut'
+          });
+        }
+
+        // Settle text to green
+        this.time.delayedCall(400, () => {
+          this.txtLastWin.setColor('#44ff88').setShadow(0, 0, '#000', 0, false, false);
         });
       },
     });
@@ -1743,7 +1860,8 @@ export class Game extends Phaser.Scene {
   private requestPurchase(triggerType: number, betMultCost: number) {
     if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
 
-    const cost = this.getEffectiveBet() * betMultCost;
+    const baseBet = this.getEffectiveBet();
+    const cost = baseBet * betMultCost;
     const label = triggerType === 2 
       ? T('SUPER FREE SPINS', this.stakeEngine.isSocialMode()) 
       : T('BUY FREE SPINS', this.stakeEngine.isSocialMode());
@@ -1753,21 +1871,20 @@ export class Game extends Phaser.Scene {
       return;
     }
 
-    const baseBet = this.getEffectiveBet();
     const formattedBase = DisplayBalance({ amount: baseBet, currency: this.currency });
     const formattedCost = DisplayBalance({ amount: cost, currency: this.currency });
     this.confirmDialog.show(
       label,
-      `Bet: ${formattedBase}\nReal Cost: ${formattedCost}`,
-      () => this.executePurchase(triggerType, cost),
+      `Bet: ${formattedBase}\nTotal Cost: ${formattedCost}`,
+      () => this.executePurchase(triggerType, baseBet, cost),
       () => { /* cancelled */ }
     );
   }
 
-  private async executePurchase(triggerType: number, cost: number) {
+  private async executePurchase(triggerType: number, baseBet: number, totalCost: number) {
     this._spinLock = true;
     this.updateSpinButtonState();
-    this.valueMoney -= cost;
+    this.valueMoney -= totalCost;
     this.lastWin = 0;
     options.betAmount = BET_PRESETS[this.betPresetIndex];
     this.updateMoneyDisplay();
@@ -1775,11 +1892,11 @@ export class Game extends Phaser.Scene {
 
     this.audio.playSound('button');
 
-    // Bug 6: Don't pass triggerType to prepareSpin — sweep now, configure FS after intro
     this.grid.prepareSpin();
 
     try {
-      const result = await this.stakeEngine.play(cost, triggerType);
+      // Send BASE bet to RGS — the mode ('bonus'/'super') tells server the multiplier
+      const result = await this.stakeEngine.play(baseBet, triggerType);
       const stateEvents = result.round?.state || [];
       const revealEvent = stateEvents.find((e: any) => e.type === 'reveal');
 
