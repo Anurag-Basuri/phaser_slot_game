@@ -716,42 +716,50 @@ export class Game extends Phaser.Scene {
     this.bottomBar.clear();
     const bb = this.bottomBar;
 
-    // Dark sleek glassmorphic background
-    bb.fillStyle(0x0a0515, 0.85);
+    bb.fillGradientStyle(0x0a0515, 0x0a0515, 0x110518, 0x110518, 0.95);
     bb.fillRect(0, h - barH, w, barH);
     
-    // Top accent border gradient simulation
     bb.fillStyle(0xff006a, 0.8);
     bb.fillRect(0, h - barH, w, 2);
-    
-    // Subtle internal highlight line
-    bb.fillStyle(0xffffff, 0.08);
-    bb.fillRect(0, h - barH + 2, w, 1);
 
     const txtY = h - barH / 2;
-    const sidePad = isMobile ? 10 : 30;
-    const labelFS = Math.max(10, barH * 0.2);
-    const valFS = Math.max(13, barH * 0.28);
+    const sidePad = isMobile ? 5 : 20;
+    const labelFS = Math.max(10, barH * 0.22);
+    const valFS = Math.max(13, barH * 0.32);
 
-    // ── BALANCE (left side) ──
-    const balX = sidePad;
-    this.txtMoneyLabel.setPosition(balX, txtY - 8).setFontSize(labelFS).setOrigin(0, 0.5);
-    this.txtMoney.setPosition(balX, txtY + 8).setFontSize(valFS).setOrigin(0, 0.5);
+    const drawPill = (x: number, width: number) => {
+      const pillY = h - barH + 6;
+      const pillH = barH - 12;
+      bb.fillStyle(0x000000, 0.6);
+      bb.fillRoundedRect(x, pillY, width, pillH, pillH/2);
+      bb.lineStyle(1.5, 0xffffff, 0.15);
+      bb.strokeRoundedRect(x, pillY, width, pillH, pillH/2);
+    };
 
-    // ── BET (right side on mobile, center on desktop) ──
-    const betX = isStacked ? w * 0.45 : w * 0.38;
-    this.txtBetLabel.setPosition(betX, txtY - 8).setFontSize(labelFS).setOrigin(0, 0.5);
-    this.txtBet.setPosition(betX, txtY + 8).setFontSize(valFS).setOrigin(0, 0.5);
+    // ── BALANCE ──
+    const balW = isStacked ? (w - 20) * 0.33 : Math.max(140, w * 0.18);
+    drawPill(sidePad, balW);
+    const balX = sidePad + balW / 2;
+    this.txtMoneyLabel.setPosition(balX, txtY - 7).setFontSize(labelFS).setOrigin(0.5, 0.5);
+    this.txtMoney.setPosition(balX, txtY + 9).setFontSize(valFS).setOrigin(0.5, 0.5);
 
-    // ── LAST WIN (desktop only) ──
-    const winX = w * 0.62;
-    if (!isStacked && !isLandscapeMobile) {
-        this.txtLastWinLabel.setVisible(true).setPosition(winX, txtY - 8).setFontSize(labelFS).setOrigin(0, 0.5);
-        this.txtLastWin.setVisible(true).setPosition(winX, txtY + 8).setFontSize(valFS).setOrigin(0, 0.5);
-    } else {
-        this.txtLastWinLabel.setVisible(false);
-        this.txtLastWin.setVisible(false);
-    }
+    // ── BET ──
+    const betW = isStacked ? (w - 20) * 0.3 : Math.max(120, w * 0.15);
+    const betStartX = isStacked ? w / 2 - betW / 2 : sidePad + balW + 20;
+    drawPill(betStartX, betW);
+    const betX = betStartX + betW / 2;
+    this.txtBetLabel.setPosition(betX, txtY - 7).setFontSize(labelFS).setOrigin(0.5, 0.5);
+    this.txtBet.setPosition(betX, txtY + 9).setFontSize(valFS).setOrigin(0.5, 0.5);
+
+    // ── LAST WIN (Always visible now) ──
+    this.txtLastWinLabel.setVisible(true);
+    this.txtLastWin.setVisible(true);
+    const winW = isStacked ? (w - 20) * 0.33 : Math.max(140, w * 0.18);
+    const winStartX = w - sidePad - winW;
+    drawPill(winStartX, winW);
+    const winX = winStartX + winW / 2;
+    this.txtLastWinLabel.setPosition(winX, txtY - 7).setFontSize(labelFS).setOrigin(0.5, 0.5);
+    this.txtLastWin.setPosition(winX, txtY + 9).setFontSize(valFS).setOrigin(0.5, 0.5);
 
     // ==========================================
     // 4. SPIN BUTTON GROUP
@@ -1647,6 +1655,15 @@ export class Game extends Phaser.Scene {
   }
   updateMoneyDisplay() {
     this.txtMoney.setText(DisplayBalance({ amount: this.valueMoney, currency: this.currency }));
+    this.tweens.killTweensOf(this.txtMoney);
+    this.txtMoney.setScale(1.3);
+    this.tweens.add({
+      targets: this.txtMoney,
+      scaleX: 1,
+      scaleY: 1,
+      duration: 300,
+      ease: 'Back.easeOut'
+    });
   }
 
   updateBetDisplay() {
@@ -1671,13 +1688,28 @@ export class Game extends Phaser.Scene {
     if (target <= 0) {
       this._displayedWin = 0;
       this.txtLastWin.setText(DisplayBalance({ amount: 0, currency: this.currency }));
-      this.txtLastWin.setColor('#44ff88');
+      this.txtLastWin.setColor('#ffffff').setShadow(0, 0, '#000', 0, false, false);
       return;
     }
+
     const start = this._displayedWin;
     const delta = target - start;
-    const duration = Math.min(1200, Math.max(300, Math.abs(delta) * 15));
-    let elapsed = 0;
+    const duration = Math.min(1500, Math.max(500, Math.abs(delta) * 15));
+    
+    // Golden glow for wins
+    this.txtLastWin.setColor('#ffea00').setShadow(0, 2, '#ffaa00', 8, true, true);
+    
+    // Pulse while counting
+    this.tweens.add({
+      targets: [this.txtLastWin, this.txtLastWinLabel],
+      scaleX: 1.15,
+      scaleY: 1.15,
+      yoyo: true,
+      repeat: -1,
+      duration: 150,
+      ease: 'Sine.easeInOut'
+    });
+
     this._winCountTween = this.tweens.addCounter({
       from: 0,
       to: 100,
@@ -1687,14 +1719,23 @@ export class Game extends Phaser.Scene {
         const progress = (tween.getValue?.() ?? 0) / 100;
         this._displayedWin = start + delta * progress;
         this.txtLastWin.setText(DisplayBalance({ amount: this._displayedWin, currency: this.currency }));
-        // Color intensifies as value rises
-        if (this._displayedWin > 0) {
-          this.txtLastWin.setColor('#44ff88');
-        }
       },
       onComplete: () => {
         this._displayedWin = target;
         this.txtLastWin.setText(DisplayBalance({ amount: target, currency: this.currency }));
+        
+        // Stop pulsing and do a final celebratory pop
+        this.tweens.killTweensOf([this.txtLastWin, this.txtLastWinLabel]);
+        this.txtLastWin.setScale(1);
+        this.txtLastWinLabel.setScale(1);
+        this.tweens.add({ 
+          targets: this.txtLastWin, 
+          scaleX: 1.4, 
+          scaleY: 1.4, 
+          duration: 300, 
+          yoyo: true, 
+          ease: 'Back.easeOut' 
+        });
       },
     });
   }
