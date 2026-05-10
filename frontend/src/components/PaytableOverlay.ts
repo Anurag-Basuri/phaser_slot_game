@@ -38,10 +38,10 @@ export class PaytableOverlay {
   /** Draw a dark translucent card rectangle onto a page */
   private drawCard(page: Phaser.GameObjects.Container, x: number, y: number, cw: number, ch: number, accent = false) {
     const g = this.scene.add.graphics();
-    g.fillStyle(0x1a1530, 0.6);
-    g.fillRoundedRect(x, y, cw, ch, 12);
-    g.lineStyle(1.5, accent ? 0xff006a : 0x332244, accent ? 0.6 : 0.5);
-    g.strokeRoundedRect(x, y, cw, ch, 12);
+    g.fillStyle(0x0d0a18, 0.5);
+    g.fillRoundedRect(x, y, cw, ch, 10);
+    g.lineStyle(1, accent ? 0xff006a : 0xffffff, accent ? 0.4 : 0.07);
+    g.strokeRoundedRect(x, y, cw, ch, 10);
     page.add(g);
   }
 
@@ -56,7 +56,7 @@ export class PaytableOverlay {
   /** Add a section title with underline accent */
   private addSectionTitle(page: Phaser.GameObjects.Container, x: number, y: number, text: string): number {
     page.add(this.scene.add.text(x, y, text, {
-      fontSize: '22px', fontFamily: this.FONT_TITLE, color: '#ffffff'
+      fontSize: '20px', fontFamily: this.FONT_TITLE, color: '#ffffff'
     }).setOrigin(0.5));
     const g = this.scene.add.graphics();
     const lw = Math.min(text.length * 11, 300);
@@ -99,6 +99,7 @@ export class PaytableOverlay {
     bg.fillStyle(0x000000, 0.7);
     bg.fillRect(-w, -h, w * 3, h * 3);
     bg.setInteractive(new Phaser.Geom.Rectangle(-w, -h, w * 3, h * 3), Phaser.Geom.Rectangle.Contains);
+    bg.on('pointerdown', () => { (this.scene as any).audio?.playSound('button'); this.hide(); });
     this.container.add(bg);
 
     const pageWrapper = this.scene.add.container(0, 0);
@@ -106,15 +107,21 @@ export class PaytableOverlay {
 
     // Premium Panel Background for the Info Pages
     const panel = this.scene.add.graphics();
-    panel.fillStyle(0x130f24, 0.98); // Dark navy
-    panel.fillRoundedRect(0, 0, logicalW, logicalH, 24);
-    
-    // Top gradient accent for the panel header
-    panel.fillStyle(0xff006a, 0.15);
-    panel.fillRoundedRect(0, 0, logicalW, 70, 24);
-    
-    panel.lineStyle(4, 0xff006a, 1); // Hot pink border
-    panel.strokeRoundedRect(0, 0, logicalW, logicalH, 24);
+    // Drop shadow
+    panel.fillStyle(0x000000, 0.4);
+    panel.fillRoundedRect(6, 8, logicalW, logicalH, 20);
+    // Main panel
+    panel.fillGradientStyle(0x130f24, 0x130f24, 0x0a0812, 0x0a0812, 0.98);
+    panel.fillRoundedRect(0, 0, logicalW, logicalH, 20);
+    // Header gradient
+    panel.fillGradientStyle(0xff006a, 0xff3388, 0x130f24, 0x130f24, 0.2, 0.2, 0, 0);
+    panel.fillRoundedRect(0, 0, logicalW, 60, {tl:20,tr:20,bl:0,br:0} as any);
+    // Border
+    panel.lineStyle(2, 0xff006a, 0.6);
+    panel.strokeRoundedRect(0, 0, logicalW, logicalH, 20);
+    // Inner rim
+    panel.lineStyle(1, 0xffffff, 0.05);
+    panel.strokeRoundedRect(2, 2, logicalW - 4, logicalH - 4, 18);
     pageWrapper.add(panel);
 
     const scale = Math.min(w / logicalW, h / logicalH, 1);
@@ -126,18 +133,18 @@ export class PaytableOverlay {
 
     // Title
     const isSocial = getStakeEngine().isSocialMode();
-    pageWrapper.add(this.scene.add.text(logicalW / 2, 35, T('GAME RULES', isSocial), {
-      fontSize: '28px', fontFamily: this.FONT_TITLE, color: '#ffffff'
+    pageWrapper.add(this.scene.add.text(logicalW / 2, 30, T('GAME RULES', isSocial), {
+      fontSize: '24px', fontFamily: this.FONT_TITLE, color: '#ffffff'
     }).setOrigin(0.5));
 
     // Close button — circle with X
     const closeBtnGfx = this.scene.add.graphics();
-    closeBtnGfx.fillStyle(0xff006a, 0.2);
-    closeBtnGfx.fillCircle(logicalW - 35, 35, 18);
-    closeBtnGfx.lineStyle(2, 0xff006a, 0.8);
-    closeBtnGfx.strokeCircle(logicalW - 35, 35, 18);
+    closeBtnGfx.fillStyle(0xff006a, 0.12);
+    closeBtnGfx.fillCircle(logicalW - 35, 33, 16);
+    closeBtnGfx.lineStyle(1.5, 0xff006a, 0.5);
+    closeBtnGfx.strokeCircle(logicalW - 35, 33, 16);
     pageWrapper.add(closeBtnGfx);
-    const closeBtn = this.scene.add.text(logicalW - 35, 35, '✕', {
+    const closeBtn = this.scene.add.text(logicalW - 35, 33, '✕', {
       fontSize: '22px', color: '#ffffff', fontFamily: this.FONT_BODY, fontStyle: 'bold'
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     closeBtn.on('pointerdown', () => {
@@ -162,7 +169,7 @@ export class PaytableOverlay {
     const navCenter = logicalW / 2;
 
     const prevBtn = this.scene.add.text(navCenter - 120, navY, '< PREV', {
-      fontSize: '28px', color: '#ff006a', fontStyle: 'bold',
+      fontSize: '20px', color: '#ff006a', fontStyle: 'bold', fontFamily: this.FONT_BODY,
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     prevBtn.on('pointerdown', () => {
       (this.scene as any).audio.playSound('button');
@@ -173,7 +180,7 @@ export class PaytableOverlay {
     pageWrapper.add(prevBtn);
 
     const nextBtn = this.scene.add.text(navCenter + 120, navY, 'NEXT >', {
-      fontSize: '28px', color: '#ff006a', fontStyle: 'bold',
+      fontSize: '20px', color: '#ff006a', fontStyle: 'bold', fontFamily: this.FONT_BODY,
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     nextBtn.on('pointerdown', () => {
       (this.scene as any).audio.playSound('button');
@@ -463,7 +470,7 @@ export class PaytableOverlay {
       fontSize: '13px', color: this.COL_GOLD, fontStyle: 'bold', fontFamily: this.FONT_BODY
     }).setOrigin(0.5));
     const buyLines = [
-      '\u2022  Pay 100\u00d7 total bet to trigger FREE SPINS.',
+      '\u2022  Pay 1,000\u00d7 total bet to trigger FREE SPINS.',
       '\u2022  Pay 500\u00d7 total bet to trigger SUPER FREE SPINS.',
       '     In SUPER mode, all spots start with \u00d72 multipliers.',
       '\u2022  On buy, 3-7 Scatters hit randomly (10-30 spins).',
@@ -497,11 +504,11 @@ export class PaytableOverlay {
     yPos += 60;
     this.drawCard(page, pad, yPos - 5, w - pad * 2, 200);
     const rules = [
-      '\u2022  Only the highest win per combination is paid.',
-      '\u2022  Multiple cluster wins are summed to total win.',
-      '\u2022  All wins are multiplied by base bet.',
-      '\u2022  Free spins win awarded after round completes.',
-      '\u2022  SPACE or ENTER key starts/stops the spin.',
+      '\u2022  Wins are calculated per cluster (5+ connected symbols).',
+      '\u2022  Multiple cluster wins in a single tumble are summed.',
+      '\u2022  All wins are multiplied by the base bet amount.',
+      '\u2022  Multiplier spots in a cluster are summed, then applied.',
+      '\u2022  Free spins total win is awarded when the round ends.',
       '\u2022  Ante Bet: costs 25% more, doubles scatter chance.',
     ];
     rules.forEach((line, i) => {
@@ -537,9 +544,8 @@ export class PaytableOverlay {
     let yPos = 75;
 
     page.add(this.scene.add.text(w / 2, yPos, 'HOW TO PLAY', {
-      fontSize: '24px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      color: '#ffffff', fontStyle: 'bold',
-      stroke: '#000000', strokeThickness: 3,
+      fontSize: '22px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      color: '#ffffff',
     }).setOrigin(0.5));
     yPos += 45;
 
@@ -557,17 +563,14 @@ export class PaytableOverlay {
 
     yPos += 15;
     page.add(this.scene.add.text(w / 2, yPos, 'MAIN GAME INTERFACE', {
-      fontSize: '20px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      color: '#ffffff', fontStyle: 'bold',
+      fontSize: '18px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      color: '#ffffff',
     }).setOrigin(0.5));
     yPos += 40;
 
     const uiInfo = [
       '[SETTINGS] opens the SETTINGS menu that contains settings which',
       'affect the way the game is being played.',
-      '',
-      '[QUICK SPIN] cycles through spin speed settings: normal speed,',
-      'quick spin and turbo spin.',
       '',
       '[SOUND] toggles sound and music on and off.',
       '',
@@ -604,10 +607,9 @@ export class PaytableOverlay {
 
     page.add(this.scene.add.text(w / 2, yPos, 'SETTINGS MENU', {
       fontSize: '22px', fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      color: '#ffffff', fontStyle: 'bold',
-      stroke: '#000000', strokeThickness: 3,
+      color: '#ffffff',
     }).setOrigin(0.5));
-    yPos += 45;
+    yPos += 40;
 
     const settingsInfo = [
       'INTRO SCREEN – toggles the introductory screen on and off',
@@ -674,7 +676,7 @@ export class PaytableOverlay {
     page.add(sep);
     yPos += 15;
 
-    page.add(this.scene.add.text(w / 2, yPos, 'BUY FREE SPINS: Pay 100× total bet to trigger FREE SPINS.\nBUY SUPER FREE SPINS: Pay 500× total bet with ×2 starting multipliers.', {
+    page.add(this.scene.add.text(w / 2, yPos, 'BUY FREE SPINS: Pay 1,000× total bet to trigger FREE SPINS.\nBUY SUPER FREE SPINS: Pay 500× total bet with ×2 starting multipliers.', {
       fontSize: '13px', color: '#aaaaaa', align: 'center', lineSpacing: 6, fontFamily: '"Inter", "Arial", sans-serif'
     }).setOrigin(0.5, 0));
 

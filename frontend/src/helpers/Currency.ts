@@ -103,11 +103,10 @@ export function DisplayBalance(balance: Balance): string {
     decimals: 2,
     symbolAfter: true,
   };
-  const fixed = balance.amount.toFixed(meta.decimals);
-  // Add thousands separators (e.g. 100000.00 → 100,000.00)
-  const parts = fixed.split('.');
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  const formattedAmount = parts.join('.');
+  const formattedAmount = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: meta.decimals,
+    maximumFractionDigits: meta.decimals
+  }).format(balance.amount);
 
   if (meta.symbolAfter) {
     return `${formattedAmount} ${meta.symbol}`;
