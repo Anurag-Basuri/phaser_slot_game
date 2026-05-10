@@ -764,6 +764,11 @@ export class Game extends Phaser.Scene {
     const spinY = isStacked ? safeH - spinSize / 2 - 25 : safeH * 0.55;
     
     this.spinBtnHit.setPosition(spinX, spinY).setSize(spinSize, spinSize);
+    if (this.spinBtnImage) {
+        const intrinsicWidth = this.spinBtnImage.width || 200;
+        const targetScale = spinSize / intrinsicWidth;
+        this.spinBtnImage.setScale(targetScale);
+    }
     this.updateSpinButtonState();
 
     // Auto Play
