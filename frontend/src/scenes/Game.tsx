@@ -1588,6 +1588,13 @@ export class Game extends Phaser.Scene {
           onComplete: () => {
             endText.destroy();
             this._spinLock = false;
+            if (this.stakeEngine.isReplayMode()) {
+                this.replayBtnTxt.setText("PLAY AGAIN");
+                this.replayBtnHit.setVisible(true);
+                this.replayBtnTxt.setVisible(true);
+                return;
+            }
+
             this.stakeEngine.endRound().catch(e => console.warn('[Game] endRound error:', e));
             this.saveSpinRecord(totalWin, 'free_spins');
             this.updateSpinButtonState();
@@ -1651,6 +1658,13 @@ export class Game extends Phaser.Scene {
 
       const finishUp = () => {
         this._spinLock = false;
+        if (this.stakeEngine.isReplayMode()) {
+            this.replayBtnTxt.setText("PLAY AGAIN");
+            this.replayBtnHit.setVisible(true);
+            this.replayBtnTxt.setVisible(true);
+            return;
+        }
+
         this.stakeEngine.endRound().catch(e => console.warn('[Game] endRound error:', e));
         this.saveSpinRecord(this.lastWin, 'base');
         this.updateSpinButtonState();
@@ -1736,6 +1750,23 @@ export class Game extends Phaser.Scene {
   }
 
   updateBetDisplay() {
+    if (this.stakeEngine.isReplayMode()) {
+      const params = new URLSearchParams(window.location.search);
+      const amount = parseFloat(params.get('amount') || '1');
+      const mode = params.get('mode') || 'BASE';
+      const formattedBase = DisplayBalance({ amount, currency: this.currency });
+      
+      const rData = (this.stakeEngine as any).replayData;
+      if (rData && rData.costMultiplier > 1) {
+        const effective = amount * rData.costMultiplier;
+        const formattedEffective = DisplayBalance({ amount: effective, currency: this.currency });
+        this.txtBet.setText(`${mode} ${formattedBase}, ${formattedEffective} REAL COST`).setFontSize(14);
+      } else {
+        this.txtBet.setText(formattedBase).setFontSize(24);
+      }
+      return;
+    }
+
     const baseBet = BET_PRESETS[this.betPresetIndex];
     const effectiveBet = this.getEffectiveBet();
     const formattedEffective = DisplayBalance({ amount: effectiveBet, currency: this.currency });
@@ -2078,6 +2109,7 @@ export class Game extends Phaser.Scene {
     this.updateSpinButtonState();
     this.lastWin = 0;
     this.updateLastWinDisplay();
+    this.updateBetDisplay(); // Update bet text with REAL COST now that replayData is fetched
     
     this.audio.playReels();
     this.grid.prepareSpin();
