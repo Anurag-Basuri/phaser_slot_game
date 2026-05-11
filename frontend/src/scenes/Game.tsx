@@ -1089,7 +1089,7 @@ export class Game extends Phaser.Scene {
         if (logoScale >= MIN_LOGO_SCALE) {
           showLogo = true;
           logoX = rightColCenter;
-          logoY = logoRegionTop + availH / 2; // Center vertically in available region
+          logoY = logoRegionTop + availH * 0.25; // Positioned higher up (33% of region instead of 50%) to increase separation from spin controls
         }
       }
     }

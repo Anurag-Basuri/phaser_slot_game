@@ -95,7 +95,7 @@ export class SpinControls {
       spinY = safeH - spinSize / 2 - 8;
     } else {
       spinX = rightColCenter;
-      spinY = safeH * 0.55;
+      spinY = safeH * 0.72; // Moved lower down the screen
     }
 
     this._lastSpinX = spinX;
@@ -172,69 +172,78 @@ export class SpinControls {
     g.clear();
     const r = size / 2;
 
-    // ── Outer glow (subtle, layered) ──
-    g.fillStyle(0xff006a, 0.06);
-    g.fillCircle(x, y, r + 22);
-    g.fillStyle(0xff006a, 0.03);
-    g.fillCircle(x, y, r + 32);
+    // Drop shadow
+    g.fillStyle(0x000000, 0.5);
+    g.fillCircle(x, y + 6, r + 8);
 
-    // ── Drop shadow ──
-    g.fillStyle(0x000000, 0.45);
-    g.fillCircle(x, y + 3, r + 5);
-
-    // ── Gold outer bezel ──
-    g.fillGradientStyle(0xeebb44, 0xddaa33, 0xaa7722, 0x886611, 1);
+    // Thick multi-layered gold bezel
+    // Layer 1: Outer dark gold edge
+    g.fillGradientStyle(0x774400, 0x553300, 0x996611, 0x664400, 1);
+    g.fillCircle(x, y, r + 6);
+    // Layer 2: Main bright gold ring
+    g.fillGradientStyle(0xffdd55, 0xffbb22, 0xcc8800, 0xaa5500, 1);
     g.fillCircle(x, y, r + 4);
-
-    // ── Chrome mid ring ──
-    g.fillGradientStyle(0xdddddd, 0xeeeeee, 0xbbbbbb, 0x999999, 1);
-    g.fillCircle(x, y, r + 1);
-
-    // ── Gold inner bezel ──
-    g.fillGradientStyle(0xddaa33, 0xeebb44, 0x997722, 0x886611, 1);
+    // Layer 3: Bezel inner slope (darker)
+    g.fillGradientStyle(0xaa6600, 0x884400, 0xffcc33, 0xdd9900, 1);
     g.fillCircle(x, y, r - 2);
 
-    // ── Main face gradient (candy berry) ──
-    g.fillGradientStyle(0xff4488, 0xff2266, 0xcc0044, 0x990033, 1);
-    g.fillCircle(x, y, r - 5);
+    // Jewel Center (Spherical Candy Look)
+    const candyR = r - 6;
+    // Base dark ruby color
+    g.fillStyle(0x880022, 1);
+    g.fillCircle(x, y, candyR);
+    // Mid layer shifted up
+    g.fillGradientStyle(0xcc0044, 0xaa0033, 0xff2266, 0xdd1144, 1);
+    g.fillCircle(x, y - 2, candyR * 0.95);
+    // Bright center shifted further up-left
+    g.fillGradientStyle(0xff3377, 0xee1155, 0xff6699, 0xdd3366, 1);
+    g.fillCircle(x - 2, y - 4, candyR * 0.85);
 
-    // ── Glossy top hemisphere ──
+    // High-gloss crescent highlight at the top-left
     g.beginPath();
-    g.arc(x, y - 1, r - 5, Math.PI, 0, false);
+    g.arc(x - 4, y - 4, candyR * 0.7, Math.PI * 0.7, Math.PI * 1.8, false);
+    g.arc(x - 2, y - 2, candyR * 0.7, Math.PI * 1.8, Math.PI * 0.7, true);
     g.closePath();
-    g.fillStyle(0xffffff, 0.22);
+    g.fillStyle(0xffffff, 0.65);
     g.fillPath();
 
-    // ── Inner rim highlight ──
-    g.lineStyle(1, 0xffffff, 0.15);
-    g.strokeCircle(x, y, r - 5);
-
-    // ── Play triangle icon ──
-    const tri = r * 0.38;
-    const tx = x + tri * 0.12;
-
-    // Shadow
-    g.fillStyle(0x000000, 0.18);
+    // Secondary subtle highlight on bottom right
     g.beginPath();
-    g.moveTo(tx - tri * 0.48, y - tri * 0.58 + 2);
-    g.lineTo(tx + tri * 0.62, y + 2);
-    g.lineTo(tx - tri * 0.48, y + tri * 0.58 + 2);
+    g.arc(x + 4, y + 4, candyR * 0.7, 0, Math.PI * 0.5, false);
+    g.arc(x + 2, y + 2, candyR * 0.6, Math.PI * 0.5, 0, true);
+    g.closePath();
+    g.fillStyle(0xffffff, 0.25);
+    g.fillPath();
+
+    // Play triangle icon
+    const triSize = candyR * 0.45;
+    const triX = x + triSize * 0.15; // slight offset right for visual centering
+    
+    // Triangle shadow for depth
+    g.fillStyle(0x550022, 0.8);
+    g.beginPath();
+    g.moveTo(triX - triSize * 0.5, y - triSize * 0.6 + 4);
+    g.lineTo(triX + triSize * 0.65, y + 4);
+    g.lineTo(triX - triSize * 0.5, y + triSize * 0.6 + 4);
     g.closePath();
     g.fillPath();
 
-    // White triangle
+    // Triangle body
     g.fillStyle(0xffffff, 0.95);
     g.beginPath();
-    g.moveTo(tx - tri * 0.48, y - tri * 0.58);
-    g.lineTo(tx + tri * 0.62, y);
-    g.lineTo(tx - tri * 0.48, y + tri * 0.58);
+    g.moveTo(triX - triSize * 0.5, y - triSize * 0.6);
+    g.lineTo(triX + triSize * 0.65, y);
+    g.lineTo(triX - triSize * 0.5, y + triSize * 0.6);
     g.closePath();
     g.fillPath();
 
-    // ── Sparkle dots on gold ring ──
-    g.fillStyle(0xffffff, 0.55);
-    for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
-      g.fillCircle(x + Math.cos(a) * (r + 2), y + Math.sin(a) * (r + 2), 1.2);
+    // Sparkle dots on the gold ring
+    const sparkleR = 2;
+    g.fillStyle(0xffffff, 0.7);
+    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 3) {
+      const sx = x + Math.cos(angle) * (r + 1);
+      const sy = y + Math.sin(angle) * (r + 1);
+      g.fillCircle(sx, sy, sparkleR);
     }
   }
 
@@ -242,79 +251,107 @@ export class SpinControls {
   drawBetButton(gfx: Phaser.GameObjects.Graphics, tx: number, ty: number, size: number, isPlus: boolean) {
     gfx.clear();
     gfx.setPosition(tx, ty);
+    const cx = 0;
+    const cy = 0;
     const r = size / 2;
 
-    // Dark backdrop halo
-    gfx.fillStyle(0x0a0515, 0.45);
-    gfx.fillCircle(0, 0, r + 5);
-
-    // Accent glow ring
-    gfx.lineStyle(1.5, 0xff006a, 0.5);
-    gfx.strokeCircle(0, 0, r + 5);
-
     // Drop shadow
-    gfx.fillStyle(0x000000, 0.55);
-    gfx.fillCircle(0, 2, r);
+    gfx.fillStyle(0x000000, 0.6);
+    gfx.fillCircle(cx, cy + 4, r + 4);
 
-    // Gold bezel
-    gfx.fillGradientStyle(0xddaa33, 0xeebb44, 0xaa7722, 0x886611, 1);
-    gfx.fillCircle(0, 0, r);
+    // Thick multi-layered gold bezel
+    gfx.fillGradientStyle(0x774400, 0x553300, 0x996611, 0x664400, 1);
+    gfx.fillCircle(cx, cy, r + 4);
+    gfx.fillGradientStyle(0xffdd55, 0xffbb22, 0xcc8800, 0xaa5500, 1);
+    gfx.fillCircle(cx, cy, r + 2);
+    gfx.fillGradientStyle(0xaa6600, 0x884400, 0xffcc33, 0xdd9900, 1);
+    gfx.fillCircle(cx, cy, r - 2);
 
-    // Chrome inner ring
-    gfx.fillGradientStyle(0xcccccc, 0xdddddd, 0xaaaaaa, 0x888888, 1);
-    gfx.fillCircle(0, 0, r - 1.5);
+    // Jewel Center (Spherical Candy Look)
+    const candyR = r - 4;
+    gfx.fillStyle(0x880022, 1);
+    gfx.fillCircle(cx, cy, candyR);
+    gfx.fillGradientStyle(0xcc0044, 0xaa0033, 0xff2266, 0xdd1144, 1);
+    gfx.fillCircle(cx, cy - 1, candyR * 0.95);
+    gfx.fillGradientStyle(0xff3377, 0xee1155, 0xff6699, 0xdd3366, 1);
+    gfx.fillCircle(cx - 1, cy - 2, candyR * 0.85);
 
-    // Candy-pink face
-    gfx.fillGradientStyle(0xff2266, 0xff2266, 0xaa0033, 0xaa0033, 1);
-    gfx.fillCircle(0, 0, r - 3);
-
-    // Glossy top
+    // High-gloss crescent highlight at the top-left
     gfx.beginPath();
-    gfx.arc(0, 0, r - 3, Math.PI, 0, false);
+    gfx.arc(cx - 2, cy - 2, candyR * 0.7, Math.PI * 0.7, Math.PI * 1.8, false);
+    gfx.arc(cx - 1, cy - 1, candyR * 0.7, Math.PI * 1.8, Math.PI * 0.7, true);
     gfx.closePath();
-    gfx.fillStyle(0xffffff, 0.28);
+    gfx.fillStyle(0xffffff, 0.65);
     gfx.fillPath();
 
-    // Inner rim
-    gfx.lineStyle(0.8, 0xffffff, 0.25);
-    gfx.strokeCircle(0, 0, r - 3);
-
-    // Icon (+/-)
-    gfx.fillStyle(0xffffff, 1);
-    const arm = size * 0.20;
-    const thick = Math.max(2.5, size * 0.08);
+    // Icon (plus/minus) — thicker and drop shadowed
+    const arm = size * 0.22;
+    const thick = Math.max(3, size * 0.12);
+    
+    // Icon shadow (inset into the candy)
+    gfx.fillStyle(0x550022, 0.8);
     if (isPlus) {
-      gfx.fillRoundedRect(-thick / 2, -arm, thick, arm * 2, 1.5);
-      gfx.fillRoundedRect(-arm, -thick / 2, arm * 2, thick, 1.5);
+      gfx.fillRoundedRect(cx - thick / 2, cy - arm + 2, thick, arm * 2, 2);
+      gfx.fillRoundedRect(cx - arm, cy - thick / 2 + 2, arm * 2, thick, 2);
     } else {
-      gfx.fillRoundedRect(-arm, -thick / 2, arm * 2, thick, 1.5);
+      gfx.fillRoundedRect(cx - arm, cy - thick / 2 + 2, arm * 2, thick, 2);
+    }
+
+    // Icon Body (White)
+    gfx.fillStyle(0xffffff, 1);
+    if (isPlus) {
+      gfx.fillRoundedRect(cx - thick / 2, cy - arm, thick, arm * 2, 2);
+      gfx.fillRoundedRect(cx - arm, cy - thick / 2, arm * 2, thick, 2);
+    } else {
+      gfx.fillRoundedRect(cx - arm, cy - thick / 2, arm * 2, thick, 2);
     }
   }
 
   /** Draw the autoplay button at its last known position */
   drawAutoButton(spinX: number, spinY: number, spinSize: number, isActive: boolean, remaining: number) {
     if (!this.autoGfx.visible) return;
-    const autoY = spinY + spinSize / 2 + 14;
+    const autoY = spinY + spinSize / 2 + 16; // Dropped slightly for bezel
     this.autoGfx.clear();
     this.autoGfx.setPosition(spinX, autoY);
 
-    const bw = 64, bh = 22, rad = bh / 2;
+    const bw = 76, bh = 24, rad = bh / 2;
+    const x = -bw / 2;
+    const y = -bh / 2;
+
+    // Drop shadow
+    this.autoGfx.fillStyle(0x000000, 0.5);
+    this.autoGfx.fillRoundedRect(x, y + 3, bw, bh, rad);
+
     if (isActive) {
-      this.autoGfx.fillStyle(0x000000, 0.25);
-      this.autoGfx.fillRoundedRect(-bw / 2 + 1, -bh / 2 + 2, bw, bh, rad);
+      // Active: Gold bezel, pink face
+      this.autoGfx.fillGradientStyle(0xeebb44, 0xddaa33, 0xaa7722, 0x886611, 1);
+      this.autoGfx.fillRoundedRect(x - 2, y - 2, bw + 4, bh + 4, rad + 2);
+      
       this.autoGfx.fillGradientStyle(0xff006a, 0xff006a, 0xaa0044, 0xaa0044, 1);
-      this.autoGfx.fillRoundedRect(-bw / 2, -bh / 2, bw, bh, rad);
-      this.autoGfx.lineStyle(1, 0xffffff, 0.25);
-      this.autoGfx.strokeRoundedRect(-bw / 2, -bh / 2, bw, bh, rad);
-      this.autoTxt.setText(remaining > 0 ? `AUTO ${remaining}` : 'AUTO ∞').setColor('#ffffff');
+      this.autoGfx.fillRoundedRect(x, y, bw, bh, rad);
+
+      // Glass highlight
+      this.autoGfx.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.4, 0.4, 0.05, 0.05);
+      this.autoGfx.fillRoundedRect(x + 1, y + 1, bw - 2, bh * 0.45, { tl: rad - 1, tr: rad - 1, bl: 0, br: 0 } as any);
+
+      this.autoTxt.setText(remaining > 0 ? `AUTO ${remaining}` : 'AUTO ∞')
+                  .setColor('#ffffff')
+                  .setShadow(0, 1, '#550022', 0, true, true);
     } else {
-      this.autoGfx.fillStyle(0x000000, 0.25);
-      this.autoGfx.fillRoundedRect(-bw / 2 + 1, -bh / 2 + 2, bw, bh, rad);
-      this.autoGfx.fillGradientStyle(0x1a0a24, 0x1a0a24, 0x0d0518, 0x0d0518, 0.8);
-      this.autoGfx.fillRoundedRect(-bw / 2, -bh / 2, bw, bh, rad);
-      this.autoGfx.lineStyle(1, 0x442266, 0.5);
-      this.autoGfx.strokeRoundedRect(-bw / 2, -bh / 2, bw, bh, rad);
-      this.autoTxt.setText('AUTO').setColor('#8877aa');
+      // Inactive: Chrome/Dark metal bezel, dark violet face
+      this.autoGfx.fillGradientStyle(0x999999, 0x777777, 0x444444, 0x222222, 1);
+      this.autoGfx.fillRoundedRect(x - 2, y - 2, bw + 4, bh + 4, rad + 2);
+
+      this.autoGfx.fillGradientStyle(0x1a0a24, 0x1a0a24, 0x0d0518, 0x0d0518, 0.95);
+      this.autoGfx.fillRoundedRect(x, y, bw, bh, rad);
+
+      // Glass highlight
+      this.autoGfx.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.15, 0.15, 0, 0);
+      this.autoGfx.fillRoundedRect(x + 1, y + 1, bw - 2, bh * 0.45, { tl: rad - 1, tr: rad - 1, bl: 0, br: 0 } as any);
+
+      this.autoTxt.setText('AUTOPLAY')
+                  .setColor('#cccccc')
+                  .setShadow(0, 1, '#000000', 0, true, true);
     }
   }
 
