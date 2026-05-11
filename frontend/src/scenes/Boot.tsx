@@ -4,409 +4,429 @@ import { Theme } from '../constants/theme';
 /**
  * PREMIUM Boot Scene — Professional title screen with smooth animations
  * Features:
- *   - Premium typography using Google Fonts
- *   - Polished particle effects
- *   - Smooth entrance animations
- *   - Professional button design with hover effects
- *   - Cohesive color scheme
+ *   - Responsive layout engine that adapts to any screen size instantly
+ *   - Premium typography with 3D drop shadows and strokes
+ *   - Dynamic particle system (sugar dust)
+ *   - Staggered entrance animations
+ *   - Glassmorphic UI pills for readability
  */
 export class Boot extends Phaser.Scene {
+  private bgBase!: Phaser.GameObjects.Image;
+  private vignetteTop!: Phaser.GameObjects.Graphics;
+  private vignetteBottom!: Phaser.GameObjects.Graphics;
+  
+  private dustEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
+  
+  // Containers allow layout repositioning without breaking local tweens
+  private titleContainer!: Phaser.GameObjects.Container;
+  private titleShadow!: Phaser.GameObjects.Text;
+  private titleMain!: Phaser.GameObjects.Text;
+  
+  private num1000Container!: Phaser.GameObjects.Container;
+  private num1000Shadow!: Phaser.GameObjects.Text;
+  private num1000Main!: Phaser.GameObjects.Text;
+  
+  private subtitleContainer!: Phaser.GameObjects.Container;
+  private subtitlePill!: Phaser.GameObjects.Graphics;
+  private subtitleTxt!: Phaser.GameObjects.Text;
+  
+  private btnContainer!: Phaser.GameObjects.Container;
+  private btnGlow!: Phaser.GameObjects.Graphics;
+  private btnBg!: Phaser.GameObjects.Graphics;
+  private playText!: Phaser.GameObjects.Text;
+  private playBtnHit!: Phaser.GameObjects.Rectangle;
+  
+  private footerRTP!: Phaser.GameObjects.Text;
+  private footerCopy!: Phaser.GameObjects.Text;
+
+  private _resizeTimer?: NodeJS.Timeout;
+
   constructor() {
     super({ key: 'Boot' });
   }
 
   create() {
-    const w = this.scale.width;
-    const h = this.scale.height;
-
     // ═══════════════════════════════════════════════════
-    // BACKGROUND (Candy-land image)
+    // BACKGROUND & VIGNETTES
     // ═══════════════════════════════════════════════════
-    const bg = this.add.image(w / 2, h / 2, 'game_bg');
-    const bgScaleX = w / bg.width;
-    const bgScaleY = h / bg.height;
-    bg.setScale(Math.max(bgScaleX, bgScaleY));
-
-    // Subtle vignette overlay for text readability
-    const vignette = this.add.graphics();
-    vignette.fillStyle(0x000000, 0.35);
-    vignette.fillRect(0, 0, w, h);
-    vignette.fillStyle(0x000000, 0.0);
-    vignette.fillCircle(w / 2, h * 0.4, Math.min(w, h) * 0.48);
-
+    this.bgBase = this.add.image(0, 0, 'game_bg');
+    
+    // Dark gradients top and bottom guarantee text readability
+    this.vignetteTop = this.add.graphics().setDepth(1);
+    this.vignetteBottom = this.add.graphics().setDepth(1);
+    
     // ═══════════════════════════════════════════════════
-    // FLOATING CANDY PARTICLES (Background)
+    // DYNAMIC PARTICLES
     // ═══════════════════════════════════════════════════
-    for (let i = 0; i < 6; i++) {
-      const x = Phaser.Math.Between(Math.floor(w * 0.08), Math.floor(w * 0.92));
-      const y = Phaser.Math.Between(Math.floor(h * 0.12), Math.floor(h * 0.88));
-      const candy = this.add.sprite(x, y, `candy_${i % 7}`);
-      candy
-        .setScale(Phaser.Math.FloatBetween(0.14, 0.24))
-        .setAlpha(0.2)
-        .setDepth(-1);
-      this.tweens.add({
-        targets: candy,
-        y: y - Phaser.Math.Between(25, 60),
-        rotation: Phaser.Math.FloatBetween(-0.2, 0.2),
-        yoyo: true,
-        repeat: -1,
-        duration: Phaser.Math.Between(3000, 6000),
-        ease: 'Sine.easeInOut',
-        delay: Phaser.Math.Between(0, 2500),
-      });
-    }
-
+    this.createSugarDust();
+    
     // ═══════════════════════════════════════════════════
-    // CENTRAL GLOW (Premium radial effect)
+    // TITLE UI ELEMENTS
     // ═══════════════════════════════════════════════════
-    const centerGlow1 = this.add.graphics();
-    centerGlow1.fillStyle(0xff006a, 0.15);
-    centerGlow1.fillCircle(w / 2, h * 0.38, Math.min(280, w * 0.32));
-
-    const centerGlow2 = this.add.graphics();
-    centerGlow2.fillStyle(0xff006a, 0.06);
-    centerGlow2.fillCircle(w / 2, h * 0.38, Math.min(450, w * 0.52));
-
-    this.tweens.add({
-      targets: centerGlow1,
-      alpha: { from: 0.15, to: 0.25 },
-      yoyo: true,
-      repeat: -1,
-      duration: 2500,
-      ease: 'Sine.easeInOut',
-    });
-
-    // ═══════════════════════════════════════════════════
-    // PREMIUM TITLE — "SUGAR BLAST"
-    // ═══════════════════════════════════════════════════
+    this.titleContainer = this.add.container(0, 0).setDepth(10);
     const titleShadowSettings = { offsetX: 0, offsetY: 4, color: '#000000', blur: 6, stroke: true, fill: true };
-
-    const titleShadow = this.add
-      .text(w / 2, h * 0.27 + 10, 'SUGAR BLAST', {
-        fontSize: '84px',
+    this.titleShadow = this.add.text(0, 0, 'SUGAR BLAST', {
         fontFamily: '"Luckiest Guy", cursive, sans-serif',
         fontStyle: 'bold',
         color: '#ff006a',
         stroke: '#ff006a',
         strokeThickness: 24,
         shadow: titleShadowSettings
-      })
-      .setOrigin(0.5)
-      .setAlpha(0)
-      .setScale(0.4)
-      .setDepth(5);
+    }).setOrigin(0.5);
 
-    const titleMain = this.add
-      .text(w / 2, h * 0.27, 'SUGAR BLAST', {
-        fontSize: '84px',
+    this.titleMain = this.add.text(0, 0, 'SUGAR BLAST', {
         fontFamily: '"Luckiest Guy", cursive, sans-serif',
         fontStyle: 'bold',
         color: '#ffffff',
         stroke: '#ff006a',
         strokeThickness: 8,
-        shadow: {
-          offsetX: 0,
-          offsetY: 6,
-          color: '#000000',
-          blur: 0,
-          stroke: true,
-          fill: true,
-        },
-      })
-      .setOrigin(0.5)
-      .setAlpha(0)
-      .setScale(0.4)
-      .setDepth(6);
+        shadow: { offsetX: 0, offsetY: 6, color: '#000000', blur: 0, stroke: true, fill: true }
+    }).setOrigin(0.5);
+    this.titleContainer.add([this.titleShadow, this.titleMain]);
+    
+    // ═══════════════════════════════════════════════════
+    // "1000" GRAPHIC
+    // ═══════════════════════════════════════════════════
+    this.num1000Container = this.add.container(0, 0).setDepth(10);
+    this.num1000Shadow = this.add.text(0, 0, '1000', {
+        fontFamily: Theme.fonts.mono,
+        fontStyle: 'bold',
+        color: '#442200' // Darker backing
+    }).setOrigin(0.5);
+    
+    this.num1000Main = this.add.text(0, 0, '1000', {
+        fontFamily: Theme.fonts.mono,
+        fontStyle: 'bold',
+        color: Theme.colors.secondary,
+        stroke: '#ff8800',
+        shadow: { offsetX: 0, offsetY: 8, color: '#000000', blur: 0, stroke: true, fill: true }
+    }).setOrigin(0.5);
+    this.num1000Container.add([this.num1000Shadow, this.num1000Main]);
+    
+    // ═══════════════════════════════════════════════════
+    // SUBTITLE (Frosted Pill)
+    // ═══════════════════════════════════════════════════
+    this.subtitleContainer = this.add.container(0, 0).setDepth(10);
+    this.subtitlePill = this.add.graphics();
+    this.subtitleTxt = this.add.text(0, 0, '7×7 CLUSTER PAYS  •  CASCADING REELS  •  UP TO 25,000× WIN', {
+        fontFamily: Theme.fonts.sans,
+        fontStyle: 'bold',
+        color: '#ffffff',
+        align: 'center',
+    }).setOrigin(0.5);
+    this.subtitleContainer.add([this.subtitlePill, this.subtitleTxt]);
+    
+    // ═══════════════════════════════════════════════════
+    // PLAY BUTTON
+    // ═══════════════════════════════════════════════════
+    this.btnContainer = this.add.container(0, 0).setDepth(20);
+    this.btnGlow = this.add.graphics();
+    this.btnBg = this.add.graphics();
+    this.playText = this.add.text(0, 0, '▶  PLAY', {
+        fontFamily: Theme.fonts.display,
+        fontStyle: 'bold',
+        color: Theme.colors.textPrimary,
+        shadow: { offsetX: 0, offsetY: 3, color: '#000000', blur: 4, fill: true }
+    }).setOrigin(0.5);
+    this.playBtnHit = this.add.rectangle(0, 0, 100, 50, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    this.btnContainer.add([this.btnGlow, this.btnBg, this.playText, this.playBtnHit]);
+    
+    // ═══════════════════════════════════════════════════
+    // FOOTERS
+    // ═══════════════════════════════════════════════════
+    this.footerRTP = this.add.text(0, 0, 'RTP: 96.50%  |  High Volatility  |  Cluster Pays', {
+        fontFamily: Theme.fonts.sans,
+        color: '#cccccc', // Brighter for better contrast on dark bg
+        align: 'center'
+    }).setOrigin(0.5).setDepth(10);
+    
+    this.footerCopy = this.add.text(0, 0, '© 2026 Stake Engine  |  Version 1.0.0', {
+        fontFamily: Theme.fonts.sans,
+        color: '#999999',
+        align: 'center'
+    }).setOrigin(0.5).setDepth(10);
+    
+    // ═══════════════════════════════════════════════════
+    // INIT & EVENT BINDINGS
+    // ═══════════════════════════════════════════════════
+    this.triggerEntranceAnimations();
+    this.setupButtonInteractions();
+    
+    // Initial Layout & Resize Listener
+    this.layoutAll();
+    this.scale.on('resize', () => {
+      if (this._resizeTimer) clearTimeout(this._resizeTimer);
+      this._resizeTimer = setTimeout(() => {
+        this.layoutAll();
+      }, 50);
+    });
+  }
+  
+  /**
+   * Premium ambient background dust
+   */
+  private createSugarDust() {
+    const textureName = 'boot_sugar_dust';
+    if (!this.textures.exists(textureName)) {
+      const g = this.add.graphics();
+      g.fillStyle(0xffffff, 1);
+      g.fillCircle(8, 8, 4);
+      g.fillStyle(0xffffff, 0.4);
+      g.fillCircle(8, 8, 8);
+      g.generateTexture(textureName, 16, 16);
+      g.destroy();
+    }
+    
+    this.dustEmitter = this.add.particles(0, 0, textureName, {
+      x: { min: 0, max: this.scale.width },
+      y: { min: this.scale.height, max: this.scale.height + 100 },
+      quantity: 1,
+      frequency: 150,
+      lifespan: { min: 6000, max: 12000 },
+      scale: { start: 0, end: 0.8, ease: 'Sine.easeInOut' },
+      alpha: { start: 0, end: 0.5, ease: 'Sine.easeInOut' },
+      speedY: { min: -15, max: -45 },
+      speedX: { min: -15, max: 15 },
+      blendMode: 'ADD',
+      advance: 8000 // Pre-warm so particles are already filling the screen
+    }).setDepth(2);
+  }
 
-    // Animate entrance
+  /**
+   * Fully responsive layout engine. Adapts to any aspect ratio.
+   */
+  private layoutAll() {
+    const w = this.scale.width;
+    const h = this.scale.height;
+    const isPortrait = h > w;
+
+    // 1. Background Cover
+    this.bgBase.setPosition(w/2, h/2);
+    const scaleX = w / this.bgBase.width;
+    const scaleY = h / this.bgBase.height;
+    this.bgBase.setScale(Math.max(scaleX, scaleY));
+    
+    // 2. Particle Bounds
+    if (this.dustEmitter) {
+      this.dustEmitter.particleX = { min: 0, max: w } as any;
+      this.dustEmitter.particleY = { min: h, max: h + 100 } as any;
+    }
+    
+    // 3. Dark Vignettes (Top and bottom readability gradients)
+    this.vignetteTop.clear();
+    this.vignetteTop.fillGradientStyle(0x1a0525, 0x1a0525, 0x000000, 0x000000, 0.8, 0.8, 0, 0);
+    this.vignetteTop.fillRect(0, 0, w, h * 0.45); // Taller top gradient for logo
+    
+    this.vignetteBottom.clear();
+    this.vignetteBottom.fillGradientStyle(0x000000, 0x000000, 0x1a0525, 0x1a0525, 0, 0, 0.9, 0.9);
+    this.vignetteBottom.fillRect(0, h * 0.65, w, h * 0.35); // Taller bottom gradient for text/button
+    
+    // 4. Title "SUGAR BLAST"
+    const titleY = isPortrait ? h * 0.25 : h * 0.22;
+    // Base size on width, but cap it so it doesn't get huge on landscape
+    const actualTitleFS = Math.max(48, Math.min(110, w * 0.12, h * 0.18));
+    this.titleContainer.setPosition(w/2, titleY);
+    
+    this.titleMain.setFontSize(`${actualTitleFS}px`);
+    this.titleShadow.setFontSize(`${actualTitleFS}px`);
+    this.titleShadow.setPosition(0, actualTitleFS * 0.08);
+
+    // 5. Number "1000"
+    const num1000FS = Math.max(70, Math.min(160, w * 0.20, h * 0.25));
+    const num1000Y = titleY + actualTitleFS * 0.85;
+    
+    this.num1000Container.setPosition(w/2, num1000Y);
+    this.num1000Main.setFontSize(`${num1000FS}px`);
+    this.num1000Shadow.setFontSize(`${num1000FS}px`);
+    
+    // Dynamic thick stroke to emulate 3D
+    this.num1000Main.setStroke('#ff8800', Math.max(6, num1000FS * 0.07));
+    this.num1000Shadow.setPosition(0, num1000FS * 0.08);
+    
+    // 6. Subtitle (Frosted Pill)
+    const subFS = Math.max(10, Math.min(16, w * 0.025));
+    const subY = num1000Y + num1000FS * 0.65;
+    
+    this.subtitleContainer.setPosition(w/2, subY);
+    this.subtitleTxt.setFontSize(`${subFS}px`);
+    this.subtitleTxt.setWordWrapWidth(w * 0.85);
+    
+    // Draw Frosted Pill background precisely wrapping the text
+    const subWidth = Math.min(w * 0.9, this.subtitleTxt.width + 40);
+    const subHeight = this.subtitleTxt.height + 16;
+    this.subtitlePill.clear();
+    // Dark base
+    this.subtitlePill.fillStyle(0x000000, 0.65);
+    this.subtitlePill.fillRoundedRect(-subWidth/2, -subHeight/2, subWidth, subHeight, subHeight/2);
+    // Colored border glow
+    this.subtitlePill.lineStyle(2, 0xff006a, 0.7);
+    this.subtitlePill.strokeRoundedRect(-subWidth/2, -subHeight/2, subWidth, subHeight, subHeight/2);
+    
+    // 7. Play Button
+    const btnW = Math.max(220, Math.min(320, w * 0.45));
+    const btnH = Math.max(65, Math.min(85, h * 0.12));
+    const btnY = isPortrait ? h * 0.72 : h * 0.75;
+    const btnRadius = btnH * 0.4;
+    
+    this.btnContainer.setPosition(w/2, btnY);
+    this.playBtnHit.setPosition(0, 0).setSize(btnW, btnH);
+    
+    // Outer Additive Glow
+    this.btnGlow.clear();
+    this.btnGlow.fillStyle(0xff006a, 0.6);
+    this.btnGlow.fillRoundedRect(-btnW/2 - 15, -btnH/2 - 15, btnW + 30, btnH + 30, btnRadius + 10);
+    this.btnGlow.setBlendMode(Phaser.BlendModes.ADD);
+    
+    this.btnBg.clear();
+    // Dark Drop Shadow
+    this.btnBg.fillStyle(0x000000, 0.6);
+    this.btnBg.fillRoundedRect(-btnW/2, -btnH/2 + 6, btnW, btnH, btnRadius);
+    // Base Magenta
+    this.btnBg.fillStyle(0xff006a, 1);
+    this.btnBg.fillRoundedRect(-btnW/2, -btnH/2, btnW, btnH, btnRadius);
+    // Glossy Top Highlight
+    this.btnBg.fillStyle(0xff4d94, 0.9);
+    this.btnBg.fillRoundedRect(-btnW/2, -btnH/2, btnW, btnH * 0.45, btnRadius);
+    // Inner glass rim
+    this.btnBg.fillStyle(0xffffff, 0.35);
+    this.btnBg.fillRoundedRect(-btnW/2 + 4, -btnH/2 + 3, btnW - 8, btnH * 0.25, btnRadius - 2);
+    // Bright White Stroke Border
+    this.btnBg.lineStyle(2, 0xffffff, 0.9);
+    this.btnBg.strokeRoundedRect(-btnW/2, -btnH/2, btnW, btnH, btnRadius);
+    
+    const playFS = Math.max(24, Math.min(38, btnH * 0.45));
+    this.playText.setFontSize(`${playFS}px`);
+    this.playText.setPosition(0, -2);
+    
+    // 8. Footers
+    const footerFS = Math.max(10, Math.min(14, w * 0.022));
+    this.footerRTP.setFontSize(`${footerFS}px`);
+    this.footerCopy.setFontSize(`${Math.max(9, footerFS - 2)}px`);
+    
+    const baseBotSpace = Math.max(20, h * 0.04);
+    this.footerCopy.setPosition(w/2, h - baseBotSpace);
+    this.footerRTP.setPosition(w/2, h - baseBotSpace - footerFS * 1.8);
+  }
+  
+  /**
+   * Premium staggered entrance animations
+   */
+  private triggerEntranceAnimations() {
+    // Hide initially
+    this.titleContainer.setAlpha(0).setScale(0.6);
+    this.num1000Container.setAlpha(0).setScale(0.4);
+    this.subtitleContainer.setAlpha(0);
+    this.btnContainer.setAlpha(0).setScale(0.8);
+    
+    // Staggered pop-in
     this.tweens.add({
-      targets: [titleShadow, titleMain],
+      targets: this.titleContainer,
       alpha: 1,
       scale: 1,
-      duration: 900,
+      duration: 800,
       ease: Theme.animation.easeBounce,
-      delay: 0,
+      delay: 100
     });
-
-    // Continuous subtle float
+    
+    // Continuous subtle float for title text inside container
     this.tweens.add({
-      targets: [titleShadow, titleMain],
+      targets: [this.titleShadow, this.titleMain],
       y: `-=12`,
       yoyo: true,
       repeat: -1,
       duration: 3000,
       ease: 'Sine.easeInOut',
-      delay: 900,
+      delay: 900
     });
-
-    // ═══════════════════════════════════════════════════
-    // PREMIUM TITLE — "1000"
-    // ═══════════════════════════════════════════════════
-    const numFontSize = Math.min(130, w * 0.165);
-
-    const num1000Shadow = this.add
-      .text(w / 2, h * 0.41 + 12, '1000', {
-        fontSize: `${numFontSize}px`,
-        fontFamily: Theme.fonts.mono,
-        fontStyle: 'bold',
-        color: '#664400',
-      })
-      .setOrigin(0.5)
-      .setAlpha(0)
-      .setScale(0.25)
-      .setDepth(5);
-
-    const num1000Main = this.add
-      .text(w / 2, h * 0.41, '1000', {
-        fontSize: `${numFontSize}px`,
-        fontFamily: Theme.fonts.mono,
-        fontStyle: 'bold',
-        color: Theme.colors.secondary,
-        stroke: '#ff8800',
-        strokeThickness: Math.max(6, Math.floor(numFontSize * 0.06)),
-        shadow: {
-          offsetX: 0,
-          offsetY: 7,
-          color: '#000000',
-          blur: 0,
-          stroke: true,
-          fill: true,
-        },
-      })
-      .setOrigin(0.5)
-      .setAlpha(0)
-      .setScale(0.25)
-      .setDepth(6);
-
-    // Animate entrance with bounce
+    
     this.tweens.add({
-      targets: [num1000Shadow, num1000Main],
+      targets: this.num1000Container,
       alpha: 1,
       scale: 1,
       duration: 800,
       ease: Theme.animation.easeBounce,
-      delay: 200,
+      delay: 300
     });
-
-    // Continuous pulse
+    
+    // Continuous heartbeat for 1000 text inside container
     this.tweens.add({
-      targets: [num1000Shadow, num1000Main],
-      scale: { from: 1, to: 1.06 },
+      targets: [this.num1000Shadow, this.num1000Main],
+      scale: 1.05,
       yoyo: true,
       repeat: -1,
       duration: 2000,
       ease: 'Sine.easeInOut',
-      delay: 1100,
+      delay: 1100
     });
-
-    // ═══════════════════════════════════════════════════
-    // PREMIUM SUBTITLE
-    // ═══════════════════════════════════════════════════
-    const subFontSize = Math.min(18, w * 0.028);
-    const subtitle = this.add
-      .text(
-        w / 2,
-        h * 0.54,
-        '7×7 CLUSTER PAYS  •  CASCADING REELS  •  UP TO 25,000× WIN',
-        {
-          fontSize: `${subFontSize}px`,
-          fontFamily: Theme.fonts.sans,
-          fontStyle: 'bold',
-          color: Theme.colors.textSecondary,
-          stroke: Theme.colors.bgDarkest,
-          strokeThickness: 3,
-          align: 'center',
-          wordWrap: { width: w * 0.8 },
-        },
-      )
-      .setOrigin(0.5)
-      .setAlpha(0)
-      .setDepth(6);
-
+    
     this.tweens.add({
-      targets: subtitle,
+      targets: this.subtitleContainer,
       alpha: 1,
+      y: `+=10`, // Slight slide down
       duration: 600,
-      delay: 800,
+      ease: 'Cubic.easeOut',
+      delay: 600
     });
-
-    // ═══════════════════════════════════════════════════
-    // PREMIUM PLAY BUTTON
-    // ═══════════════════════════════════════════════════
-    const btnW = Math.min(320, w * 0.48);
-    const btnH = Math.min(80, h * 0.1);
-    const btnY = h * 0.66;
-    const btnX = w / 2;
-    const btnRadius = Math.min(40, btnH * 0.55);
-
-    const btnContainer = this.add
-      .container(btnX, btnY)
-      .setAlpha(0)
-      .setDepth(20);
-
-    // Outer glow effect
-    const btnGlow = this.add.graphics().setDepth(0);
-    btnGlow.fillStyle(0xff006a, 0.5);
-    btnGlow.fillRoundedRect(
-      -btnW / 2 - 18,
-      -btnH / 2 - 18,
-      btnW + 36,
-      btnH + 36,
-      btnRadius + 12,
-    );
-    btnContainer.add(btnGlow);
-
-    // Button background with layers
-    const btnBg = this.add.graphics().setDepth(1);
-    // Drop shadow
-    btnBg.fillStyle(0x000000, 0.5);
-    btnBg.fillRoundedRect(-btnW / 2, -btnH / 2 + 8, btnW, btnH, btnRadius);
-    // Base color
-    btnBg.fillStyle(0xff006a, 1);
-    btnBg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, btnRadius);
-    // Top highlight (glossy effect)
-    btnBg.fillStyle(0xff4d94, 0.9);
-    btnBg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH * 0.45, btnRadius);
-    // Rim highlight
-    btnBg.fillStyle(0xffffff, 0.3);
-    btnBg.fillRoundedRect(
-      -btnW / 2 + 6,
-      -btnH / 2 + 4,
-      btnW - 12,
-      btnH * 0.22,
-      btnRadius - 3,
-    );
-    // Border
-    btnBg.lineStyle(2.5, 0xff4d94, 0.95);
-    btnBg.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, btnRadius);
-    btnContainer.add(btnBg);
-
-    // Button text
-    const playFontSize = Math.min(36, btnH * 0.5);
-    const playText = this.add
-      .text(0, -2, '▶  PLAY', {
-        fontSize: `${playFontSize}px`,
-        fontFamily: Theme.fonts.display,
-        fontStyle: 'bold',
-        color: Theme.colors.textPrimary,
-        shadow: {
-          offsetX: 0,
-          offsetY: 3,
-          color: '#000000',
-          blur: 4,
-          fill: true,
-        },
-      })
-      .setOrigin(0.5)
-      .setDepth(2);
-    btnContainer.add(playText);
-
-    // Hit area
-    const playBtn = this.add
-      .rectangle(0, 0, btnW, btnH, 0xffffff, 0)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(3);
-    btnContainer.add(playBtn);
-
-    // Animate button entrance
+    
     this.tweens.add({
-      targets: btnContainer,
+      targets: this.btnContainer,
       alpha: 1,
-      y: btnY - 12,
+      scale: 1,
       duration: 700,
-      delay: 1000,
       ease: Theme.animation.easeBounce,
+      delay: 800
     });
-
-    // Pulsing glow animation
+    
+    // Glowing heartbeat for play button
     this.tweens.add({
-      targets: btnGlow,
-      alpha: { from: 0.5, to: 0.85 },
-      scale: { from: 1, to: 1.08 },
+      targets: this.btnGlow,
+      alpha: { from: 0.5, to: 1 },
+      scale: { from: 1, to: 1.15 },
       yoyo: true,
       repeat: -1,
-      duration: 1400,
-      ease: 'Sine.easeInOut',
+      duration: 1200,
+      ease: 'Sine.easeInOut'
     });
-
-    // Button hover effects
-    playBtn.on('pointerover', () => {
+  }
+  
+  private setupButtonInteractions() {
+    this.playBtnHit.on('pointerover', () => {
       this.tweens.add({
-        targets: btnContainer,
-        scale: 1.08,
-        duration: 200,
-        ease: Theme.animation.easeOut,
+        targets: this.btnBg,
+        scale: 1.06,
+        duration: 150,
+        ease: 'Quad.easeOut'
       });
       this.tweens.add({
-        targets: [playText],
+        targets: this.playText,
         scale: 1.1,
-        duration: 200,
-        ease: Theme.animation.easeOut,
+        duration: 150,
+        ease: 'Quad.easeOut'
       });
     });
-
-    playBtn.on('pointerout', () => {
+    
+    this.playBtnHit.on('pointerout', () => {
       this.tweens.add({
-        targets: btnContainer,
+        targets: [this.btnBg, this.playText],
         scale: 1,
-        duration: 200,
-        ease: Theme.animation.easeOut,
-      });
-      this.tweens.add({
-        targets: [playText],
-        scale: 1,
-        duration: 200,
-        ease: Theme.animation.easeOut,
+        duration: 150,
+        ease: 'Quad.easeOut'
       });
     });
-
-    playBtn.on('pointerdown', () => {
+    
+    this.playBtnHit.on('pointerdown', () => {
       this.tweens.add({
-        targets: btnContainer,
-        scale: 0.96,
-        duration: 100,
-        yoyo: true,
+        targets: [this.btnBg, this.playText],
+        scale: 0.95,
+        duration: 80,
+        yoyo: true
       });
-
-      // Smooth fade-out transition
-      this.cameras.main.fade(500, 0, 0, 0);
+      
+      // Smooth fade transition to the game
+      this.cameras.main.fade(400, 0, 0, 0);
       this.cameras.main.once('camerafadeoutcomplete', () => {
         this.scene.start('Game');
       });
     });
-
-    // ═══════════════════════════════════════════════════
-    // FOOTER INFORMATION
-    // ═══════════════════════════════════════════════════
-    const footerFontSize = Math.min(12, w * 0.016);
-    this.add
-      .text(
-        w / 2,
-        h * 0.91,
-        'RTP: 95.30%  |  High Volatility  |  Cluster Pays',
-        {
-          fontSize: `${footerFontSize}px`,
-          fontFamily: Theme.fonts.sans,
-          color: Theme.colors.textMuted,
-          stroke: Theme.colors.bgDarkest,
-          strokeThickness: 2,
-          align: 'center',
-        },
-      )
-      .setOrigin(0.5)
-      .setDepth(5);
-
-    this.add
-      .text(w / 2, h * 0.96, '© 2026 Stake Engine  |  Version 1.0.0', {
-        fontSize: `${Math.max(10, footerFontSize - 2)}px`,
-        fontFamily: Theme.fonts.sans,
-        color: Theme.colors.textMuted,
-        stroke: Theme.colors.bgDarkest,
-        strokeThickness: 1,
-        align: 'center',
-      })
-      .setOrigin(0.5)
-      .setDepth(5);
   }
 }
