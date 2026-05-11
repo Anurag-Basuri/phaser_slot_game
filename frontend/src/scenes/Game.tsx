@@ -254,48 +254,70 @@ export class Game extends Phaser.Scene {
     this.logoContainer = this.add.container(0, 0);
     this.logoWrapper.add(this.logoContainer);
 
+    // Candy banner/ribbon behind the logo text
+    const logoBanner = this.add.graphics();
+    // Main ribbon body (candy pink)
+    logoBanner.fillGradientStyle(0xff2277, 0xff0066, 0xcc0055, 0xaa0044, 1);
+    logoBanner.fillRoundedRect(-190, -52, 380, 58, 12);
+    // Ribbon fold left
+    logoBanner.fillStyle(0x880033, 1);
+    logoBanner.fillTriangle(-190, -52, -210, -42, -190, -32);
+    logoBanner.fillTriangle(-190, 6, -210, -4, -190, -14);
+    // Ribbon fold right
+    logoBanner.fillTriangle(190, -52, 210, -42, 190, -32);
+    logoBanner.fillTriangle(190, 6, 210, -4, 190, -14);
+    // Ribbon gloss highlight
+    logoBanner.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.3, 0.3, 0, 0);
+    logoBanner.fillRoundedRect(-188, -50, 376, 22, { tl: 10, tr: 10, bl: 0, br: 0 } as any);
+    // Gold trim on ribbon edges
+    logoBanner.lineStyle(2, 0xffcc44, 0.8);
+    logoBanner.strokeRoundedRect(-190, -52, 380, 58, 12);
+
     // Apply premium styling with gradient and thick border with shadow
     this.logoText1 = this.add
-      .text(0, -20, 'SUGAR BLAST', {
+      .text(0, -22, 'SUGAR BLAST', {
         fontFamily: '"Lilita One", "Luckiest Guy", cursive, sans-serif',
-        fontSize: '48px',
+        fontSize: '46px',
         fontStyle: 'normal',
         color: '#ffffff',
         stroke: '#ffffff',
-        strokeThickness: 24,
+        strokeThickness: 22,
       })
       .setOrigin(0.5, 0.5)
-      .setShadow(0, 14, '#880033', 0, true, false);
+      .setShadow(0, 12, '#660022', 0, true, false);
 
     this.logoText1.updateText();
     const gradient1 = this.logoText1.context.createLinearGradient(0, 0, 0, this.logoText1.height);
     gradient1.addColorStop(0, '#ffffff');
-    gradient1.addColorStop(0.3, '#ff66aa');
-    gradient1.addColorStop(0.7, '#ff0055');
-    gradient1.addColorStop(1, '#990033');
+    gradient1.addColorStop(0.25, '#ffaacc');
+    gradient1.addColorStop(0.55, '#ff3388');
+    gradient1.addColorStop(0.8, '#dd0055');
+    gradient1.addColorStop(1, '#880033');
     this.logoText1.setFill(gradient1);
 
+    // "1000" - golden candy number with a candy-drip shadow
     this.logoText2 = this.add
-      .text(0, 35, '1000', {
+      .text(0, 36, '1000', {
         fontFamily: '"Slackey", "Chango", "Comic Sans MS", "Impact", sans-serif',
-        fontSize: '64px',
+        fontSize: '62px',
         fontStyle: 'normal',
         color: '#ffffff',
         stroke: '#ffffff',
-        strokeThickness: 24,
+        strokeThickness: 22,
       })
       .setOrigin(0.5, 0.5)
-      .setShadow(0, 14, '#883300', 0, true, false);
+      .setShadow(0, 12, '#774400', 0, true, false);
 
     this.logoText2.updateText();
     const gradient2 = this.logoText2.context.createLinearGradient(0, 0, 0, this.logoText2.height);
     gradient2.addColorStop(0, '#ffffff');
-    gradient2.addColorStop(0.3, '#ffeeaa');
-    gradient2.addColorStop(0.7, '#ffcc00');
-    gradient2.addColorStop(1, '#cc6600');
+    gradient2.addColorStop(0.2, '#ffee88');
+    gradient2.addColorStop(0.5, '#ffcc00');
+    gradient2.addColorStop(0.8, '#ee8800');
+    gradient2.addColorStop(1, '#aa5500');
     this.logoText2.setFill(gradient2);
 
-    this.logoContainer.add([this.logoText1, this.logoText2]);
+    this.logoContainer.add([logoBanner, this.logoText1, this.logoText2]);
 
     // Buy buttons setup
     const btnStyle = {
@@ -1776,13 +1798,15 @@ export class Game extends Phaser.Scene {
   }
 
   private wireGridCallbacks() {
-    this.grid.onWinCallback = (winAmount) => {
+    this.grid.onWinCallback = (winAmount, symbolId) => {
       const actualWin = winAmount;
       if (!this.fsActive) {
         this.valueMoney += actualWin;
         this.updateMoneyDisplay();
         this.lastWin += actualWin;
-        this.updateLastWinDisplay();
+        
+        const symKey = symbolId !== undefined ? `candy_${symbolId}` : undefined;
+        this.updateLastWinDisplay(symKey);
       }
       // During free spins, don't track lastWin per cascade —
       // the Grid's totalFreeSpinsWin is authoritative
@@ -2036,8 +2060,11 @@ export class Game extends Phaser.Scene {
     );
   }
 
-  updateLastWinDisplay() {
+  updateLastWinDisplay(symbolKey?: string) {
     const target = this.lastWin;
+    
+    // Update symbol icon in HUD
+    this.bottomBarHUD.setWinSymbol(symbolKey);
     if (this._winCountTween) {
       this._winCountTween.stop();
     }
@@ -2056,6 +2083,7 @@ export class Game extends Phaser.Scene {
 
     if (target <= 0) {
       this._displayedWin = 0;
+      this.bottomBarHUD.winSymbolIcon.setVisible(false);
       this.bottomBarHUD.txtLastWin.setText(
         DisplayBalance({ amount: 0, currency: this.currency }),
       );
@@ -2129,6 +2157,10 @@ export class Game extends Phaser.Scene {
             currency: this.currency,
           }),
         );
+        // Keep icon position synced as text width changes
+        if (this.bottomBarHUD.winSymbolIcon.visible) {
+          this.bottomBarHUD.winSymbolIcon.x = this.bottomBarHUD.txtLastWin.x - this.bottomBarHUD.txtLastWin.width - 24;
+        }
       },
       onComplete: () => {
         this._displayedWin = target;

@@ -44,8 +44,11 @@ export class Grid {
   // Idle shimmer
   private _shimmerTimer?: Phaser.Time.TimerEvent;
 
+  // Phase 6: Cascade depth counter
+  private cascadeCounterTxt!: Phaser.GameObjects.Text;
+
   // Callbacks
-  public onWinCallback: ((winAmount: number) => void) | null = null;
+  public onWinCallback: ((winAmount: number, symbolId?: number) => void) | null = null;
   public onFreeSpinsStart: ((count: number) => void) | null = null;
   public onFreeSpinsEnd: ((totalWin: number) => void) | null = null;
   public onCompleteCallback: (() => void) | null = null;
@@ -105,6 +108,17 @@ export class Grid {
     );
     this.cellBackgrounds = this.scene.add.graphics().setDepth(2);
     this.drawCellBackgrounds();
+
+    // Phase 6: Cascade depth counter text
+    this.cascadeCounterTxt = this.scene.add.text(0, 0, '', {
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontSize: '22px',
+      color: '#ffffff',
+      stroke: '#cc0055',
+      strokeThickness: 5,
+      shadow: { offsetX: 0, offsetY: 3, color: '#000000', blur: 6, stroke: true, fill: true }
+    }).setOrigin(0.5).setDepth(25).setVisible(false);
+
     // NOTE: fillEmpty() is NOT called here — it must be called after
     // layoutAll() sets the correct offsetX/offsetY/cellSize so that
     // sprites spawn at the right screen positions.
@@ -112,9 +126,9 @@ export class Grid {
   }
 
   /**
-   * Draw premium Sugar Rush grid interior.
-   * Rich candy gradient, inset column separators, warm checkerboard,
-   * deep atmospheric vignette, and soft radial center glow.
+   * Draw premium Sugar Rush 1000 grid interior.
+   * Warm candy pink frosted glass, subtle cell delineation,
+   * inner frame bevel, multiplier cell glow tints, and center glow.
    */
   public drawCellBackgrounds() {
     this.cellBackgrounds.clear();
@@ -135,13 +149,14 @@ export class Grid {
       );
     }
 
-    // 1. Rich multi-stop vertical gradient (lavender → lilac → rose → peach)
+    // ═══ Phase 1: Warm Candy Pink Gradient (Sugar Rush 1000 palette) ═══
     const stops = [
-      { t: 0.0,  r: 200, g: 215, b: 255 }, // Soft lavender
-      { t: 0.25, r: 225, g: 200, b: 250 }, // Lilac
-      { t: 0.50, r: 250, g: 195, b: 235 }, // Warm rose
-      { t: 0.75, r: 255, g: 210, b: 225 }, // Blush pink
-      { t: 1.0,  r: 255, g: 225, b: 215 }, // Soft peach
+      { t: 0.0,  r: 255, g: 210, b: 230 }, // Soft candy pink
+      { t: 0.20, r: 250, g: 200, b: 225 }, // Rose blush
+      { t: 0.40, r: 245, g: 195, b: 220 }, // Warm rose
+      { t: 0.60, r: 248, g: 200, b: 228 }, // Mid candy
+      { t: 0.80, r: 252, g: 208, b: 235 }, // Light rose
+      { t: 1.0,  r: 255, g: 215, b: 238 }, // Candy cream
     ];
     const gradSteps = 56;
     const stripH = totalSize / gradSteps;
@@ -161,13 +176,13 @@ export class Grid {
       this.cellBackgrounds.fillRect(gx, gy + i * stripH, totalSize, Math.ceil(stripH) + 1);
     }
 
-    // 2. Alternating cell tint (warm checkerboard for depth and texture)
+    // ═══ Checkerboard cell tint (warm candy alternation) ═══
     for (let r = 0; r < size; r++) {
       for (let c = 0; c < size; c++) {
         if ((r + c) % 2 === 0) {
-          this.cellBackgrounds.fillStyle(0xffffff, 0.07);
+          this.cellBackgrounds.fillStyle(0xffffff, 0.10);
         } else {
-          this.cellBackgrounds.fillStyle(0x000000, 0.04);
+          this.cellBackgrounds.fillStyle(0xcc4488, 0.04);
         }
         this.cellBackgrounds.fillRect(
           gx + c * this.cellSize, gy + r * this.cellSize,
@@ -176,53 +191,85 @@ export class Grid {
       }
     }
 
-    // 3. Column separators — thick inset lines with highlight/shadow pair
+    // ═══ Phase 3: Multiplier Cell Glow Tints ═══
+    // Draw colored cell backgrounds for cells with active multipliers
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const mult = this.multipliers[r][c];
+        if (mult >= 1) {
+          const tier = this.getMultTier(Math.max(2, mult));
+          const tierColor = parseInt(tier.fill.replace('#', ''), 16);
+          // Soft colored tint on the entire cell
+          this.cellBackgrounds.fillStyle(tierColor, mult >= 2 ? 0.12 : 0.06);
+          this.cellBackgrounds.fillRect(
+            gx + c * this.cellSize, gy + r * this.cellSize,
+            this.cellSize, this.cellSize
+          );
+          // Radial center glow within the cell
+          if (mult >= 2) {
+            this.cellBackgrounds.fillStyle(tierColor, 0.08);
+            this.cellBackgrounds.fillCircle(
+              this.getX(c), this.getY(r),
+              this.cellSize * 0.35
+            );
+          }
+        }
+      }
+    }
+
+    // ═══ Subtle candy-tinted grid separators (not harsh white) ═══
+    // Column separators — soft pink-tinted inset groove
     for (let c = 1; c < size; c++) {
       const x = gx + c * this.cellSize;
       // Shadow (left side of groove)
-      this.cellBackgrounds.lineStyle(1.5, 0x6644aa, 0.18);
+      this.cellBackgrounds.lineStyle(1, 0x994477, 0.12);
       this.cellBackgrounds.lineBetween(x - 1, gy, x - 1, gy + totalSize);
-      // Main bright separator
-      this.cellBackgrounds.lineStyle(2, 0xffffff, 0.50);
+      // Main separator — soft pink-white
+      this.cellBackgrounds.lineStyle(1.5, 0xffccdd, 0.35);
       this.cellBackgrounds.lineBetween(x, gy, x, gy + totalSize);
-      // Highlight (right side of groove)
-      this.cellBackgrounds.lineStyle(1, 0xeeddff, 0.12);
+      // Highlight (right side)
+      this.cellBackgrounds.lineStyle(1, 0xffeeff, 0.08);
       this.cellBackgrounds.lineBetween(x + 1, gy, x + 1, gy + totalSize);
     }
-    // Row separators — delicate dotted feel
+    // Row separators — delicate candy lines
     for (let r = 1; r < size; r++) {
       const y = gy + r * this.cellSize;
-      this.cellBackgrounds.lineStyle(1, 0x7766bb, 0.10);
+      this.cellBackgrounds.lineStyle(1, 0x994477, 0.08);
       this.cellBackgrounds.lineBetween(gx, y + 1, gx + totalSize, y + 1);
-      this.cellBackgrounds.lineStyle(1.5, 0xffffff, 0.22);
+      this.cellBackgrounds.lineStyle(1.5, 0xffccdd, 0.18);
       this.cellBackgrounds.lineBetween(gx, y, gx + totalSize, y);
     }
 
-    // 4. Deep atmospheric vignette (recessed candy machine look)
-    const vigLayers = 14;
-    for (let i = 0; i < vigLayers; i++) {
-      const a = 0.09 - i * 0.006;
+    // ═══ Phase 2: Inner Frame Bevel (recessed candy display) ═══
+    // Deep inset shadow — makes the grid look like it's sunken into the frame
+    const bevelLayers = 18;
+    for (let i = 0; i < bevelLayers; i++) {
+      const a = 0.12 - i * 0.006;
       if (a <= 0) break;
       const d = i * 2;
-      this.cellBackgrounds.fillStyle(0x220033, a);
-      // Top
+      // Use a warm deep magenta for the shadow instead of cold purple
+      this.cellBackgrounds.fillStyle(0x440022, a);
+      // Top edge
       this.cellBackgrounds.fillRect(gx, gy + d, totalSize, 2);
-      // Bottom
+      // Bottom edge
       this.cellBackgrounds.fillRect(gx, gy + totalSize - d - 2, totalSize, 2);
-      // Left
+      // Left edge
       this.cellBackgrounds.fillRect(gx + d, gy, 2, totalSize);
-      // Right
+      // Right edge
       this.cellBackgrounds.fillRect(gx + totalSize - d - 2, gy, 2, totalSize);
     }
+    // Inner light rim (like a candy glass edge catching light)
+    this.cellBackgrounds.lineStyle(1, 0xffffff, 0.12);
+    this.cellBackgrounds.strokeRect(gx + 1, gy + 1, totalSize - 2, totalSize - 2);
 
-    // 5. Radial warm glow at center (candy jar interior light)
+    // ═══ Radial warm candy glow at center ═══
     const cx = gx + totalSize / 2;
     const cy = gy + totalSize / 2;
-    for (let i = 0; i < 8; i++) {
-      const glowAlpha = 0.035 - i * 0.004;
+    for (let i = 0; i < 10; i++) {
+      const glowAlpha = 0.04 - i * 0.003;
       if (glowAlpha <= 0) break;
-      this.cellBackgrounds.fillStyle(0xffddf0, glowAlpha);
-      this.cellBackgrounds.fillCircle(cx, cy, totalSize * 0.22 + i * 25);
+      this.cellBackgrounds.fillStyle(0xffbbdd, glowAlpha);
+      this.cellBackgrounds.fillCircle(cx, cy, totalSize * 0.18 + i * 28);
     }
   }
 
@@ -425,6 +472,7 @@ export class Grid {
         }
       }
     }
+    this.cascadeCounterTxt.setVisible(false);
 
     // Sweep old symbols — dramatic vacuum-suck exit
     for (let r = 0; r < options.gridSize; r++) {
@@ -756,8 +804,59 @@ export class Grid {
       cluster.positions.forEach(pos => winPositions.add(`${pos.row},${pos.col}`));
     });
 
-    // ──────── Phase 1: Anticipation — rhythmic bounce + connected glow ────────
     const anticipationDuration = this.turboMode ? 80 : 250;
+
+    // ──────── Phase 4: Cluster Connection Lines ────────
+    // Draw glowing lines connecting adjacent cluster members
+    if (!this.turboMode) {
+      const connectionGfx = this.scene.add.graphics().setDepth(11).setAlpha(0);
+      clusters.forEach(cluster => {
+        const symId = cluster.symbolId;
+        const symColors = [0xffaa44, 0xcc66ff, 0xff4466, 0x44ff88, 0xaa44ff, 0xff8844, 0xff66aa];
+        const lineColor = symColors[symId % symColors.length];
+
+        // Build adjacency connections
+        const posSet = new Set(cluster.positions.map(p => `${p.row},${p.col}`));
+        cluster.positions.forEach(pos => {
+          const cx = this.getX(pos.col);
+          const cy = this.getY(pos.row);
+          // Check right neighbor
+          if (posSet.has(`${pos.row},${pos.col + 1}`)) {
+            const nx = this.getX(pos.col + 1);
+            // Thick glow line
+            connectionGfx.lineStyle(6, lineColor, 0.15);
+            connectionGfx.lineBetween(cx, cy, nx, cy);
+            // Core bright line
+            connectionGfx.lineStyle(2, lineColor, 0.5);
+            connectionGfx.lineBetween(cx, cy, nx, cy);
+          }
+          // Check bottom neighbor
+          if (posSet.has(`${pos.row + 1},${pos.col}`)) {
+            const ny = this.getY(pos.row + 1);
+            connectionGfx.lineStyle(6, lineColor, 0.15);
+            connectionGfx.lineBetween(cx, cy, cx, ny);
+            connectionGfx.lineStyle(2, lineColor, 0.5);
+            connectionGfx.lineBetween(cx, cy, cx, ny);
+          }
+        });
+      });
+      // Fade in the connection lines, then destroy after anticipation
+      this.scene.tweens.add({
+        targets: connectionGfx,
+        alpha: { from: 0, to: 1 },
+        duration: 120,
+      });
+      this.scene.time.delayedCall(anticipationDuration + 100, () => {
+        this.scene.tweens.add({
+          targets: connectionGfx,
+          alpha: 0,
+          duration: 150,
+          onComplete: () => connectionGfx.destroy(),
+        });
+      });
+    }
+
+    // ──────── Anticipation — rhythmic bounce + connected glow ────────
     let staggerIndex = 0;
     
     winPositions.forEach(key => {
@@ -919,15 +1018,65 @@ export class Grid {
                 this.getX(c) - halfCell, this.getY(r) - halfCell,
                 this.cellSize, this.cellSize, 4
               );
-              // White core flash
-              flash.fillStyle(0xffffff, 0.40);
-              flash.fillCircle(this.getX(c), this.getY(r), halfCell * 0.5);
+              // White core flash — brighter and larger
+              flash.fillStyle(0xffffff, 0.55);
+              flash.fillCircle(this.getX(c), this.getY(r), halfCell * 0.6);
               
               this.scene.tweens.add({
                 targets: flash, alpha: 0, duration: 250,
                 ease: 'Quad.easeOut',
                 onComplete: () => flash.destroy(),
               });
+
+              // ═══ Phase 5: Starburst Lines ═══
+              // Procedural radiating lines for candy shatter feel
+              const star = this.scene.add.graphics().setDepth(12);
+              const starCx = this.getX(c);
+              const starCy = this.getY(r);
+              const rays = 8;
+              const rayLen = this.cellSize * 0.45;
+              for (let i = 0; i < rays; i++) {
+                const angle = (i / rays) * Math.PI * 2 + Math.random() * 0.3;
+                const ex = starCx + Math.cos(angle) * rayLen;
+                const ey = starCy + Math.sin(angle) * rayLen;
+                // Outer glow ray
+                star.lineStyle(3, burstColor, 0.3);
+                star.lineBetween(starCx, starCy, ex, ey);
+                // Inner bright ray
+                star.lineStyle(1.5, 0xffffff, 0.6);
+                star.lineBetween(starCx, starCy, ex * 0.7 + starCx * 0.3, ey * 0.7 + starCy * 0.3);
+              }
+              star.setScale(0.3);
+              this.scene.tweens.add({
+                targets: star,
+                scaleX: 1.2, scaleY: 1.2, alpha: 0,
+                duration: 300,
+                ease: 'Quad.easeOut',
+                onComplete: () => star.destroy(),
+              });
+
+              // Sugar crystal scatter (small colored dots with gravity)
+              const crystalCount = 4 + Math.floor(Math.random() * 3);
+              for (let i = 0; i < crystalCount; i++) {
+                const crystal = this.scene.add.graphics().setDepth(14);
+                const cSize = 2 + Math.random() * 3;
+                crystal.fillStyle(burstColor, 0.9);
+                crystal.fillCircle(0, 0, cSize);
+                crystal.fillStyle(0xffffff, 0.5);
+                crystal.fillCircle(-0.5, -0.5, cSize * 0.4);
+                crystal.setPosition(starCx, starCy);
+                const vx = (Math.random() - 0.5) * 200;
+                const vy = -100 - Math.random() * 150;
+                this.scene.tweens.add({
+                  targets: crystal,
+                  x: starCx + vx * 0.8,
+                  y: starCy + vy * 0.3 + 120,
+                  alpha: 0,
+                  duration: 400 + Math.random() * 200,
+                  ease: 'Quad.easeIn',
+                  onComplete: () => crystal.destroy(),
+                });
+              }
             }
 
             // Advance multiplier
@@ -941,7 +1090,27 @@ export class Grid {
             this.drawMultiplierUI(r, c);
           }
         });
+        // Redraw cell backgrounds to show the updated multiplier tints (Phase 3)
+        this.drawCellBackgrounds();
       });
+
+      // Phase 6: Show/Update tumble counter
+      if (this.cascadeDepth > 0) {
+        const totalSize = this.cellSize * options.gridSize;
+        this.cascadeCounterTxt
+          .setText(`TUMBLE ×${this.cascadeDepth + 1}`)
+          .setPosition(this.offsetX + totalSize / 2, this.offsetY - 25)
+          .setVisible(true)
+          .setScale(0.5)
+          .setAlpha(0);
+        
+        this.scene.tweens.add({
+          targets: this.cascadeCounterTxt,
+          scaleX: 1, scaleY: 1, alpha: 1,
+          duration: 250,
+          ease: 'Back.easeOut'
+        });
+      }
 
       // Enforce max win cap
       if (totalWin > 0) {
@@ -955,7 +1124,18 @@ export class Grid {
         }
 
         if (this.freeSpinsRemaining > 0) this.totalFreeSpinsWin += totalWin;
-        if (this.onWinCallback) this.onWinCallback(totalWin);
+        
+        // Find the "representative" symbol for this tumble (usually the highest paying cluster's symbol)
+        let mainSymbolId = clusters[0].symbolId;
+        let maxClusterSize = clusters[0].positions.length;
+        for (let i = 1; i < clusters.length; i++) {
+          if (clusters[i].positions.length > maxClusterSize) {
+            maxClusterSize = clusters[i].positions.length;
+            mainSymbolId = clusters[i].symbolId;
+          }
+        }
+
+        if (this.onWinCallback) this.onWinCallback(totalWin, mainSymbolId);
 
         if (this.maxWinReached) {
           if (this.onMaxWinCallback) this.onMaxWinCallback(this.cumulativeRoundWin);
@@ -1060,10 +1240,12 @@ export class Grid {
     if (this.onFreeSpinsEnd) this.onFreeSpinsEnd(this.totalFreeSpinsWin);
     this.isSuperFreeSpins = false;
     this.isProcessing = false;
+    this.cascadeCounterTxt.setVisible(false);
   }
 
   private finishRound() {
     this.isProcessing = false;
+    this.cascadeCounterTxt.setVisible(false);
     if (this.freeSpinsRemaining > 0 && !this.maxWinReached) {
       // Still in FS
     } else if (this.freeSpinsRemaining > 0 && this.maxWinReached) {

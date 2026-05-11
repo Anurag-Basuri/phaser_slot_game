@@ -27,6 +27,7 @@ export class BottomBarHUD {
   txtBet!: Phaser.GameObjects.Text;
   txtLastWinLabel!: Phaser.GameObjects.Text;
   txtLastWin!: Phaser.GameObjects.Text;
+  winSymbolIcon!: Phaser.GameObjects.Sprite;
   demoLabel!: Phaser.GameObjects.Text;
 
   // Interactive
@@ -37,9 +38,9 @@ export class BottomBarHUD {
   private _prevMoney = -1;
   private _winCountTween: Phaser.Tweens.Tween | null = null;
 
-  private readonly COL_LABEL = '#bb88cc';
+  private readonly COL_LABEL = '#ffaacc';  // Warm candy pink labels
   private readonly COL_VALUE = '#ffffff';
-  private readonly COL_WIN = '#44ff88';
+  private readonly COL_WIN = '#66ffaa';    // Bright candy mint
   private readonly FONT_LABEL = '"Outfit", "Inter", sans-serif';
   private readonly FONT_VALUE = '"Inter", "Arial", sans-serif';
 
@@ -73,6 +74,8 @@ export class BottomBarHUD {
     this.txtLastWin = this.scene.add.text(0, 0, '', { ...tVal, color: this.COL_WIN }).setOrigin(1, 0.5).setDepth(50);
     this.txtLastWin.setText(DisplayBalance({ amount: 0, currency: 'USD' }));
 
+    this.winSymbolIcon = this.scene.add.sprite(0, 0, 'candy_0').setDepth(50).setVisible(false);
+
     this.demoLabel = this.scene.add.text(0, 0, '', {
       fontFamily: this.FONT_LABEL, fontStyle: '700', color: '#ff4466'
     }).setOrigin(0.5, 0.5).setDepth(50).setAlpha(0.7);
@@ -92,22 +95,39 @@ export class BottomBarHUD {
     this.bar.clear();
     const bb = this.bar;
 
-    // ── Backdrop ──
-    // Glassmorphic candy panel — semi-transparent so background bleeds through
-    bb.fillGradientStyle(0x1a0a28, 0x1a0a28, 0x0d0515, 0x0d0515, 0.65, 0.65, 0.45, 0.45);
+    // ── Backdrop ── (Rich candy shelf gradient)
+    // Base: deep cherry-to-plum gradient for candy-store warmth
+    bb.fillGradientStyle(0x2a0833, 0x220828, 0x180420, 0x100318, 0.85, 0.85, 0.7, 0.7);
     bb.fillRect(0, h - barH, w, barH);
 
-    // Top accent line (candy-pink gradient)
-    bb.fillGradientStyle(0xff88bb, 0xff006a, 0xcc0055, 0xff88bb, 1);
-    bb.fillRect(0, h - barH, w, 2);
+    // Candy stripe top edge (multicolor candy ribbon)
+    const stripeH = 3;
+    const stripeY = h - barH;
+    const stripeSegments = Math.ceil(w / 24);
+    const stripeColors = [0xff006a, 0xffcc00, 0x44ddff, 0xff66aa, 0x88ff44, 0xff8833];
+    for (let i = 0; i < stripeSegments; i++) {
+      const col = stripeColors[i % stripeColors.length];
+      bb.fillStyle(col, 0.9);
+      bb.fillRect(i * 24, stripeY, 24, stripeH);
+    }
 
-    // Subtle glow beneath line
-    bb.fillGradientStyle(0xff006a, 0xff006a, 0x1a0a28, 0x1a0a28, 0.18, 0.18, 0, 0);
-    bb.fillRect(0, h - barH + 2, w, 8);
+    // Warm pink glow beneath the stripe
+    bb.fillGradientStyle(0xff3388, 0xff006a, 0x2a0833, 0x2a0833, 0.25, 0.25, 0, 0);
+    bb.fillRect(0, stripeY + stripeH, w, 10);
 
-    // Inner highlight line (subtle glass rim)
-    bb.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.06, 0.06, 0, 0);
-    bb.fillRect(0, h - barH + 2, w, 1);
+    // Glass rim highlight
+    bb.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.08, 0.08, 0, 0);
+    bb.fillRect(0, stripeY + stripeH, w, 1);
+
+    // Candy sprinkle dots on the backdrop (subtle but thematic)
+    const sprinkleCount = Math.max(6, Math.floor(w / 60));
+    for (let i = 0; i < sprinkleCount; i++) {
+      const sx = (w / (sprinkleCount + 1)) * (i + 1) + ((i * 17) % 11 - 5);
+      const sy = h - barH / 2 + ((i * 7) % 9 - 4);
+      const sCol = stripeColors[(i * 3) % stripeColors.length];
+      bb.fillStyle(sCol, 0.08);
+      bb.fillCircle(sx, sy, 3 + (i % 3));
+    }
 
     const txtY = h - barH / 2;
     const sidePad = isMobile ? 8 : 20;
@@ -115,30 +135,30 @@ export class BottomBarHUD {
     const valFS = Math.max(11, Math.min(18, barH * 0.34));
     const pillPad = isMobile ? 10 : 16;
 
-    // ── Pill renderer ──
-    const drawPill = (x: number, width: number, accent = 0xff006a) => {
+    // ── Pill renderer (candy-themed with distinct accent per pill) ──
+    const drawPill = (x: number, width: number, accent: number, accentDark: number) => {
       const py = h - barH + 5;
       const ph = barH - 10;
       const rad = ph / 2;
 
-      // Shadow
-      bb.fillStyle(0x000000, 0.35);
+      // Drop shadow
+      bb.fillStyle(0x000000, 0.4);
       bb.fillRoundedRect(x + 1, py + 2, width, ph, rad);
 
-      // Body — translucent deep plum (candy-glass)
-      bb.fillGradientStyle(0x1a0a28, 0x1a0a28, 0x120820, 0x120820, 0.5);
+      // Body — deep candy glass with subtle accent tint
+      bb.fillGradientStyle(accentDark, accentDark, 0x120820, 0x120820, 0.6, 0.6, 0.45, 0.45);
       bb.fillRoundedRect(x, py, width, ph, rad);
 
-      // Top glass sheen
-      bb.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.08, 0.08, 0, 0);
+      // Candy glass sheen (top hemisphere highlight)
+      bb.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.12, 0.12, 0, 0);
       bb.fillRoundedRect(x + 2, py + 1, width - 4, ph * 0.35, { tl: rad, tr: rad, bl: 0, br: 0 } as any);
 
-      // Accent border (candy-colored rim)
-      bb.lineStyle(1.5, accent, 0.3);
+      // Accent border (candy-colored rim with glow)
+      bb.lineStyle(1.5, accent, 0.45);
       bb.strokeRoundedRect(x, py, width, ph, rad);
 
-      // Inner rim
-      bb.lineStyle(0.5, 0xffffff, 0.06);
+      // Inner glass rim
+      bb.lineStyle(0.5, 0xffffff, 0.08);
       bb.strokeRoundedRect(x + 1, py + 1, width - 2, ph - 2, rad - 1);
     };
 
@@ -146,29 +166,34 @@ export class BottomBarHUD {
     const gap = isMobile ? 5 : 10;
     const usableW = w - sidePad * 2 - gap * 2;
 
-    // Uniform layout: all three pills share the available width equally.
-    // This strictly prevents "jumping" sizes and ensures a premium, symmetrical look.
+    // Uniform layout: all three pills share the available width equally
     const pillW = usableW / 3;
     const balW = pillW;
     const betW = pillW;
     const winW = pillW;
 
-    // ── Position pills ──
+    // ── Position pills (each with a distinct candy accent color) ──
     const balX = sidePad;
-    drawPill(balX, balW);
+    drawPill(balX, balW, 0xff88bb, 0x2a0828);  // Pink candy accent for Balance
     this.txtMoneyLabel.setPosition(balX + pillPad, txtY).setFontSize(labelFS);
     this.txtMoney.setPosition(balX + balW - pillPad, txtY).setFontSize(valFS);
 
     const betX = balX + balW + gap;
-    drawPill(betX, betW);
+    drawPill(betX, betW, 0xffaa44, 0x2a1808);  // Golden candy accent for Bet
     this.txtBetLabel.setPosition(betX + pillPad, txtY).setFontSize(labelFS);
     this.txtBet.setPosition(betX + betW - pillPad, txtY).setFontSize(valFS);
     this.betPillHit.setPosition(betX + betW / 2, txtY).setSize(betW, barH - 4);
 
     const winX = betX + betW + gap;
-    drawPill(winX, winW, 0x44ff88);
+    drawPill(winX, winW, 0x44ffaa, 0x082a18);  // Mint candy accent for Win
     this.txtLastWinLabel.setVisible(true).setPosition(winX + pillPad, txtY).setFontSize(labelFS);
-    this.txtLastWin.setVisible(true).setPosition(winX + winW - pillPad, txtY).setFontSize(valFS);
+    
+    // Position the win value and icon. If icon is visible, we shift the text.
+    const winValX = winX + winW - pillPad;
+    this.txtLastWin.setVisible(true).setPosition(winValX, txtY).setFontSize(valFS);
+    
+    // Icon sits just to the left of the win value text
+    this.winSymbolIcon.setPosition(winValX - this.txtLastWin.width - 22, txtY).setScale(0.35);
 
     this._winPillBounds = { x: winX, w: winW, y: h - barH + 5, h: barH - 10 };
 
@@ -239,7 +264,23 @@ export class BottomBarHUD {
     }
   }
 
-  updateLastWinDisplay(target: number, currency: string, betAmount: number) {
+  setWinSymbol(key?: string) {
+    if (!key) {
+      this.winSymbolIcon.setVisible(false);
+      return;
+    }
+    this.winSymbolIcon.setTexture(key).setVisible(true).setScale(0);
+    this.scene.tweens.add({
+      targets: this.winSymbolIcon,
+      scale: 0.42,
+      duration: 350,
+      ease: 'Back.easeOut'
+    });
+    // Position sync
+    this.winSymbolIcon.x = this.txtLastWin.x - this.txtLastWin.width - 24;
+  }
+
+  updateLastWinDisplay(target: number, currency: string, betAmount: number, symbolKey?: string) {
     if (this._winCountTween) { this._winCountTween.stop(); }
     this.scene.tweens.killTweensOf([this.txtLastWin, this.txtLastWinLabel]);
     this.txtLastWin.setScale(1);
@@ -261,6 +302,13 @@ export class BottomBarHUD {
       ease: 'Cubic.easeOut',
       onUpdate: () => {
         this.txtLastWin.setText(DisplayBalance({ amount: counter.val, currency }));
+        // Keep icon position synced if text width changes
+        if (this.winSymbolIcon.visible) {
+          const winX = this._winPillBounds.x;
+          const winW = this._winPillBounds.w;
+          const pillPad = this.txtMoneyLabel.x - this.bar.x; // approximate padding
+          this.winSymbolIcon.x = winX + winW - 16 - this.txtLastWin.width - 20;
+        }
       },
       onStart: () => {
         this.scene.tweens.add({
@@ -277,6 +325,17 @@ export class BottomBarHUD {
           scaleX: 1.25, scaleY: 1.25,
           duration: 200, yoyo: true, ease: 'Back.easeOut',
         });
+        // Show winning candy icon next to the final win value
+        if (symbolKey) {
+          this.winSymbolIcon.setTexture(symbolKey).setVisible(true).setScale(0);
+          this.scene.tweens.add({
+            targets: this.winSymbolIcon,
+            scale: 0.38,
+            duration: 300,
+            ease: 'Back.easeOut'
+          });
+          this.winSymbolIcon.x = this.txtLastWin.x - this.txtLastWin.width - 22;
+        }
       }
     });
 
