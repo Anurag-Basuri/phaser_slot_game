@@ -218,7 +218,6 @@ export class Game extends Phaser.Scene {
       if (this._resizeTimer) clearTimeout(this._resizeTimer);
       this._resizeTimer = setTimeout(() => {
         this.layoutAll();
-        this.grid.repositionSprites();
       }, 80);
     });
 
@@ -1092,9 +1091,10 @@ export class Game extends Phaser.Scene {
       this.logoWrapper.setVisible(false);
     }
 
-    // FS Counter
+    // FS Counter — proportional offset from grid top
+    const fsCounterOffset = Math.max(20, gridY * 0.25);
     this.txtFSRemaining
-      .setPosition(w / 2, gridY - 30)
+      .setPosition(w / 2, gridY - fsCounterOffset)
       .setFontSize(Math.min(42, w * 0.08));
 
     if (this.stakeEngine.isReplayMode()) {
@@ -1818,13 +1818,15 @@ export class Game extends Phaser.Scene {
       // Floating win text
       const cx = this.grid.offsetX + this.grid.cellSize * 3.5;
       const cy = this.grid.offsetY + this.grid.cellSize * 3.5;
+      const winFS = Math.max(28, this.grid.cellSize * 0.7);
+      const winStroke = Math.max(3, winFS * 0.18);
       const winText = this.add
         .text(cx, cy, `+${actualWin.toFixed(2)}`, {
-          fontSize: `${Math.max(28, this.grid.cellSize * 0.7)}px`,
+          fontSize: `${winFS}px`,
           color: '#ffe600',
           fontStyle: 'bold',
           stroke: '#000',
-          strokeThickness: 6,
+          strokeThickness: winStroke,
         })
         .setOrigin(0.5)
         .setDepth(25);

@@ -109,10 +109,10 @@ export class Grid {
     this.cellBackgrounds = this.scene.add.graphics().setDepth(2);
     this.drawCellBackgrounds();
 
-    // Phase 6: Cascade depth counter text
+    // Phase 6: Cascade depth counter text — font scales with grid
     this.cascadeCounterTxt = this.scene.add.text(0, 0, '', {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      fontSize: '22px',
+      fontSize: '22px', // Will be overridden dynamically on each display
       color: '#ffffff',
       stroke: '#cc0055',
       strokeThickness: 5,
@@ -1097,9 +1097,15 @@ export class Grid {
       // Phase 6: Show/Update tumble counter
       if (this.cascadeDepth > 0) {
         const totalSize = this.cellSize * options.gridSize;
+        // Scale font and offset proportionally to cell size
+        const counterFS = Math.max(14, Math.min(32, this.cellSize * 0.42));
+        const counterOffset = Math.max(18, this.cellSize * 0.45);
+        const counterStroke = Math.max(3, counterFS * 0.22);
         this.cascadeCounterTxt
           .setText(`TUMBLE ×${this.cascadeDepth + 1}`)
-          .setPosition(this.offsetX + totalSize / 2, this.offsetY - 25)
+          .setPosition(this.offsetX + totalSize / 2, this.offsetY - counterOffset)
+          .setFontSize(counterFS)
+          .setStroke('#cc0055', counterStroke)
           .setVisible(true)
           .setScale(0.5)
           .setAlpha(0);
