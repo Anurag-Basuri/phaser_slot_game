@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 import {
   Grid, Audio, PaytableOverlay, SettingsOverlay,
   WinCelebration, ConfirmDialog, FreeSpinsIntro, ErrorManager,
-  AutoPlayOverlay, BetOverlay
+  AutoPlayOverlay, BetOverlay, BottomBarHUD, SpinControls
 } from '../components';
 import { getStakeEngine } from '../engine';
 import { SpinEventData, StakeEngineClient } from '../engine/StakeEngineClient';
@@ -26,6 +26,8 @@ export class Game extends Phaser.Scene {
   errorManager!: ErrorManager;
   autoPlayOverlay!: AutoPlayOverlay;
   betOverlay!: BetOverlay;
+  bottomBarHUD!: BottomBarHUD;
+  spinControls!: SpinControls;
 
   private stakeEngine!: StakeEngineClient;
   private skipScreensActive = false;
@@ -35,26 +37,11 @@ export class Game extends Phaser.Scene {
   private gridPanel!: Phaser.GameObjects.Image;
   private logoText1!: Phaser.GameObjects.Text;
   private logoText2!: Phaser.GameObjects.Text;
+  private logoGlow!: Phaser.GameObjects.Graphics;
   private gridFrame!: Phaser.GameObjects.Graphics;
-  private spinBtnImage!: Phaser.GameObjects.Image;
   private panelSuperGraphics!: Phaser.GameObjects.Graphics;
   private panelRegularGraphics!: Phaser.GameObjects.Graphics;
   
-  private spinBtnHit!: Phaser.GameObjects.Rectangle;
-  private spinBtnLabel!: Phaser.GameObjects.Text;
-  private spinBtnRadius = 50;
-  private btnAutoHit!: Phaser.GameObjects.Rectangle;
-  private btnAutoGraphics!: Phaser.GameObjects.Graphics;
-  private txtAuto!: Phaser.GameObjects.Text;
-  private btnBetMinus!: Phaser.GameObjects.Graphics;
-  private btnBetPlus!: Phaser.GameObjects.Graphics;
-  private btnBetMinusHit!: Phaser.GameObjects.Rectangle;
-  private btnBetPlusHit!: Phaser.GameObjects.Rectangle;
-  private txtMoney!: Phaser.GameObjects.Text;
-  private txtMoneyLabel!: Phaser.GameObjects.Text;
-  private txtBet!: Phaser.GameObjects.Text;
-  private txtBetLabel!: Phaser.GameObjects.Text;
-  private bottomBar!: Phaser.GameObjects.Graphics;
 
   private txtFSRemaining!: Phaser.GameObjects.Text;
   private buySuperHit!: Phaser.GameObjects.Rectangle;
@@ -71,9 +58,6 @@ export class Game extends Phaser.Scene {
   private iconSettings!: Phaser.GameObjects.Image;
   private btnFullscreen!: Phaser.GameObjects.Graphics;
   private iconFullscreen!: Phaser.GameObjects.Image;
-  private txtLastWin!: Phaser.GameObjects.Text;
-  private txtLastWinLabel!: Phaser.GameObjects.Text;
-  private demoLabel!: Phaser.GameObjects.Text;
   // Ante Bet
   private anteBetBtn!: Phaser.GameObjects.Graphics;
   private anteBetHit!: Phaser.GameObjects.Rectangle;
@@ -105,7 +89,6 @@ export class Game extends Phaser.Scene {
   lastWin = 0;
   private _winCountTween?: Phaser.Tweens.Tween;
   private _displayedWin = 0;
-  private winPillGlow!: Phaser.GameObjects.Graphics;
 
   // Spin lock — prevents double-trigger across pointer + keyboard
   private _spinLock = false;
@@ -243,23 +226,25 @@ export class Game extends Phaser.Scene {
     // === GRID FRAME (subtle overlay for cell delineation) ===
     this.gridFrame = this.add.graphics({ x: 0, y: 0 }).setDepth(2);
 
-    // === LOGO (top-right like real Sugar Blast 1000) ===
+    // === LOGO (Premium Sugar Blast 1000) ===
+    this.logoGlow = this.add.graphics().setDepth(29).setAlpha(0.5);
+
     this.logoText1 = this.add.text(0, 0, 'SUGAR BLAST', {
-      fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      color: '#ff007f',
-      fontStyle: 'normal',
+      fontFamily: '"Outfit", "Luckiest Guy", cursive, sans-serif',
+      fontStyle: '900',
+      color: '#ff1a75',
       stroke: '#ffffff',
-      strokeThickness: 8,
-      shadow: { offsetX: 3, offsetY: 5, color: '#cc0066', blur: 0, stroke: true, fill: true }
+      strokeThickness: 6,
+      shadow: { offsetX: 2, offsetY: 4, color: '#990044', blur: 8, stroke: true, fill: true }
     }).setDepth(30).setOrigin(0.5, 0.5);
 
     this.logoText2 = this.add.text(0, 0, '1000', {
-      fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      color: '#ffaa00',
-      fontStyle: 'normal',
+      fontFamily: '"Outfit", "Luckiest Guy", cursive, sans-serif',
+      fontStyle: '900',
+      color: '#ffcc00',
       stroke: '#ffffff',
-      strokeThickness: 8,
-      shadow: { offsetX: 3, offsetY: 5, color: '#cc5500', blur: 0, stroke: true, fill: true }
+      strokeThickness: 6,
+      shadow: { offsetX: 2, offsetY: 4, color: '#cc6600', blur: 8, stroke: true, fill: true }
     }).setDepth(30).setOrigin(0.5, 0.5);
 
     // Buy buttons setup
@@ -308,59 +293,8 @@ export class Game extends Phaser.Scene {
       });
     this.btnFeaturesMenuIcon = this.add.text(0, 0, '⋮', { fontSize: '32px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5).setDepth(21);
 
-    // Spin button setup (Authentic Pragmatic Circular Style)
-    this.spinBtnImage = this.add.graphics().setDepth(20) as any; // Procedural spin button
-    this.spinBtnHit = this.add.rectangle(0, 0, 150, 150, 0xffffff, 0)
-      .setInteractive({ useHandCursor: true }).setDepth(21);
-    this.spinBtnLabel = this.add.text(0, 0, '', { fontFamily: '"Luckiest Guy", cursive, sans-serif' }).setOrigin(0.5).setDepth(21);
-
-    // Auto Play setup
-    this.btnAutoGraphics = this.add.graphics().setDepth(21);
-    this.btnAutoHit = this.add.rectangle(0, 0, 100, 30, 0xffffff, 0)
-      .setInteractive({ useHandCursor: true }).setDepth(22);
-    this.txtAuto = this.add.text(0, 0, 'AUTO', { fontFamily: '"Inter", "Arial", sans-serif', fontStyle: '900', color: '#ffffff', shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 0, fill: true } }).setOrigin(0.5).setDepth(21);
-
-    // === BOTTOM BAR ===
-    const tLabelStyle: Phaser.Types.GameObjects.Text.TextStyle = {
-      fontFamily: '"Outfit", "Inter", sans-serif',
-      fontStyle: '500',
-      color: '#8899bb',
-      letterSpacing: 2,
-    };
-    const tValStyle: Phaser.Types.GameObjects.Text.TextStyle = {
-      fontFamily: '"Inter", "Arial", sans-serif',
-      fontStyle: '700',
-      color: '#ffffff',
-    };
-    
-    // Bottom Bar Structural Graphic
-    this.bottomBar = this.add.graphics().setDepth(45);
-    this.winPillGlow = this.add.graphics().setDepth(46).setAlpha(0);
-    
-    this.txtMoneyLabel = this.add.text(0, 0, T('BALANCE', this.stakeEngine.isSocialMode()), tLabelStyle).setOrigin(0, 0.5).setDepth(50);
-    this.txtMoney = this.add.text(0, 0, '', tValStyle).setOrigin(1, 0.5).setDepth(50);
-    
-    this.txtBetLabel = this.add.text(0, 0, T('BET', this.stakeEngine.isSocialMode()), tLabelStyle).setOrigin(0, 0.5).setDepth(50);
-    this.txtBet = this.add.text(0, 0, '', tValStyle).setOrigin(1, 0.5).setDepth(50);
-    
-    this.txtLastWinLabel = this.add.text(0, 0, T('LAST WIN', this.stakeEngine.isSocialMode()), tLabelStyle).setOrigin(0, 0.5).setDepth(50);
-    this.txtLastWin = this.add.text(0, 0, '', { ...tValStyle, color: '#44ff88' }).setOrigin(1, 0.5).setDepth(50);
-    // Initialize LAST WIN to $0.00 so the pill is never empty
-    this.txtLastWin.setText(DisplayBalance({ amount: 0, currency: 'USD' }));
-    
-    this.demoLabel = this.add.text(0, 0, '', {
-      fontFamily: '"Luckiest Guy", cursive, sans-serif', color: '#ff4466'
-    }).setOrigin(1, 0.5).setDepth(50).setAlpha(0.8);
-
-    if (this.stakeEngine.isDemoMode()) {
-      this.demoLabel.setText('DEMO');
-    }
-
-    // Bet -/+ buttons
-    this.btnBetMinus = this.add.graphics().setDepth(50);
-    this.btnBetMinusHit = this.add.rectangle(0, 0, 44, 44).setInteractive({ useHandCursor: true }).setAlpha(0.001).setDepth(51);
-    this.btnBetPlus = this.add.graphics().setDepth(50);
-    this.btnBetPlusHit = this.add.rectangle(0, 0, 44, 44).setInteractive({ useHandCursor: true }).setAlpha(0.001).setDepth(51);
+    // === BOTTOM BAR & SPIN CONTROLS (created by new component classes) ===
+    // BottomBarHUD and SpinControls are instantiated after overlays below
 
     // === FREE SPINS COUNTER ===
     this.txtFSRemaining = this.add.text(0, 0, '', {
@@ -390,6 +324,48 @@ export class Game extends Phaser.Scene {
     this.settings = new SettingsOverlay(this);
     this.autoPlayOverlay = new AutoPlayOverlay(this);
     this.betOverlay = new BetOverlay(this);
+    this.bottomBarHUD = new BottomBarHUD(this);
+    this.spinControls = new SpinControls(this);
+
+    // Wire up spin controls callbacks
+    this.spinControls.onSpin(() => {
+      if (this.anyOverlayOpen()) return;
+      this.audio.playSound('button');
+      this.attemptSpin(0);
+    });
+    this.spinControls.onBetMinus(() => {
+      if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
+      if (this.betPresetIndex > 0) {
+        this.betPresetIndex--;
+        options.betAmount = BET_PRESETS[this.betPresetIndex];
+        this.updateBetDisplay();
+        this.audio.playSound('button');
+      }
+    });
+    this.spinControls.onBetPlus(() => {
+      if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
+      if (this.betPresetIndex < BET_PRESETS.length - 1) {
+        this.betPresetIndex++;
+        options.betAmount = BET_PRESETS[this.betPresetIndex];
+        this.updateBetDisplay();
+        this.audio.playSound('button');
+      }
+    });
+    this.spinControls.onAutoPlay(() => {
+      if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
+      if (this.autoSpinActive) {
+        this.stopAutoSpin();
+      } else {
+        this.audio.playSound('button');
+        this.autoPlayOverlay.show();
+      }
+    });
+    this.bottomBarHUD.onBetTap(() => {
+      if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
+      this.audio.playSound('button');
+      this.betOverlay.syncState(this.betPresetIndex, options.anteBetEnabled, options.anteBetCostMultiplier);
+      this.betOverlay.toggle();
+    });
 
     // Bet overlay callback — updates game bet index
     this.betOverlay.setCallback((newIndex) => {
@@ -440,26 +416,13 @@ export class Game extends Phaser.Scene {
       this.anteBetIcon.setVisible(false);
       this.anteBetTxt.setVisible(false);
       
-      this.btnAutoHit.setVisible(false);
-      this.btnAutoGraphics.setVisible(false);
-      this.txtAuto.setVisible(false);
-      
-      this.btnBetMinus.setVisible(false);
-      this.btnBetMinusHit.setVisible(false);
-      this.btnBetPlus.setVisible(false);
-      this.btnBetPlusHit.setVisible(false);
-      
-      this.txtMoneyLabel.setVisible(false);
-      this.txtMoney.setVisible(false);
-      this.txtBetLabel.setVisible(false);
-      this.txtBet.setVisible(false);
+      this.spinControls.hideAll();
+      this.bottomBarHUD.hideAll();
 
       this.logoText1.setVisible(false);
       this.logoText2.setVisible(false);
 
-      this.spinBtnImage.setVisible(false);
-      this.spinBtnHit.setVisible(false);
-      this.spinBtnLabel.setVisible(false);
+      // spin controls already hidden above
 
       this.replayBtnHit = this.add.rectangle(0, 0, 240, 70, 0xff006a)
         .setStrokeStyle(3, 0xffffff, 1)
@@ -729,122 +692,18 @@ export class Game extends Phaser.Scene {
     }
 
     // ==========================================
-    // 3. BOTTOM BAR & HUD
+    // 3. BOTTOM BAR & HUD (delegated to BottomBarHUD)
     // ==========================================
-    this.bottomBar.clear();
-    const bb = this.bottomBar;
-
-    // Dark glass backdrop
-    bb.fillGradientStyle(0x080312, 0x080312, 0x0d0518, 0x0d0518, 0.97);
-    bb.fillRect(0, h - barH, w, barH);
-    
-    // Top accent line
-    bb.fillGradientStyle(0xff006a, 0xff3388, 0xff006a, 0xff3388, 0.9);
-    bb.fillRect(0, h - barH, w, 1.5);
-
-    const txtY = h - barH / 2;
-    const sidePad = isMobile ? 8 : 24;
-    const labelFS = Math.max(9, barH * 0.20);
-    const valFS = Math.max(12, barH * 0.30);
-    const pillInnerPad = isMobile ? 12 : 18;
-
-    const drawPill = (x: number, width: number) => {
-      const pillY = h - barH + 5;
-      const pillH = barH - 10;
-      // Pill shadow
-      bb.fillStyle(0x000000, 0.35);
-      bb.fillRoundedRect(x + 1, pillY + 2, width, pillH, pillH / 2);
-      // Pill bg
-      bb.fillGradientStyle(0x0f0820, 0x0f0820, 0x1a0d2a, 0x1a0d2a, 0.8);
-      bb.fillRoundedRect(x, pillY, width, pillH, pillH / 2);
-      // Pill border
-      bb.lineStyle(1, 0xffffff, 0.1);
-      bb.strokeRoundedRect(x, pillY, width, pillH, pillH / 2);
-    };
-
-    // Calculate pill widths — evenly distributed with gaps
-    const gap = isMobile ? 6 : 16;
-    const totalGaps = gap * 2 + sidePad * 2;
-    const availW = w - totalGaps;
-    const balW = isStacked ? availW * 0.36 : Math.max(160, availW * 0.30);
-    const betW = isStacked ? availW * 0.28 : Math.max(130, availW * 0.22);
-    const winW = isStacked ? availW * 0.36 : Math.max(160, availW * 0.30);
-
-    // ── BALANCE pill ──
-    const balStart = sidePad;
-    drawPill(balStart, balW);
-    this.txtMoneyLabel.setPosition(balStart + pillInnerPad, txtY).setFontSize(labelFS).setOrigin(0, 0.5);
-    this.txtMoney.setPosition(balStart + balW - pillInnerPad, txtY).setFontSize(valFS).setOrigin(1, 0.5);
-
-    // ── BET pill (tappable — opens bet overlay) ──
-    const betStart = balStart + balW + gap;
-    drawPill(betStart, betW);
-    this.txtBetLabel.setPosition(betStart + pillInnerPad, txtY).setFontSize(labelFS).setOrigin(0, 0.5);
-    this.txtBet.setPosition(betStart + betW - pillInnerPad, txtY).setFontSize(valFS).setOrigin(1, 0.5);
-    // Bet pill hit zone
-    if (!(this as any)._betPillHit) {
-      (this as any)._betPillHit = this.add.rectangle(0, 0, 10, 10, 0xffffff, 0)
-        .setInteractive({ useHandCursor: true }).setDepth(51)
-        .on('pointerdown', () => {
-          if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
-          this.audio.playSound('button');
-          this.betOverlay.syncState(this.betPresetIndex, options.anteBetEnabled, options.anteBetCostMultiplier);
-          this.betOverlay.toggle();
-        });
-    }
-    (this as any)._betPillHit.setPosition(betStart + betW / 2, txtY).setSize(betW, barH - 4);
-
-    // ── LAST WIN pill ──
-    this.txtLastWinLabel.setVisible(true);
-    this.txtLastWin.setVisible(true);
-    const winStart = w - sidePad - winW;
-    drawPill(winStart, winW);
-    this.txtLastWinLabel.setPosition(winStart + pillInnerPad, txtY).setFontSize(labelFS).setOrigin(0, 0.5);
-    this.txtLastWin.setPosition(winStart + winW - pillInnerPad, txtY).setFontSize(valFS).setOrigin(1, 0.5);
-    // Cache win pill bounds for glow effect
-    (this as any)._winPillBounds = { x: winStart, w: winW, y: h - barH + 5, h: barH - 10 };
+    this.bottomBarHUD.layout(w, h, barH, isStacked, isMobile);
 
     // ==========================================
-    // 4. SPIN BUTTON GROUP
+    // 4. SPIN BUTTON GROUP (delegated to SpinControls)
     // ==========================================
-    const rightMargin = w - gridX - gridTotalSize;
-    const rightColCenter = gridX + gridTotalSize + rightMargin / 2;
-    const spinSize = isStacked ? Math.max(60, w * 0.15) : isLandscapeMobile ? Math.min(80, rightMargin * 0.5) : Math.min(120, rightMargin * 0.55);
-    
-    const spinX = isStacked ? w - spinSize / 2 - 10 : rightColCenter;
-    const spinY = isStacked ? safeH - spinSize / 2 - 25 : safeH * 0.55;
-    
-    this.spinBtnHit.setPosition(spinX, spinY).setSize(spinSize * 1.2, spinSize * 1.2);
-    this.spinBtnImage.setPosition(spinX, spinY);
-    this.drawSpinButton(0, 0, spinSize);
+    const { spinX, spinY, spinSize } = this.spinControls.layout(
+      w, h, gridX, gridY, gridTotalSize, barH, isStacked, isLandscapeMobile
+    );
     this.updateSpinButtonState();
-
-    // Auto Play
-    const autoY = spinY + spinSize / 2 + 15;
-    this.btnAutoHit.setPosition(spinX, autoY).setSize(80, 28);
-    this.txtAuto.setPosition(spinX, autoY).setFontSize(isLandscapeMobile ? 11 : 14).setDepth(23);
     this.updateAutoSpinDisplay();
-
-    // Bet (+/-) Buttons
-    // Scale bet buttons proportionally, getting bigger on large screens
-    let bBtnSize = isStacked ? Math.max(35, Math.min(60, w * 0.10)) : Math.max(45, Math.min(80, rightMargin * 0.18));
-    if (!isStacked) {
-        const betBtnOffset = spinSize / 2 + bBtnSize / 2 + 15; // Increased gap
-        // Clamp to screen edges
-        const minusX = Math.max(bBtnSize, spinX - betBtnOffset);
-        const plusX = Math.min(w - bBtnSize, spinX + betBtnOffset);
-        this.btnBetMinusHit.setPosition(minusX, spinY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
-        this.drawBetButton(this.btnBetMinus, minusX, spinY, bBtnSize, false);
-        this.btnBetPlusHit.setPosition(plusX, spinY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
-        this.drawBetButton(this.btnBetPlus, plusX, spinY, bBtnSize, true);
-    } else {
-        const mCenter = w - 80;
-        const mOffset = 50;
-        this.btnBetMinusHit.setPosition(mCenter - mOffset, txtY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
-        this.drawBetButton(this.btnBetMinus, mCenter - mOffset, txtY, bBtnSize, false);
-        this.btnBetPlusHit.setPosition(mCenter + mOffset, txtY).setSize(bBtnSize * 1.5, bBtnSize * 1.5);
-        this.drawBetButton(this.btnBetPlus, mCenter + mOffset, txtY, bBtnSize, true);
-    }
 
     // ==========================================
     // 5. TOOLBAR ICONS (Top Left)
@@ -863,46 +722,75 @@ export class Game extends Phaser.Scene {
     });
     this.drawToolbarIcons();
 
-    // ==========================================
-    // 6. LOGO — positioned above spin button, hide if tight
-    // ==========================================
-    const maxLogoWidth = rightMargin * 0.9;
-    const logoFS1 = isStacked ? Math.min(32, w * 0.06) : Math.max(18, Math.min(50, maxLogoWidth * 0.12));
-    const logoFS2 = isStacked ? Math.min(40, w * 0.07) : Math.max(22, Math.min(60, maxLogoWidth * 0.14));
+    // Recalculate margins for logo placement
+    const rightMargin = w - gridX - gridTotalSize;
+    const rightColCenter = gridX + gridTotalSize + rightMargin / 2;
 
-    // Hide logo if there is not enough room
-    const logoSpaceAboveSpin = spinY - gridY;
-    if (isLandscapeMobile || isStacked || rightMargin < 150 || logoSpaceAboveSpin < 80) {
-      this.logoText1.setVisible(false);
-      this.logoText2.setVisible(false);
+    // ==========================================
+    // 6. LOGO — responsive placement with premium glow
+    // ==========================================
+    this.logoGlow.clear();
+
+    if (isStacked) {
+      // Portrait: show logo at top center, above the grid
+      const topSpace = gridY;
+      if (topSpace > 55) {
+        const logoFS1 = Math.max(14, Math.min(26, w * 0.055));
+        const logoFS2 = Math.max(18, Math.min(34, w * 0.07));
+        const logoX = w / 2;
+        const logoY = Math.max(20, topSpace * 0.35);
+
+        this.logoText1.setVisible(true).setPosition(logoX, logoY)
+          .setFontSize(logoFS1).setStroke('#ffffff', Math.max(4, logoFS1 * 0.25));
+        this.logoText2.setVisible(true).setPosition(logoX, logoY + logoFS1 * 0.9)
+          .setFontSize(logoFS2).setStroke('#ffffff', Math.max(4, logoFS2 * 0.25));
+
+        // Glow behind logo
+        this.logoGlow.fillStyle(0xff006a, 0.06);
+        this.logoGlow.fillEllipse(logoX, logoY + logoFS1 * 0.4, (logoFS1 + logoFS2) * 3, (logoFS1 + logoFS2) * 1.2);
+      } else {
+        this.logoText1.setVisible(false);
+        this.logoText2.setVisible(false);
+      }
+    } else if (isLandscapeMobile || rightMargin < 140) {
+      // Tight landscape: show compact logo at top center
+      const logoFS1 = Math.max(12, Math.min(20, w * 0.025));
+      const logoFS2 = Math.max(16, Math.min(26, w * 0.032));
+      const logoX = w / 2;
+      const logoY = Math.max(16, gridY * 0.35);
+
+      this.logoText1.setVisible(true).setPosition(logoX, logoY)
+        .setFontSize(logoFS1).setStroke('#ffffff', Math.max(3, logoFS1 * 0.22));
+      this.logoText2.setVisible(true).setPosition(logoX, logoY + logoFS1 * 0.85)
+        .setFontSize(logoFS2).setStroke('#ffffff', Math.max(3, logoFS2 * 0.22));
     } else {
-      this.logoText1.setVisible(true);
-      this.logoText2.setVisible(true);
-
+      // Desktop: logo in right column above spin button
+      const maxLogoW = rightMargin * 0.9;
+      const logoFS1 = Math.max(16, Math.min(42, maxLogoW * 0.11));
+      const logoFS2 = Math.max(20, Math.min(52, maxLogoW * 0.13));
       const logoX = rightColCenter;
       const logoRegionTop = gridY;
-      const logoRegionBot = spinY - spinSize / 2 - 10;
+      const logoRegionBot = spinY - spinSize / 2 - 8;
       const logoBlockH = logoFS1 + logoFS2 * 0.9;
       const logoY = logoRegionTop + Math.max(0, (logoRegionBot - logoRegionTop - logoBlockH) / 2) + logoFS1 * 0.5;
 
-      this.logoText1.setPosition(logoX, logoY)
-                    .setFontSize(logoFS1)
-                    .setStroke('#ffffff', Math.max(8, logoFS1 * 0.35));
+      this.logoText1.setVisible(true).setPosition(logoX, logoY)
+        .setFontSize(logoFS1).setStroke('#ffffff', Math.max(5, logoFS1 * 0.3));
+      this.logoText2.setVisible(true).setPosition(logoX, logoY + logoFS1 * 0.85)
+        .setFontSize(logoFS2).setStroke('#ffffff', Math.max(5, logoFS2 * 0.3));
 
-      this.logoText2.setPosition(logoX, logoY + logoFS1 * 0.85)
-                    .setFontSize(logoFS2)
-                    .setStroke('#ffffff', Math.max(8, logoFS2 * 0.35));
+      // Logo glow backdrop
+      this.logoGlow.fillStyle(0xff006a, 0.06);
+      this.logoGlow.fillEllipse(logoX, logoY + logoFS1 * 0.4, maxLogoW * 0.8, (logoFS1 + logoFS2) * 1.5);
+    }
 
-      if (!this.tweens.isTweening(this.logoText1)) {
-        this.tweens.add({
-          targets: [this.logoText1, this.logoText2],
-          y: '+=3',
-          yoyo: true,
-          repeat: -1,
-          duration: 2500,
-          ease: 'Sine.easeInOut',
-        });
-      }
+    // Floating animation (only add once)
+    if (this.logoText1.visible && !this.tweens.isTweening(this.logoText1)) {
+      this.tweens.add({
+        targets: [this.logoText1, this.logoText2],
+        y: '+=3', yoyo: true, repeat: -1,
+        duration: 2500, ease: 'Sine.easeInOut',
+      });
     }
 
     // FS Counter
@@ -1120,7 +1008,7 @@ export class Game extends Phaser.Scene {
 
   /** Draw a fully procedural premium spin button — no PNG needed */
   private drawSpinButton(x: number, y: number, size: number) {
-    const g = this.spinBtnImage as any as Phaser.GameObjects.Graphics;
+    const g = this.spinControls.spinGfx;
     if (!g || !g.clear) return;
     g.clear();
     const r = size / 2;
@@ -1204,14 +1092,13 @@ export class Game extends Phaser.Scene {
     /** Update spin button visual and all UI interactivity to reflect current state */
   private updateSpinButtonState() {
     this.updateUIInteractivity();
-    if (!this.spinBtnImage) return;
-    // Spin button is now procedurally drawn, just update alpha for state
+    if (!this.spinControls?.spinGfx) return;
     if (this.autoSpinActive) {
-      this.spinBtnImage.setAlpha(1);
+      this.spinControls.spinGfx.setAlpha(1);
     } else if (this._spinLock) {
-      this.spinBtnImage.setAlpha(0.5);
+      this.spinControls.spinGfx.setAlpha(0.5);
     } else {
-      this.spinBtnImage.setAlpha(1);
+      this.spinControls.spinGfx.setAlpha(1);
     }
   }
 
@@ -1233,15 +1120,14 @@ export class Game extends Phaser.Scene {
 
     // ─── Bet +/- buttons ───
     const betDisabled = busy;
-    this.btnBetMinus.setAlpha(betDisabled ? 0.3 : 1);
-    this.btnBetPlus.setAlpha(betDisabled ? 0.3 : 1);
-    // Disable pointer events by toggling interactive
+    this.spinControls.betMinusGfx.setAlpha(betDisabled ? 0.3 : 1);
+    this.spinControls.betPlusGfx.setAlpha(betDisabled ? 0.3 : 1);
     if (betDisabled) {
-      this.btnBetMinusHit.disableInteractive();
-      this.btnBetPlusHit.disableInteractive();
+      this.spinControls.betMinusHit.disableInteractive();
+      this.spinControls.betPlusHit.disableInteractive();
     } else {
-      this.btnBetMinusHit.setInteractive();
-      this.btnBetPlusHit.setInteractive();
+      this.spinControls.betMinusHit.setInteractive();
+      this.spinControls.betPlusHit.setInteractive();
     }
 
     // ─── Buy Free Spins panels ───
@@ -1295,20 +1181,20 @@ export class Game extends Phaser.Scene {
   }
 
   private wireInteractions() {
-    this.spinBtnHit.on('pointerdown', () => {
-      this.tweens.add({ targets: this.spinBtnImage, scaleX: this.spinBtnImage.scaleX * 0.9, scaleY: this.spinBtnImage.scaleY * 0.9, yoyo: true, duration: 80 });
+    this.spinControls.spinHit.on('pointerdown', () => {
+      this.tweens.add({ targets: this.spinControls.spinGfx, scaleX: this.spinControls.spinGfx.scaleX * 0.9, scaleY: this.spinControls.spinGfx.scaleY * 0.9, yoyo: true, duration: 80 });
       this.handleUniversalAction();
     });
 
-    this.spinBtnHit.on('pointerover', () => {
-      if (!this._spinLock) this.spinBtnLabel.setColor('#ccffdd');
+    this.spinControls.spinHit.on('pointerover', () => {
+      if (!this._spinLock) this.spinControls.spinLabel.setColor('#ccffdd');
     });
-    this.spinBtnHit.on('pointerout', () => {
+    this.spinControls.spinHit.on('pointerout', () => {
       this.updateSpinButtonState();
     });
 
     // Auto play
-    this.btnAutoHit.on('pointerdown', () => {
+    this.spinControls.autoHit.on('pointerdown', () => {
       if (this.fsActive || this.anyOverlayOpen()) return;
       this.audio.playSound('button');
       if (!this.autoSpinActive) {
@@ -1326,13 +1212,13 @@ export class Game extends Phaser.Scene {
     });
 
     // Bet controls — open the bet overlay panel
-    this.btnBetMinusHit.on('pointerdown', () => {
+    this.spinControls.betMinusHit.on('pointerdown', () => {
       if (this.anyOverlayOpen()) return;
       this.audio.playSound('button');
       this.betOverlay.syncState(this.betPresetIndex, options.anteBetEnabled, options.anteBetCostMultiplier);
       this.betOverlay.toggle();
     });
-    this.btnBetPlusHit.on('pointerdown', () => {
+    this.spinControls.betPlusHit.on('pointerdown', () => {
       if (this.anyOverlayOpen()) return;
       this.audio.playSound('button');
       this.betOverlay.syncState(this.betPresetIndex, options.anteBetEnabled, options.anteBetCostMultiplier);
@@ -1368,8 +1254,8 @@ export class Game extends Phaser.Scene {
     addHover(this.btnPaytable, [this.btnPaytable, this.iconPaytable]);
     addHover(this.btnSettings, [this.btnSettings, this.iconSettings]);
     addHover(this.btnFullscreen, [this.btnFullscreen, this.iconFullscreen]);
-    addHover(this.spinBtnHit, this.spinBtnImage);
-    addHover(this.btnAutoHit, this.btnAutoGraphics);
+    addHover(this.spinControls.spinHit, this.spinControls.spinGfx);
+    addHover(this.spinControls.autoHit, this.spinControls.autoGfx);
 
     // Buy features (with confirmation) — also guard overlays
     this.buySuperHit.on('pointerdown', () => {
@@ -1474,12 +1360,12 @@ export class Game extends Phaser.Scene {
 
   /** Update auto-spin button display */
   private updateAutoSpinDisplay() {
-    const w = this.btnAutoHit.width;
-    const h = this.btnAutoHit.height;
-    const gfx = this.btnAutoGraphics;
+    const w = this.spinControls.autoHit.width;
+    const h = this.spinControls.autoHit.height;
+    const gfx = this.spinControls.autoGfx;
     
     gfx.clear();
-    gfx.setPosition(this.btnAutoHit.x, this.btnAutoHit.y);
+    gfx.setPosition(this.spinControls.autoHit.x, this.spinControls.autoHit.y);
     const cx = 0;
     const cy = 0;
 
@@ -1489,7 +1375,7 @@ export class Game extends Phaser.Scene {
 
     if (this.autoSpinActive) {
       const label = this.autoSpinRemaining > 0 ? `STOP (${this.autoSpinRemaining})` : 'STOP';
-      this.txtAuto.setText(label).setColor('#ff0066').setShadow(0,0,'#000',0,false);
+      this.spinControls.autoTxt.setText(label).setColor('#ff0066').setShadow(0,0,'#000',0,false);
       
       // Active State (Bright White / Pink)
       gfx.fillStyle(0xffffff, 1);
@@ -1502,7 +1388,7 @@ export class Game extends Phaser.Scene {
       gfx.fillStyle(0xffffff, 0.8);
       gfx.fillRoundedRect(cx - w/2 + 3, cy - h/2 + 2, w - 6, h/2 - 2, (h/2 - 2));
     } else {
-      this.txtAuto.setText('AUTOPLAY').setColor('#ffffff').setShadow(0,2,'#000000',0,true);
+      this.spinControls.autoTxt.setText('AUTOPLAY').setColor('#ffffff').setShadow(0,2,'#000000',0,true);
       
       // Inactive State (Deep Purple / Chrome)
       gfx.fillStyle(0x2a1144, 1);
@@ -1709,74 +1595,12 @@ export class Game extends Phaser.Scene {
     const baseBet = BET_PRESETS[this.betPresetIndex];
     return options.anteBetEnabled ? baseBet * options.anteBetCostMultiplier : baseBet;
   }
-  private _prevBalance = -1;
   updateMoneyDisplay() {
-    const newBal = this.valueMoney;
-    const decreased = this._prevBalance >= 0 && newBal < this._prevBalance;
-    this._prevBalance = newBal;
-
-    this.txtMoney.setText(DisplayBalance({ amount: newBal, currency: this.currency }));
-    this.tweens.killTweensOf(this.txtMoney);
-
-    if (decreased) {
-      // Flash red briefly on deduction
-      this.txtMoney.setColor('#ff4466');
-      this.txtMoney.setScale(0.9);
-      this.tweens.add({
-        targets: this.txtMoney,
-        scaleX: 1,
-        scaleY: 1,
-        duration: 400,
-        ease: 'Back.easeOut',
-        onComplete: () => {
-          this.txtMoney.setColor('#ffffff');
-        }
-      });
-    } else {
-      // Pop on increase
-      this.txtMoney.setColor('#44ff88');
-      this.txtMoney.setScale(1.25);
-      this.tweens.add({
-        targets: this.txtMoney,
-        scaleX: 1,
-        scaleY: 1,
-        duration: 350,
-        ease: 'Back.easeOut',
-        onComplete: () => {
-          this.txtMoney.setColor('#ffffff');
-        }
-      });
-    }
+    this.bottomBarHUD.updateMoneyDisplay(this.valueMoney, this.currency);
   }
 
   updateBetDisplay() {
-    if (this.stakeEngine.isReplayMode()) {
-      const params = new URLSearchParams(window.location.search);
-      const amount = parseFloat(params.get('amount') || '1');
-      const mode = params.get('mode') || 'BASE';
-      const formattedBase = DisplayBalance({ amount, currency: this.currency });
-      
-      const rData = (this.stakeEngine as any).replayData;
-      if (rData && rData.costMultiplier > 1) {
-        const effective = amount * rData.costMultiplier;
-        const formattedEffective = DisplayBalance({ amount: effective, currency: this.currency });
-        this.txtBet.setText(`${mode} ${formattedBase}, ${formattedEffective} REAL COST`).setFontSize(14);
-      } else {
-        this.txtBet.setText(formattedBase).setFontSize(24);
-      }
-      return;
-    }
-
-    const baseBet = BET_PRESETS[this.betPresetIndex];
-    const effectiveBet = this.getEffectiveBet();
-    const formattedEffective = DisplayBalance({ amount: effectiveBet, currency: this.currency });
-    
-    if (options.anteBetEnabled) {
-      const formattedBase = DisplayBalance({ amount: baseBet, currency: this.currency });
-      this.txtBet.setText(`${formattedBase} (REAL COST ${formattedEffective})`).setFontSize(16);
-    } else {
-      this.txtBet.setText(formattedEffective).setFontSize(24);
-    }
+    this.bottomBarHUD.updateBetDisplay(this.betPresetIndex, this.currency, options.anteBetEnabled);
   }
 
   updateLastWinDisplay() {
@@ -1786,18 +1610,18 @@ export class Game extends Phaser.Scene {
     }
 
     // Kill any lingering pulse tweens
-    this.tweens.killTweensOf([this.txtLastWin, this.txtLastWinLabel]);
-    this.txtLastWin.setScale(1);
-    this.txtLastWinLabel.setScale(1);
+    this.tweens.killTweensOf([this.bottomBarHUD.txtLastWin, this.bottomBarHUD.txtLastWinLabel]);
+    this.bottomBarHUD.txtLastWin.setScale(1);
+    this.bottomBarHUD.txtLastWinLabel.setScale(1);
 
     // Hide win glow
-    this.tweens.killTweensOf(this.winPillGlow);
-    this.winPillGlow.setAlpha(0);
+    this.tweens.killTweensOf(this.bottomBarHUD.winPillGlow);
+    this.bottomBarHUD.winPillGlow.setAlpha(0);
 
     if (target <= 0) {
       this._displayedWin = 0;
-      this.txtLastWin.setText(DisplayBalance({ amount: 0, currency: this.currency }));
-      this.txtLastWin.setColor('#44ff88').setShadow(0, 0, '#000', 0, false, false);
+      this.bottomBarHUD.txtLastWin.setText(DisplayBalance({ amount: 0, currency: this.currency }));
+      this.bottomBarHUD.txtLastWin.setColor('#44ff88').setShadow(0, 0, '#000', 0, false, false);
       return;
     }
 
@@ -1808,11 +1632,11 @@ export class Game extends Phaser.Scene {
     const duration = Math.min(1500, Math.max(500, Math.abs(delta) * 15));
 
     // Golden glow text
-    this.txtLastWin.setColor('#ffea00').setShadow(0, 2, '#ffaa00', 6, true, true);
+    this.bottomBarHUD.txtLastWin.setColor('#ffea00').setShadow(0, 2, '#ffaa00', 6, true, true);
 
     // Pulse text while counting
     this.tweens.add({
-      targets: [this.txtLastWin, this.txtLastWinLabel],
+      targets: [this.bottomBarHUD.txtLastWin, this.bottomBarHUD.txtLastWinLabel],
       scaleX: 1.12,
       scaleY: 1.12,
       yoyo: true,
@@ -1823,14 +1647,14 @@ export class Game extends Phaser.Scene {
 
     // Big win: glow the pill itself
     if (isBigWin) {
-      const b = (this as any)._winPillBounds;
+      const b = this.bottomBarHUD.getWinPillBounds();
       if (b) {
-        this.winPillGlow.clear();
-        this.winPillGlow.fillStyle(0xffaa00, 0.25);
-        this.winPillGlow.fillRoundedRect(b.x - 4, b.y - 4, b.w + 8, b.h + 8, (b.h + 8) / 2);
-        this.winPillGlow.setAlpha(0);
+        this.bottomBarHUD.winPillGlow.clear();
+        this.bottomBarHUD.winPillGlow.fillStyle(0xffaa00, 0.25);
+        this.bottomBarHUD.winPillGlow.fillRoundedRect(b.x - 4, b.y - 4, b.w + 8, b.h + 8, (b.h + 8) / 2);
+        this.bottomBarHUD.winPillGlow.setAlpha(0);
         this.tweens.add({
-          targets: this.winPillGlow,
+          targets: this.bottomBarHUD.winPillGlow,
           alpha: { from: 0, to: 1 },
           yoyo: true,
           repeat: -1,
@@ -1848,20 +1672,20 @@ export class Game extends Phaser.Scene {
       onUpdate: (tween: Phaser.Tweens.Tween) => {
         const progress = (tween.getValue?.() ?? 0) / 100;
         this._displayedWin = start + delta * progress;
-        this.txtLastWin.setText(DisplayBalance({ amount: this._displayedWin, currency: this.currency }));
+        this.bottomBarHUD.txtLastWin.setText(DisplayBalance({ amount: this._displayedWin, currency: this.currency }));
       },
       onComplete: () => {
         this._displayedWin = target;
-        this.txtLastWin.setText(DisplayBalance({ amount: target, currency: this.currency }));
+        this.bottomBarHUD.txtLastWin.setText(DisplayBalance({ amount: target, currency: this.currency }));
 
         // Stop pulsing
-        this.tweens.killTweensOf([this.txtLastWin, this.txtLastWinLabel]);
-        this.txtLastWin.setScale(1);
-        this.txtLastWinLabel.setScale(1);
+        this.tweens.killTweensOf([this.bottomBarHUD.txtLastWin, this.bottomBarHUD.txtLastWinLabel]);
+        this.bottomBarHUD.txtLastWin.setScale(1);
+        this.bottomBarHUD.txtLastWinLabel.setScale(1);
 
         // Final celebratory pop
         this.tweens.add({
-          targets: this.txtLastWin,
+          targets: this.bottomBarHUD.txtLastWin,
           scaleX: 1.3,
           scaleY: 1.3,
           duration: 250,
@@ -1871,9 +1695,9 @@ export class Game extends Phaser.Scene {
 
         // Settle win glow
         if (isBigWin) {
-          this.tweens.killTweensOf(this.winPillGlow);
+          this.tweens.killTweensOf(this.bottomBarHUD.winPillGlow);
           this.tweens.add({
-            targets: this.winPillGlow,
+            targets: this.bottomBarHUD.winPillGlow,
             alpha: 0.5,
             duration: 600,
             ease: 'Sine.easeOut'
@@ -1882,7 +1706,7 @@ export class Game extends Phaser.Scene {
 
         // Settle text to green
         this.time.delayedCall(400, () => {
-          this.txtLastWin.setColor('#44ff88').setShadow(0, 0, '#000', 0, false, false);
+          this.bottomBarHUD.txtLastWin.setColor('#44ff88').setShadow(0, 0, '#000', 0, false, false);
         });
       },
     });
