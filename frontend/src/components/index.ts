@@ -11,3 +11,4 @@ export { SettingsOverlay } from './SettingsOverlay';
 export { SpinControls } from './SpinControls';
 export { WinCelebration } from './WinCelebration';
 export { AutoPlayOverlay } from './AutoPlayOverlay';
+export { BackgroundManager } from './BackgroundManager';
