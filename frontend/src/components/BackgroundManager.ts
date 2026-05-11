@@ -3,9 +3,11 @@ import Phaser from 'phaser';
 export class BackgroundManager {
   private scene: Phaser.Scene;
   private bgBase!: Phaser.GameObjects.Image;
+  private overlay!: Phaser.GameObjects.Rectangle;
   private raysGraphics!: Phaser.GameObjects.Graphics;
   private raysContainer!: Phaser.GameObjects.Container;
   private dustEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
+  private floaters: Phaser.GameObjects.Sprite[] = [];
   
   // Reactivity
   private pulseTween: Phaser.Tweens.Tween | null = null;
@@ -37,8 +39,8 @@ export class BackgroundManager {
     this.bgBase.setScale(scale);
     
     // Add a slight pink tint overlay to warm it up to match the grid
-    const overlay = this.scene.add.rectangle(w/2, h/2, w, h, 0xffbbdd, 0.1).setDepth(0);
-    overlay.setBlendMode(Phaser.BlendModes.ADD);
+    this.overlay = this.scene.add.rectangle(w/2, h/2, w, h, 0xffbbdd, 0.1).setDepth(0);
+    this.overlay.setBlendMode(Phaser.BlendModes.ADD);
   }
 
   private createGodRays() {
@@ -49,22 +51,7 @@ export class BackgroundManager {
     this.raysGraphics = this.scene.add.graphics();
     this.raysContainer.add(this.raysGraphics);
     
-    const rayCount = 12;
-    const rayLength = Math.max(w, h) * 1.5;
-    
-    this.raysGraphics.fillStyle(0xffffff, this.baseRayAlpha);
-    
-    for (let i = 0; i < rayCount; i++) {
-      const angle = (i / rayCount) * Math.PI * 2;
-      const angleNext = ((i + 0.4) / rayCount) * Math.PI * 2; // 0.4 for ray width
-      
-      this.raysGraphics.beginPath();
-      this.raysGraphics.moveTo(0, 0);
-      this.raysGraphics.lineTo(Math.cos(angle) * rayLength, Math.sin(angle) * rayLength);
-      this.raysGraphics.lineTo(Math.cos(angleNext) * rayLength, Math.sin(angleNext) * rayLength);
-      this.raysGraphics.closePath();
-      this.raysGraphics.fillPath();
-    }
+    this.drawRays(w, h, this.baseRayAlpha);
     
     this.raysContainer.setBlendMode(Phaser.BlendModes.ADD);
     
@@ -76,6 +63,27 @@ export class BackgroundManager {
       repeat: -1,
       ease: 'Linear'
     });
+  }
+
+  /** Draw the god ray triangles at the specified alpha */
+  private drawRays(w: number, h: number, alpha: number) {
+    this.raysGraphics.clear();
+    const rayCount = 12;
+    const rayLength = Math.max(w, h) * 1.5;
+    
+    this.raysGraphics.fillStyle(0xffffff, alpha);
+    
+    for (let i = 0; i < rayCount; i++) {
+      const angle = (i / rayCount) * Math.PI * 2;
+      const angleNext = ((i + 0.4) / rayCount) * Math.PI * 2;
+      
+      this.raysGraphics.beginPath();
+      this.raysGraphics.moveTo(0, 0);
+      this.raysGraphics.lineTo(Math.cos(angle) * rayLength, Math.sin(angle) * rayLength);
+      this.raysGraphics.lineTo(Math.cos(angleNext) * rayLength, Math.sin(angleNext) * rayLength);
+      this.raysGraphics.closePath();
+      this.raysGraphics.fillPath();
+    }
   }
 
   private createSugarDust() {
@@ -118,37 +126,30 @@ export class BackgroundManager {
 
     for (let i = 0; i < candyCount; i++) {
       const key = Phaser.Math.RND.pick(candyKeys);
-      // Spawn at random positions across the screen
       const x = Phaser.Math.Between(0, w);
       const y = Phaser.Math.Between(0, h);
       
       const candy = this.scene.add.sprite(x, y, key).setDepth(0);
       
-      // Depth simulation: 
-      // Smaller scale = farther away = slower, more transparent
-      // Larger scale = closer = faster, less transparent
+      // Depth simulation: smaller scale = farther = slower + more transparent
       const scale = Phaser.Math.FloatBetween(0.3, 0.8);
       candy.setScale(scale);
-      candy.setAlpha(scale * 0.5); // Max alpha around 0.4
-      
-      // Optional: Add a slight tint or blur if using WebGL shaders, 
-      // but for basic performance we'll just use alpha and scale to imply depth.
-      candy.setTint(0xffccdd); // Soft pinkish tint
+      candy.setAlpha(scale * 0.5);
+      candy.setTint(0xffccdd);
 
+      this.floaters.push(candy);
       this.animateFloater(candy, w, h);
     }
   }
 
   private animateFloater(candy: Phaser.GameObjects.Sprite, w: number, h: number) {
-    if (!candy.scene) return; // Prevent errors if scene is destroyed
+    if (!candy.scene) return;
 
-    const scale = candy.scaleX; // Use scale to determine speed
+    const scale = candy.scaleX;
     const durationX = Phaser.Math.Between(20000, 35000) / scale;
     const durationY = Phaser.Math.Between(25000, 40000) / scale;
     
-    // Determine random destination within reasonable bounds
     const destX = Phaser.Math.Between(candy.x - 300, candy.x + 300);
-    const destY = Phaser.Math.Between(-100, h + 100);
 
     // X axis drift
     this.scene.tweens.add({
@@ -182,6 +183,7 @@ export class BackgroundManager {
   }
 
   public resize(w: number, h: number) {
+    // Base image
     if (this.bgBase) {
       this.bgBase.setPosition(w / 2, h / 2);
       const scaleX = w / this.bgBase.texture.getSourceImage().width;
@@ -189,13 +191,34 @@ export class BackgroundManager {
       this.bgBase.setScale(Math.max(scaleX, scaleY));
     }
     
-    if (this.raysContainer) {
-      this.raysContainer.setPosition(w / 2, -100);
+    // Pink tint overlay
+    if (this.overlay) {
+      this.overlay.setPosition(w / 2, h / 2).setSize(w, h);
     }
     
+    // God rays — reposition and redraw to cover new screen size
+    if (this.raysContainer) {
+      this.raysContainer.setPosition(w / 2, -100);
+      this.drawRays(w, h, this.baseRayAlpha);
+    }
+    
+    // Sugar dust emitter bounds
     if (this.dustEmitter) {
       this.dustEmitter.particleX = { min: 0, max: w } as any;
       this.dustEmitter.particleY = { min: -100, max: h + 100 } as any;
+    }
+    
+    // Clamp floating candies to visible bounds
+    for (const candy of this.floaters) {
+      if (candy && candy.scene) {
+        // If a floater drifted way out of the new bounds, nudge it back
+        if (candy.x < -200 || candy.x > w + 200) {
+          candy.x = Phaser.Math.Between(50, w - 50);
+        }
+        if (candy.y < -200 || candy.y > h + 200) {
+          candy.y = Phaser.Math.Between(50, h - 50);
+        }
+      }
     }
   }
 
@@ -205,62 +228,31 @@ export class BackgroundManager {
   public triggerWinPulse(intensity: number = 1) {
     if (this.pulseTween) this.pulseTween.stop();
     
-    // Cap intensity
     const pulseStrength = Math.min(intensity, 3);
     const targetAlpha = this.baseRayAlpha + (0.15 * pulseStrength);
+    const w = this.scene.cameras.main.width;
+    const h = this.scene.cameras.main.height;
     
-    this.raysContainer.setAlpha(targetAlpha);
+    // Flash the rays brighter
+    this.drawRays(w, h, targetAlpha);
+    this.raysContainer.setAlpha(1);
     
+    // Fade back to normal over time
     this.pulseTween = this.scene.tweens.add({
       targets: this.raysContainer,
-      alpha: 1, // Full opacity container
+      alpha: 1,
       duration: 600,
       ease: 'Sine.easeOut',
-      onStart: () => {
-        this.raysGraphics.clear();
-        this.raysGraphics.fillStyle(0xffffff, targetAlpha);
-        // Redraw rays with higher alpha
-        const w = this.scene.cameras.main.width;
-        const h = this.scene.cameras.main.height;
-        const rayCount = 12;
-        const rayLength = Math.max(w, h) * 1.5;
-        
-        for (let i = 0; i < rayCount; i++) {
-          const angle = (i / rayCount) * Math.PI * 2;
-          const angleNext = ((i + 0.4) / rayCount) * Math.PI * 2;
-          
-          this.raysGraphics.beginPath();
-          this.raysGraphics.moveTo(0, 0);
-          this.raysGraphics.lineTo(Math.cos(angle) * rayLength, Math.sin(angle) * rayLength);
-          this.raysGraphics.lineTo(Math.cos(angleNext) * rayLength, Math.sin(angleNext) * rayLength);
-          this.raysGraphics.closePath();
-          this.raysGraphics.fillPath();
-        }
-      },
       onComplete: () => {
+        // Smoothly transition ray alpha back to base
+        const counter = { val: targetAlpha };
         this.scene.tweens.add({
-          targets: this.raysContainer,
-          alpha: 1,
+          targets: counter,
+          val: this.baseRayAlpha,
           duration: 1000,
-          onUpdate: (t) => {
-            // Fade back to normal
-            const currentAlpha = Phaser.Math.Linear(targetAlpha, this.baseRayAlpha, t.progress);
-            this.raysGraphics.clear();
-            this.raysGraphics.fillStyle(0xffffff, currentAlpha);
-            const w = this.scene.cameras.main.width;
-            const h = this.scene.cameras.main.height;
-            const rayCount = 12;
-            const rayLength = Math.max(w, h) * 1.5;
-            for (let i = 0; i < rayCount; i++) {
-              const angle = (i / rayCount) * Math.PI * 2;
-              const angleNext = ((i + 0.4) / rayCount) * Math.PI * 2;
-              this.raysGraphics.beginPath();
-              this.raysGraphics.moveTo(0, 0);
-              this.raysGraphics.lineTo(Math.cos(angle) * rayLength, Math.sin(angle) * rayLength);
-              this.raysGraphics.lineTo(Math.cos(angleNext) * rayLength, Math.sin(angleNext) * rayLength);
-              this.raysGraphics.closePath();
-              this.raysGraphics.fillPath();
-            }
+          ease: 'Sine.easeInOut',
+          onUpdate: () => {
+            this.drawRays(w, h, counter.val);
           }
         });
       }

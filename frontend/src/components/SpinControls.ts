@@ -159,16 +159,18 @@ export class SpinControls {
     this.spinGfx.setPosition(spinX, spinY);
     this.drawSpinButton(0, 0, spinSize);
 
-    // ── AutoPlay pill — directly beneath spin ──
-    const autoFS = isLandscapeMobile ? 10 : isStacked ? 10 : 12;
-    const autoY = spinY + spinSize / 2 + (isStacked ? 24 : 32); // Increased to clear spin button's 3D drop shadow
+    // ── AutoPlay pill — directly beneath spin, scaled proportionally ──
+    const autoFS = Math.max(8, Math.min(14, spinSize * 0.13));
+    const autoPillW = Math.max(60, spinSize * 1.0);
+    const autoPillH = Math.max(22, spinSize * 0.28);
+    const autoY = spinY + spinSize / 2 + (isStacked ? 24 : 32);
     if (isStacked && autoY > safeH - 2) {
       // Hide autoplay if it would clip into the bar
       this.autoHit.setVisible(false);
       this.autoTxt.setVisible(false);
       this.autoGfx.setVisible(false);
     } else {
-      this.autoHit.setVisible(true).setPosition(spinX, autoY).setSize(88, 28);
+      this.autoHit.setVisible(true).setPosition(spinX, autoY).setSize(autoPillW, autoPillH);
       this.autoTxt.setVisible(true).setPosition(spinX, autoY).setFontSize(autoFS);
       this.autoGfx.setVisible(true);
     }
