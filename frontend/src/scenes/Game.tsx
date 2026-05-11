@@ -254,11 +254,6 @@ export class Game extends Phaser.Scene {
     this.logoContainer = this.add.container(0, 0);
     this.logoWrapper.add(this.logoContainer);
 
-    // Deep shadow behind entire logo for background separation
-    this.logoGlow = this.add.graphics();
-    this.logoGlow.fillStyle(0x1a0022, 0.3);
-    this.logoGlow.fillEllipse(0, 15, 360, 140);
-
     // Apply premium styling with gradient and thick border with shadow
     this.logoText1 = this.add
       .text(0, -20, 'SUGAR BLAST', {
@@ -270,7 +265,7 @@ export class Game extends Phaser.Scene {
         strokeThickness: 24,
       })
       .setOrigin(0.5, 0.5)
-      .setShadow(0, 8, '#ff006a', 0, true, false);
+      .setShadow(0, 14, '#880033', 0, true, false);
 
     this.logoText1.updateText();
     const gradient1 = this.logoText1.context.createLinearGradient(0, 0, 0, this.logoText1.height);
@@ -290,7 +285,7 @@ export class Game extends Phaser.Scene {
         strokeThickness: 24,
       })
       .setOrigin(0.5, 0.5)
-      .setShadow(0, 8, '#cc6600', 0, true, false);
+      .setShadow(0, 14, '#883300', 0, true, false);
 
     this.logoText2.updateText();
     const gradient2 = this.logoText2.context.createLinearGradient(0, 0, 0, this.logoText2.height);
@@ -300,7 +295,7 @@ export class Game extends Phaser.Scene {
     gradient2.addColorStop(1, '#cc6600');
     this.logoText2.setFill(gradient2);
 
-    this.logoContainer.add([this.logoGlow, this.logoText1, this.logoText2]);
+    this.logoContainer.add([this.logoText1, this.logoText2]);
 
     // Buy buttons setup
     const btnStyle = {
@@ -1345,45 +1340,39 @@ export class Game extends Phaser.Scene {
 
     // Drop shadow
     gfx.fillStyle(0x000000, 0.6);
-    gfx.fillCircle(cx, cy + 3, r + 2);
+    gfx.fillCircle(cx, cy + 4, r + 4);
 
-    // Thick gold outer ring (matches spin button)
-    gfx.fillGradientStyle(0xddaa33, 0xeebb44, 0xaa7722, 0x886611, 1);
+    // Thick multi-layered gold bezel
+    gfx.fillGradientStyle(0x774400, 0x553300, 0x996611, 0x664400, 1);
+    gfx.fillCircle(cx, cy, r + 4);
+    gfx.fillGradientStyle(0xffdd55, 0xffbb22, 0xcc8800, 0xaa5500, 1);
     gfx.fillCircle(cx, cy, r + 2);
+    gfx.fillGradientStyle(0xaa6600, 0x884400, 0xffcc33, 0xdd9900, 1);
+    gfx.fillCircle(cx, cy, r - 2);
 
-    // Silver inner ring for 3D metallic depth
-    gfx.fillGradientStyle(0xcccccc, 0xeeeeee, 0x999999, 0x777777, 1);
-    gfx.fillCircle(cx, cy, r - 1);
+    // Jewel Center (Spherical Candy Look)
+    const candyR = r - 4;
+    gfx.fillStyle(0x880022, 1);
+    gfx.fillCircle(cx, cy, candyR);
+    gfx.fillGradientStyle(0xcc0044, 0xaa0033, 0xff2266, 0xdd1144, 1);
+    gfx.fillCircle(cx, cy - 1, candyR * 0.95);
+    gfx.fillGradientStyle(0xff3377, 0xee1155, 0xff6699, 0xdd3366, 1);
+    gfx.fillCircle(cx - 1, cy - 2, candyR * 0.85);
 
-    // Deep ruby / pink inner gradient (button face)
-    gfx.fillGradientStyle(0xff4488, 0xff2266, 0xcc0044, 0xaa0033, 1);
-    gfx.fillCircle(cx, cy, r - 3);
-
-    // Glossy top hemisphere highlight
+    // High-gloss crescent highlight at the top-left
     gfx.beginPath();
-    gfx.arc(cx, cy, r - 3, Math.PI, 0, false);
+    gfx.arc(cx - 2, cy - 2, candyR * 0.7, Math.PI * 0.7, Math.PI * 1.8, false);
+    gfx.arc(cx - 1, cy - 1, candyR * 0.7, Math.PI * 1.8, Math.PI * 0.7, true);
     gfx.closePath();
-    gfx.fillStyle(0xffffff, 0.25);
+    gfx.fillStyle(0xffffff, 0.65);
     gfx.fillPath();
-
-    // Inner rim highlight
-    gfx.lineStyle(1.5, 0xffffff, 0.2);
-    gfx.strokeCircle(cx, cy, r - 3);
-
-    // Sparkle dots on the gold ring
-    const sparkleR = 1.5;
-    gfx.fillStyle(0xffffff, 0.6);
-    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 2) {
-      const sx = cx + Math.cos(angle) * (r);
-      const sy = cy + Math.sin(angle) * (r);
-      gfx.fillCircle(sx, sy, sparkleR);
-    }
 
     // Icon (plus/minus) — thicker and drop shadowed
     const arm = size * 0.22;
     const thick = Math.max(3, size * 0.12);
     
-    gfx.fillStyle(0x000000, 0.3); // Icon Shadow
+    // Icon shadow (inset into the candy)
+    gfx.fillStyle(0x550022, 0.8);
     if (isPlus) {
       gfx.fillRoundedRect(cx - thick / 2, cy - arm + 2, thick, arm * 2, 2);
       gfx.fillRoundedRect(cx - arm, cy - thick / 2 + 2, arm * 2, thick, 2);
@@ -1391,7 +1380,8 @@ export class Game extends Phaser.Scene {
       gfx.fillRoundedRect(cx - arm, cy - thick / 2 + 2, arm * 2, thick, 2);
     }
 
-    gfx.fillStyle(0xffffff, 1); // Icon Body
+    // Icon Body (White)
+    gfx.fillStyle(0xffffff, 1);
     if (isPlus) {
       gfx.fillRoundedRect(cx - thick / 2, cy - arm, thick, arm * 2, 2);
       gfx.fillRoundedRect(cx - arm, cy - thick / 2, arm * 2, thick, 2);
@@ -1407,64 +1397,63 @@ export class Game extends Phaser.Scene {
     g.clear();
     const r = size / 2;
 
-    // Outer soft neon glow
-    g.fillStyle(0xff006a, 0.1);
-    g.fillCircle(x, y, r + 18);
-    g.fillStyle(0xff006a, 0.05);
-    g.fillCircle(x, y, r + 28);
-
     // Drop shadow
     g.fillStyle(0x000000, 0.5);
-    g.fillCircle(x, y + 4, r + 4);
+    g.fillCircle(x, y + 6, r + 8);
 
-    // Gold outer ring
-    g.fillGradientStyle(0xddaa33, 0xeebb44, 0xaa7722, 0x886611, 1);
+    // Thick multi-layered gold bezel
+    // Layer 1: Outer dark gold edge
+    g.fillGradientStyle(0x774400, 0x553300, 0x996611, 0x664400, 1);
+    g.fillCircle(x, y, r + 6);
+    // Layer 2: Main bright gold ring
+    g.fillGradientStyle(0xffdd55, 0xffbb22, 0xcc8800, 0xaa5500, 1);
     g.fillCircle(x, y, r + 4);
+    // Layer 3: Bezel inner slope (darker)
+    g.fillGradientStyle(0xaa6600, 0x884400, 0xffcc33, 0xdd9900, 1);
+    g.fillCircle(x, y, r - 2);
 
-    // Silver inner ring
-    g.fillGradientStyle(0xcccccc, 0xeeeeee, 0x999999, 0x777777, 1);
-    g.fillCircle(x, y, r - 1);
+    // Jewel Center (Spherical Candy Look)
+    const candyR = r - 6;
+    // Base dark ruby color
+    g.fillStyle(0x880022, 1);
+    g.fillCircle(x, y, candyR);
+    // Mid layer shifted up
+    g.fillGradientStyle(0xcc0044, 0xaa0033, 0xff2266, 0xdd1144, 1);
+    g.fillCircle(x, y - 2, candyR * 0.95);
+    // Bright center shifted further up-left
+    g.fillGradientStyle(0xff3377, 0xee1155, 0xff6699, 0xdd3366, 1);
+    g.fillCircle(x - 2, y - 4, candyR * 0.85);
 
-    // Gold inner border
-    g.fillGradientStyle(0xddaa33, 0xeebb44, 0xaa7722, 0x886611, 1);
-    g.fillCircle(x, y, r - 4);
-
-    // Main ruby/pink gradient face
-    g.fillGradientStyle(0xff4488, 0xff2266, 0xcc0044, 0xaa0033, 1);
-    g.fillCircle(x, y, r - 7);
-
-    // Glossy top hemisphere highlight
+    // High-gloss crescent highlight at the top-left
     g.beginPath();
-    g.arc(x, y, r - 7, Math.PI, 0, false);
+    g.arc(x - 4, y - 4, candyR * 0.7, Math.PI * 0.7, Math.PI * 1.8, false);
+    g.arc(x - 2, y - 2, candyR * 0.7, Math.PI * 1.8, Math.PI * 0.7, true);
     g.closePath();
-    g.fillStyle(0xffffff, 0.22);
+    g.fillStyle(0xffffff, 0.65);
     g.fillPath();
 
-    // Inner rim highlight
-    g.lineStyle(1.5, 0xffffff, 0.15);
-    g.strokeCircle(x, y, r - 7);
+    // Secondary subtle highlight on bottom right
+    g.beginPath();
+    g.arc(x + 4, y + 4, candyR * 0.7, 0, Math.PI * 0.5, false);
+    g.arc(x + 2, y + 2, candyR * 0.6, Math.PI * 0.5, 0, true);
+    g.closePath();
+    g.fillStyle(0xffffff, 0.25);
+    g.fillPath();
 
     // Play triangle icon
-    const triSize = r * 0.45;
+    const triSize = candyR * 0.45;
     const triX = x + triSize * 0.15; // slight offset right for visual centering
-    g.fillStyle(0xffffff, 0.95);
-    g.beginPath();
-    g.moveTo(triX - triSize * 0.5, y - triSize * 0.6);
-    g.lineTo(triX + triSize * 0.65, y);
-    g.lineTo(triX - triSize * 0.5, y + triSize * 0.6);
-    g.closePath();
-    g.fillPath();
-
+    
     // Triangle shadow for depth
-    g.fillStyle(0x000000, 0.15);
+    g.fillStyle(0x550022, 0.8);
     g.beginPath();
-    g.moveTo(triX - triSize * 0.5, y - triSize * 0.6 + 3);
-    g.lineTo(triX + triSize * 0.65, y + 3);
-    g.lineTo(triX - triSize * 0.5, y + triSize * 0.6 + 3);
+    g.moveTo(triX - triSize * 0.5, y - triSize * 0.6 + 4);
+    g.lineTo(triX + triSize * 0.65, y + 4);
+    g.lineTo(triX - triSize * 0.5, y + triSize * 0.6 + 4);
     g.closePath();
     g.fillPath();
 
-    // Re-draw white triangle on top of shadow
+    // Triangle body
     g.fillStyle(0xffffff, 0.95);
     g.beginPath();
     g.moveTo(triX - triSize * 0.5, y - triSize * 0.6);
