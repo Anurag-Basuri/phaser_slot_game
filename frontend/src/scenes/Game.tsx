@@ -13,6 +13,7 @@ import {
   BetOverlay,
   BottomBarHUD,
   SpinControls,
+  BackgroundManager,
 } from '../components';
 import { getStakeEngine } from '../engine';
 import { SpinEventData, StakeEngineClient } from '../engine/StakeEngineClient';
@@ -42,7 +43,7 @@ export class Game extends Phaser.Scene {
   private skipScreensActive = false;
 
   // UI elements
-  private bgImage!: Phaser.GameObjects.Image;
+  private backgroundManager!: BackgroundManager;
   private gridPanel!: Phaser.GameObjects.Image;
   private logoWrapper!: Phaser.GameObjects.Container;
   private logoContainer!: Phaser.GameObjects.Container;
@@ -236,8 +237,8 @@ export class Game extends Phaser.Scene {
     const w = this.scale.width;
     const h = this.scale.height;
 
-    // === BACKGROUND (actual candy-land panorama) ===
-    this.bgImage = this.add.image(w / 2, h / 2, 'game_bg').setDepth(0);
+    // === BACKGROUND (Dynamic Sugar Rush 1000 animations) ===
+    this.backgroundManager = new BackgroundManager(this);
 
     // === GRID PANEL (authentic Sugar Rush 1000 frame image) ===
     this.gridPanel = this.add.image(0, 0, 'grid_panel').setDepth(1);
@@ -585,12 +586,9 @@ export class Game extends Phaser.Scene {
     const h = this.scale.height;
 
     // === BACKGROUND ===
-    const bgScaleX = w / this.bgImage.width;
-    const bgScaleY = h / this.bgImage.height;
-    this.bgImage
-      .setPosition(w / 2, h / 2)
-      .setScale(Math.max(bgScaleX, bgScaleY))
-      .setVisible(true);
+    if (this.backgroundManager) {
+      this.backgroundManager.resize(w, h);
+    }
 
     // Determine layout mode
     const isPortrait = h > w;
@@ -1812,6 +1810,10 @@ export class Game extends Phaser.Scene {
       // the Grid's totalFreeSpinsWin is authoritative
 
       this.audio.playWin(actualWin / this.getEffectiveBet());
+      
+      // Pulse background intensity based on win size
+      const pulseIntensity = Math.min(actualWin / this.getEffectiveBet(), 3);
+      this.backgroundManager.triggerWinPulse(pulseIntensity);
 
       // Floating win text
       const cx = this.grid.offsetX + this.grid.cellSize * 3.5;
@@ -2159,7 +2161,7 @@ export class Game extends Phaser.Scene {
         );
         // Keep icon position synced as text width changes
         if (this.bottomBarHUD.winSymbolIcon.visible) {
-          this.bottomBarHUD.winSymbolIcon.x = this.bottomBarHUD.txtLastWin.x - this.bottomBarHUD.txtLastWin.width - 24;
+          this.bottomBarHUD.winSymbolIcon.x = this.bottomBarHUD.txtLastWin.x - (this.bottomBarHUD.txtLastWin.width * this.bottomBarHUD.txtLastWin.scaleX) - 18;
         }
       },
       onComplete: () => {

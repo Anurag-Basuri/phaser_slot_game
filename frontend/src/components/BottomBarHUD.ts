@@ -37,6 +37,7 @@ export class BottomBarHUD {
   private _winPillBounds = { x: 0, w: 0, y: 0, h: 0 };
   private _prevMoney = -1;
   private _winCountTween: Phaser.Tweens.Tween | null = null;
+  private _iconTargetScale = 0.2;
 
   private readonly COL_LABEL = '#ffaacc';  // Warm candy pink labels
   private readonly COL_VALUE = '#ffffff';
@@ -171,29 +172,57 @@ export class BottomBarHUD {
     const balW = pillW;
     const betW = pillW;
     const winW = pillW;
+    
+    // Abbreviate labels on small screens to save space
+    const isSmall = w < 600;
+    const isSocial = getStakeEngine().isSocialMode();
+    this.txtMoneyLabel.setText(isSmall ? 'BAL' : T('BALANCE', isSocial));
+    this.txtLastWinLabel.setText(isSmall ? 'WIN' : T('LAST WIN', isSocial));
+
+    // Helper to prevent text overflow in pills
+    const fitTextInPill = (label: Phaser.GameObjects.Text, value: Phaser.GameObjects.Text, availableWidth: number, iconWidth: number = 0) => {
+      label.setScale(1);
+      value.setScale(1);
+      const totalContentW = label.width + value.width + iconWidth + 10; // 10px spacing
+      if (totalContentW > availableWidth) {
+        const scale = availableWidth / totalContentW;
+        label.setScale(scale);
+        value.setScale(scale);
+      }
+    };
 
     // ── Position pills (each with a distinct candy accent color) ──
     const balX = sidePad;
     drawPill(balX, balW, 0xff88bb, 0x2a0828);  // Pink candy accent for Balance
     this.txtMoneyLabel.setPosition(balX + pillPad, txtY).setFontSize(labelFS);
     this.txtMoney.setPosition(balX + balW - pillPad, txtY).setFontSize(valFS);
+    fitTextInPill(this.txtMoneyLabel, this.txtMoney, balW - pillPad * 2);
 
     const betX = balX + balW + gap;
     drawPill(betX, betW, 0xffaa44, 0x2a1808);  // Golden candy accent for Bet
     this.txtBetLabel.setPosition(betX + pillPad, txtY).setFontSize(labelFS);
     this.txtBet.setPosition(betX + betW - pillPad, txtY).setFontSize(valFS);
     this.betPillHit.setPosition(betX + betW / 2, txtY).setSize(betW, barH - 4);
+    fitTextInPill(this.txtBetLabel, this.txtBet, betW - pillPad * 2);
 
     const winX = betX + betW + gap;
     drawPill(winX, winW, 0x44ffaa, 0x082a18);  // Mint candy accent for Win
     this.txtLastWinLabel.setVisible(true).setPosition(winX + pillPad, txtY).setFontSize(labelFS);
     
+    // Icon sits just to the left of the win value text
+    // The pill height is barH - 10. We want the icon to fit comfortably inside it (about 75% of pill height).
+    const targetIconHeight = Math.max(10, (barH - 10) * 0.8);
+    const baseHeight = this.winSymbolIcon.height > 0 ? this.winSymbolIcon.height : 256;
+    this._iconTargetScale = targetIconHeight / baseHeight;
+    const expectedIconWidth = this.winSymbolIcon.visible ? targetIconHeight : 0; // Rough width
+
     // Position the win value and icon. If icon is visible, we shift the text.
     const winValX = winX + winW - pillPad;
     this.txtLastWin.setVisible(true).setPosition(winValX, txtY).setFontSize(valFS);
     
-    // Icon sits just to the left of the win value text
-    this.winSymbolIcon.setPosition(winValX - this.txtLastWin.width - 22, txtY).setScale(0.35);
+    fitTextInPill(this.txtLastWinLabel, this.txtLastWin, winW - pillPad * 2, expectedIconWidth + 18);
+    
+    this.winSymbolIcon.setPosition(winValX - (this.txtLastWin.width * this.txtLastWin.scaleX) - 18, txtY).setScale(this._iconTargetScale);
 
     this._winPillBounds = { x: winX, w: winW, y: h - barH + 5, h: barH - 10 };
 
@@ -272,12 +301,12 @@ export class BottomBarHUD {
     this.winSymbolIcon.setTexture(key).setVisible(true).setScale(0);
     this.scene.tweens.add({
       targets: this.winSymbolIcon,
-      scale: 0.42,
+      scale: this._iconTargetScale,
       duration: 350,
       ease: 'Back.easeOut'
     });
     // Position sync
-    this.winSymbolIcon.x = this.txtLastWin.x - this.txtLastWin.width - 24;
+    this.winSymbolIcon.x = this.txtLastWin.x - (this.txtLastWin.width * this.txtLastWin.scaleX) - 18;
   }
 
   updateLastWinDisplay(target: number, currency: string, betAmount: number, symbolKey?: string) {
@@ -307,7 +336,7 @@ export class BottomBarHUD {
           const winX = this._winPillBounds.x;
           const winW = this._winPillBounds.w;
           const pillPad = this.txtMoneyLabel.x - this.bar.x; // approximate padding
-          this.winSymbolIcon.x = winX + winW - 16 - this.txtLastWin.width - 20;
+          this.winSymbolIcon.x = winX + winW - 16 - (this.txtLastWin.width * this.txtLastWin.scaleX) - 18;
         }
       },
       onStart: () => {
@@ -330,11 +359,11 @@ export class BottomBarHUD {
           this.winSymbolIcon.setTexture(symbolKey).setVisible(true).setScale(0);
           this.scene.tweens.add({
             targets: this.winSymbolIcon,
-            scale: 0.38,
+            scale: this._iconTargetScale,
             duration: 300,
             ease: 'Back.easeOut'
           });
-          this.winSymbolIcon.x = this.txtLastWin.x - this.txtLastWin.width - 22;
+          this.winSymbolIcon.x = this.txtLastWin.x - (this.txtLastWin.width * this.txtLastWin.scaleX) - 18;
         }
       }
     });
