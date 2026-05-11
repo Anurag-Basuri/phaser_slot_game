@@ -146,27 +146,12 @@ export class BottomBarHUD {
     const gap = isMobile ? 5 : 10;
     const usableW = w - sidePad * 2 - gap * 2;
 
-    // Dynamic ratio: balance gets most, bet smallest, win matches balance
-    let balW: number, betW: number, winW: number;
-    if (isStacked) {
-      // On narrow screens, just divide equally
-      balW = usableW * 0.38;
-      betW = usableW * 0.22;
-      winW = usableW * 0.38;
-    } else {
-      balW = Math.min(220, usableW * 0.35);
-      betW = Math.min(160, usableW * 0.20);
-      winW = Math.min(220, usableW * 0.35);
-    }
-
-    // Safety clamp: if pills exceed available width, shrink proportionally
-    const totalPill = balW + betW + winW;
-    if (totalPill > usableW) {
-      const scale = usableW / totalPill;
-      balW *= scale;
-      betW *= scale;
-      winW *= scale;
-    }
+    // Uniform layout: all three pills share the available width equally.
+    // This strictly prevents "jumping" sizes and ensures a premium, symmetrical look.
+    const pillW = usableW / 3;
+    const balW = pillW;
+    const betW = pillW;
+    const winW = pillW;
 
     // ── Position pills ──
     const balX = sidePad;
@@ -247,7 +232,8 @@ export class BottomBarHUD {
 
     if (anteBetEnabled) {
       const formattedBase = DisplayBalance({ amount: baseBet, currency });
-      this.txtBet.setText(`${formattedBase} (${formatted})`).setFontSize(14);
+      // Keep the same font styling as the rest of the bar, don't force a hard-coded font size
+      this.txtBet.setText(`${formattedBase} (${formatted})`);
     } else {
       this.txtBet.setText(formatted);
     }

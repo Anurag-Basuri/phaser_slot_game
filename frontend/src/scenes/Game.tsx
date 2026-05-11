@@ -1032,9 +1032,10 @@ export class Game extends Phaser.Scene {
     // ==========================================
     // 6. LOGO — responsive placement with premium glow
     // ==========================================
-    const LOGO_BASE_W = 350;
+    // Increased base width to 460 to account for thick fonts and stroke, preventing overlap
+    const LOGO_BASE_W = 460;
     const LOGO_BASE_H = 150;
-    const MAX_LOGO_SCALE = 1.2;
+    const MAX_LOGO_SCALE = 1.1; // Slightly reduced max scale
     const MIN_LOGO_SCALE = 0.35; // Hide if space requires scaling smaller than this
 
     let logoScale = 1;
@@ -1088,8 +1089,10 @@ export class Game extends Phaser.Scene {
 
         if (logoScale >= MIN_LOGO_SCALE) {
           showLogo = true;
-          logoX = rightColCenter;
-          logoY = logoRegionTop + availH * 0.25; // Positioned higher up (33% of region instead of 50%) to increase separation from spin controls
+          // Fix to the right wall (with 20px padding) to maximize distance from the grid
+          const actualLogoWidth = LOGO_BASE_W * logoScale;
+          logoX = w - (actualLogoWidth / 2) - 20;
+          logoY = logoRegionTop + availH * 0.25; 
         }
       }
     }

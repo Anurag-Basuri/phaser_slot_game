@@ -54,6 +54,10 @@ export class SpinControls {
     this.betPlusHit = this.scene.add.rectangle(0, 0, 44, 44)
       .setInteractive({ useHandCursor: true }).setAlpha(0.001).setDepth(21);
 
+    // Setup interactive hover/press states for tactile arcade feedback
+    this.setupTactileFeedback(this.betMinusGfx, this.betMinusHit);
+    this.setupTactileFeedback(this.betPlusGfx, this.betPlusHit);
+
     this.autoGfx = this.scene.add.graphics().setDepth(21);
     this.autoHit = this.scene.add.rectangle(0, 0, 100, 30, 0xffffff, 0)
       .setInteractive({ useHandCursor: true }).setDepth(22);
@@ -63,6 +67,51 @@ export class SpinControls {
       color: '#ffffff',
       shadow: { offsetX: 0, offsetY: 1, color: '#000000', blur: 2, fill: true }
     }).setOrigin(0.5).setDepth(23);
+  }
+
+  /**
+   * Binds high-fidelity micro-animations for hover scaling and active pressing click effects
+   */
+  private setupTactileFeedback(gfx: Phaser.GameObjects.Graphics, hit: Phaser.GameObjects.Rectangle) {
+    hit.on('pointerover', () => {
+      this.scene.tweens.add({
+        targets: [gfx, hit],
+        scaleX: 1.1,
+        scaleY: 1.1,
+        duration: 100,
+        ease: 'Quad.easeOut'
+      });
+    });
+
+    hit.on('pointerout', () => {
+      this.scene.tweens.add({
+        targets: [gfx, hit],
+        scaleX: 1.0,
+        scaleY: 1.0,
+        duration: 100,
+        ease: 'Quad.easeOut'
+      });
+    });
+
+    hit.on('pointerdown', () => {
+      this.scene.tweens.add({
+        targets: [gfx, hit],
+        scaleX: 0.9,
+        scaleY: 0.9,
+        duration: 50,
+        ease: 'Quad.easeOut'
+      });
+    });
+
+    hit.on('pointerup', () => {
+      this.scene.tweens.add({
+        targets: [gfx, hit],
+        scaleX: 1.1, // return to hover scale
+        scaleY: 1.1,
+        duration: 80,
+        ease: 'Quad.easeOut'
+      });
+    });
   }
 
   onSpin(cb: () => void) { this.spinHit.on('pointerdown', cb); }
@@ -76,16 +125,16 @@ export class SpinControls {
     const rightMargin = w - gridX - gridTotalSize;
     const rightColCenter = gridX + gridTotalSize + rightMargin / 2;
 
-    // ── Spin button size — proportional, clamped ──
+    // ── Spin button size — proportional, clamped (Slightly larger) ──
     let spinSize: number;
     if (isStacked) {
-      spinSize = Math.max(50, Math.min(80, w * 0.13, safeH * 0.1));
+      spinSize = Math.max(60, Math.min(95, w * 0.15, safeH * 0.12));
     } else if (isLandscapeMobile) {
-      spinSize = Math.min(70, rightMargin * 0.40, safeH * 0.18);
+      spinSize = Math.min(85, rightMargin * 0.45, safeH * 0.20);
     } else {
-      spinSize = Math.min(100, rightMargin * 0.42, safeH * 0.16);
+      spinSize = Math.min(115, rightMargin * 0.46, safeH * 0.18);
     }
-    spinSize = Math.max(40, spinSize);
+    spinSize = Math.max(50, spinSize);
 
     // ── Spin position ──
     let spinX: number, spinY: number;
@@ -108,26 +157,26 @@ export class SpinControls {
 
     // ── AutoPlay pill — directly beneath spin ──
     const autoFS = isLandscapeMobile ? 10 : isStacked ? 10 : 12;
-    const autoY = spinY + spinSize / 2 + (isStacked ? 10 : 14);
+    const autoY = spinY + spinSize / 2 + (isStacked ? 24 : 32); // Increased to clear spin button's 3D drop shadow
     if (isStacked && autoY > safeH - 2) {
       // Hide autoplay if it would clip into the bar
       this.autoHit.setVisible(false);
       this.autoTxt.setVisible(false);
       this.autoGfx.setVisible(false);
     } else {
-      this.autoHit.setVisible(true).setPosition(spinX, autoY).setSize(70, 24);
+      this.autoHit.setVisible(true).setPosition(spinX, autoY).setSize(88, 28);
       this.autoTxt.setVisible(true).setPosition(spinX, autoY).setFontSize(autoFS);
       this.autoGfx.setVisible(true);
     }
 
-    // ── Bet +/- buttons ──
+    // ── Bet +/- buttons (Slightly larger) ──
     let bBtnSize: number;
     if (isStacked) {
-      bBtnSize = Math.max(24, Math.min(38, spinSize * 0.45));
+      bBtnSize = Math.max(26, Math.min(42, spinSize * 0.46));
     } else if (isLandscapeMobile) {
-      bBtnSize = Math.max(28, Math.min(45, rightMargin * 0.14));
+      bBtnSize = Math.max(30, Math.min(48, rightMargin * 0.16));
     } else {
-      bBtnSize = Math.max(32, Math.min(55, rightMargin * 0.14, spinSize * 0.55));
+      bBtnSize = Math.max(36, Math.min(60, rightMargin * 0.16, spinSize * 0.58));
     }
 
     if (isStacked) {
@@ -310,11 +359,11 @@ export class SpinControls {
   /** Draw the autoplay button at its last known position */
   drawAutoButton(spinX: number, spinY: number, spinSize: number, isActive: boolean, remaining: number) {
     if (!this.autoGfx.visible) return;
-    const autoY = spinY + spinSize / 2 + 16; // Dropped slightly for bezel
+    const autoY = spinY + spinSize / 2 + 32; // Dropped to clear the spin button's massive drop shadow
     this.autoGfx.clear();
     this.autoGfx.setPosition(spinX, autoY);
 
-    const bw = 76, bh = 24, rad = bh / 2;
+    const bw = 88, bh = 28, rad = bh / 2;
     const x = -bw / 2;
     const y = -bh / 2;
 
