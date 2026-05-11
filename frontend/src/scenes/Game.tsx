@@ -1,9 +1,18 @@
 import Phaser from 'phaser';
 
 import {
-  Grid, Audio, PaytableOverlay, SettingsOverlay,
-  WinCelebration, ConfirmDialog, FreeSpinsIntro, ErrorManager,
-  AutoPlayOverlay, BetOverlay, BottomBarHUD, SpinControls
+  Grid,
+  Audio,
+  PaytableOverlay,
+  SettingsOverlay,
+  WinCelebration,
+  ConfirmDialog,
+  FreeSpinsIntro,
+  ErrorManager,
+  AutoPlayOverlay,
+  BetOverlay,
+  BottomBarHUD,
+  SpinControls,
 } from '../components';
 import { getStakeEngine } from '../engine';
 import { SpinEventData, StakeEngineClient } from '../engine/StakeEngineClient';
@@ -35,13 +44,14 @@ export class Game extends Phaser.Scene {
   // UI elements
   private bgImage!: Phaser.GameObjects.Image;
   private gridPanel!: Phaser.GameObjects.Image;
+  private logoWrapper!: Phaser.GameObjects.Container;
+  private logoContainer!: Phaser.GameObjects.Container;
   private logoText1!: Phaser.GameObjects.Text;
   private logoText2!: Phaser.GameObjects.Text;
   private logoGlow!: Phaser.GameObjects.Graphics;
   private gridFrame!: Phaser.GameObjects.Graphics;
   private panelSuperGraphics!: Phaser.GameObjects.Graphics;
   private panelRegularGraphics!: Phaser.GameObjects.Graphics;
-  
 
   private txtFSRemaining!: Phaser.GameObjects.Text;
   private buySuperHit!: Phaser.GameObjects.Rectangle;
@@ -114,23 +124,35 @@ export class Game extends Phaser.Scene {
       } catch (err) {
         this.errorManager.showBlockingError(
           'REPLAY FETCH FAILED',
-          async () => { throw new Error('Replay invalid'); },
-          () => window.location.reload()
+          async () => {
+            throw new Error('Replay invalid');
+          },
+          () => window.location.reload(),
         );
         return;
       }
     } else if (!this.stakeEngine.isDemoMode()) {
       try {
         const auth = await this.stakeEngine.authenticate();
-        this.valueMoney = StakeEngineClient.toDisplayAmount(auth.balance.amount);
+        this.valueMoney = StakeEngineClient.toDisplayAmount(
+          auth.balance.amount,
+        );
         this.currency = auth.balance.currency;
 
-        if (auth.config && auth.config.betLevels && auth.config.betLevels.length > 0) {
+        if (
+          auth.config &&
+          auth.config.betLevels &&
+          auth.config.betLevels.length > 0
+        ) {
           BET_PRESETS.length = 0;
           for (let i = 0; i < auth.config.betLevels.length; i++) {
-            BET_PRESETS.push(StakeEngineClient.toDisplayAmount(auth.config.betLevels[i]));
+            BET_PRESETS.push(
+              StakeEngineClient.toDisplayAmount(auth.config.betLevels[i]),
+            );
           }
-          const defaultDisplay = StakeEngineClient.toDisplayAmount(auth.config.defaultBetLevel);
+          const defaultDisplay = StakeEngineClient.toDisplayAmount(
+            auth.config.defaultBetLevel,
+          );
           this.betPresetIndex = BET_PRESETS.indexOf(defaultDisplay);
           if (this.betPresetIndex === -1) this.betPresetIndex = 0;
           options.betAmount = BET_PRESETS[this.betPresetIndex];
@@ -146,14 +168,15 @@ export class Game extends Phaser.Scene {
           // Unrecoverable — session is invalid, must relaunch
           this.errorManager.showBlockingError(
             'SESSION EXPIRED',
-            async () => { throw new Error('Session expired — cannot retry'); },
+            async () => {
+              throw new Error('Session expired — cannot retry');
+            },
             () => window.location.reload(),
           );
         } else {
           // Network error — allow retry
-          this.errorManager.showBlockingError(
-            'CONNECTION FAILED',
-            () => this.resyncAfterError(),
+          this.errorManager.showBlockingError('CONNECTION FAILED', () =>
+            this.resyncAfterError(),
           );
         }
         return; // Halt boot sequence
@@ -167,7 +190,7 @@ export class Game extends Phaser.Scene {
 
     this.buildUI();
     this.wireInteractions();
-    
+
     // Initialize grid internals (mask, backgrounds) before layout
     this.grid.init();
 
@@ -227,52 +250,128 @@ export class Game extends Phaser.Scene {
     this.gridFrame = this.add.graphics({ x: 0, y: 0 }).setDepth(2);
 
     // === LOGO (Premium Sugar Blast 1000) ===
-    this.logoGlow = this.add.graphics().setDepth(29).setAlpha(0.5);
+    this.logoWrapper = this.add.container(0, 0).setDepth(30);
+    this.logoContainer = this.add.container(0, 0);
+    this.logoWrapper.add(this.logoContainer);
 
-    this.logoText1 = this.add.text(0, 0, 'SUGAR BLAST', {
-      fontFamily: '"Outfit", "Luckiest Guy", cursive, sans-serif',
-      fontStyle: '900',
-      color: '#ff1a75',
-      stroke: '#ffffff',
-      strokeThickness: 6,
-      shadow: { offsetX: 2, offsetY: 4, color: '#990044', blur: 8, stroke: true, fill: true }
-    }).setDepth(30).setOrigin(0.5, 0.5);
+    // Apply premium styling with gradient and thick border with shadow
+    this.logoText1 = this.add
+      .text(0, -20, 'SUGAR BLAST', {
+        fontFamily: '"Lilita One", "Luckiest Guy", cursive, sans-serif',
+        fontSize: '48px',
+        fontStyle: 'normal',
+        color: '#ffffff', // Base white, gradient applied below
+        stroke: '#ffffff',
+        strokeThickness: 24,
+      })
+      .setOrigin(0.5, 0.5)
+      .setShadow(0, 8, '#ff006a', 0, true, false); // shadow on stroke, not on fill
 
-    this.logoText2 = this.add.text(0, 0, '1000', {
-      fontFamily: '"Outfit", "Luckiest Guy", cursive, sans-serif',
-      fontStyle: '900',
-      color: '#ffcc00',
-      stroke: '#ffffff',
-      strokeThickness: 6,
-      shadow: { offsetX: 2, offsetY: 4, color: '#cc6600', blur: 8, stroke: true, fill: true }
-    }).setDepth(30).setOrigin(0.5, 0.5);
+    // Ensure texture is ready before creating gradient (Phaser workaround for text gradients)
+    this.logoText1.updateText();
+    const gradient1 = this.logoText1.context.createLinearGradient(0, 0, 0, this.logoText1.height);
+    gradient1.addColorStop(0, '#ffffff');
+    gradient1.addColorStop(0.3, '#ff66aa');
+    gradient1.addColorStop(0.7, '#ff0055');
+    gradient1.addColorStop(1, '#990033');
+    this.logoText1.setFill(gradient1);
+
+    this.logoText2 = this.add
+      .text(0, 35, '1000', {
+        fontFamily: '"Slackey", "Chango", "Comic Sans MS", "Impact", sans-serif',
+        fontSize: '64px',
+        fontStyle: 'normal',
+        color: '#ffffff',
+        stroke: '#ffffff',
+        strokeThickness: 24,
+      })
+      .setOrigin(0.5, 0.5)
+      .setShadow(0, 8, '#cc6600', 0, true, false); // shadow on stroke, not on fill
+
+    this.logoText2.updateText();
+    const gradient2 = this.logoText2.context.createLinearGradient(0, 0, 0, this.logoText2.height);
+    gradient2.addColorStop(0, '#ffffff');
+    gradient2.addColorStop(0.3, '#ffeeaa');
+    gradient2.addColorStop(0.7, '#ffcc00');
+    gradient2.addColorStop(1, '#cc6600');
+    this.logoText2.setFill(gradient2);
+
+    this.logoContainer.add([this.logoText1, this.logoText2]);
 
     // Buy buttons setup
-    const btnStyle = { fontFamily: '"Luckiest Guy", cursive, sans-serif', fontStyle: 'normal', align: 'center', strokeThickness: 0, shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 0, fill: true } };
-    
+    const btnStyle = {
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontStyle: 'normal',
+      align: 'center',
+      strokeThickness: 0,
+      shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 0, fill: true },
+    };
+
     // Super Buy
     this.panelSuperGraphics = this.add.graphics({ x: 0, y: 0 }).setDepth(20);
-    this.buySuperHit = this.add.rectangle(0, 0, 100, 50, 0xffffff, 0)
-      .setInteractive({ useHandCursor: true }).setDepth(21);
-    this.buySuperTxt1 = this.add.text(0, 0, 'SUPER', { ...btnStyle, color: '#ffffff' }).setOrigin(0.5).setDepth(21);
-    this.buySuperTxt2 = this.add.text(0, 0, '500X', { ...btnStyle, color: '#ffe600', stroke: '#000000', strokeThickness: 4 }).setOrigin(0.5).setDepth(21);
+    this.buySuperHit = this.add
+      .rectangle(0, 0, 100, 50, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(21);
+    this.buySuperTxt1 = this.add
+      .text(0, 0, 'SUPER', { ...btnStyle, color: '#ffffff' })
+      .setOrigin(0.5)
+      .setDepth(21);
+    this.buySuperTxt2 = this.add
+      .text(0, 0, '500X', {
+        ...btnStyle,
+        color: '#ffe600',
+        stroke: '#000000',
+        strokeThickness: 4,
+      })
+      .setOrigin(0.5)
+      .setDepth(21);
 
     // Regular Buy
     this.panelRegularGraphics = this.add.graphics({ x: 0, y: 0 }).setDepth(20);
-    this.buyRegularHit = this.add.rectangle(0, 0, 100, 50, 0xffffff, 0)
-      .setInteractive({ useHandCursor: true }).setDepth(21);
-    this.buyRegularTxt1 = this.add.text(0, 0, T('BUY', this.stakeEngine.isSocialMode()), { ...btnStyle, color: '#ffffff' }).setOrigin(0.5).setDepth(21);
-    this.buyRegularTxt2 = this.add.text(0, 0, '1000X', { ...btnStyle, color: '#ffe600', stroke: '#000000', strokeThickness: 4 }).setOrigin(0.5).setDepth(21);
+    this.buyRegularHit = this.add
+      .rectangle(0, 0, 100, 50, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(21);
+    this.buyRegularTxt1 = this.add
+      .text(0, 0, T('BUY', this.stakeEngine.isSocialMode()), {
+        ...btnStyle,
+        color: '#ffffff',
+      })
+      .setOrigin(0.5)
+      .setDepth(21);
+    this.buyRegularTxt2 = this.add
+      .text(0, 0, '1000X', {
+        ...btnStyle,
+        color: '#ffe600',
+        stroke: '#000000',
+        strokeThickness: 4,
+      })
+      .setOrigin(0.5)
+      .setDepth(21);
 
     // Ante bet setup
     this.anteBetBtn = this.add.graphics().setDepth(20);
-    this.anteBetHit = this.add.rectangle(0, 0, 100, 30, 0xffffff, 0)
-      .setInteractive({ useHandCursor: true }).setDepth(21);
-    this.anteBetIcon = this.add.text(0, 0, '⚡', { fontFamily: '"Outfit", sans-serif' }).setOrigin(0.5).setDepth(21);
-    this.anteBetTxt = this.add.text(0, 0, T('ANTE BET', this.stakeEngine.isSocialMode()), { fontFamily: '"Inter", "Arial", sans-serif', fontStyle: 'bold', color: '#ffffff' }).setOrigin(0, 0.5).setDepth(21);
+    this.anteBetHit = this.add
+      .rectangle(0, 0, 100, 30, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(21);
+    this.anteBetIcon = this.add
+      .text(0, 0, '⚡', { fontFamily: '"Outfit", sans-serif' })
+      .setOrigin(0.5)
+      .setDepth(21);
+    this.anteBetTxt = this.add
+      .text(0, 0, T('ANTE BET', this.stakeEngine.isSocialMode()), {
+        fontFamily: '"Inter", "Arial", sans-serif',
+        fontStyle: 'bold',
+        color: '#ffffff',
+      })
+      .setOrigin(0, 0.5)
+      .setDepth(21);
 
     // Features Menu UI (for small screens)
-    this.featuresMenuHitOverlay = this.add.rectangle(0, 0, w, h, 0x000000, 0.5)
+    this.featuresMenuHitOverlay = this.add
+      .rectangle(0, 0, w, h, 0x000000, 0.5)
       .setInteractive()
       .setDepth(60)
       .setVisible(false)
@@ -280,42 +379,88 @@ export class Game extends Phaser.Scene {
         this.isFeaturesMenuOpen = false;
         this.layoutAll();
       });
-    
-    this.featuresMenuPopupBg = this.add.graphics().setDepth(61).setVisible(false);
-    
+
+    this.featuresMenuPopupBg = this.add
+      .graphics()
+      .setDepth(61)
+      .setVisible(false);
+
     this.btnFeaturesMenuGraphics = this.add.graphics().setDepth(20);
-    this.btnFeaturesMenuHit = this.add.rectangle(0, 0, 50, 50, 0xffffff, 0)
-      .setInteractive({ useHandCursor: true }).setDepth(21)
+    this.btnFeaturesMenuHit = this.add
+      .rectangle(0, 0, 50, 50, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(21)
       .on('pointerdown', () => {
         this.isFeaturesMenuOpen = !this.isFeaturesMenuOpen;
         this.layoutAll();
         this.audio.playSound('button');
       });
-    this.btnFeaturesMenuIcon = this.add.text(0, 0, '⋮', { fontSize: '32px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5).setDepth(21);
+    this.btnFeaturesMenuIcon = this.add
+      .text(0, 0, '⋮', {
+        fontSize: '32px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5)
+      .setDepth(21);
 
     // === BOTTOM BAR & SPIN CONTROLS (created by new component classes) ===
     // BottomBarHUD and SpinControls are instantiated after overlays below
 
     // === FREE SPINS COUNTER ===
-    this.txtFSRemaining = this.add.text(0, 0, '', {
-      fontSize: '36px', color: '#ffffff', align: 'center', fontStyle: 'bold',
-      fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      stroke: '#cc00ff', strokeThickness: 6,
-      shadow: { offsetX: 0, offsetY: 3, color: '#8800cc', blur: 12, fill: true }
-    }).setOrigin(0.5).setVisible(false).setDepth(20);
+    this.txtFSRemaining = this.add
+      .text(0, 0, '', {
+        fontSize: '36px',
+        color: '#ffffff',
+        align: 'center',
+        fontStyle: 'bold',
+        fontFamily: '"Luckiest Guy", cursive, sans-serif',
+        stroke: '#cc00ff',
+        strokeThickness: 6,
+        shadow: {
+          offsetX: 0,
+          offsetY: 3,
+          color: '#8800cc',
+          blur: 12,
+          fill: true,
+        },
+      })
+      .setOrigin(0.5)
+      .setVisible(false)
+      .setDepth(20);
 
     // === TOOLBAR (Graphics-drawn icons instead of emoji) ===
     this.soundToggle = this.add.graphics().setDepth(50);
     this.btnPaytable = this.add.graphics().setDepth(50);
     this.btnSettings = this.add.graphics().setDepth(50);
     this.btnFullscreen = this.add.graphics().setDepth(50);
-    this.iconSound = this.add.image(0, 0, 'icon_sound').setDepth(51).setOrigin(0.5);
-    this.iconPaytable = this.add.image(0, 0, 'icon_info').setDepth(51).setOrigin(0.5);
-    this.iconSettings = this.add.image(0, 0, 'icon_settings').setDepth(51).setOrigin(0.5);
-    this.iconFullscreen = this.add.image(0, 0, 'icon_fullscreen').setDepth(51).setOrigin(0.5);
+    this.iconSound = this.add
+      .image(0, 0, 'icon_sound')
+      .setDepth(51)
+      .setOrigin(0.5);
+    this.iconPaytable = this.add
+      .image(0, 0, 'icon_info')
+      .setDepth(51)
+      .setOrigin(0.5);
+    this.iconSettings = this.add
+      .image(0, 0, 'icon_settings')
+      .setDepth(51)
+      .setOrigin(0.5);
+    this.iconFullscreen = this.add
+      .image(0, 0, 'icon_fullscreen')
+      .setDepth(51)
+      .setOrigin(0.5);
     // Make hit areas interactive
-    [this.soundToggle, this.btnPaytable, this.btnSettings, this.btnFullscreen].forEach(btn => {
-      btn.setInteractive(new Phaser.Geom.Circle(0, 0, 24), Phaser.Geom.Circle.Contains);
+    [
+      this.soundToggle,
+      this.btnPaytable,
+      this.btnSettings,
+      this.btnFullscreen,
+    ].forEach((btn) => {
+      btn.setInteractive(
+        new Phaser.Geom.Circle(0, 0, 24),
+        Phaser.Geom.Circle.Contains,
+      );
       (btn as any).input!.cursor = 'pointer';
     });
 
@@ -363,7 +508,11 @@ export class Game extends Phaser.Scene {
     this.bottomBarHUD.onBetTap(() => {
       if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
       this.audio.playSound('button');
-      this.betOverlay.syncState(this.betPresetIndex, options.anteBetEnabled, options.anteBetCostMultiplier);
+      this.betOverlay.syncState(
+        this.betPresetIndex,
+        options.anteBetEnabled,
+        options.anteBetCostMultiplier,
+      );
       this.betOverlay.toggle();
     });
 
@@ -405,30 +554,38 @@ export class Game extends Phaser.Scene {
       this.buySuperHit.setVisible(false);
       this.buySuperTxt1.setVisible(false);
       this.buySuperTxt2.setVisible(false);
-      
+
       this.panelRegularGraphics.setVisible(false);
       this.buyRegularHit.setVisible(false);
       this.buyRegularTxt1.setVisible(false);
       this.buyRegularTxt2.setVisible(false);
-      
+
       this.anteBetBtn.setVisible(false);
       this.anteBetHit.setVisible(false);
       this.anteBetIcon.setVisible(false);
       this.anteBetTxt.setVisible(false);
-      
+
       this.spinControls.hideAll();
       this.bottomBarHUD.hideAll();
 
-      this.logoText1.setVisible(false);
-      this.logoText2.setVisible(false);
+      this.logoWrapper.setVisible(false);
 
       // spin controls already hidden above
 
-      this.replayBtnHit = this.add.rectangle(0, 0, 240, 70, 0xff006a)
+      this.replayBtnHit = this.add
+        .rectangle(0, 0, 240, 70, 0xff006a)
         .setStrokeStyle(3, 0xffffff, 1)
-        .setInteractive({ useHandCursor: true }).setDepth(55)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(55)
         .on('pointerdown', () => this.executeReplay());
-      this.replayBtnTxt = this.add.text(0, 0, '▶ START REPLAY', {fontSize: '24px', fontFamily: '"Luckiest Guy", cursive, sans-serif', color: '#fff'}).setOrigin(0.5).setDepth(56);
+      this.replayBtnTxt = this.add
+        .text(0, 0, '▶ START REPLAY', {
+          fontSize: '24px',
+          fontFamily: '"Luckiest Guy", cursive, sans-serif',
+          color: '#fff',
+        })
+        .setOrigin(0.5)
+        .setDepth(56);
     }
   }
 
@@ -440,12 +597,15 @@ export class Game extends Phaser.Scene {
     // === BACKGROUND ===
     const bgScaleX = w / this.bgImage.width;
     const bgScaleY = h / this.bgImage.height;
-    this.bgImage.setPosition(w / 2, h / 2).setScale(Math.max(bgScaleX, bgScaleY)).setVisible(true);
+    this.bgImage
+      .setPosition(w / 2, h / 2)
+      .setScale(Math.max(bgScaleX, bgScaleY))
+      .setVisible(true);
 
     // Determine layout mode
     const isPortrait = h > w;
     const isMobile = w < 768;
-    const isStacked = isPortrait || (w < 650);
+    const isStacked = isPortrait || w < 650;
     const isLandscapeMobile = !isPortrait && h < 500;
 
     // Height of the bottom bar
@@ -479,7 +639,7 @@ export class Game extends Phaser.Scene {
       gridY = (safeH - gridTotalSize) / 2;
     } else {
       // Desktop column mode
-      gridTotalSize = Math.min(w * 0.50, safeH * 0.88);
+      gridTotalSize = Math.min(w * 0.5, safeH * 0.88);
       gridX = (w - gridTotalSize) / 2;
       gridY = (safeH - gridTotalSize) / 2 + 5;
     }
@@ -514,19 +674,19 @@ export class Game extends Phaser.Scene {
     // Subtle outer glow effect using multiple transparent strokes
     f.lineStyle(6, 0xff006a, 0.3);
     f.strokeRoundedRect(frameX - 2, frameY - 2, frameW + 4, frameH + 4, 22);
-    
+
     f.lineStyle(12, 0xff006a, 0.1);
     f.strokeRoundedRect(frameX - 5, frameY - 5, frameW + 10, frameH + 10, 25);
 
     // Chrome/Silver accents on the corners
     const cornerSize = Math.max(15, gridTotalSize * 0.04);
     f.lineStyle(4, 0xffffff, 1);
-    
+
     // Top-left
     f.beginPath();
     f.moveTo(frameX + cornerSize, frameY);
     f.lineTo(frameX + 10, frameY);
-    f.arc(frameX + 10, frameY + 10, 10, -Math.PI/2, Math.PI, true);
+    f.arc(frameX + 10, frameY + 10, 10, -Math.PI / 2, Math.PI, true);
     f.lineTo(frameX, frameY + cornerSize);
     f.strokePath();
 
@@ -534,7 +694,7 @@ export class Game extends Phaser.Scene {
     f.beginPath();
     f.moveTo(frameX + frameW - cornerSize, frameY);
     f.lineTo(frameX + frameW - 10, frameY);
-    f.arc(frameX + frameW - 10, frameY + 10, 10, -Math.PI/2, 0, false);
+    f.arc(frameX + frameW - 10, frameY + 10, 10, -Math.PI / 2, 0, false);
     f.lineTo(frameX + frameW, frameY + cornerSize);
     f.strokePath();
 
@@ -542,7 +702,7 @@ export class Game extends Phaser.Scene {
     f.beginPath();
     f.moveTo(frameX, frameY + frameH - cornerSize);
     f.lineTo(frameX, frameY + frameH - 10);
-    f.arc(frameX + 10, frameY + frameH - 10, 10, Math.PI, Math.PI/2, true);
+    f.arc(frameX + 10, frameY + frameH - 10, 10, Math.PI, Math.PI / 2, true);
     f.lineTo(frameX + cornerSize, frameY + frameH);
     f.strokePath();
 
@@ -550,7 +710,14 @@ export class Game extends Phaser.Scene {
     f.beginPath();
     f.moveTo(frameX + frameW, frameY + frameH - cornerSize);
     f.lineTo(frameX + frameW, frameY + frameH - 10);
-    f.arc(frameX + frameW - 10, frameY + frameH - 10, 10, 0, Math.PI/2, false);
+    f.arc(
+      frameX + frameW - 10,
+      frameY + frameH - 10,
+      10,
+      0,
+      Math.PI / 2,
+      false,
+    );
     f.lineTo(frameX + frameW - cornerSize, frameY + frameH);
     f.strokePath();
 
@@ -559,8 +726,11 @@ export class Game extends Phaser.Scene {
     // ==========================================
     const availableWidthForFeatures = gridX;
     const availableHeightForFeatures = safeH - (gridY + gridTotalSize);
-    
-    const useFeaturesMenu = isLandscapeMobile || (isStacked && availableHeightForFeatures < 170) || (!isStacked && availableWidthForFeatures < 160);
+
+    const useFeaturesMenu =
+      isLandscapeMobile ||
+      (isStacked && availableHeightForFeatures < 170) ||
+      (!isStacked && availableWidthForFeatures < 160);
 
     let buyW = isStacked ? w * 0.42 : Math.min(200, gridX * 0.75);
     let buyH = isStacked ? 55 : Math.min(100, safeH * 0.14);
@@ -578,27 +748,69 @@ export class Game extends Phaser.Scene {
       this.btnFeaturesMenuGraphics.setVisible(true).clear();
       this.btnFeaturesMenuHit.setVisible(true);
       this.btnFeaturesMenuIcon.setVisible(true);
-      
+
       const toggleX = isLandscapeMobile ? 35 : w * 0.15;
       const toggleY = isLandscapeMobile ? safeH / 2 : toolY + 60;
-      
+
       this.btnFeaturesMenuHit.setPosition(toggleX, toggleY).setSize(50, 50);
       // Glassmorphic toggle pill
       this.btnFeaturesMenuGraphics.fillStyle(0x000000, 0.5);
-      this.btnFeaturesMenuGraphics.fillRoundedRect(toggleX - 22, toggleY - 22 + 3, 44, 44, 14);
-      this.btnFeaturesMenuGraphics.fillGradientStyle(0xff006a, 0xff006a, 0x880033, 0x880033, 1);
-      this.btnFeaturesMenuGraphics.fillRoundedRect(toggleX - 22, toggleY - 22, 44, 44, 14);
-      this.btnFeaturesMenuGraphics.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.3, 0.3, 0, 0);
-      this.btnFeaturesMenuGraphics.fillRoundedRect(toggleX - 20, toggleY - 20, 40, 18, {tl: 12, tr: 12, bl: 0, br: 0} as any);
+      this.btnFeaturesMenuGraphics.fillRoundedRect(
+        toggleX - 22,
+        toggleY - 22 + 3,
+        44,
+        44,
+        14,
+      );
+      this.btnFeaturesMenuGraphics.fillGradientStyle(
+        0xff006a,
+        0xff006a,
+        0x880033,
+        0x880033,
+        1,
+      );
+      this.btnFeaturesMenuGraphics.fillRoundedRect(
+        toggleX - 22,
+        toggleY - 22,
+        44,
+        44,
+        14,
+      );
+      this.btnFeaturesMenuGraphics.fillGradientStyle(
+        0xffffff,
+        0xffffff,
+        0xffffff,
+        0xffffff,
+        0.3,
+        0.3,
+        0,
+        0,
+      );
+      this.btnFeaturesMenuGraphics.fillRoundedRect(
+        toggleX - 20,
+        toggleY - 20,
+        40,
+        18,
+        { tl: 12, tr: 12, bl: 0, br: 0 } as any,
+      );
       this.btnFeaturesMenuGraphics.lineStyle(2, 0xffffff, 0.6);
-      this.btnFeaturesMenuGraphics.strokeRoundedRect(toggleX - 22, toggleY - 22, 44, 44, 14);
+      this.btnFeaturesMenuGraphics.strokeRoundedRect(
+        toggleX - 22,
+        toggleY - 22,
+        44,
+        44,
+        14,
+      );
       this.btnFeaturesMenuIcon.setPosition(toggleX, toggleY);
 
       if (this.isFeaturesMenuOpen) {
         // Position inside popup
-        this.featuresMenuHitOverlay.setVisible(true).setPosition(w/2, h/2).setSize(w, h);
+        this.featuresMenuHitOverlay
+          .setVisible(true)
+          .setPosition(w / 2, h / 2)
+          .setSize(w, h);
         this.featuresMenuPopupBg.setVisible(true).clear();
-        
+
         buyW = Math.min(220, w * 0.8);
         buyH = 60;
         anteW = buyW;
@@ -612,19 +824,48 @@ export class Game extends Phaser.Scene {
 
         // Premium popup backdrop
         this.featuresMenuPopupBg.fillStyle(0x000000, 0.6);
-        this.featuresMenuPopupBg.fillRoundedRect(popupX - popupW/2 + 4, popupY - popupH/2 + 6, popupW, popupH, 22);
-        this.featuresMenuPopupBg.fillGradientStyle(0x1a0a24, 0x1a0a24, 0x0d0512, 0x0d0512, 0.98);
-        this.featuresMenuPopupBg.fillRoundedRect(popupX - popupW/2, popupY - popupH/2, popupW, popupH, 20);
+        this.featuresMenuPopupBg.fillRoundedRect(
+          popupX - popupW / 2 + 4,
+          popupY - popupH / 2 + 6,
+          popupW,
+          popupH,
+          22,
+        );
+        this.featuresMenuPopupBg.fillGradientStyle(
+          0x1a0a24,
+          0x1a0a24,
+          0x0d0512,
+          0x0d0512,
+          0.98,
+        );
+        this.featuresMenuPopupBg.fillRoundedRect(
+          popupX - popupW / 2,
+          popupY - popupH / 2,
+          popupW,
+          popupH,
+          20,
+        );
         this.featuresMenuPopupBg.lineStyle(2, 0xff006a, 0.8);
-        this.featuresMenuPopupBg.strokeRoundedRect(popupX - popupW/2, popupY - popupH/2, popupW, popupH, 20);
+        this.featuresMenuPopupBg.strokeRoundedRect(
+          popupX - popupW / 2,
+          popupY - popupH / 2,
+          popupW,
+          popupH,
+          20,
+        );
         this.featuresMenuPopupBg.lineStyle(1, 0xffffff, 0.15);
-        this.featuresMenuPopupBg.strokeRoundedRect(popupX - popupW/2 + 2, popupY - popupH/2 + 2, popupW - 4, popupH - 4, 18);
+        this.featuresMenuPopupBg.strokeRoundedRect(
+          popupX - popupW / 2 + 2,
+          popupY - popupH / 2 + 2,
+          popupW - 4,
+          popupH - 4,
+          18,
+        );
 
         buyX = popupX;
-        buyY1 = popupY - popupH/2 + 20 + buyH/2;
+        buyY1 = popupY - popupH / 2 + 20 + buyH / 2;
         buyY2 = buyY1 + buyH + buyGap;
-        anteY = buyY2 + buyH/2 + buyGap + anteH/2;
-
+        anteY = buyY2 + buyH / 2 + buyGap + anteH / 2;
       } else {
         this.featuresMenuHitOverlay.setVisible(false);
         this.featuresMenuPopupBg.setVisible(false);
@@ -656,18 +897,27 @@ export class Game extends Phaser.Scene {
     }
 
     const showFeatures = !useFeaturesMenu || this.isFeaturesMenuOpen;
-    const featuresDepthBase = (useFeaturesMenu && this.isFeaturesMenuOpen) ? 62 : 20;
+    const featuresDepthBase =
+      useFeaturesMenu && this.isFeaturesMenuOpen ? 62 : 20;
 
-    this.panelSuperGraphics.setVisible(showFeatures).setDepth(featuresDepthBase);
+    this.panelSuperGraphics
+      .setVisible(showFeatures)
+      .setDepth(featuresDepthBase);
     this.buySuperHit.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
     this.buySuperTxt1.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
     this.buySuperTxt2.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
-    
-    this.panelRegularGraphics.setVisible(showFeatures).setDepth(featuresDepthBase);
+
+    this.panelRegularGraphics
+      .setVisible(showFeatures)
+      .setDepth(featuresDepthBase);
     this.buyRegularHit.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
-    this.buyRegularTxt1.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
-    this.buyRegularTxt2.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
-    
+    this.buyRegularTxt1
+      .setVisible(showFeatures)
+      .setDepth(featuresDepthBase + 1);
+    this.buyRegularTxt2
+      .setVisible(showFeatures)
+      .setDepth(featuresDepthBase + 1);
+
     this.anteBetBtn.setVisible(showFeatures).setDepth(featuresDepthBase);
     this.anteBetHit.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
     this.anteBetTxt.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
@@ -677,18 +927,38 @@ export class Game extends Phaser.Scene {
       this.drawBuyPanel(this.panelSuperGraphics, buyW, buyH, true);
       this.buySuperHit.setPosition(buyX, buyY1).setSize(buyW, buyH);
       this.panelSuperGraphics.setPosition(buyX, buyY1);
-      this.updateBuyText(this.buySuperTxt1, this.buySuperTxt2, buyX, buyY1, buyH, 'SUPER');
+      this.updateBuyText(
+        this.buySuperTxt1,
+        this.buySuperTxt2,
+        buyX,
+        buyY1,
+        buyH,
+        'SUPER',
+      );
 
       this.drawBuyPanel(this.panelRegularGraphics, buyW, buyH, false);
       this.buyRegularHit.setPosition(buyX, buyY2).setSize(buyW, buyH);
       this.panelRegularGraphics.setPosition(buyX, buyY2);
-      this.updateBuyText(this.buyRegularTxt1, this.buyRegularTxt2, buyX, buyY2, buyH, 'BUY');
-      
+      this.updateBuyText(
+        this.buyRegularTxt1,
+        this.buyRegularTxt2,
+        buyX,
+        buyY2,
+        buyH,
+        'BUY',
+      );
+
       this.anteBetHit.setPosition(buyX, anteY).setSize(anteW, anteH);
       this.anteBetBtn.setPosition(buyX, anteY);
       this.drawAnteBetButton(anteW, anteH);
-      this.anteBetIcon.setPosition(buyX - 40, anteY).setFontSize(22).setOrigin(0.5);
-      this.anteBetTxt.setPosition(buyX - 25, anteY).setFontSize(16).setOrigin(0, 0.5);
+      this.anteBetIcon
+        .setPosition(buyX - 40, anteY)
+        .setFontSize(22)
+        .setOrigin(0.5);
+      this.anteBetTxt
+        .setPosition(buyX - 25, anteY)
+        .setFontSize(16)
+        .setOrigin(0, 0.5);
     }
 
     // ==========================================
@@ -700,7 +970,14 @@ export class Game extends Phaser.Scene {
     // 4. SPIN BUTTON GROUP (delegated to SpinControls)
     // ==========================================
     const { spinX, spinY, spinSize } = this.spinControls.layout(
-      w, h, gridX, gridY, gridTotalSize, barH, isStacked, isLandscapeMobile
+      w,
+      h,
+      gridX,
+      gridY,
+      gridTotalSize,
+      barH,
+      isStacked,
+      isLandscapeMobile,
     );
     this.updateSpinButtonState();
     this.updateAutoSpinDisplay();
@@ -712,93 +989,105 @@ export class Game extends Phaser.Scene {
     this.btnPaytable.setPosition(toolPad + toolGap, toolY);
     this.soundToggle.setPosition(toolPad + toolGap * 2, toolY);
     this.btnFullscreen.setPosition(toolPad + toolGap * 3, toolY);
-    
+
     // Reposition icon images on top of their parent toolbar buttons
     const targetSize = isMobile ? 20 : 24;
-    [this.iconSettings, this.iconPaytable, this.iconSound, this.iconFullscreen].forEach((icon, i) => {
-        icon.setPosition(toolPad + toolGap * i, toolY).setDisplaySize(targetSize, targetSize);
-        (icon as any)._baseScaleX = icon.scaleX;
-        (icon as any)._baseScaleY = icon.scaleY;
+    [
+      this.iconSettings,
+      this.iconPaytable,
+      this.iconSound,
+      this.iconFullscreen,
+    ].forEach((icon, i) => {
+      icon
+        .setPosition(toolPad + toolGap * i, toolY)
+        .setDisplaySize(targetSize, targetSize);
+      (icon as any)._baseScaleX = icon.scaleX;
+      (icon as any)._baseScaleY = icon.scaleY;
     });
     this.drawToolbarIcons();
 
     // Recalculate margins for logo placement
     const rightMargin = w - gridX - gridTotalSize;
     const rightColCenter = gridX + gridTotalSize + rightMargin / 2;
-
     // ==========================================
     // 6. LOGO — responsive placement with premium glow
     // ==========================================
-    this.logoGlow.clear();
+    const LOGO_BASE_W = 350;
+    const LOGO_BASE_H = 150;
+    const MAX_LOGO_SCALE = 1.2;
+    const MIN_LOGO_SCALE = 0.35; // Hide if space requires scaling smaller than this
+
+    let logoScale = 1;
+    let logoX = 0;
+    let logoY = 0;
+    let showLogo = false;
 
     if (isStacked) {
-      // Portrait: show logo at top center, above the grid
-      const topSpace = gridY;
-      if (topSpace > 55) {
-        const logoFS1 = Math.max(14, Math.min(26, w * 0.055));
-        const logoFS2 = Math.max(18, Math.min(34, w * 0.07));
-        const logoX = w / 2;
-        const logoY = Math.max(20, topSpace * 0.35);
-
-        this.logoText1.setVisible(true).setPosition(logoX, logoY)
-          .setFontSize(logoFS1).setStroke('#ffffff', Math.max(4, logoFS1 * 0.25));
-        this.logoText2.setVisible(true).setPosition(logoX, logoY + logoFS1 * 0.9)
-          .setFontSize(logoFS2).setStroke('#ffffff', Math.max(4, logoFS2 * 0.25));
-
-        // Glow behind logo
-        this.logoGlow.fillStyle(0xff006a, 0.06);
-        this.logoGlow.fillEllipse(logoX, logoY + logoFS1 * 0.4, (logoFS1 + logoFS2) * 3, (logoFS1 + logoFS2) * 1.2);
-      } else {
-        this.logoText1.setVisible(false);
-        this.logoText2.setVisible(false);
+      // Portrait: above the grid
+      const availW = w * 0.9;
+      const availH = gridY - 10;
+      
+      if (availH > 40) {
+        const scaleW = availW / LOGO_BASE_W;
+        const scaleH = availH / LOGO_BASE_H;
+        logoScale = Math.min(scaleW, scaleH, MAX_LOGO_SCALE);
+        
+        if (logoScale >= MIN_LOGO_SCALE) {
+          showLogo = true;
+          logoX = w / 2;
+          logoY = (gridY / 2) + 5; // Center vertically in top space
+        }
       }
     } else if (isLandscapeMobile || rightMargin < 140) {
-      // Tight landscape: show compact logo at top center
-      const logoFS1 = Math.max(12, Math.min(20, w * 0.025));
-      const logoFS2 = Math.max(16, Math.min(26, w * 0.032));
-      const logoX = w / 2;
-      const logoY = Math.max(16, gridY * 0.35);
+      // Tight landscape: above the grid
+      const availW = w * 0.5;
+      const availH = gridY - 5;
 
-      this.logoText1.setVisible(true).setPosition(logoX, logoY)
-        .setFontSize(logoFS1).setStroke('#ffffff', Math.max(3, logoFS1 * 0.22));
-      this.logoText2.setVisible(true).setPosition(logoX, logoY + logoFS1 * 0.85)
-        .setFontSize(logoFS2).setStroke('#ffffff', Math.max(3, logoFS2 * 0.22));
+      if (availH > 30) {
+        const scaleW = availW / LOGO_BASE_W;
+        const scaleH = availH / LOGO_BASE_H;
+        logoScale = Math.min(scaleW, scaleH, MAX_LOGO_SCALE);
+        
+        if (logoScale >= MIN_LOGO_SCALE) {
+          showLogo = true;
+          logoX = w / 2;
+          logoY = gridY / 2;
+        }
+      }
     } else {
-      // Desktop: logo in right column above spin button
-      const maxLogoW = rightMargin * 0.9;
-      const logoFS1 = Math.max(16, Math.min(42, maxLogoW * 0.11));
-      const logoFS2 = Math.max(20, Math.min(52, maxLogoW * 0.13));
-      const logoX = rightColCenter;
+      // Desktop: right column between top of grid and spin button
+      const availW = rightMargin * 0.9;
       const logoRegionTop = gridY;
-      const logoRegionBot = spinY - spinSize / 2 - 8;
-      const logoBlockH = logoFS1 + logoFS2 * 0.9;
-      const logoY = logoRegionTop + Math.max(0, (logoRegionBot - logoRegionTop - logoBlockH) / 2) + logoFS1 * 0.5;
+      const logoRegionBot = spinY - spinSize / 2 - 20;
+      const availH = logoRegionBot - logoRegionTop;
 
-      this.logoText1.setVisible(true).setPosition(logoX, logoY)
-        .setFontSize(logoFS1).setStroke('#ffffff', Math.max(5, logoFS1 * 0.3));
-      this.logoText2.setVisible(true).setPosition(logoX, logoY + logoFS1 * 0.85)
-        .setFontSize(logoFS2).setStroke('#ffffff', Math.max(5, logoFS2 * 0.3));
+      if (availW > 100 && availH > 80) {
+        const scaleW = availW / LOGO_BASE_W;
+        const scaleH = availH / LOGO_BASE_H;
+        logoScale = Math.min(scaleW, scaleH, MAX_LOGO_SCALE);
 
-      // Logo glow backdrop
-      this.logoGlow.fillStyle(0xff006a, 0.06);
-      this.logoGlow.fillEllipse(logoX, logoY + logoFS1 * 0.4, maxLogoW * 0.8, (logoFS1 + logoFS2) * 1.5);
+        if (logoScale >= MIN_LOGO_SCALE) {
+          showLogo = true;
+          logoX = rightColCenter;
+          logoY = logoRegionTop + availH / 2; // Center vertically in available region
+        }
+      }
     }
 
-    // Floating animation (only add once)
-    if (this.logoText1.visible && !this.tweens.isTweening(this.logoText1)) {
-      this.tweens.add({
-        targets: [this.logoText1, this.logoText2],
-        y: '+=3', yoyo: true, repeat: -1,
-        duration: 2500, ease: 'Sine.easeInOut',
-      });
+    if (showLogo) {
+      this.logoWrapper.setVisible(true).setPosition(logoX, logoY).setScale(logoScale);
+    } else {
+      this.logoWrapper.setVisible(false);
     }
 
     // FS Counter
-    this.txtFSRemaining.setPosition(w / 2, gridY - 30).setFontSize(Math.min(42, w * 0.08));
+    this.txtFSRemaining
+      .setPosition(w / 2, gridY - 30)
+      .setFontSize(Math.min(42, w * 0.08));
 
     if (this.stakeEngine.isReplayMode()) {
-      this.replayBtnHit.setPosition(w/2, h/2).setSize(240, 70);
-      this.replayBtnTxt.setPosition(w/2, h/2).setFontSize(24);
+      this.replayBtnHit.setPosition(w / 2, h / 2).setSize(240, 70);
+      this.replayBtnTxt.setPosition(w / 2, h / 2).setFontSize(24);
     }
   }
 
@@ -809,13 +1098,22 @@ export class Game extends Phaser.Scene {
     const positions = [
       { obj: this.btnSettings, icon: this.iconSettings, type: 'settings' },
       { obj: this.btnPaytable, icon: this.iconPaytable, type: 'info' },
-      { obj: this.soundToggle, icon: this.iconSound, type: (this.musicEnabled || this.sfxEnabled) ? 'sound_on' : 'sound_off' },
-      { obj: this.btnFullscreen, icon: this.iconFullscreen, type: 'fullscreen' },
+      {
+        obj: this.soundToggle,
+        icon: this.iconSound,
+        type: this.musicEnabled || this.sfxEnabled ? 'sound_on' : 'sound_off',
+      },
+      {
+        obj: this.btnFullscreen,
+        icon: this.iconFullscreen,
+        type: 'fullscreen',
+      },
     ];
     for (const { obj, icon, type } of positions) {
       if (!obj) continue;
       obj.clear();
-      const cx = 0, cy = 0;
+      const cx = 0,
+        cy = 0;
       const radius = iconR + 2;
       const isSoundOff = type === 'sound_off';
       const accentColor = isSoundOff ? 0x663355 : 0xff006a;
@@ -853,22 +1151,43 @@ export class Game extends Phaser.Scene {
       if (icon) {
         icon.setAlpha(isSoundOff ? 0.4 : 0.9);
       }
-      if (type === 'sound_on' && this.iconSound) this.iconSound.setTexture('icon_sound');
-      if (type === 'sound_off' && this.iconSound) this.iconSound.setTexture('icon_sound_off');
+      if (type === 'sound_on' && this.iconSound)
+        this.iconSound.setTexture('icon_sound');
+      if (type === 'sound_off' && this.iconSound)
+        this.iconSound.setTexture('icon_sound_off');
     }
   }
 
-  private updateBuyText(txt1: Phaser.GameObjects.Text, txt2: Phaser.GameObjects.Text, x: number, y: number, h: number, type: string) {
+  private updateBuyText(
+    txt1: Phaser.GameObjects.Text,
+    txt2: Phaser.GameObjects.Text,
+    x: number,
+    y: number,
+    h: number,
+    type: string,
+  ) {
     const fsTitle = Math.min(18, h * 0.22);
     const fsSub = Math.min(32, h * 0.38);
     const title = type === 'SUPER' ? 'SUPER\nFREE SPINS' : 'BUY\nFREE SPINS';
-    txt1.setText(title).setPosition(x, y - h * 0.15).setFontSize(fsTitle).setLineSpacing(-4);
+    txt1
+      .setText(title)
+      .setPosition(x, y - h * 0.15)
+      .setFontSize(fsTitle)
+      .setLineSpacing(-4);
     txt1.setColor('#ffffff').setShadow(0, 2, '#000000', 4, true, true);
     txt2.setPosition(x, y + h * 0.28).setFontSize(fsSub);
-    txt2.setColor('#ffe600').setStroke('#000000', 5).setShadow(0, 3, '#000000', 0, false, true);
+    txt2
+      .setColor('#ffe600')
+      .setStroke('#000000', 5)
+      .setShadow(0, 3, '#000000', 0, false, true);
   }
 
-  private drawBuyPanel(gfx: Phaser.GameObjects.Graphics, w: number, h: number, isSuper: boolean) {
+  private drawBuyPanel(
+    gfx: Phaser.GameObjects.Graphics,
+    w: number,
+    h: number,
+    isSuper: boolean,
+  ) {
     gfx.clear();
     const r = 14;
     const accentTop = isSuper ? 0xffcc00 : 0xff2288;
@@ -878,35 +1197,54 @@ export class Game extends Phaser.Scene {
 
     // Outer glow
     gfx.fillStyle(accentMid, 0.2);
-    gfx.fillRoundedRect(-w/2 - 6, -h/2 - 6, w + 12, h + 12, r + 3);
+    gfx.fillRoundedRect(-w / 2 - 6, -h / 2 - 6, w + 12, h + 12, r + 3);
 
     // Drop shadow
     gfx.fillStyle(0x000000, 0.5);
-    gfx.fillRoundedRect(-w/2 + 3, -h/2 + 5, w, h, r);
+    gfx.fillRoundedRect(-w / 2 + 3, -h / 2 + 5, w, h, r);
 
     // Main body gradient
     gfx.fillGradientStyle(accentTop, accentTop, accentBot, accentBot, 1);
-    gfx.fillRoundedRect(-w/2, -h/2, w, h, r);
+    gfx.fillRoundedRect(-w / 2, -h / 2, w, h, r);
 
     // Dark bottom band
     gfx.fillGradientStyle(darkBase, darkBase, darkBase, darkBase, 0.85);
-    gfx.fillRoundedRect(-w/2, -h/2 + h * 0.5, w, h * 0.5, {tl: 0, tr: 0, bl: r, br: r} as any);
+    gfx.fillRoundedRect(-w / 2, -h / 2 + h * 0.5, w, h * 0.5, {
+      tl: 0,
+      tr: 0,
+      bl: r,
+      br: r,
+    } as any);
 
     // Division line between top color and bottom dark
     gfx.fillStyle(0x000000, 0.4);
-    gfx.fillRect(-w/2 + 4, -h/2 + h * 0.5 - 1, w - 8, 2);
+    gfx.fillRect(-w / 2 + 4, -h / 2 + h * 0.5 - 1, w - 8, 2);
 
     // Glass highlight on top
-    gfx.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.45, 0.45, 0, 0);
-    gfx.fillRoundedRect(-w/2 + 3, -h/2 + 2, w - 6, h * 0.22, {tl: r - 2, tr: r - 2, bl: 0, br: 0} as any);
+    gfx.fillGradientStyle(
+      0xffffff,
+      0xffffff,
+      0xffffff,
+      0xffffff,
+      0.45,
+      0.45,
+      0,
+      0,
+    );
+    gfx.fillRoundedRect(-w / 2 + 3, -h / 2 + 2, w - 6, h * 0.22, {
+      tl: r - 2,
+      tr: r - 2,
+      bl: 0,
+      br: 0,
+    } as any);
 
     // Border
     gfx.lineStyle(2.5, accentMid, 1);
-    gfx.strokeRoundedRect(-w/2, -h/2, w, h, r);
+    gfx.strokeRoundedRect(-w / 2, -h / 2, w, h, r);
 
     // Bright outer rim
     gfx.lineStyle(1.5, 0xffffff, 0.5);
-    gfx.strokeRoundedRect(-w/2 - 1.5, -h/2 - 1.5, w + 3, h + 3, r + 1);
+    gfx.strokeRoundedRect(-w / 2 - 1.5, -h / 2 - 1.5, w + 3, h + 3, r + 1);
   }
 
   private drawAnteBetButton(bw: number, bh: number) {
@@ -919,41 +1257,95 @@ export class Game extends Phaser.Scene {
       // Active state - bright amber
       this.anteBetBtn.fillStyle(0x000000, 0.4);
       this.anteBetBtn.fillRoundedRect(x + 2, y + 4, bw, bh, rad);
-      
-      this.anteBetBtn.fillGradientStyle(0xffbb33, 0xffbb33, 0x885500, 0x885500, 1);
+
+      this.anteBetBtn.fillGradientStyle(
+        0xffbb33,
+        0xffbb33,
+        0x885500,
+        0x885500,
+        1,
+      );
       this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
-      
-      this.anteBetBtn.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.35, 0.35, 0, 0);
-      this.anteBetBtn.fillRoundedRect(x + 2, y + 2, bw - 4, bh * 0.4, {tl: rad-2, tr: rad-2, bl: 0, br: 0} as any);
-      
+
+      this.anteBetBtn.fillGradientStyle(
+        0xffffff,
+        0xffffff,
+        0xffffff,
+        0xffffff,
+        0.35,
+        0.35,
+        0,
+        0,
+      );
+      this.anteBetBtn.fillRoundedRect(x + 2, y + 2, bw - 4, bh * 0.4, {
+        tl: rad - 2,
+        tr: rad - 2,
+        bl: 0,
+        br: 0,
+      } as any);
+
       this.anteBetBtn.lineStyle(2, 0xffeebb, 0.9);
       this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, rad);
 
       this.anteBetBtn.lineStyle(6, 0xffaa00, 0.25);
       this.anteBetBtn.strokeRoundedRect(x - 3, y - 3, bw + 6, bh + 6, rad + 3);
 
-      this.anteBetTxt.setColor('#ffffff').setShadow(0, 2, '#000000', 0, true, true);
-      this.anteBetIcon.setColor('#ffffff').setShadow(0, 0, '#ffcc00', 6, true, true);
+      this.anteBetTxt
+        .setColor('#ffffff')
+        .setShadow(0, 2, '#000000', 0, true, true);
+      this.anteBetIcon
+        .setColor('#ffffff')
+        .setShadow(0, 0, '#ffcc00', 6, true, true);
     } else {
       // Premium Inactive - Dark Glass
       this.anteBetBtn.fillStyle(0x000000, 0.5);
       this.anteBetBtn.fillRoundedRect(x + 2, y + 4, bw, bh, rad);
-      
-      this.anteBetBtn.fillGradientStyle(0x2a1a3a, 0x2a1a3a, 0x110518, 0x110518, 0.95);
+
+      this.anteBetBtn.fillGradientStyle(
+        0x2a1a3a,
+        0x2a1a3a,
+        0x110518,
+        0x110518,
+        0.95,
+      );
       this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
-      
-      this.anteBetBtn.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.1, 0.1, 0, 0);
-      this.anteBetBtn.fillRoundedRect(x + 2, y + 2, bw - 4, bh * 0.4, {tl: rad-2, tr: rad-2, bl: 0, br: 0} as any);
+
+      this.anteBetBtn.fillGradientStyle(
+        0xffffff,
+        0xffffff,
+        0xffffff,
+        0xffffff,
+        0.1,
+        0.1,
+        0,
+        0,
+      );
+      this.anteBetBtn.fillRoundedRect(x + 2, y + 2, bw - 4, bh * 0.4, {
+        tl: rad - 2,
+        tr: rad - 2,
+        bl: 0,
+        br: 0,
+      } as any);
 
       this.anteBetBtn.lineStyle(2, 0x442266, 1);
       this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, rad);
 
-      this.anteBetTxt.setColor('#8877aa').setShadow(0, 0, '#000000', 0, false, false);
-      this.anteBetIcon.setColor('#ff8844').setShadow(0, 0, '#000', 0, false, false);
+      this.anteBetTxt
+        .setColor('#8877aa')
+        .setShadow(0, 0, '#000000', 0, false, false);
+      this.anteBetIcon
+        .setColor('#ff8844')
+        .setShadow(0, 0, '#000', 0, false, false);
     }
   }
 
-  private drawBetButton(gfx: Phaser.GameObjects.Graphics, targetX: number, targetY: number, size: number, isPlus: boolean) {
+  private drawBetButton(
+    gfx: Phaser.GameObjects.Graphics,
+    targetX: number,
+    targetY: number,
+    size: number,
+    isPlus: boolean,
+  ) {
     gfx.clear();
     gfx.setPosition(targetX, targetY);
     const cx = 0;
@@ -1014,7 +1406,7 @@ export class Game extends Phaser.Scene {
     const r = size / 2;
 
     // Outer soft neon glow
-    g.fillStyle(0xff006a, 0.10);
+    g.fillStyle(0xff006a, 0.1);
     g.fillCircle(x, y, r + 18);
     g.fillStyle(0xff006a, 0.05);
     g.fillCircle(x, y, r + 28);
@@ -1089,7 +1481,7 @@ export class Game extends Phaser.Scene {
     }
   }
 
-    /** Update spin button visual and all UI interactivity to reflect current state */
+  /** Update spin button visual and all UI interactivity to reflect current state */
   private updateSpinButtonState() {
     this.updateUIInteractivity();
     if (!this.spinControls?.spinGfx) return;
@@ -1105,7 +1497,7 @@ export class Game extends Phaser.Scene {
   /**
    * Centralized UI interactivity manager — dims and disables controls
    * that should not be used during certain game states.
-   * 
+   *
    * Rules:
    * - During spin: bet ±, buy panels, ante bet, settings, paytable → DISABLED
    * - During free spins: bet ±, buy panels, ante bet, autoplay open → DISABLED
@@ -1168,10 +1560,12 @@ export class Game extends Phaser.Scene {
       this.btnPaytable.disableInteractive();
     } else {
       this.btnSettings.setInteractive(
-        new Phaser.Geom.Circle(0, 0, 22), Phaser.Geom.Circle.Contains
+        new Phaser.Geom.Circle(0, 0, 22),
+        Phaser.Geom.Circle.Contains,
       );
       this.btnPaytable.setInteractive(
-        new Phaser.Geom.Circle(0, 0, 22), Phaser.Geom.Circle.Contains
+        new Phaser.Geom.Circle(0, 0, 22),
+        Phaser.Geom.Circle.Contains,
       );
     }
 
@@ -1182,7 +1576,13 @@ export class Game extends Phaser.Scene {
 
   private wireInteractions() {
     this.spinControls.spinHit.on('pointerdown', () => {
-      this.tweens.add({ targets: this.spinControls.spinGfx, scaleX: this.spinControls.spinGfx.scaleX * 0.9, scaleY: this.spinControls.spinGfx.scaleY * 0.9, yoyo: true, duration: 80 });
+      this.tweens.add({
+        targets: this.spinControls.spinGfx,
+        scaleX: this.spinControls.spinGfx.scaleX * 0.9,
+        scaleY: this.spinControls.spinGfx.scaleY * 0.9,
+        yoyo: true,
+        duration: 80,
+      });
       this.handleUniversalAction();
     });
 
@@ -1215,13 +1615,21 @@ export class Game extends Phaser.Scene {
     this.spinControls.betMinusHit.on('pointerdown', () => {
       if (this.anyOverlayOpen()) return;
       this.audio.playSound('button');
-      this.betOverlay.syncState(this.betPresetIndex, options.anteBetEnabled, options.anteBetCostMultiplier);
+      this.betOverlay.syncState(
+        this.betPresetIndex,
+        options.anteBetEnabled,
+        options.anteBetCostMultiplier,
+      );
       this.betOverlay.toggle();
     });
     this.spinControls.betPlusHit.on('pointerdown', () => {
       if (this.anyOverlayOpen()) return;
       this.audio.playSound('button');
-      this.betOverlay.syncState(this.betPresetIndex, options.anteBetEnabled, options.anteBetCostMultiplier);
+      this.betOverlay.syncState(
+        this.betPresetIndex,
+        options.anteBetEnabled,
+        options.anteBetCostMultiplier,
+      );
       this.betOverlay.toggle();
     });
 
@@ -1229,27 +1637,51 @@ export class Game extends Phaser.Scene {
     const addHover = (hit: Phaser.GameObjects.GameObject, target: any) => {
       hit.on('pointerover', () => {
         const targets = Array.isArray(target) ? target : [target];
-        targets.forEach(t => {
-           if (t._baseScaleX === undefined) {
-              t._baseScaleX = t.scaleX;
-              t._baseScaleY = t.scaleY;
-           }
-           this.tweens.add({ targets: t, scaleX: t._baseScaleX * 1.1, scaleY: t._baseScaleY * 1.1, duration: 150, ease: 'Back.easeOut' });
+        targets.forEach((t) => {
+          if (t._baseScaleX === undefined) {
+            t._baseScaleX = t.scaleX;
+            t._baseScaleY = t.scaleY;
+          }
+          this.tweens.add({
+            targets: t,
+            scaleX: t._baseScaleX * 1.1,
+            scaleY: t._baseScaleY * 1.1,
+            duration: 150,
+            ease: 'Back.easeOut',
+          });
         });
       });
       hit.on('pointerout', () => {
         const targets = Array.isArray(target) ? target : [target];
-        targets.forEach(t => {
-           if (t._baseScaleX !== undefined) {
-             this.tweens.add({ targets: t, scaleX: t._baseScaleX, scaleY: t._baseScaleY, duration: 150, ease: 'Back.easeIn' });
-           }
+        targets.forEach((t) => {
+          if (t._baseScaleX !== undefined) {
+            this.tweens.add({
+              targets: t,
+              scaleX: t._baseScaleX,
+              scaleY: t._baseScaleY,
+              duration: 150,
+              ease: 'Back.easeIn',
+            });
+          }
         });
       });
     };
 
-    addHover(this.buySuperHit, [this.panelSuperGraphics, this.buySuperTxt1, this.buySuperTxt2]);
-    addHover(this.buyRegularHit, [this.panelRegularGraphics, this.buyRegularTxt1, this.buyRegularTxt2]);
-    addHover(this.anteBetHit, [this.anteBetBtn, this.anteBetTxt, this.anteBetIcon]);
+    addHover(this.buySuperHit, [
+      this.panelSuperGraphics,
+      this.buySuperTxt1,
+      this.buySuperTxt2,
+    ]);
+    addHover(this.buyRegularHit, [
+      this.panelRegularGraphics,
+      this.buyRegularTxt1,
+      this.buyRegularTxt2,
+    ]);
+    addHover(this.anteBetHit, [
+      this.anteBetBtn,
+      this.anteBetTxt,
+      this.anteBetIcon,
+    ]);
     addHover(this.soundToggle, [this.soundToggle, this.iconSound]);
     addHover(this.btnPaytable, [this.btnPaytable, this.iconPaytable]);
     addHover(this.btnSettings, [this.btnSettings, this.iconSettings]);
@@ -1260,12 +1692,32 @@ export class Game extends Phaser.Scene {
     // Buy features (with confirmation) — also guard overlays
     this.buySuperHit.on('pointerdown', () => {
       if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
-      this.tweens.add({ targets: [this.panelSuperGraphics, this.buySuperTxt1, this.buySuperTxt2], scaleX: 0.95, scaleY: 0.95, yoyo: true, duration: 80 });
+      this.tweens.add({
+        targets: [
+          this.panelSuperGraphics,
+          this.buySuperTxt1,
+          this.buySuperTxt2,
+        ],
+        scaleX: 0.95,
+        scaleY: 0.95,
+        yoyo: true,
+        duration: 80,
+      });
       this.requestPurchase(2, 500);
     });
     this.buyRegularHit.on('pointerdown', () => {
       if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
-      this.tweens.add({ targets: [this.panelRegularGraphics, this.buyRegularTxt1, this.buyRegularTxt2], scaleX: 0.95, scaleY: 0.95, yoyo: true, duration: 80 });
+      this.tweens.add({
+        targets: [
+          this.panelRegularGraphics,
+          this.buyRegularTxt1,
+          this.buyRegularTxt2,
+        ],
+        scaleX: 0.95,
+        scaleY: 0.95,
+        yoyo: true,
+        duration: 80,
+      });
       this.requestPurchase(1, 1000);
     });
 
@@ -1274,9 +1726,7 @@ export class Game extends Phaser.Scene {
       if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
       options.anteBetEnabled = !options.anteBetEnabled;
       this.audio.playSound('button');
-      this.drawAnteBetButton(
-        this.anteBetHit.width, this.anteBetHit.height
-      );
+      this.drawAnteBetButton(this.anteBetHit.width, this.anteBetHit.height);
       this.updateBetDisplay();
     });
 
@@ -1337,8 +1787,14 @@ export class Game extends Phaser.Scene {
       return;
     }
     // 3. Close any overlay (paytable, settings)
-    if (this.paytable.isVisible()) { this.paytable.hide(); return; }
-    if (this.settings.isVisible()) { this.settings.hide(); return; }
+    if (this.paytable.isVisible()) {
+      this.paytable.hide();
+      return;
+    }
+    if (this.settings.isVisible()) {
+      this.settings.hide();
+      return;
+    }
     if (this.confirmDialog.isVisible()) return; // Don't dismiss confirm with space
 
     // 4. During free spins, don't allow manual action
@@ -1356,14 +1812,12 @@ export class Game extends Phaser.Scene {
     }
   }
 
-
-
   /** Update auto-spin button display */
   private updateAutoSpinDisplay() {
     const w = this.spinControls.autoHit.width;
     const h = this.spinControls.autoHit.height;
     const gfx = this.spinControls.autoGfx;
-    
+
     gfx.clear();
     gfx.setPosition(this.spinControls.autoHit.x, this.spinControls.autoHit.y);
     const cx = 0;
@@ -1371,38 +1825,65 @@ export class Game extends Phaser.Scene {
 
     // Common Drop Shadow
     gfx.fillStyle(0x000000, 0.3);
-    gfx.fillRoundedRect(cx - w/2, cy - h/2 + 4, w, h, h/2);
+    gfx.fillRoundedRect(cx - w / 2, cy - h / 2 + 4, w, h, h / 2);
 
     if (this.autoSpinActive) {
-      const label = this.autoSpinRemaining > 0 ? `STOP (${this.autoSpinRemaining})` : 'STOP';
-      this.spinControls.autoTxt.setText(label).setColor('#ff0066').setShadow(0,0,'#000',0,false);
-      
+      const label =
+        this.autoSpinRemaining > 0
+          ? `STOP (${this.autoSpinRemaining})`
+          : 'STOP';
+      this.spinControls.autoTxt
+        .setText(label)
+        .setColor('#ff0066')
+        .setShadow(0, 0, '#000', 0, false);
+
       // Active State (Bright White / Pink)
       gfx.fillStyle(0xffffff, 1);
-      gfx.fillRoundedRect(cx - w/2, cy - h/2, w, h, h/2);
-      
+      gfx.fillRoundedRect(cx - w / 2, cy - h / 2, w, h, h / 2);
+
       gfx.lineStyle(3, 0xff0066, 1);
-      gfx.strokeRoundedRect(cx - w/2, cy - h/2, w, h, h/2);
-      
+      gfx.strokeRoundedRect(cx - w / 2, cy - h / 2, w, h, h / 2);
+
       // Gloss highlight
       gfx.fillStyle(0xffffff, 0.8);
-      gfx.fillRoundedRect(cx - w/2 + 3, cy - h/2 + 2, w - 6, h/2 - 2, (h/2 - 2));
+      gfx.fillRoundedRect(
+        cx - w / 2 + 3,
+        cy - h / 2 + 2,
+        w - 6,
+        h / 2 - 2,
+        h / 2 - 2,
+      );
     } else {
-      this.spinControls.autoTxt.setText('AUTOPLAY').setColor('#ffffff').setShadow(0,2,'#000000',0,true);
-      
+      this.spinControls.autoTxt
+        .setText('AUTOPLAY')
+        .setColor('#ffffff')
+        .setShadow(0, 2, '#000000', 0, true);
+
       // Inactive State (Deep Purple / Chrome)
       gfx.fillStyle(0x2a1144, 1);
-      gfx.fillRoundedRect(cx - w/2, cy - h/2, w, h, h/2);
-      
+      gfx.fillRoundedRect(cx - w / 2, cy - h / 2, w, h, h / 2);
+
       gfx.fillStyle(0x442266, 1);
-      gfx.fillRoundedRect(cx - w/2 + 2, cy - h/2 + 2, w - 4, h - 4, (h/2 - 2));
-      
+      gfx.fillRoundedRect(
+        cx - w / 2 + 2,
+        cy - h / 2 + 2,
+        w - 4,
+        h - 4,
+        h / 2 - 2,
+      );
+
       gfx.lineStyle(2, 0xdd99ff, 1);
-      gfx.strokeRoundedRect(cx - w/2, cy - h/2, w, h, h/2);
-      
+      gfx.strokeRoundedRect(cx - w / 2, cy - h / 2, w, h, h / 2);
+
       // Gloss highlight
       gfx.fillStyle(0xffffff, 0.15);
-      gfx.fillRoundedRect(cx - w/2 + 3, cy - h/2 + 2, w - 6, h/2 - 2, (h/2 - 2));
+      gfx.fillRoundedRect(
+        cx - w / 2 + 3,
+        cy - h / 2 + 2,
+        w - 6,
+        h / 2 - 2,
+        h / 2 - 2,
+      );
     }
   }
 
@@ -1415,7 +1896,7 @@ export class Game extends Phaser.Scene {
         this.lastWin += actualWin;
         this.updateLastWinDisplay();
       }
-      // During free spins, don't track lastWin per cascade — 
+      // During free spins, don't track lastWin per cascade —
       // the Grid's totalFreeSpinsWin is authoritative
 
       this.audio.playWin(actualWin / this.getEffectiveBet());
@@ -1423,15 +1904,24 @@ export class Game extends Phaser.Scene {
       // Floating win text
       const cx = this.grid.offsetX + this.grid.cellSize * 3.5;
       const cy = this.grid.offsetY + this.grid.cellSize * 3.5;
-      const winText = this.add.text(cx, cy, `+${actualWin.toFixed(2)}`, {
-        fontSize: `${Math.max(28, this.grid.cellSize * 0.7)}px`,
-        color: '#ffe600', fontStyle: 'bold', stroke: '#000', strokeThickness: 6
-      }).setOrigin(0.5).setDepth(25);
+      const winText = this.add
+        .text(cx, cy, `+${actualWin.toFixed(2)}`, {
+          fontSize: `${Math.max(28, this.grid.cellSize * 0.7)}px`,
+          color: '#ffe600',
+          fontStyle: 'bold',
+          stroke: '#000',
+          strokeThickness: 6,
+        })
+        .setOrigin(0.5)
+        .setDepth(25);
 
       this.tweens.add({
-        targets: winText, y: cy - this.grid.cellSize * 1.2, alpha: 0,
-        duration: 1200, ease: 'Power1',
-        onComplete: () => winText.destroy()
+        targets: winText,
+        y: cy - this.grid.cellSize * 1.2,
+        alpha: 0,
+        duration: 1200,
+        ease: 'Power1',
+        onComplete: () => winText.destroy(),
       });
     };
 
@@ -1445,7 +1935,8 @@ export class Game extends Phaser.Scene {
       this.tweens.add({
         targets: this.txtFSRemaining,
         scale: { from: 1.3, to: 1 },
-        duration: 400, ease: 'Back.easeOut',
+        duration: 400,
+        ease: 'Back.easeOut',
       });
     };
 
@@ -1461,27 +1952,46 @@ export class Game extends Phaser.Scene {
       this.audio.playMusic('backgroundDefault', 1000);
 
       const betAmount = this.getEffectiveBet();
-      
+
       const doSummary = () => {
-        const endText = this.add.text(
-          this.scale.width / 2, this.scale.height / 2,
-          `FREE SPINS TOTAL\n${totalWin.toFixed(2)}`,
-          { fontSize: '64px', color: '#ffe600', align: 'center', fontStyle: 'bold', stroke: '#000', strokeThickness: 10 }
-        ).setOrigin(0.5).setDepth(35).setScale(0);
+        const endText = this.add
+          .text(
+            this.scale.width / 2,
+            this.scale.height / 2,
+            `FREE SPINS TOTAL\n${totalWin.toFixed(2)}`,
+            {
+              fontSize: '64px',
+              color: '#ffe600',
+              align: 'center',
+              fontStyle: 'bold',
+              stroke: '#000',
+              strokeThickness: 10,
+            },
+          )
+          .setOrigin(0.5)
+          .setDepth(35)
+          .setScale(0);
 
         this.tweens.add({
-          targets: endText, scale: 1, duration: 500, yoyo: true, hold: 2000, ease: 'Back.easeOut',
+          targets: endText,
+          scale: 1,
+          duration: 500,
+          yoyo: true,
+          hold: 2000,
+          ease: 'Back.easeOut',
           onComplete: () => {
             endText.destroy();
             this._spinLock = false;
             if (this.stakeEngine.isReplayMode()) {
-                this.replayBtnTxt.setText("PLAY AGAIN");
-                this.replayBtnHit.setVisible(true);
-                this.replayBtnTxt.setVisible(true);
-                return;
+              this.replayBtnTxt.setText('PLAY AGAIN');
+              this.replayBtnHit.setVisible(true);
+              this.replayBtnTxt.setVisible(true);
+              return;
             }
 
-            this.stakeEngine.endRound().catch(e => console.warn('[Game] endRound error:', e));
+            this.stakeEngine
+              .endRound()
+              .catch((e) => console.warn('[Game] endRound error:', e));
             this.saveSpinRecord(totalWin, 'free_spins');
             this.updateSpinButtonState();
 
@@ -1505,7 +2015,7 @@ export class Game extends Phaser.Scene {
                 if (this.autoSpinActive && !this.fsActive) this.attemptSpin(0);
               });
             }
-          }
+          },
         });
       };
 
@@ -1518,14 +2028,25 @@ export class Game extends Phaser.Scene {
 
     this.grid.onMaxWinCallback = (totalWin) => {
       // MAX WIN reached — show special celebration
-      const maxText = this.add.text(
-        this.scale.width / 2, this.scale.height * 0.35, 'MAX WIN!',
-        { fontSize: '96px', color: '#ffe600', fontStyle: 'bold', stroke: '#ff0066', strokeThickness: 12 }
-      ).setOrigin(0.5).setDepth(40).setScale(0);
+      const maxText = this.add
+        .text(this.scale.width / 2, this.scale.height * 0.35, 'MAX WIN!', {
+          fontSize: '96px',
+          color: '#ffe600',
+          fontStyle: 'bold',
+          stroke: '#ff0066',
+          strokeThickness: 12,
+        })
+        .setOrigin(0.5)
+        .setDepth(40)
+        .setScale(0);
 
       this.tweens.add({
-        targets: maxText, scale: 1, duration: 600, ease: 'Back.easeOut',
-        yoyo: true, hold: 3000,
+        targets: maxText,
+        scale: 1,
+        duration: 600,
+        ease: 'Back.easeOut',
+        yoyo: true,
+        hold: 3000,
         onComplete: () => maxText.destroy(),
       });
     };
@@ -1545,13 +2066,15 @@ export class Game extends Phaser.Scene {
       const finishUp = () => {
         this._spinLock = false;
         if (this.stakeEngine.isReplayMode()) {
-            this.replayBtnTxt.setText("PLAY AGAIN");
-            this.replayBtnHit.setVisible(true);
-            this.replayBtnTxt.setVisible(true);
-            return;
+          this.replayBtnTxt.setText('PLAY AGAIN');
+          this.replayBtnHit.setVisible(true);
+          this.replayBtnTxt.setVisible(true);
+          return;
         }
 
-        this.stakeEngine.endRound().catch(e => console.warn('[Game] endRound error:', e));
+        this.stakeEngine
+          .endRound()
+          .catch((e) => console.warn('[Game] endRound error:', e));
         this.saveSpinRecord(this.lastWin, 'base');
         this.updateSpinButtonState();
 
@@ -1579,8 +2102,15 @@ export class Game extends Phaser.Scene {
         }
       };
 
-      if (this.lastWin >= this.getEffectiveBet() * 2 && !this.skipScreensActive) {
-        this.winCelebration.show(this.lastWin, this.getEffectiveBet(), finishUp);
+      if (
+        this.lastWin >= this.getEffectiveBet() * 2 &&
+        !this.skipScreensActive
+      ) {
+        this.winCelebration.show(
+          this.lastWin,
+          this.getEffectiveBet(),
+          finishUp,
+        );
       } else {
         finishUp();
       }
@@ -1588,19 +2118,34 @@ export class Game extends Phaser.Scene {
   }
 
   private anyOverlayOpen(): boolean {
-    return this.paytable.isVisible() || this.settings.isVisible() || this.confirmDialog.isVisible() || this.winCelebration.isVisible || this.freeSpinsIntro.isVisible || this.errorManager.isBlocking || this.autoPlayOverlay.isVisible() || this.betOverlay.isVisible();
+    return (
+      this.paytable.isVisible() ||
+      this.settings.isVisible() ||
+      this.confirmDialog.isVisible() ||
+      this.winCelebration.isVisible ||
+      this.freeSpinsIntro.isVisible ||
+      this.errorManager.isBlocking ||
+      this.autoPlayOverlay.isVisible() ||
+      this.betOverlay.isVisible()
+    );
   }
 
   private getEffectiveBet(): number {
     const baseBet = BET_PRESETS[this.betPresetIndex];
-    return options.anteBetEnabled ? baseBet * options.anteBetCostMultiplier : baseBet;
+    return options.anteBetEnabled
+      ? baseBet * options.anteBetCostMultiplier
+      : baseBet;
   }
   updateMoneyDisplay() {
     this.bottomBarHUD.updateMoneyDisplay(this.valueMoney, this.currency);
   }
 
   updateBetDisplay() {
-    this.bottomBarHUD.updateBetDisplay(this.betPresetIndex, this.currency, options.anteBetEnabled);
+    this.bottomBarHUD.updateBetDisplay(
+      this.betPresetIndex,
+      this.currency,
+      options.anteBetEnabled,
+    );
   }
 
   updateLastWinDisplay() {
@@ -1610,7 +2155,10 @@ export class Game extends Phaser.Scene {
     }
 
     // Kill any lingering pulse tweens
-    this.tweens.killTweensOf([this.bottomBarHUD.txtLastWin, this.bottomBarHUD.txtLastWinLabel]);
+    this.tweens.killTweensOf([
+      this.bottomBarHUD.txtLastWin,
+      this.bottomBarHUD.txtLastWinLabel,
+    ]);
     this.bottomBarHUD.txtLastWin.setScale(1);
     this.bottomBarHUD.txtLastWinLabel.setScale(1);
 
@@ -1620,8 +2168,12 @@ export class Game extends Phaser.Scene {
 
     if (target <= 0) {
       this._displayedWin = 0;
-      this.bottomBarHUD.txtLastWin.setText(DisplayBalance({ amount: 0, currency: this.currency }));
-      this.bottomBarHUD.txtLastWin.setColor('#44ff88').setShadow(0, 0, '#000', 0, false, false);
+      this.bottomBarHUD.txtLastWin.setText(
+        DisplayBalance({ amount: 0, currency: this.currency }),
+      );
+      this.bottomBarHUD.txtLastWin
+        .setColor('#44ff88')
+        .setShadow(0, 0, '#000', 0, false, false);
       return;
     }
 
@@ -1632,17 +2184,22 @@ export class Game extends Phaser.Scene {
     const duration = Math.min(1500, Math.max(500, Math.abs(delta) * 15));
 
     // Golden glow text
-    this.bottomBarHUD.txtLastWin.setColor('#ffea00').setShadow(0, 2, '#ffaa00', 6, true, true);
+    this.bottomBarHUD.txtLastWin
+      .setColor('#ffea00')
+      .setShadow(0, 2, '#ffaa00', 6, true, true);
 
     // Pulse text while counting
     this.tweens.add({
-      targets: [this.bottomBarHUD.txtLastWin, this.bottomBarHUD.txtLastWinLabel],
+      targets: [
+        this.bottomBarHUD.txtLastWin,
+        this.bottomBarHUD.txtLastWinLabel,
+      ],
       scaleX: 1.12,
       scaleY: 1.12,
       yoyo: true,
       repeat: -1,
       duration: 200,
-      ease: 'Sine.easeInOut'
+      ease: 'Sine.easeInOut',
     });
 
     // Big win: glow the pill itself
@@ -1651,7 +2208,13 @@ export class Game extends Phaser.Scene {
       if (b) {
         this.bottomBarHUD.winPillGlow.clear();
         this.bottomBarHUD.winPillGlow.fillStyle(0xffaa00, 0.25);
-        this.bottomBarHUD.winPillGlow.fillRoundedRect(b.x - 4, b.y - 4, b.w + 8, b.h + 8, (b.h + 8) / 2);
+        this.bottomBarHUD.winPillGlow.fillRoundedRect(
+          b.x - 4,
+          b.y - 4,
+          b.w + 8,
+          b.h + 8,
+          (b.h + 8) / 2,
+        );
         this.bottomBarHUD.winPillGlow.setAlpha(0);
         this.tweens.add({
           targets: this.bottomBarHUD.winPillGlow,
@@ -1659,7 +2222,7 @@ export class Game extends Phaser.Scene {
           yoyo: true,
           repeat: -1,
           duration: 400,
-          ease: 'Sine.easeInOut'
+          ease: 'Sine.easeInOut',
         });
       }
     }
@@ -1672,14 +2235,24 @@ export class Game extends Phaser.Scene {
       onUpdate: (tween: Phaser.Tweens.Tween) => {
         const progress = (tween.getValue?.() ?? 0) / 100;
         this._displayedWin = start + delta * progress;
-        this.bottomBarHUD.txtLastWin.setText(DisplayBalance({ amount: this._displayedWin, currency: this.currency }));
+        this.bottomBarHUD.txtLastWin.setText(
+          DisplayBalance({
+            amount: this._displayedWin,
+            currency: this.currency,
+          }),
+        );
       },
       onComplete: () => {
         this._displayedWin = target;
-        this.bottomBarHUD.txtLastWin.setText(DisplayBalance({ amount: target, currency: this.currency }));
+        this.bottomBarHUD.txtLastWin.setText(
+          DisplayBalance({ amount: target, currency: this.currency }),
+        );
 
         // Stop pulsing
-        this.tweens.killTweensOf([this.bottomBarHUD.txtLastWin, this.bottomBarHUD.txtLastWinLabel]);
+        this.tweens.killTweensOf([
+          this.bottomBarHUD.txtLastWin,
+          this.bottomBarHUD.txtLastWinLabel,
+        ]);
         this.bottomBarHUD.txtLastWin.setScale(1);
         this.bottomBarHUD.txtLastWinLabel.setScale(1);
 
@@ -1690,7 +2263,7 @@ export class Game extends Phaser.Scene {
           scaleY: 1.3,
           duration: 250,
           yoyo: true,
-          ease: 'Back.easeOut'
+          ease: 'Back.easeOut',
         });
 
         // Settle win glow
@@ -1700,13 +2273,15 @@ export class Game extends Phaser.Scene {
             targets: this.bottomBarHUD.winPillGlow,
             alpha: 0.5,
             duration: 600,
-            ease: 'Sine.easeOut'
+            ease: 'Sine.easeOut',
           });
         }
 
         // Settle text to green
         this.time.delayedCall(400, () => {
-          this.bottomBarHUD.txtLastWin.setColor('#44ff88').setShadow(0, 0, '#000', 0, false, false);
+          this.bottomBarHUD.txtLastWin
+            .setColor('#44ff88')
+            .setShadow(0, 0, '#000', 0, false, false);
         });
       },
     });
@@ -1717,26 +2292,39 @@ export class Game extends Phaser.Scene {
 
     const baseBet = this.getEffectiveBet();
     const cost = baseBet * betMultCost;
-    const label = triggerType === 2 
-      ? T('SUPER FREE SPINS', this.stakeEngine.isSocialMode()) 
-      : T('BUY FREE SPINS', this.stakeEngine.isSocialMode());
+    const label =
+      triggerType === 2
+        ? T('SUPER FREE SPINS', this.stakeEngine.isSocialMode())
+        : T('BUY FREE SPINS', this.stakeEngine.isSocialMode());
 
     if (this.valueMoney < cost) {
       this.errorManager.showToast('INSUFFICIENT FUNDS', '#ff4466');
       return;
     }
 
-    const formattedBase = DisplayBalance({ amount: baseBet, currency: this.currency });
-    const formattedCost = DisplayBalance({ amount: cost, currency: this.currency });
+    const formattedBase = DisplayBalance({
+      amount: baseBet,
+      currency: this.currency,
+    });
+    const formattedCost = DisplayBalance({
+      amount: cost,
+      currency: this.currency,
+    });
     this.confirmDialog.show(
       label,
       `Bet: ${formattedBase}\nTotal Cost: ${formattedCost}`,
       () => this.executePurchase(triggerType, baseBet, cost),
-      () => { /* cancelled */ }
+      () => {
+        /* cancelled */
+      },
     );
   }
 
-  private async executePurchase(triggerType: number, baseBet: number, totalCost: number) {
+  private async executePurchase(
+    triggerType: number,
+    baseBet: number,
+    totalCost: number,
+  ) {
     this._spinLock = true;
     this.updateSpinButtonState();
     this.valueMoney -= totalCost;
@@ -1762,10 +2350,12 @@ export class Game extends Phaser.Scene {
         const spinEvent = stateEvents.find((e: any) => e.type === 'spin');
         serverGrid = spinEvent?.grid || spinEvent?.data?.grid;
       }
-      
+
       // Update balance from server response (authoritative)
       if (result.balance && !this.stakeEngine.isDemoMode()) {
-        this.valueMoney = StakeEngineClient.toDisplayAmount(result.balance.amount);
+        this.valueMoney = StakeEngineClient.toDisplayAmount(
+          result.balance.amount,
+        );
         this.updateMoneyDisplay();
       }
 
@@ -1788,7 +2378,9 @@ export class Game extends Phaser.Scene {
           }
         }
         this.fsActive = true;
-        this.txtFSRemaining.setText(`${this.grid.freeSpinsRemaining} FREE SPINS`).setVisible(true);
+        this.txtFSRemaining
+          .setText(`${this.grid.freeSpinsRemaining} FREE SPINS`)
+          .setVisible(true);
         this.audio.playMusic('musicDefault', 800);
         this.grid.injectServerResult(serverGrid);
       });
@@ -1829,7 +2421,13 @@ export class Game extends Phaser.Scene {
   }
 
   async attemptSpin(triggerType: number) {
-    if (this._spinLock || this._recovering || this.fsActive || this.anyOverlayOpen()) return;
+    if (
+      this._spinLock ||
+      this._recovering ||
+      this.fsActive ||
+      this.anyOverlayOpen()
+    )
+      return;
 
     const cost = this.getEffectiveBet();
     if (this.valueMoney >= cost) {
@@ -1866,7 +2464,9 @@ export class Game extends Phaser.Scene {
 
         // Update balance from server response (authoritative)
         if (result.balance && !this.stakeEngine.isDemoMode()) {
-          this.valueMoney = StakeEngineClient.toDisplayAmount(result.balance.amount);
+          this.valueMoney = StakeEngineClient.toDisplayAmount(
+            result.balance.amount,
+          );
           this.updateMoneyDisplay();
         }
 
@@ -1886,7 +2486,6 @@ export class Game extends Phaser.Scene {
       this.errorManager.showToast('INSUFFICIENT FUNDS', '#ff4466');
     }
   }
-
 
   changeBet(direction: number) {
     if (this._spinLock || this.fsActive) return;
@@ -1913,7 +2512,7 @@ export class Game extends Phaser.Scene {
   private async executeReplay() {
     this.replayBtnHit.setVisible(false);
     this.replayBtnTxt.setVisible(false);
-    
+
     // We fetch replayData state bypassing normal play triggers
     const replayData = await this.stakeEngine.fetchReplay();
     const stateEvents = replayData.state || [];
@@ -1927,22 +2526,22 @@ export class Game extends Phaser.Scene {
       const spinEvent = stateEvents.find((e: any) => e.type === 'spin');
       serverGrid = spinEvent?.grid || spinEvent?.data?.grid;
     }
-    
+
     // Reset Grid context
     this._spinLock = true;
     this.updateSpinButtonState();
     this.lastWin = 0;
     this.updateLastWinDisplay();
     this.updateBetDisplay(); // Update bet text with REAL COST now that replayData is fetched
-    
+
     this.audio.playReels();
     this.grid.prepareSpin();
-    
+
     // Check if free spins trigger was embedded (SDK event format)
     const fsEvent = stateEvents.find((e: any) => e.type === 'fsTrigger');
     if (fsEvent) {
-       this.grid.isSuperFreeSpins = fsEvent.triggerType === 'super';
-       this.grid.freeSpinsRemaining = fsEvent.totalSpins || 0;
+      this.grid.isSuperFreeSpins = fsEvent.triggerType === 'super';
+      this.grid.freeSpinsRemaining = fsEvent.totalSpins || 0;
     }
 
     this.grid.injectServerResult(serverGrid);
@@ -1952,30 +2551,34 @@ export class Game extends Phaser.Scene {
     // SDK disconnect recovery flow:
     // On auth, the RGS returns any pending round in auth.round.
     const totalAmount = StakeEngineClient.toDisplayAmount(round.amount);
-    
+
     // Stake Requirement: Restore player's previously selected bet amount on refresh.
     let bestDist = Infinity;
     let bestIdx = this.betPresetIndex;
     for (let i = 0; i < BET_PRESETS.length; i++) {
-        const bp = BET_PRESETS[i];
-        const distBase = Math.abs(totalAmount - bp);
-        const distAnte = Math.abs(totalAmount - bp * 1.25);
-        const distBonus = Math.abs(totalAmount - bp * 100);
-        const distSuper = Math.abs(totalAmount - bp * 500);
-        
-        const minThis = Math.min(distBase, distAnte, distBonus, distSuper);
-        if (minThis < bestDist) {
-            bestDist = minThis;
-            bestIdx = i;
-        }
+      const bp = BET_PRESETS[i];
+      const distBase = Math.abs(totalAmount - bp);
+      const distAnte = Math.abs(totalAmount - bp * 1.25);
+      const distBonus = Math.abs(totalAmount - bp * 100);
+      const distSuper = Math.abs(totalAmount - bp * 500);
+
+      const minThis = Math.min(distBase, distAnte, distBonus, distSuper);
+      if (minThis < bestDist) {
+        bestDist = minThis;
+        bestIdx = i;
+      }
     }
-    
+
     this.betPresetIndex = bestIdx;
     options.betAmount = BET_PRESETS[this.betPresetIndex];
     this.updateBetDisplay();
 
-    console.log(`[Game] Pending round detected — restored bet amount to ${options.betAmount} (total cost: ${totalAmount})`);
-    this.stakeEngine.endRound().catch(e => console.warn('[Game] endRound error:', e));
+    console.log(
+      `[Game] Pending round detected — restored bet amount to ${options.betAmount} (total cost: ${totalAmount})`,
+    );
+    this.stakeEngine
+      .endRound()
+      .catch((e) => console.warn('[Game] endRound error:', e));
   }
 
   private saveSpinRecord(_winAmount: number, _feature: string) {
@@ -2001,14 +2604,15 @@ export class Game extends Phaser.Scene {
       // Unrecoverable — session is dead
       this.errorManager.showBlockingError(
         headline,
-        async () => { throw new Error('Session expired'); },
+        async () => {
+          throw new Error('Session expired');
+        },
         () => window.location.reload(),
       );
     } else {
       // Recoverable — show retry modal that resyncs balance
-      this.errorManager.showBlockingError(
-        headline,
-        () => this.resyncAfterError(),
+      this.errorManager.showBlockingError(headline, () =>
+        this.resyncAfterError(),
       );
     }
   }
@@ -2031,8 +2635,13 @@ export class Game extends Phaser.Scene {
 
       // If there's a pending round the server knows about, end it
       if (state.pendingRound) {
-        console.log('[Game] Server reports pending round:', state.pendingRound.betID);
-        this.stakeEngine.endRound().catch(e => console.warn('[Game] endRound error:', e));
+        console.log(
+          '[Game] Server reports pending round:',
+          state.pendingRound.betID,
+        );
+        this.stakeEngine
+          .endRound()
+          .catch((e) => console.warn('[Game] endRound error:', e));
       }
 
       // Clean up — no local state to clear
@@ -2043,7 +2652,10 @@ export class Game extends Phaser.Scene {
       this.updateSpinButtonState();
 
       this.errorManager.showToast('Connection restored', '#44ff88');
-      console.log('[Game] Resync successful. Balance:', this.valueMoney.toFixed(2));
+      console.log(
+        '[Game] Resync successful. Balance:',
+        this.valueMoney.toFixed(2),
+      );
     } catch (resyncErr) {
       this._recovering = false;
       console.error('[Game] Resync failed:', resyncErr);
@@ -2051,7 +2663,3 @@ export class Game extends Phaser.Scene {
     }
   }
 }
-
-
-
-
