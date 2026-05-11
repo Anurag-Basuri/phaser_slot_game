@@ -57,6 +57,7 @@ export class SpinControls {
     // Setup interactive hover/press states for tactile arcade feedback
     this.setupTactileFeedback(this.betMinusGfx, this.betMinusHit);
     this.setupTactileFeedback(this.betPlusGfx, this.betPlusHit);
+    this.setupTactileFeedback(this.spinGfx, this.spinHit);
 
     this.autoGfx = this.scene.add.graphics().setDepth(21);
     this.autoHit = this.scene.add.rectangle(0, 0, 100, 30, 0xffffff, 0)
@@ -67,6 +68,9 @@ export class SpinControls {
       color: '#ffffff',
       shadow: { offsetX: 0, offsetY: 1, color: '#000000', blur: 2, fill: true }
     }).setOrigin(0.5).setDepth(23);
+
+    // Autoplay also gets tactile feedback
+    this.setupTactileFeedback(this.autoGfx, this.autoHit);
   }
 
   /**
@@ -296,6 +300,62 @@ export class SpinControls {
     }
   }
 
+  /** Draw the STOP button (visually replaces spin during active spin) */
+  drawStopButton(x: number, y: number, size: number) {
+    const g = this.spinGfx;
+    g.clear();
+    const r = size / 2;
+
+    // Drop shadow
+    g.fillStyle(0x000000, 0.5);
+    g.fillCircle(x, y + 6, r + 8);
+
+    // Same thick multi-layered gold bezel as spin
+    g.fillGradientStyle(0x774400, 0x553300, 0x996611, 0x664400, 1);
+    g.fillCircle(x, y, r + 6);
+    g.fillGradientStyle(0xffdd55, 0xffbb22, 0xcc8800, 0xaa5500, 1);
+    g.fillCircle(x, y, r + 4);
+    g.fillGradientStyle(0xaa6600, 0x884400, 0xffcc33, 0xdd9900, 1);
+    g.fillCircle(x, y, r - 2);
+
+    // Crimson/Red Jewel Center (STOP state)
+    const candyR = r - 6;
+    g.fillStyle(0x550000, 1);
+    g.fillCircle(x, y, candyR);
+    g.fillGradientStyle(0x990000, 0x880000, 0xcc2200, 0xaa1100, 1);
+    g.fillCircle(x, y - 2, candyR * 0.95);
+    g.fillGradientStyle(0xdd3300, 0xbb1100, 0xee4422, 0xcc2200, 1);
+    g.fillCircle(x - 2, y - 4, candyR * 0.85);
+
+    // High-gloss crescent highlight at the top-left
+    g.beginPath();
+    g.arc(x - 4, y - 4, candyR * 0.7, Math.PI * 0.7, Math.PI * 1.8, false);
+    g.arc(x - 2, y - 2, candyR * 0.7, Math.PI * 1.8, Math.PI * 0.7, true);
+    g.closePath();
+    g.fillStyle(0xffffff, 0.55);
+    g.fillPath();
+
+    // White square STOP icon
+    const sqSize = candyR * 0.35;
+
+    // Square shadow
+    g.fillStyle(0x440000, 0.8);
+    g.fillRoundedRect(x - sqSize / 2, y - sqSize / 2 + 3, sqSize, sqSize, 3);
+
+    // Square body
+    g.fillStyle(0xffffff, 0.95);
+    g.fillRoundedRect(x - sqSize / 2, y - sqSize / 2, sqSize, sqSize, 3);
+
+    // Sparkle dots on the gold ring
+    const sparkleR = 2;
+    g.fillStyle(0xffffff, 0.7);
+    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 3) {
+      const sx = x + Math.cos(angle) * (r + 1);
+      const sy = y + Math.sin(angle) * (r + 1);
+      g.fillCircle(sx, sy, sparkleR);
+    }
+  }
+
   /** Draw a bet +/- button */
   drawBetButton(gfx: Phaser.GameObjects.Graphics, tx: number, ty: number, size: number, isPlus: boolean) {
     gfx.clear();
@@ -359,9 +419,10 @@ export class SpinControls {
   /** Draw the autoplay button at its last known position */
   drawAutoButton(spinX: number, spinY: number, spinSize: number, isActive: boolean, remaining: number) {
     if (!this.autoGfx.visible) return;
-    const autoY = spinY + spinSize / 2 + 32; // Dropped to clear the spin button's massive drop shadow
+    const autoY = spinY + spinSize / 2 + 32;
     this.autoGfx.clear();
     this.autoGfx.setPosition(spinX, autoY);
+    this.autoTxt.setPosition(spinX, autoY);
 
     const bw = 88, bh = 28, rad = bh / 2;
     const x = -bw / 2;
@@ -372,20 +433,25 @@ export class SpinControls {
     this.autoGfx.fillRoundedRect(x, y + 3, bw, bh, rad);
 
     if (isActive) {
-      // Active: Gold bezel, pink face
+      // Active STOP state: White pill with pink border (Sugar Rush 1000 standard)
       this.autoGfx.fillGradientStyle(0xeebb44, 0xddaa33, 0xaa7722, 0x886611, 1);
       this.autoGfx.fillRoundedRect(x - 2, y - 2, bw + 4, bh + 4, rad + 2);
-      
-      this.autoGfx.fillGradientStyle(0xff006a, 0xff006a, 0xaa0044, 0xaa0044, 1);
+
+      this.autoGfx.fillStyle(0xffffff, 1);
       this.autoGfx.fillRoundedRect(x, y, bw, bh, rad);
 
+      // Pink border stroke
+      this.autoGfx.lineStyle(2.5, 0xff0066, 1);
+      this.autoGfx.strokeRoundedRect(x, y, bw, bh, rad);
+
       // Glass highlight
-      this.autoGfx.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.4, 0.4, 0.05, 0.05);
+      this.autoGfx.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.6, 0.6, 0.1, 0.1);
       this.autoGfx.fillRoundedRect(x + 1, y + 1, bw - 2, bh * 0.45, { tl: rad - 1, tr: rad - 1, bl: 0, br: 0 } as any);
 
-      this.autoTxt.setText(remaining > 0 ? `AUTO ${remaining}` : 'AUTO ∞')
-                  .setColor('#ffffff')
-                  .setShadow(0, 1, '#550022', 0, true, true);
+      const label = remaining > 0 ? `STOP (${remaining})` : 'STOP';
+      this.autoTxt.setText(label)
+                  .setColor('#ff0066')
+                  .setShadow(0, 0, '#000000', 0, false, false);
     } else {
       // Inactive: Chrome/Dark metal bezel, dark violet face
       this.autoGfx.fillGradientStyle(0x999999, 0x777777, 0x444444, 0x222222, 1);

@@ -471,39 +471,8 @@ export class Game extends Phaser.Scene {
     this.bottomBarHUD = new BottomBarHUD(this);
     this.spinControls = new SpinControls(this);
 
-    // Wire up spin controls callbacks
-    this.spinControls.onSpin(() => {
-      if (this.anyOverlayOpen()) return;
-      this.audio.playSound('button');
-      this.attemptSpin(0);
-    });
-    this.spinControls.onBetMinus(() => {
-      if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
-      if (this.betPresetIndex > 0) {
-        this.betPresetIndex--;
-        options.betAmount = BET_PRESETS[this.betPresetIndex];
-        this.updateBetDisplay();
-        this.audio.playSound('button');
-      }
-    });
-    this.spinControls.onBetPlus(() => {
-      if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
-      if (this.betPresetIndex < BET_PRESETS.length - 1) {
-        this.betPresetIndex++;
-        options.betAmount = BET_PRESETS[this.betPresetIndex];
-        this.updateBetDisplay();
-        this.audio.playSound('button');
-      }
-    });
-    this.spinControls.onAutoPlay(() => {
-      if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
-      if (this.autoSpinActive) {
-        this.stopAutoSpin();
-      } else {
-        this.audio.playSound('button');
-        this.autoPlayOverlay.show();
-      }
-    });
+    // Spin controls event wiring is handled centrally in wireInteractions()
+    // to avoid double-binding. Only non-spin callbacks are wired here.
     this.bottomBarHUD.onBetTap(() => {
       if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
       this.audio.playSound('button');
@@ -1479,11 +1448,15 @@ export class Game extends Phaser.Scene {
   private updateSpinButtonState() {
     this.updateUIInteractivity();
     if (!this.spinControls?.spinGfx) return;
-    if (this.autoSpinActive) {
+
+    // Visual transformation: Play ▶ ↔ Stop ■ (Sugar Rush 1000 standard)
+    if (this._spinLock || this.autoSpinActive) {
+      // During a spin or autoplay: show the STOP button (crimson + square icon)
+      this.spinControls.drawStopButton(0, 0, this.spinControls['_lastSpinSize'] || 100);
       this.spinControls.spinGfx.setAlpha(1);
-    } else if (this._spinLock) {
-      this.spinControls.spinGfx.setAlpha(0.5);
     } else {
+      // Idle: show the normal PLAY button (pink + triangle icon)
+      this.spinControls.drawSpinButton(0, 0, this.spinControls['_lastSpinSize'] || 100);
       this.spinControls.spinGfx.setAlpha(1);
     }
   }
@@ -1569,22 +1542,9 @@ export class Game extends Phaser.Scene {
   }
 
   private wireInteractions() {
+    // Spin button — game logic only (tactile feedback is handled by SpinControls)
     this.spinControls.spinHit.on('pointerdown', () => {
-      this.tweens.add({
-        targets: this.spinControls.spinGfx,
-        scaleX: this.spinControls.spinGfx.scaleX * 0.9,
-        scaleY: this.spinControls.spinGfx.scaleY * 0.9,
-        yoyo: true,
-        duration: 80,
-      });
       this.handleUniversalAction();
-    });
-
-    this.spinControls.spinHit.on('pointerover', () => {
-      if (!this._spinLock) this.spinControls.spinLabel.setColor('#ccffdd');
-    });
-    this.spinControls.spinHit.on('pointerout', () => {
-      this.updateSpinButtonState();
     });
 
     // Auto play
@@ -1605,26 +1565,24 @@ export class Game extends Phaser.Scene {
       }
     });
 
-    // Bet controls — open the bet overlay panel
+    // Bet controls — directly cycle through bet presets (Sugar Rush 1000 behavior)
     this.spinControls.betMinusHit.on('pointerdown', () => {
-      if (this.anyOverlayOpen()) return;
-      this.audio.playSound('button');
-      this.betOverlay.syncState(
-        this.betPresetIndex,
-        options.anteBetEnabled,
-        options.anteBetCostMultiplier,
-      );
-      this.betOverlay.toggle();
+      if (this._spinLock || this.fsActive || this.autoSpinActive || this.anyOverlayOpen()) return;
+      if (this.betPresetIndex > 0) {
+        this.betPresetIndex--;
+        options.betAmount = BET_PRESETS[this.betPresetIndex];
+        this.updateBetDisplay();
+        this.audio.playSound('button');
+      }
     });
     this.spinControls.betPlusHit.on('pointerdown', () => {
-      if (this.anyOverlayOpen()) return;
-      this.audio.playSound('button');
-      this.betOverlay.syncState(
-        this.betPresetIndex,
-        options.anteBetEnabled,
-        options.anteBetCostMultiplier,
-      );
-      this.betOverlay.toggle();
+      if (this._spinLock || this.fsActive || this.autoSpinActive || this.anyOverlayOpen()) return;
+      if (this.betPresetIndex < BET_PRESETS.length - 1) {
+        this.betPresetIndex++;
+        options.betAmount = BET_PRESETS[this.betPresetIndex];
+        this.updateBetDisplay();
+        this.audio.playSound('button');
+      }
     });
 
     // Premium Hover states builder
@@ -1680,8 +1638,7 @@ export class Game extends Phaser.Scene {
     addHover(this.btnPaytable, [this.btnPaytable, this.iconPaytable]);
     addHover(this.btnSettings, [this.btnSettings, this.iconSettings]);
     addHover(this.btnFullscreen, [this.btnFullscreen, this.iconFullscreen]);
-    addHover(this.spinControls.spinHit, this.spinControls.spinGfx);
-    addHover(this.spinControls.autoHit, this.spinControls.autoGfx);
+    // Spin and Autoplay hover/press feedback is handled by SpinControls.setupTactileFeedback
 
     // Buy features (with confirmation) — also guard overlays
     this.buySuperHit.on('pointerdown', () => {
@@ -1806,79 +1763,16 @@ export class Game extends Phaser.Scene {
     }
   }
 
-  /** Update auto-spin button display */
+  /** Update auto-spin button display — delegates to SpinControls (single render path) */
   private updateAutoSpinDisplay() {
-    const w = this.spinControls.autoHit.width;
-    const h = this.spinControls.autoHit.height;
-    const gfx = this.spinControls.autoGfx;
-
-    gfx.clear();
-    gfx.setPosition(this.spinControls.autoHit.x, this.spinControls.autoHit.y);
-    const cx = 0;
-    const cy = 0;
-
-    // Common Drop Shadow
-    gfx.fillStyle(0x000000, 0.3);
-    gfx.fillRoundedRect(cx - w / 2, cy - h / 2 + 4, w, h, h / 2);
-
-    if (this.autoSpinActive) {
-      const label =
-        this.autoSpinRemaining > 0
-          ? `STOP (${this.autoSpinRemaining})`
-          : 'STOP';
-      this.spinControls.autoTxt
-        .setText(label)
-        .setColor('#ff0066')
-        .setShadow(0, 0, '#000', 0, false);
-
-      // Active State (Bright White / Pink)
-      gfx.fillStyle(0xffffff, 1);
-      gfx.fillRoundedRect(cx - w / 2, cy - h / 2, w, h, h / 2);
-
-      gfx.lineStyle(3, 0xff0066, 1);
-      gfx.strokeRoundedRect(cx - w / 2, cy - h / 2, w, h, h / 2);
-
-      // Gloss highlight
-      gfx.fillStyle(0xffffff, 0.8);
-      gfx.fillRoundedRect(
-        cx - w / 2 + 3,
-        cy - h / 2 + 2,
-        w - 6,
-        h / 2 - 2,
-        h / 2 - 2,
-      );
-    } else {
-      this.spinControls.autoTxt
-        .setText('AUTOPLAY')
-        .setColor('#ffffff')
-        .setShadow(0, 2, '#000000', 0, true);
-
-      // Inactive State (Deep Purple / Chrome)
-      gfx.fillStyle(0x2a1144, 1);
-      gfx.fillRoundedRect(cx - w / 2, cy - h / 2, w, h, h / 2);
-
-      gfx.fillStyle(0x442266, 1);
-      gfx.fillRoundedRect(
-        cx - w / 2 + 2,
-        cy - h / 2 + 2,
-        w - 4,
-        h - 4,
-        h / 2 - 2,
-      );
-
-      gfx.lineStyle(2, 0xdd99ff, 1);
-      gfx.strokeRoundedRect(cx - w / 2, cy - h / 2, w, h, h / 2);
-
-      // Gloss highlight
-      gfx.fillStyle(0xffffff, 0.15);
-      gfx.fillRoundedRect(
-        cx - w / 2 + 3,
-        cy - h / 2 + 2,
-        w - 6,
-        h / 2 - 2,
-        h / 2 - 2,
-      );
-    }
+    const spinX = this.spinControls['_lastSpinX'] || 0;
+    const spinY = this.spinControls['_lastSpinY'] || 0;
+    const spinSize = this.spinControls['_lastSpinSize'] || 100;
+    this.spinControls.drawAutoButton(
+      spinX, spinY, spinSize,
+      this.autoSpinActive,
+      this.autoSpinRemaining,
+    );
   }
 
   private wireGridCallbacks() {
