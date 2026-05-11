@@ -37,7 +37,7 @@ export class BottomBarHUD {
   private _prevMoney = -1;
   private _winCountTween: Phaser.Tweens.Tween | null = null;
 
-  private readonly COL_LABEL = '#8899bb';
+  private readonly COL_LABEL = '#bb88cc';
   private readonly COL_VALUE = '#ffffff';
   private readonly COL_WIN = '#44ff88';
   private readonly FONT_LABEL = '"Outfit", "Inter", sans-serif';
@@ -93,17 +93,21 @@ export class BottomBarHUD {
     const bb = this.bar;
 
     // ── Backdrop ──
-    // Deep berry gradient
-    bb.fillGradientStyle(0x130820, 0x130820, 0x0a0412, 0x0a0412, 0.97);
+    // Glassmorphic candy panel — semi-transparent so background bleeds through
+    bb.fillGradientStyle(0x1a0a28, 0x1a0a28, 0x0d0515, 0x0d0515, 0.65, 0.65, 0.45, 0.45);
     bb.fillRect(0, h - barH, w, barH);
 
     // Top accent line (candy-pink gradient)
-    bb.fillGradientStyle(0xff3388, 0xff006a, 0xcc0055, 0xff3388, 1);
+    bb.fillGradientStyle(0xff88bb, 0xff006a, 0xcc0055, 0xff88bb, 1);
     bb.fillRect(0, h - barH, w, 2);
 
     // Subtle glow beneath line
-    bb.fillGradientStyle(0xff006a, 0xff006a, 0x130820, 0x130820, 0.12, 0.12, 0, 0);
-    bb.fillRect(0, h - barH + 2, w, 6);
+    bb.fillGradientStyle(0xff006a, 0xff006a, 0x1a0a28, 0x1a0a28, 0.18, 0.18, 0, 0);
+    bb.fillRect(0, h - barH + 2, w, 8);
+
+    // Inner highlight line (subtle glass rim)
+    bb.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.06, 0.06, 0, 0);
+    bb.fillRect(0, h - barH + 2, w, 1);
 
     const txtY = h - barH / 2;
     const sidePad = isMobile ? 8 : 20;
@@ -121,20 +125,20 @@ export class BottomBarHUD {
       bb.fillStyle(0x000000, 0.35);
       bb.fillRoundedRect(x + 1, py + 2, width, ph, rad);
 
-      // Body — deep plum
-      bb.fillGradientStyle(0x120920, 0x120920, 0x1a0e2c, 0x1a0e2c, 0.85);
+      // Body — translucent deep plum (candy-glass)
+      bb.fillGradientStyle(0x1a0a28, 0x1a0a28, 0x120820, 0x120820, 0.5);
       bb.fillRoundedRect(x, py, width, ph, rad);
 
       // Top glass sheen
-      bb.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.06, 0.06, 0, 0);
+      bb.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.08, 0.08, 0, 0);
       bb.fillRoundedRect(x + 2, py + 1, width - 4, ph * 0.35, { tl: rad, tr: rad, bl: 0, br: 0 } as any);
 
-      // Border
-      bb.lineStyle(1, accent, 0.20);
+      // Accent border (candy-colored rim)
+      bb.lineStyle(1.5, accent, 0.3);
       bb.strokeRoundedRect(x, py, width, ph, rad);
 
       // Inner rim
-      bb.lineStyle(0.5, 0xffffff, 0.04);
+      bb.lineStyle(0.5, 0xffffff, 0.06);
       bb.strokeRoundedRect(x + 1, py + 1, width - 2, ph - 2, rad - 1);
     };
 

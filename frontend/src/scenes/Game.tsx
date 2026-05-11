@@ -254,20 +254,24 @@ export class Game extends Phaser.Scene {
     this.logoContainer = this.add.container(0, 0);
     this.logoWrapper.add(this.logoContainer);
 
+    // Deep shadow behind entire logo for background separation
+    this.logoGlow = this.add.graphics();
+    this.logoGlow.fillStyle(0x1a0022, 0.3);
+    this.logoGlow.fillEllipse(0, 15, 360, 140);
+
     // Apply premium styling with gradient and thick border with shadow
     this.logoText1 = this.add
       .text(0, -20, 'SUGAR BLAST', {
         fontFamily: '"Lilita One", "Luckiest Guy", cursive, sans-serif',
         fontSize: '48px',
         fontStyle: 'normal',
-        color: '#ffffff', // Base white, gradient applied below
+        color: '#ffffff',
         stroke: '#ffffff',
         strokeThickness: 24,
       })
       .setOrigin(0.5, 0.5)
-      .setShadow(0, 8, '#ff006a', 0, true, false); // shadow on stroke, not on fill
+      .setShadow(0, 8, '#ff006a', 0, true, false);
 
-    // Ensure texture is ready before creating gradient (Phaser workaround for text gradients)
     this.logoText1.updateText();
     const gradient1 = this.logoText1.context.createLinearGradient(0, 0, 0, this.logoText1.height);
     gradient1.addColorStop(0, '#ffffff');
@@ -286,7 +290,7 @@ export class Game extends Phaser.Scene {
         strokeThickness: 24,
       })
       .setOrigin(0.5, 0.5)
-      .setShadow(0, 8, '#cc6600', 0, true, false); // shadow on stroke, not on fill
+      .setShadow(0, 8, '#cc6600', 0, true, false);
 
     this.logoText2.updateText();
     const gradient2 = this.logoText2.context.createLinearGradient(0, 0, 0, this.logoText2.height);
@@ -296,7 +300,7 @@ export class Game extends Phaser.Scene {
     gradient2.addColorStop(1, '#cc6600');
     this.logoText2.setFill(gradient2);
 
-    this.logoContainer.add([this.logoText1, this.logoText2]);
+    this.logoContainer.add([this.logoGlow, this.logoText1, this.logoText2]);
 
     // Buy buttons setup
     const btnStyle = {
@@ -653,73 +657,94 @@ export class Game extends Phaser.Scene {
     // === GRID PANEL IMAGE ===
     this.gridPanel.setVisible(false); // Hide the old background image
 
-    // === PREMIUM GLASSMORPHIC GRID FRAME ===
+    // === PREMIUM CANDY MACHINE GRID FRAME ===
     this.gridFrame.clear();
     const f = this.gridFrame;
 
-    const framePadding = Math.max(12, gridTotalSize * 0.02);
+    const borderThickness = Math.max(10, gridTotalSize * 0.022);
+    const framePadding = borderThickness + 4;
     const frameW = gridTotalSize + framePadding * 2;
     const frameH = gridTotalSize + framePadding * 2;
     const frameX = gridX - framePadding;
     const frameY = gridY - framePadding;
+    const frameR = Math.max(16, gridTotalSize * 0.03);
 
-    // Dark semi-transparent background plate
-    f.fillStyle(0x0a0515, 0.7);
-    f.fillRoundedRect(frameX, frameY, frameW, frameH, 20);
+    // --- Layer 1: Deep outer shadow ---
+    f.fillStyle(0x000000, 0.45);
+    f.fillRoundedRect(frameX + 4, frameY + 6, frameW, frameH, frameR + 2);
 
-    // Inner glow / neon border
-    f.lineStyle(3, 0xff006a, 0.9);
-    f.strokeRoundedRect(frameX, frameY, frameW, frameH, 20);
+    // --- Layer 2: Thick glossy plastic rim (outer ring) ---
+    // Bottom half (darker) for 3D depth
+    f.fillGradientStyle(0xdd5599, 0xdd5599, 0x881144, 0x881144, 1);
+    f.fillRoundedRect(frameX, frameY, frameW, frameH, frameR);
 
-    // Subtle outer glow effect using multiple transparent strokes
-    f.lineStyle(6, 0xff006a, 0.3);
-    f.strokeRoundedRect(frameX - 2, frameY - 2, frameW + 4, frameH + 4, 22);
+    // Top half highlight overlay (lighter plastic shine)
+    f.fillGradientStyle(0xff88bb, 0xffaacc, 0xdd5599, 0xdd5599, 1);
+    f.fillRoundedRect(frameX, frameY, frameW, frameH * 0.5, { tl: frameR, tr: frameR, bl: 0, br: 0 } as any);
 
-    f.lineStyle(12, 0xff006a, 0.1);
-    f.strokeRoundedRect(frameX - 5, frameY - 5, frameW + 10, frameH + 10, 25);
+    // Glass sheen on top edge of rim
+    f.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.5, 0.5, 0, 0);
+    f.fillRoundedRect(frameX + 4, frameY + 2, frameW - 8, borderThickness * 0.6, { tl: frameR - 2, tr: frameR - 2, bl: 0, br: 0 } as any);
 
-    // Chrome/Silver accents on the corners
-    const cornerSize = Math.max(15, gridTotalSize * 0.04);
-    f.lineStyle(4, 0xffffff, 1);
+    // --- Layer 3: Inner recess (dark well holding the grid) ---
+    const innerX = frameX + borderThickness;
+    const innerY = frameY + borderThickness;
+    const innerW = frameW - borderThickness * 2;
+    const innerH = frameH - borderThickness * 2;
+    const innerR = Math.max(8, frameR - 4);
 
-    // Top-left
+    // Dark inset shadow to create depth
+    f.fillStyle(0x050208, 0.9);
+    f.fillRoundedRect(innerX - 2, innerY - 2, innerW + 4, innerH + 4, innerR + 2);
+
+    // Frosted dark purple plate behind symbols
+    f.fillGradientStyle(0x1a0a28, 0x1a0a28, 0x0d0515, 0x0d0515, 0.75);
+    f.fillRoundedRect(innerX, innerY, innerW, innerH, innerR);
+
+    // Inner border for definition
+    f.lineStyle(1.5, 0xff006a, 0.35);
+    f.strokeRoundedRect(innerX, innerY, innerW, innerH, innerR);
+
+    // --- Layer 4: Outer rim border & highlight ---
+    f.lineStyle(2, 0xffccdd, 0.7);
+    f.strokeRoundedRect(frameX, frameY, frameW, frameH, frameR);
+    f.lineStyle(1, 0xffffff, 0.2);
+    f.strokeRoundedRect(frameX + 1, frameY + 1, frameW - 2, frameH - 2, frameR - 1);
+
+    // --- Layer 5: Glass glare diagonal across the grid ---
     f.beginPath();
-    f.moveTo(frameX + cornerSize, frameY);
-    f.lineTo(frameX + 10, frameY);
-    f.arc(frameX + 10, frameY + 10, 10, -Math.PI / 2, Math.PI, true);
-    f.lineTo(frameX, frameY + cornerSize);
-    f.strokePath();
+    const glareW = gridTotalSize * 0.15;
+    f.moveTo(gridX + gridTotalSize * 0.05, gridY);
+    f.lineTo(gridX + gridTotalSize * 0.05 + glareW, gridY);
+    f.lineTo(gridX, gridY + gridTotalSize * 0.3);
+    f.lineTo(gridX, gridY + gridTotalSize * 0.15);
+    f.closePath();
+    f.fillStyle(0xffffff, 0.08);
+    f.fillPath();
 
-    // Top-right
-    f.beginPath();
-    f.moveTo(frameX + frameW - cornerSize, frameY);
-    f.lineTo(frameX + frameW - 10, frameY);
-    f.arc(frameX + frameW - 10, frameY + 10, 10, -Math.PI / 2, 0, false);
-    f.lineTo(frameX + frameW, frameY + cornerSize);
-    f.strokePath();
-
-    // Bottom-left
-    f.beginPath();
-    f.moveTo(frameX, frameY + frameH - cornerSize);
-    f.lineTo(frameX, frameY + frameH - 10);
-    f.arc(frameX + 10, frameY + frameH - 10, 10, Math.PI, Math.PI / 2, true);
-    f.lineTo(frameX + cornerSize, frameY + frameH);
-    f.strokePath();
-
-    // Bottom-right
-    f.beginPath();
-    f.moveTo(frameX + frameW, frameY + frameH - cornerSize);
-    f.lineTo(frameX + frameW, frameY + frameH - 10);
-    f.arc(
-      frameX + frameW - 10,
-      frameY + frameH - 10,
-      10,
-      0,
-      Math.PI / 2,
-      false,
-    );
-    f.lineTo(frameX + frameW - cornerSize, frameY + frameH);
-    f.strokePath();
+    // --- Layer 6: Decorative candy-bolt corner accents ---
+    const boltR = Math.max(5, gridTotalSize * 0.012);
+    const boltInset = borderThickness * 0.55;
+    const boltPositions = [
+      { x: frameX + boltInset, y: frameY + boltInset },
+      { x: frameX + frameW - boltInset, y: frameY + boltInset },
+      { x: frameX + boltInset, y: frameY + frameH - boltInset },
+      { x: frameX + frameW - boltInset, y: frameY + frameH - boltInset },
+    ];
+    for (const bp of boltPositions) {
+      // Bolt shadow
+      f.fillStyle(0x000000, 0.4);
+      f.fillCircle(bp.x + 1, bp.y + 2, boltR);
+      // Bolt body — silver gradient
+      f.fillGradientStyle(0xdddddd, 0xeeeeee, 0x999999, 0xaaaaaa, 1);
+      f.fillCircle(bp.x, bp.y, boltR);
+      // Bolt highlight
+      f.fillStyle(0xffffff, 0.6);
+      f.fillCircle(bp.x - boltR * 0.25, bp.y - boltR * 0.25, boltR * 0.4);
+      // Bolt rim
+      f.lineStyle(1, 0x777777, 0.5);
+      f.strokeCircle(bp.x, bp.y, boltR);
+    }
 
     // ==========================================
     // 2. BUY PANELS & ANTE BET
@@ -1091,7 +1116,7 @@ export class Game extends Phaser.Scene {
     }
   }
 
-  /** Draw premium circular toolbar icons with neon glow */
+  /** Draw glossy candy-arcade toolbar icons */
   private drawToolbarIcons() {
     const isMobile = this.scale.width < 768;
     const iconR = isMobile ? 16 : 20;
@@ -1116,36 +1141,46 @@ export class Game extends Phaser.Scene {
         cy = 0;
       const radius = iconR + 2;
       const isSoundOff = type === 'sound_off';
-      const accentColor = isSoundOff ? 0x663355 : 0xff006a;
-
-      // Outer neon glow pulse
-      obj.fillStyle(accentColor, 0.12);
-      obj.fillCircle(cx, cy, radius + 8);
-      obj.fillStyle(accentColor, 0.06);
-      obj.fillCircle(cx, cy, radius + 14);
+      const accentColor = isSoundOff ? 0x553344 : 0xff006a;
+      const rimColor = isSoundOff ? 0x664455 : 0xdd5599;
 
       // Drop shadow
       obj.fillStyle(0x000000, 0.5);
-      obj.fillCircle(cx, cy + 3, radius);
+      obj.fillCircle(cx, cy + 3, radius + 3);
 
-      // Base dark circle
+      // Thick colored candy rim (outer ring)
+      obj.fillGradientStyle(rimColor, rimColor, isSoundOff ? 0x332233 : 0x881144, isSoundOff ? 0x332233 : 0x881144, 1);
+      obj.fillCircle(cx, cy, radius + 3);
+
+      // Glass sheen on rim top half
+      obj.beginPath();
+      obj.arc(cx, cy, radius + 3, Math.PI, 0, false);
+      obj.closePath();
+      obj.fillStyle(0xffffff, 0.25);
+      obj.fillPath();
+
+      // Inner dark circle (the button face)
       obj.fillGradientStyle(0x1a0a2e, 0x1a0a2e, 0x0d0518, 0x0d0518, 1);
       obj.fillCircle(cx, cy, radius);
 
-      // Glass top hemisphere highlight
+      // Glass top hemisphere highlight on inner face
       obj.beginPath();
       obj.arc(cx, cy, radius, Math.PI, 0, false);
       obj.closePath();
-      obj.fillStyle(0xffffff, 0.1);
+      obj.fillStyle(0xffffff, 0.15);
       obj.fillPath();
 
-      // Bright accent border ring
-      obj.lineStyle(2, accentColor, isSoundOff ? 0.4 : 0.9);
+      // Accent inner ring (pressed recess)
+      obj.lineStyle(1.5, accentColor, isSoundOff ? 0.3 : 0.7);
       obj.strokeCircle(cx, cy, radius);
 
-      // Inner white rim for depth
-      obj.lineStyle(1, 0xffffff, 0.15);
+      // Subtle inner rim for depth
+      obj.lineStyle(0.5, 0xffffff, 0.1);
       obj.strokeCircle(cx, cy, radius - 2);
+
+      // Outer rim highlight
+      obj.lineStyle(1, 0xffffff, 0.2);
+      obj.strokeCircle(cx, cy, radius + 3);
 
       // Update icon state
       if (icon) {
@@ -1166,20 +1201,22 @@ export class Game extends Phaser.Scene {
     h: number,
     type: string,
   ) {
-    const fsTitle = Math.min(18, h * 0.22);
-    const fsSub = Math.min(32, h * 0.38);
+    const fsTitle = Math.min(16, h * 0.20);
+    const fsSub = Math.min(30, h * 0.36);
     const title = type === 'SUPER' ? 'SUPER\nFREE SPINS' : 'BUY\nFREE SPINS';
     txt1
       .setText(title)
       .setPosition(x, y - h * 0.15)
       .setFontSize(fsTitle)
-      .setLineSpacing(-4);
-    txt1.setColor('#ffffff').setShadow(0, 2, '#000000', 4, true, true);
+      .setFontFamily('"Lilita One", "Luckiest Guy", cursive, sans-serif')
+      .setLineSpacing(-2);
+    txt1.setColor('#ffffff').setStroke('#000000', 3).setShadow(0, 2, '#000000', 4, true, true);
     txt2.setPosition(x, y + h * 0.28).setFontSize(fsSub);
     txt2
+      .setFontFamily('"Lilita One", "Luckiest Guy", cursive, sans-serif')
       .setColor('#ffe600')
-      .setStroke('#000000', 5)
-      .setShadow(0, 3, '#000000', 0, false, true);
+      .setStroke('#000000', 6)
+      .setShadow(0, 3, '#000000', 0, true, true);
   }
 
   private drawBuyPanel(
@@ -1189,61 +1226,44 @@ export class Game extends Phaser.Scene {
     isSuper: boolean,
   ) {
     gfx.clear();
-    const r = 14;
-    const accentTop = isSuper ? 0xffcc00 : 0xff2288;
-    const accentBot = isSuper ? 0xcc6600 : 0xcc0044;
-    const accentMid = isSuper ? 0xff9900 : 0xff0066;
-    const darkBase = isSuper ? 0x332200 : 0x330015;
+    const r = Math.min(h / 2, 28); // Pill-shaped: heavily rounded corners
+    const accentTop = isSuper ? 0xffdd44 : 0xff4499;
+    const accentBot = isSuper ? 0xcc7700 : 0xbb0044;
+    const accentMid = isSuper ? 0xffaa00 : 0xff0066;
 
-    // Outer glow
-    gfx.fillStyle(accentMid, 0.2);
-    gfx.fillRoundedRect(-w / 2 - 6, -h / 2 - 6, w + 12, h + 12, r + 3);
+    // Outer soft glow
+    gfx.fillStyle(accentMid, 0.18);
+    gfx.fillRoundedRect(-w / 2 - 8, -h / 2 - 8, w + 16, h + 16, r + 4);
 
     // Drop shadow
     gfx.fillStyle(0x000000, 0.5);
     gfx.fillRoundedRect(-w / 2 + 3, -h / 2 + 5, w, h, r);
 
-    // Main body gradient
+    // Main body gradient (vibrant candy)
     gfx.fillGradientStyle(accentTop, accentTop, accentBot, accentBot, 1);
     gfx.fillRoundedRect(-w / 2, -h / 2, w, h, r);
 
-    // Dark bottom band
-    gfx.fillGradientStyle(darkBase, darkBase, darkBase, darkBase, 0.85);
-    gfx.fillRoundedRect(-w / 2, -h / 2 + h * 0.5, w, h * 0.5, {
-      tl: 0,
-      tr: 0,
-      bl: r,
-      br: r,
-    } as any);
-
-    // Division line between top color and bottom dark
-    gfx.fillStyle(0x000000, 0.4);
-    gfx.fillRect(-w / 2 + 4, -h / 2 + h * 0.5 - 1, w - 8, 2);
-
-    // Glass highlight on top
+    // Curved glass hemisphere reflection on top half
     gfx.fillGradientStyle(
-      0xffffff,
-      0xffffff,
-      0xffffff,
-      0xffffff,
-      0.45,
-      0.45,
-      0,
-      0,
+      0xffffff, 0xffffff, 0xffffff, 0xffffff,
+      0.55, 0.55, 0.05, 0.05,
     );
-    gfx.fillRoundedRect(-w / 2 + 3, -h / 2 + 2, w - 6, h * 0.22, {
-      tl: r - 2,
-      tr: r - 2,
-      bl: 0,
-      br: 0,
+    gfx.fillRoundedRect(-w / 2 + 3, -h / 2 + 2, w - 6, h * 0.4, {
+      tl: r - 2, tr: r - 2, bl: 0, br: 0,
     } as any);
 
-    // Border
-    gfx.lineStyle(2.5, accentMid, 1);
+    // Bottom darkened recess for 3D depth
+    gfx.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.3, 0.3);
+    gfx.fillRoundedRect(-w / 2 + 2, -h / 2 + h * 0.65, w - 4, h * 0.35 - 2, {
+      tl: 0, tr: 0, bl: r - 2, br: r - 2,
+    } as any);
+
+    // Accent border
+    gfx.lineStyle(2.5, accentMid, 0.9);
     gfx.strokeRoundedRect(-w / 2, -h / 2, w, h, r);
 
-    // Bright outer rim
-    gfx.lineStyle(1.5, 0xffffff, 0.5);
+    // Outer bright rim (candy shell edge)
+    gfx.lineStyle(1.5, 0xffffff, 0.45);
     gfx.strokeRoundedRect(-w / 2 - 1.5, -h / 2 - 1.5, w + 3, h + 3, r + 1);
   }
 
@@ -1251,44 +1271,28 @@ export class Game extends Phaser.Scene {
     this.anteBetBtn.clear();
     const x = -bw / 2;
     const y = -bh / 2;
-    const rad = Math.min(18, bh / 2);
+    const rad = bh / 2; // Pill shape
 
     if (options.anteBetEnabled) {
-      // Active state - bright amber
+      // Active state - bright amber pill
       this.anteBetBtn.fillStyle(0x000000, 0.4);
       this.anteBetBtn.fillRoundedRect(x + 2, y + 4, bw, bh, rad);
 
       this.anteBetBtn.fillGradientStyle(
-        0xffbb33,
-        0xffbb33,
-        0x885500,
-        0x885500,
-        1,
+        0xffbb33, 0xffbb33, 0x885500, 0x885500, 1
       );
       this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
 
+      // Glass hemisphere
       this.anteBetBtn.fillGradientStyle(
-        0xffffff,
-        0xffffff,
-        0xffffff,
-        0xffffff,
-        0.35,
-        0.35,
-        0,
-        0,
+        0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.45, 0.45, 0.05, 0.05
       );
-      this.anteBetBtn.fillRoundedRect(x + 2, y + 2, bw - 4, bh * 0.4, {
-        tl: rad - 2,
-        tr: rad - 2,
-        bl: 0,
-        br: 0,
+      this.anteBetBtn.fillRoundedRect(x + 2, y + 1, bw - 4, bh * 0.4, {
+        tl: rad - 1, tr: rad - 1, bl: 0, br: 0,
       } as any);
 
       this.anteBetBtn.lineStyle(2, 0xffeebb, 0.9);
       this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, rad);
-
-      this.anteBetBtn.lineStyle(6, 0xffaa00, 0.25);
-      this.anteBetBtn.strokeRoundedRect(x - 3, y - 3, bw + 6, bh + 6, rad + 3);
 
       this.anteBetTxt
         .setColor('#ffffff')
@@ -1297,34 +1301,21 @@ export class Game extends Phaser.Scene {
         .setColor('#ffffff')
         .setShadow(0, 0, '#ffcc00', 6, true, true);
     } else {
-      // Premium Inactive - Dark Glass
+      // Inactive - Dark purple pill
       this.anteBetBtn.fillStyle(0x000000, 0.5);
       this.anteBetBtn.fillRoundedRect(x + 2, y + 4, bw, bh, rad);
 
       this.anteBetBtn.fillGradientStyle(
-        0x2a1a3a,
-        0x2a1a3a,
-        0x110518,
-        0x110518,
-        0.95,
+        0x2a1a3a, 0x2a1a3a, 0x110518, 0x110518, 0.95
       );
       this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
 
+      // Glass hemisphere
       this.anteBetBtn.fillGradientStyle(
-        0xffffff,
-        0xffffff,
-        0xffffff,
-        0xffffff,
-        0.1,
-        0.1,
-        0,
-        0,
+        0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.2, 0.2, 0, 0
       );
-      this.anteBetBtn.fillRoundedRect(x + 2, y + 2, bw - 4, bh * 0.4, {
-        tl: rad - 2,
-        tr: rad - 2,
-        bl: 0,
-        br: 0,
+      this.anteBetBtn.fillRoundedRect(x + 2, y + 1, bw - 4, bh * 0.4, {
+        tl: rad - 1, tr: rad - 1, bl: 0, br: 0,
       } as any);
 
       this.anteBetBtn.lineStyle(2, 0x442266, 1);
@@ -1350,46 +1341,57 @@ export class Game extends Phaser.Scene {
     gfx.setPosition(targetX, targetY);
     const cx = 0;
     const cy = 0;
-
-    // Dark opaque backdrop circle so button pops against any background
-    gfx.fillStyle(0x0a0515, 0.6);
-    gfx.fillCircle(cx, cy, size / 2 + 8);
-
-    // Neon glow ring
-    gfx.lineStyle(2, 0xff006a, 0.8);
-    gfx.strokeCircle(cx, cy, size / 2 + 8);
+    const r = size / 2;
 
     // Drop shadow
-    gfx.fillStyle(0x000000, 0.7);
-    gfx.fillCircle(cx, cy + 4, size / 2 + 2);
+    gfx.fillStyle(0x000000, 0.6);
+    gfx.fillCircle(cx, cy + 3, r + 2);
 
-    // Gold outer ring (matches spin button)
+    // Thick gold outer ring (matches spin button)
     gfx.fillGradientStyle(0xddaa33, 0xeebb44, 0xaa7722, 0x886611, 1);
-    gfx.fillCircle(cx, cy, size / 2);
+    gfx.fillCircle(cx, cy, r + 2);
 
-    // Silver inner ring
+    // Silver inner ring for 3D metallic depth
     gfx.fillGradientStyle(0xcccccc, 0xeeeeee, 0x999999, 0x777777, 1);
-    gfx.fillCircle(cx, cy, size / 2 - 2);
+    gfx.fillCircle(cx, cy, r - 1);
 
-    // Deep ruby / pink inner gradient
-    gfx.fillGradientStyle(0xff2266, 0xff2266, 0xaa0033, 0xaa0033, 1);
-    gfx.fillCircle(cx, cy, size / 2 - 4);
+    // Deep ruby / pink inner gradient (button face)
+    gfx.fillGradientStyle(0xff4488, 0xff2266, 0xcc0044, 0xaa0033, 1);
+    gfx.fillCircle(cx, cy, r - 3);
 
-    // Glossy top hemisphere
+    // Glossy top hemisphere highlight
     gfx.beginPath();
-    gfx.arc(cx, cy, size / 2 - 4, Math.PI, 0, false);
+    gfx.arc(cx, cy, r - 3, Math.PI, 0, false);
     gfx.closePath();
-    gfx.fillStyle(0xffffff, 0.35);
+    gfx.fillStyle(0xffffff, 0.25);
     gfx.fillPath();
 
-    // Inner white rim
-    gfx.lineStyle(1.5, 0xffffff, 0.4);
-    gfx.strokeCircle(cx, cy, size / 2 - 4);
+    // Inner rim highlight
+    gfx.lineStyle(1.5, 0xffffff, 0.2);
+    gfx.strokeCircle(cx, cy, r - 3);
 
-    // Icon (plus/minus) — thicker for visibility
-    gfx.fillStyle(0xffffff, 1);
-    const arm = size * 0.25;
-    const thick = Math.max(4, size * 0.1);
+    // Sparkle dots on the gold ring
+    const sparkleR = 1.5;
+    gfx.fillStyle(0xffffff, 0.6);
+    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 2) {
+      const sx = cx + Math.cos(angle) * (r);
+      const sy = cy + Math.sin(angle) * (r);
+      gfx.fillCircle(sx, sy, sparkleR);
+    }
+
+    // Icon (plus/minus) — thicker and drop shadowed
+    const arm = size * 0.22;
+    const thick = Math.max(3, size * 0.12);
+    
+    gfx.fillStyle(0x000000, 0.3); // Icon Shadow
+    if (isPlus) {
+      gfx.fillRoundedRect(cx - thick / 2, cy - arm + 2, thick, arm * 2, 2);
+      gfx.fillRoundedRect(cx - arm, cy - thick / 2 + 2, arm * 2, thick, 2);
+    } else {
+      gfx.fillRoundedRect(cx - arm, cy - thick / 2 + 2, arm * 2, thick, 2);
+    }
+
+    gfx.fillStyle(0xffffff, 1); // Icon Body
     if (isPlus) {
       gfx.fillRoundedRect(cx - thick / 2, cy - arm, thick, arm * 2, 2);
       gfx.fillRoundedRect(cx - arm, cy - thick / 2, arm * 2, thick, 2);
