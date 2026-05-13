@@ -117,6 +117,8 @@ export class Game extends Phaser.Scene {
     // ErrorManager must be created before auth so showBlockingError is available
     this.errorManager = new ErrorManager(this);
 
+    let pendingRound: any = null; // Store pending round to execute after UI is built
+
     if (this.stakeEngine.isReplayMode()) {
       try {
         await this.stakeEngine.fetchReplay();
@@ -160,7 +162,7 @@ export class Game extends Phaser.Scene {
         }
 
         if (auth.round) {
-          this.handlePendingRound(auth.round);
+          pendingRound = auth.round;
         }
       } catch (err) {
         console.error('[Game] Auth failed:', err);
@@ -214,11 +216,16 @@ export class Game extends Phaser.Scene {
     this.audio.setSfxMuted(!this.sfxEnabled);
 
     // Resize handler — debounced to prevent frame spikes during drag
-    this.scale.on('resize', () => {
+    const gameResizeListener = () => {
       if (this._resizeTimer) clearTimeout(this._resizeTimer);
       this._resizeTimer = setTimeout(() => {
         this.layoutAll();
       }, 80);
+    };
+    this.scale.on('resize', gameResizeListener);
+    this.events.once('shutdown', () => {
+      this.scale.off('resize', gameResizeListener);
+      if (this._resizeTimer) clearTimeout(this._resizeTimer);
     });
 
     // Keyboard support — both SPACE and ENTER start/stop the spin (official spec)
@@ -230,6 +237,11 @@ export class Game extends Phaser.Scene {
       e.preventDefault();
       this.handleUniversalAction();
     });
+
+    // Execute any pending rounds recovered from authentication
+    if (pendingRound) {
+      this.handlePendingRound(pendingRound);
+    }
   }
 
   private buildUI() {
@@ -367,7 +379,7 @@ export class Game extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(21);
     this.buyRegularTxt2 = this.add
-      .text(0, 0, '100X', {
+      .text(0, 0, '1000X', {
         ...btnStyle,
         color: '#ffe600',
         stroke: '#000000',
@@ -541,8 +553,16 @@ export class Game extends Phaser.Scene {
       this.drawToolbarIcons();
     });
     this.settings.setTurboCallback?.((enabled: boolean) => {
+      // Enforce jurisdiction: if turbo is disabled by jurisdiction, ignore
+      if (this.stakeEngine.isTurboDisabled()) return;
       this.grid.turboMode = enabled;
     });
+
+    // Enforce jurisdiction flags from auth config
+    if (this.stakeEngine.isFullscreenDisabled()) {
+      this.btnFullscreen.setVisible(false);
+      this.iconFullscreen.setVisible(false);
+    }
 
     if (this.stakeEngine.isReplayMode()) {
       this.panelSuperGraphics.setVisible(false);
@@ -1829,7 +1849,7 @@ export class Game extends Phaser.Scene {
       const winFS = Math.max(28, this.grid.cellSize * 0.7);
       const winStroke = Math.max(3, winFS * 0.18);
       const winText = this.add
-        .text(cx, cy, `+${actualWin.toFixed(2)}`, {
+        .text(cx, cy, `+${DisplayBalance({ amount: actualWin, currency: this.currency })}`, {
           fontSize: `${winFS}px`,
           color: '#ffe600',
           fontStyle: 'bold',
@@ -1889,7 +1909,7 @@ export class Game extends Phaser.Scene {
           .text(
             this.scale.width / 2,
             this.scale.height / 2,
-            `FREE SPINS TOTAL\n${totalWin.toFixed(2)}`,
+            `FREE SPINS TOTAL\n${DisplayBalance({ amount: totalWin, currency: this.currency })}`,
             {
               fontSize: '64px',
               color: '#ffe600',
@@ -2229,7 +2249,7 @@ export class Game extends Phaser.Scene {
   private requestPurchase(triggerType: number, betMultCost: number) {
     if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
 
-    const baseBet = this.getEffectiveBet();
+    const baseBet = BET_PRESETS[this.betPresetIndex];
     const cost = baseBet * betMultCost;
     const label =
       triggerType === 2
@@ -2298,10 +2318,9 @@ export class Game extends Phaser.Scene {
         this.updateMoneyDisplay();
       }
 
-      // Show free spins intro, then configure FS state and inject grid
-      // When buying, 3-7 scatters can hit randomly — determine FS count
-      const scatterCount = Phaser.Math.Between(3, 7);
-      const fsAwarded = options.freeSpinsByScatter[scatterCount] || 10;
+      // Read free spins count from server's fsTrigger event (authoritative)
+      const fsEvent = stateEvents.find((e: any) => e.type === 'fsTrigger');
+      const fsAwarded = fsEvent?.totalSpins || options.freeSpinsByScatter[3] || 10;
 
       this.freeSpinsIntro.play(fsAwarded, () => {
         // Set up free spins state AFTER the intro finishes
@@ -2385,7 +2404,8 @@ export class Game extends Phaser.Scene {
       this.updateSpinButtonState();
 
       try {
-        const result = await this.stakeEngine.play(cost, triggerType);
+        // Send BASE bet to RGS (not ante-adjusted) — the server applies ante multiplier via mode
+        const result = await this.stakeEngine.play(BET_PRESETS[this.betPresetIndex], triggerType);
 
         // RGS returns round.state as the events array from our math engine.
         // The first 'reveal' event contains the board state.

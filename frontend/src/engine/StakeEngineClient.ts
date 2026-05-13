@@ -168,6 +168,13 @@ export class StakeEngineClient {
   // Cached auth config for bet limits
   private _authConfig: StakeAuthResponse['config'] | null = null;
 
+  // Jurisdiction flags from auth response
+  private _jurisdictionFlags: {
+    disabledFullscreen?: boolean;
+    disabledTurbo?: boolean;
+    [key: string]: any;
+  } = {};
+
   private replayData: any = null;
 
   constructor() {
@@ -213,6 +220,16 @@ export class StakeEngineClient {
 
   public isSocialMode(): boolean {
     return this._isSocial;
+  }
+
+  /** Check if jurisdiction disables fullscreen */
+  public isFullscreenDisabled(): boolean {
+    return this._jurisdictionFlags.disabledFullscreen === true;
+  }
+
+  /** Check if jurisdiction disables turbo mode */
+  public isTurboDisabled(): boolean {
+    return this._jurisdictionFlags.disabledTurbo === true;
   }
 
   /**
@@ -291,9 +308,12 @@ export class StakeEngineClient {
 
         // Non-retryable client errors (4xx except 429)
         if (response.status >= 400 && response.status < 500 && response.status !== 429) {
-          // Parse RGS error codes: ERR_IS, ERR_ATE, ERR_IPB, etc.
-          const body = await response.json().catch(() => ({}));
+          const text = await response.text().catch(() => '');
+          let body: any = {};
+          try { body = JSON.parse(text); } catch (e) {}
+
           const code = body?.code || body?.status || '';
+          const errMsg = body?.message || body?.error || text || response.status.toString();
 
           if (code === 'ERR_IS' || code === 'ERR_ATE' || response.status === 401 || response.status === 403) {
             throw new StakeError('AUTH', `Authentication error: ${code}`, response.status);
@@ -301,7 +321,7 @@ export class StakeEngineClient {
           if (code === 'ERR_IPB') {
             throw new StakeError('REJECTED', `Insufficient balance`, response.status);
           }
-          throw new StakeError('REJECTED', `Request rejected: ${code || response.status}`, response.status);
+          throw new StakeError('REJECTED', `Request rejected: ${code ? code + ' - ' : ''}${errMsg}`, response.status);
         }
 
         // Retryable server errors (5xx, 429)
@@ -378,6 +398,15 @@ export class StakeEngineClient {
       if (data.config?.jurisdiction?.socialCasino) {
         this._isSocial = true;
       }
+
+      // Cache jurisdiction flags for the frontend to enforce
+      if (data.config?.jurisdiction) {
+        this._jurisdictionFlags = data.config.jurisdiction;
+      }
+
+      // If there is an active pending round, ensure our local state knows about it
+      // so that endRound() isn't bypassed.
+      this.currentRoundActive = data.round?.active ?? false;
 
       return {
         balance: data.balance || { amount: 0, currency: 'USD' },

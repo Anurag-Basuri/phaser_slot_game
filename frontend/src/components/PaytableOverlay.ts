@@ -4,15 +4,16 @@ import { getStakeEngine } from '../engine/StakeEngineClient';
 import { T } from '../helpers/I18n';
 
 /**
- * Multi-page Game Rules / Info overlay — 7 pages matching Sugar Rush 1000.
+ * Multi-page Game Rules / Info overlay — 8 pages matching Sugar Blast 1000.
  *
  * Page 1: Symbol Payouts + Scatter info
  * Page 2: Tumble Feature
  * Page 3: Multiplier Spots Feature
  * Page 4: Free Spins + Retrigger
- * Page 5: Game Rules (volatility, RTP, bet limits)
- * Page 6: How to Play
- * Page 7: Settings Menu / Info Screen / Bet Menu / Max Win
+ * Page 5: Buy Features (1000× / 500×)
+ * Page 6: Game Rules (volatility, RTP, bet limits)
+ * Page 7: How to Play
+ * Page 8: Settings Menu / Info Screen / Bet Menu / Max Win
  */
 export class PaytableOverlay {
   private scene: Phaser.Scene;
@@ -193,14 +194,15 @@ export class PaytableOverlay {
     closeBtn.on('pointerout', () => closeBtn.setColor('#ffffff'));
     pageWrapper.add(closeBtn);
 
-    // Build all 7 pages
+    // Build all 8 pages
     this.buildPage1_Symbols(pageWrapper, logicalW, logicalH);
     this.buildPage2_Tumble(pageWrapper, logicalW, logicalH);
     this.buildPage3_Multipliers(pageWrapper, logicalW, logicalH);
     this.buildPage4_FreeSpins(pageWrapper, logicalW, logicalH);
-    this.buildPage5_GameRules(pageWrapper, logicalW, logicalH);
-    this.buildPage6_HowToPlay(pageWrapper, logicalW, logicalH);
-    this.buildPage7_Settings(pageWrapper, logicalW, logicalH);
+    this.buildPage5_BuyFeatures(pageWrapper, logicalW, logicalH);
+    this.buildPage6_GameRules(pageWrapper, logicalW, logicalH);
+    this.buildPage7_HowToPlay(pageWrapper, logicalW, logicalH);
+    this.buildPage8_Settings(pageWrapper, logicalW, logicalH);
 
     // Navigation — ◀ ▶ with dot indicators
     const navY = logicalH - 38;
@@ -230,9 +232,9 @@ export class PaytableOverlay {
 
     // Dot indicators
     this.dotIndicators = [];
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 8; i++) {
       const dot = this.scene.add.graphics();
-      const dx = navCenter - 48 + i * 16;
+      const dx = navCenter - 56 + i * 16;
       dot.fillStyle(i === 0 ? 0xff006a : 0x332244, 1);
       dot.fillCircle(dx, navY, i === 0 ? 5 : 4);
       if (i === 0) { dot.lineStyle(1, 0xff006a, 0.5); dot.strokeCircle(dx, navY, 7); }
@@ -241,7 +243,7 @@ export class PaytableOverlay {
     }
 
     // Page label
-    this.txtPageNum = this.scene.add.text(logicalW - 70, navY, this.T('1 / 7'), {
+    this.txtPageNum = this.scene.add.text(logicalW - 70, navY, this.T('1 / 8'), {
       fontSize: '14px', color: '#8888aa', fontFamily: this.FONT_BODY
     }).setOrigin(0.5);
     pageWrapper.add(this.txtPageNum);
@@ -502,21 +504,101 @@ export class PaytableOverlay {
     });
     yPos += 15;
 
-    // Buy Free Spins card
-    this.drawCard(page, pad, yPos - 5, w - pad * 2, 125);
-    page.add(this.scene.add.text(w / 2, yPos + 6, this.T('BUY FREE SPINS'), {
-      fontSize: '13px', color: this.COL_GOLD, fontStyle: 'bold', fontFamily: this.FONT_BODY
+    // Note at bottom about buy features
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 45);
+    page.add(this.scene.add.text(w / 2, yPos + 12, this.T('\u27a1 See next page for Buy Free Spins options (1,000× and 500×)'), {
+      fontSize: '13px', color: this.COL_GOLD, fontFamily: this.FONT_BODY, fontStyle: 'bold'
     }).setOrigin(0.5));
-    const buyLines = [
-      '\u2022  Pay 1,000\u00d7 total bet to trigger FREE SPINS.',
-      '\u2022  Pay 500\u00d7 total bet to trigger SUPER FREE SPINS.',
-      '     In SUPER mode, all spots start with \u00d72 multipliers.',
-      '\u2022  On buy, 3-7 Scatters hit randomly (10-30 spins).',
+
+    parent.add(page);
+    this.pages.push(page);
+  }
+
+  // ─────────────────────────────────────────────
+  // PAGE 5: BUY FEATURES (1000× / 500×)
+  // ─────────────────────────────────────────────
+  private buildPage5_BuyFeatures(parent: Phaser.GameObjects.Container, w: number, h: number) {
+    const page = this.scene.add.container(0, 0).setVisible(false);
+    const pad = 40;
+    let yPos = 70;
+
+    yPos = this.addSectionTitle(page, w / 2, yPos, 'BUY FREE SPINS');
+
+    // Intro text
+    page.add(this.scene.add.text(w / 2, yPos, this.T('Two premium options to instantly trigger the Free Spins bonus round.'), {
+      fontSize: '14px', color: this.COL_MUTED, fontFamily: this.FONT_BODY, fontStyle: 'italic'
+    }).setOrigin(0.5));
+    yPos += 30;
+
+    // ───── 1000× Card ─────
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 170, true);
+    // Title row
+    page.add(this.scene.add.text(pad + 25, yPos + 8, this.T('\ud83c\udf6c  BUY FREE SPINS'), {
+      fontSize: '18px', color: '#ffffff', fontStyle: 'bold', fontFamily: '"Outfit", "Inter", sans-serif'
+    }));
+    page.add(this.scene.add.text(w - pad - 25, yPos + 8, this.T('1,000× BET'), {
+      fontSize: '18px', color: this.COL_GOLD, fontStyle: 'bold', fontFamily: '"Luckiest Guy", cursive, sans-serif'
+    }).setOrigin(1, 0));
+    yPos += 38;
+
+    const buy1000Rules = [
+      '\u2022  Costs 1,000× your current base bet amount.',
+      '\u2022  Instantly triggers the Free Spins bonus round.',
+      '\u2022  3-7 Scatter symbols land on the board (server-determined).',
+      '\u2022  Awards 10-30 Free Spins based on Scatter count.',
+      '\u2022  Multiplier spots start empty (standard progression).',
+      '\u2022  Multipliers persist across all spins in the round.',
     ];
-    buyLines.forEach((line, i) => {
-      page.add(this.scene.add.text(pad + 20, yPos + 26 + i * 22, this.T(line), {
-        fontSize: '13px', color: this.COL_BODY, fontFamily: this.FONT_BODY,
-        wordWrap: { width: w - pad * 2 - 50 }
+    buy1000Rules.forEach((line, i) => {
+      page.add(this.scene.add.text(pad + 25, yPos + i * 19, this.T(line), {
+        fontSize: '12px', color: this.COL_BODY, fontFamily: this.FONT_BODY,
+        wordWrap: { width: w - pad * 2 - 60 }
+      }));
+    });
+    yPos += 145;
+
+    // ───── 500× Card ─────
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 190, true);
+    // Title row
+    page.add(this.scene.add.text(pad + 25, yPos + 8, this.T('\u2b50  SUPER FREE SPINS'), {
+      fontSize: '18px', color: '#ffffff', fontStyle: 'bold', fontFamily: '"Outfit", "Inter", sans-serif'
+    }));
+    page.add(this.scene.add.text(w - pad - 25, yPos + 8, this.T('500× BET'), {
+      fontSize: '18px', color: this.COL_GOLD, fontStyle: 'bold', fontFamily: '"Luckiest Guy", cursive, sans-serif'
+    }).setOrigin(1, 0));
+    yPos += 38;
+
+    const buy500Rules = [
+      '\u2022  Costs 500× your current base bet amount.',
+      '\u2022  Instantly triggers the SUPER Free Spins bonus round.',
+      '\u2022  3-7 Scatter symbols land on the board (server-determined).',
+      '\u2022  Awards 10-30 Free Spins based on Scatter count.',
+      '\u2022  All 49 grid spots start pre-loaded with ×2 multipliers!',
+      '\u2022  Multipliers double on each hit: ×2 → ×4 → ×8 → ... → ×1024.',
+      '\u2022  Multipliers persist and compound across all spins.',
+    ];
+    buy500Rules.forEach((line, i) => {
+      page.add(this.scene.add.text(pad + 25, yPos + i * 19, this.T(line), {
+        fontSize: '12px', color: this.COL_BODY, fontFamily: this.FONT_BODY,
+        wordWrap: { width: w - pad * 2 - 60 }
+      }));
+    });
+    yPos += 155;
+
+    // Important notes
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 80);
+    page.add(this.scene.add.text(w / 2, yPos + 8, this.T('IMPORTANT'), {
+      fontSize: '13px', color: this.COL_ACCENT, fontStyle: 'bold', fontFamily: this.FONT_BODY
+    }).setOrigin(0.5));
+    const notes = [
+      '\u2022  The cost is deducted from your balance immediately upon confirmation.',
+      '\u2022  Ante Bet does not affect the Buy Feature cost.',
+      '\u2022  Max win cap of 25,000× applies to all bonus rounds.',
+    ];
+    notes.forEach((line, i) => {
+      page.add(this.scene.add.text(pad + 25, yPos + 26 + i * 17, this.T(line), {
+        fontSize: '11px', color: this.COL_MUTED, fontFamily: this.FONT_BODY,
+        wordWrap: { width: w - pad * 2 - 60 }
       }));
     });
 
@@ -525,9 +607,9 @@ export class PaytableOverlay {
   }
 
   // ─────────────────────────────────────────────
-  // PAGE 5: GAME RULES (Volatility, RTP, Bet Limits)
+  // PAGE 6: GAME RULES (Volatility, RTP, Bet Limits)
   // ─────────────────────────────────────────────
-  private buildPage5_GameRules(parent: Phaser.GameObjects.Container, w: number, h: number) {
+  private buildPage6_GameRules(parent: Phaser.GameObjects.Container, w: number, h: number) {
     const page = this.scene.add.container(0, 0).setVisible(false);
     const pad = 40;
     let yPos = 70;
@@ -575,9 +657,9 @@ export class PaytableOverlay {
   }
 
   // ─────────────────────────────────────────────
-  // PAGE 6: HOW TO PLAY
+  // PAGE 7: HOW TO PLAY
   // ─────────────────────────────────────────────
-  private buildPage6_HowToPlay(parent: Phaser.GameObjects.Container, w: number, h: number) {
+  private buildPage7_HowToPlay(parent: Phaser.GameObjects.Container, w: number, h: number) {
     const page = this.scene.add.container(0, 0).setVisible(false);
     let yPos = 75;
 
@@ -637,9 +719,9 @@ export class PaytableOverlay {
   }
 
   // ─────────────────────────────────────────────
-  // PAGE 7: SETTINGS / INFO / BET MENU / MAX WIN
+  // PAGE 8: SETTINGS / INFO / BET MENU / MAX WIN
   // ─────────────────────────────────────────────
-  private buildPage7_Settings(parent: Phaser.GameObjects.Container, w: number, h: number) {
+  private buildPage8_Settings(parent: Phaser.GameObjects.Container, w: number, h: number) {
     const page = this.scene.add.container(0, 0).setVisible(false);
     let yPos = 75;
 
@@ -743,7 +825,7 @@ export class PaytableOverlay {
       const navY = 640 - 38;
       this.dotIndicators.forEach((dot, i) => {
         dot.clear();
-        const dx = navCenter - 48 + i * 16;
+        const dx = navCenter - 56 + i * 16;
         if (i === index) {
           dot.fillStyle(0xff006a, 1); dot.fillCircle(dx, navY, 5);
           dot.lineStyle(1, 0xff006a, 0.4); dot.strokeCircle(dx, navY, 7);
