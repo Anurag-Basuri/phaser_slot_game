@@ -65,12 +65,12 @@ export class Grid {
   public offsetY = 0;
   public cellSize = 100;
 
-  // Dynamic timing based on turbo mode
-  private get cascadeDelay() { return this.turboMode ? 60 : 150; }
-  private get explodeDuration() { return this.turboMode ? 120 : 300; }
-  private get dropDuration() { return this.turboMode ? 140 : 350; }
-  private get postDropDelay() { return this.turboMode ? 200 : 500; }
-  private get sweepDuration() { return this.turboMode ? 140 : 280; }
+  // Dynamic timing based on turbo mode — snappier for premium feel
+  private get cascadeDelay() { return this.turboMode ? 50 : 120; }
+  private get explodeDuration() { return this.turboMode ? 100 : 250; }
+  private get dropDuration() { return this.turboMode ? 120 : 300; }
+  private get postDropDelay() { return this.turboMode ? 150 : 400; }
+  private get sweepDuration() { return this.turboMode ? 120 : 220; }
   private cellBackgrounds!: Phaser.GameObjects.Graphics;
 
   // Multiplier text color tiers (wrapper is always golden)
@@ -264,38 +264,32 @@ export class Grid {
   private startIdleShimmer() {
     if (this._shimmerTimer) this._shimmerTimer.remove();
     this._shimmerTimer = this.scene.time.addEvent({
-      delay: 2400,
+      delay: 1800,
       loop: true,
       callback: () => {
         if (this.isProcessing) return;
-        // Pick 1 random cell for a gentle highlight
-        const r = Phaser.Math.Between(0, options.gridSize - 1);
-        const c = Phaser.Math.Between(0, options.gridSize - 1);
-        const sprite = this.sprites[r]?.[c];
-        if (sprite && !this.scene.tweens.isTweening(sprite)) {
-          const origScale = sprite.scaleX;
-          // Smooth breathing scale pulse
-          this.scene.tweens.add({
-            targets: sprite,
-            scaleX: origScale * 1.12,
-            scaleY: origScale * 1.12,
-            yoyo: true,
-            duration: 500,
-            ease: 'Sine.easeInOut',
-          });
-          // Subtle glow flash behind the symbol
-          const glow = this.scene.add.graphics().setDepth(9);
-          glow.fillStyle(0xffffff, 0.12);
-          glow.fillCircle(this.getX(c), this.getY(r), this.cellSize * 0.38);
-          glow.setAlpha(0);
-          this.scene.tweens.add({
-            targets: glow,
-            alpha: { from: 0, to: 0.5 },
-            yoyo: true,
-            duration: 500,
-            ease: 'Sine.easeInOut',
-            onComplete: () => glow.destroy(),
-          });
+        // Pick 2 random cells for staggered highlights
+        for (let n = 0; n < 2; n++) {
+          const r = Phaser.Math.Between(0, options.gridSize - 1);
+          const c = Phaser.Math.Between(0, options.gridSize - 1);
+          const sprite = this.sprites[r]?.[c];
+          if (sprite && !this.scene.tweens.isTweening(sprite)) {
+            const origScale = sprite.scaleX;
+            // Smooth breathing scale pulse with subtle rotation
+            this.scene.tweens.add({
+              targets: sprite,
+              scaleX: origScale * 1.08,
+              scaleY: origScale * 1.08,
+              angle: Phaser.Math.Between(-3, 3),
+              yoyo: true,
+              duration: 400,
+              delay: n * 200,
+              ease: 'Sine.easeInOut',
+              onComplete: () => {
+                if (sprite && sprite.scene) sprite.setAngle(0);
+              }
+            });
+          }
         }
       },
     });
@@ -376,43 +370,38 @@ export class Grid {
           this.sprites[r][c] = sprite;
 
           // Stagger: column offset + row offset for a cascading waterfall feel
-          const colDelay = c * 40;
-          const rowDelay = (size - 1 - r) * 25;
+          const colDelay = c * 30;
+          const rowDelay = (size - 1 - r) * 20;
           const delay = colDelay + rowDelay;
-          const dropDur = this.dropDuration + (dropCounts[c] - currentDropIndex) * 50;
+          const dropDur = this.dropDuration + (dropCounts[c] - currentDropIndex) * 40;
 
           // Fade in as it enters the grid area
           this.scene.tweens.add({
             targets: sprite,
             alpha: 1,
-            duration: 80,
+            duration: 60,
             delay,
           });
 
-          // Main drop with satisfying bounce
+          // Main drop with smooth cubic ease + overshoot bounce
           this.scene.tweens.add({
             targets: sprite,
             y: this.getY(r),
             duration: dropDur,
-            ease: 'Bounce.easeOut',
+            ease: 'Cubic.easeIn',
             delay,
             onComplete: () => {
               if (!sprite || !sprite.scene) return;
-              // Landing squash-and-stretch
+              // Satisfying squash-and-stretch landing
               const sx = sprite.scaleX;
               const sy = sprite.scaleY;
-              this.scene.tweens.add({
+              this.scene.tweens.chain({
                 targets: sprite,
-                scaleY: sy * 0.82,
-                scaleX: sx * 1.12,
-                yoyo: true,
-                duration: 120,
-                ease: 'Quad.easeOut',
-                onComplete: () => {
-                  if (sprite && sprite.scene) {
-                    sprite.setScale(sx, sy);
-                  }
-                }
+                tweens: [
+                  { scaleY: sy * 0.78, scaleX: sx * 1.15, duration: 80, ease: 'Quad.easeOut' },
+                  { scaleY: sy * 1.06, scaleX: sx * 0.96, duration: 70, ease: 'Quad.easeOut' },
+                  { scaleY: sy, scaleX: sx, duration: 60, ease: 'Sine.easeOut' },
+                ]
               });
             }
           });
@@ -461,20 +450,19 @@ export class Grid {
     }
     this.cascadeCounterTxt.setVisible(false);
 
-    // Sweep old symbols — dramatic vacuum-suck exit
+    // Sweep old symbols — smooth slide-down exit
     for (let r = 0; r < options.gridSize; r++) {
       for (let c = 0; c < options.gridSize; c++) {
         if (this.sprites[r][c]) {
           const s = this.sprites[r][c]!;
-          const delay = c * 15 + r * 10;
-          // Quick upward lift, then shrink and fade
+          const delay = c * 12 + r * 8;
+          // Smooth scale-down and slide away
           this.scene.tweens.add({
             targets: s,
-            y: s.y - this.cellSize * 0.15,
-            scaleX: s.scaleX * 0.6,
-            scaleY: s.scaleY * 0.6,
+            scaleX: s.scaleX * 0.4,
+            scaleY: s.scaleY * 0.4,
             alpha: 0,
-            angle: Phaser.Math.Between(-25, 25),
+            y: s.y + this.cellSize * 0.3,
             duration: this.sweepDuration,
             delay,
             ease: 'Quad.easeIn',
@@ -889,38 +877,25 @@ export class Grid {
       const sprite = this.sprites[rr]?.[cc];
       if (!sprite) return;
       
-      const staggerDelay = this.turboMode ? 0 : staggerIndex * 12;
+      const staggerDelay = this.turboMode ? 0 : staggerIndex * 8;
       staggerIndex++;
       
       const origSX = sprite.scaleX;
       const origSY = sprite.scaleY;
 
-      // Rhythmic bounce — quick squeeze then pop
+      // Synchronized pulse — all winning symbols pop together
       this.scene.tweens.add({
         targets: sprite,
-        scaleX: origSX * 0.85,
+        scaleX: origSX * 1.18,
         scaleY: origSY * 1.18,
-        duration: anticipationDuration * 0.35,
+        duration: anticipationDuration * 0.5,
         delay: staggerDelay,
-        ease: 'Quad.easeIn',
+        ease: 'Back.easeOut',
         yoyo: true,
-        onYoyo: () => {
-          if (sprite && sprite.scene) {
-            // Pop out after squeeze
-            this.scene.tweens.add({
-              targets: sprite,
-              scaleX: origSX * 1.2,
-              scaleY: origSY * 1.2,
-              duration: anticipationDuration * 0.4,
-              yoyo: true,
-              ease: 'Quad.easeOut',
-            });
-          }
-        },
       });
 
-      // Warm golden tint on winning symbols
-      sprite.setTint(0xfff5cc);
+      // Bright white flash tint on winning symbols
+      sprite.setTint(0xffffff);
       this.scene.time.delayedCall(anticipationDuration + staggerDelay, () => {
         if (sprite && sprite.scene) sprite.clearTint();
       });
@@ -1009,27 +984,17 @@ export class Grid {
               this.scene.time.delayedCall(650, () => { debrisEmitter.destroy(); this._activeEmitterCount--; });
             }
 
-            // 2-stage destruction: squeeze inward → burst outward
+            // Clean 2-stage destruction: pop out → fade
             this.scene.tweens.add({
               targets: sprite,
-              scaleX: sprite.scaleX * 1.3,
-              scaleY: sprite.scaleY * 0.6,
-              duration: this.explodeDuration * 0.35,
-              ease: 'Quad.easeIn',
+              scaleX: sprite.scaleX * 1.4,
+              scaleY: sprite.scaleY * 1.4,
+              alpha: 0,
+              duration: this.explodeDuration,
+              ease: 'Quad.easeOut',
               onComplete: () => {
-                if (!sprite || !sprite.scene) return;
-                this.scene.tweens.add({
-                  targets: sprite,
-                  scaleX: 0, scaleY: 0,
-                  alpha: 0,
-                  angle: Phaser.Math.Between(-90, 90),
-                  duration: this.explodeDuration * 0.65,
-                  ease: 'Quad.easeIn',
-                  onComplete: () => {
-                    sprite.destroy();
-                    this.sprites[r][c] = null;
-                  }
-                });
+                sprite.destroy();
+                this.sprites[r][c] = null;
               }
             });
 
@@ -1304,7 +1269,7 @@ export class Grid {
               maxDropDistance = Math.max(maxDropDistance, dropDistance);
 
               // Natural gravity acceleration — longer drops take proportionally longer
-              const dropDur = 120 + dropDistance * 45;
+              const dropDur = 100 + dropDistance * 35;
               const targetY = this.getY(r);
 
               this.scene.tweens.add({
@@ -1314,20 +1279,17 @@ export class Grid {
                 ease: 'Cubic.easeIn',
                 onComplete: () => {
                   if (!sprite || !sprite.scene) return;
-                  // Bounce landing squash-stretch
+                  // Squash-stretch landing with proper chain
                   const sx = sprite.scaleX;
                   const sy = sprite.scaleY;
-                  const squashAmount = Math.min(dropDistance * 0.04, 0.18);
-                  this.scene.tweens.add({
+                  const squashAmount = Math.min(dropDistance * 0.05, 0.2);
+                  this.scene.tweens.chain({
                     targets: sprite,
-                    scaleY: sy * (1 - squashAmount),
-                    scaleX: sx * (1 + squashAmount * 0.7),
-                    yoyo: true,
-                    duration: 100,
-                    ease: 'Quad.easeOut',
-                    onComplete: () => {
-                      if (sprite && sprite.scene) sprite.setScale(sx, sy);
-                    }
+                    tweens: [
+                      { scaleY: sy * (1 - squashAmount), scaleX: sx * (1 + squashAmount * 0.7), duration: 70, ease: 'Quad.easeOut' },
+                      { scaleY: sy * 1.03, scaleX: sx * 0.98, duration: 60, ease: 'Sine.easeOut' },
+                      { scaleY: sy, scaleX: sx, duration: 50, ease: 'Sine.easeOut' },
+                    ]
                   });
                 }
               });
@@ -1339,7 +1301,7 @@ export class Grid {
     }
 
     // Wait for the longest drop to finish before filling new symbols
-    const waitTime = 120 + maxDropDistance * 45 + 100;
+    const waitTime = 100 + maxDropDistance * 35 + 80;
     this.scene.time.delayedCall(waitTime, () => {
       this.fillEmpty();
       this.scene.time.delayedCall(this.postDropDelay, () => {
