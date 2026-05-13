@@ -230,11 +230,16 @@ export class StakeEngineClient {
 
     try {
       const response = await fetch(`${rgsUrl}/bet/replay/${game}/${version}/${mode}/${event}`);
-      if (!response.ok) throw new Error('Failed to fetch replay data');
+      if (!response.ok) throw new Error(`Failed to fetch replay data: HTTP ${response.status}`);
 
-      const data = await response.json();
-      this.replayData = data;
-      return data;
+      const text = await response.text();
+      try {
+        const data = JSON.parse(text);
+        this.replayData = data;
+        return data;
+      } catch (parseError) {
+        throw new Error('Invalid JSON from Replay endpoint. Make sure your RGS URL is correct and running.');
+      }
     } catch (error) {
       console.error('[StakeEngine] Replay fetch failed:', error);
       throw error;

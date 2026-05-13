@@ -154,11 +154,20 @@ export class Boot extends Phaser.Scene {
     
     // Initial Layout & Resize Listener
     this.layoutAll();
-    this.scale.on('resize', () => {
+    
+    const resizeListener = () => {
+      if (!this.scene || !this.sys.isActive()) return;
       if (this._resizeTimer) clearTimeout(this._resizeTimer);
       this._resizeTimer = setTimeout(() => {
+        if (!this.scene || !this.sys.isActive()) return;
         this.layoutAll();
       }, 50);
+    };
+    
+    this.scale.on('resize', resizeListener);
+    this.events.once('shutdown', () => {
+      this.scale.off('resize', resizeListener);
+      if (this._resizeTimer) clearTimeout(this._resizeTimer);
     });
   }
   
