@@ -662,17 +662,17 @@ export class Game extends Phaser.Scene {
     f.fillRoundedRect(frameX + 4, frameY + 6, frameW, frameH, frameR + 2);
 
     // --- Layer 2: Thick glossy plastic rim (outer ring) ---
-    // Bottom half (darker) for 3D depth
-    f.fillGradientStyle(0xdd5599, 0xdd5599, 0x881144, 0x881144, 1);
+    // Bottom half (darker) for 3D depth - Premium glossy candy pink
+    f.fillGradientStyle(0xffaadd, 0xffaadd, 0xff3388, 0xff3388, 1);
     f.fillRoundedRect(frameX, frameY, frameW, frameH, frameR);
 
     // Top half highlight overlay (lighter plastic shine)
-    f.fillGradientStyle(0xff88bb, 0xffaacc, 0xdd5599, 0xdd5599, 1);
-    f.fillRoundedRect(frameX, frameY, frameW, frameH * 0.5, { tl: frameR, tr: frameR, bl: 0, br: 0 } as any);
+    f.fillGradientStyle(0xffffff, 0xffffff, 0xffaadd, 0xffaadd, 0.9, 0.9, 0.1, 0.1);
+    f.fillRoundedRect(frameX, frameY, frameW, frameH * 0.4, { tl: frameR, tr: frameR, bl: 0, br: 0 } as any);
 
     // Glass sheen on top edge of rim
-    f.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.5, 0.5, 0, 0);
-    f.fillRoundedRect(frameX + 4, frameY + 2, frameW - 8, borderThickness * 0.6, { tl: frameR - 2, tr: frameR - 2, bl: 0, br: 0 } as any);
+    f.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.8, 0.8, 0, 0);
+    f.fillRoundedRect(frameX + 4, frameY + 2, frameW - 8, borderThickness * 0.5, { tl: frameR - 2, tr: frameR - 2, bl: 0, br: 0 } as any);
 
     // --- Layer 3: Inner recess (dark well holding the grid) ---
     const innerX = frameX + borderThickness;
@@ -681,16 +681,16 @@ export class Game extends Phaser.Scene {
     const innerH = frameH - borderThickness * 2;
     const innerR = Math.max(8, frameR - 4);
 
-    // Dark inset shadow to create depth
-    f.fillStyle(0x050208, 0.9);
+    // Dark inset shadow to create depth (just a border rim shadow now)
+    f.fillStyle(0x000000, 0.35);
     f.fillRoundedRect(innerX - 2, innerY - 2, innerW + 4, innerH + 4, innerR + 2);
 
-    // Frosted dark purple plate behind symbols
-    f.fillGradientStyle(0x1a0a28, 0x1a0a28, 0x0d0515, 0x0d0515, 0.75);
-    f.fillRoundedRect(innerX, innerY, innerW, innerH, innerR);
+    // We intentionally do NOT draw a solid background here (like the old dark purple plate).
+    // This allows the Grid.ts Phase 1 frosted glass background to shine through organically,
+    // matching the original Sugar Rush 1000 aesthetic.
 
     // Inner border for definition
-    f.lineStyle(1.5, 0xff006a, 0.35);
+    f.lineStyle(1.5, 0xff006a, 0.5);
     f.strokeRoundedRect(innerX, innerY, innerW, innerH, innerR);
 
     // --- Layer 4: Outer rim border & highlight ---
@@ -968,11 +968,11 @@ export class Game extends Phaser.Scene {
       this.anteBetBtn.setPosition(buyX, anteY);
       this.drawAnteBetButton(anteW, anteH);
       this.anteBetIcon
-        .setPosition(buyX - 40, anteY)
+        .setPosition(buyX - anteW * 0.25, anteY)
         .setFontSize(22)
         .setOrigin(0.5);
       this.anteBetTxt
-        .setPosition(buyX - 25, anteY)
+        .setPosition(buyX - anteW * 0.15, anteY)
         .setFontSize(16)
         .setOrigin(0, 0.5);
     }
@@ -1853,6 +1853,9 @@ export class Game extends Phaser.Scene {
       this.fsActive = true;
       this.txtFSRemaining.setText(`${count} FREE SPINS`).setVisible(true);
 
+      // P0 Fix: Trigger intense visual mode for free spins
+      this.backgroundManager.setFreeSpinsMode(true);
+
       // Switch to FS music
       this.audio.playMusic('musicDefault', 800);
 
@@ -1867,6 +1870,10 @@ export class Game extends Phaser.Scene {
     this.grid.onFreeSpinsEnd = (totalWin) => {
       this.fsActive = false;
       this.txtFSRemaining.setVisible(false);
+      
+      // P0 Fix: Restore normal background visuals
+      this.backgroundManager.setFreeSpinsMode(false);
+      
       this.valueMoney += totalWin;
       this.updateMoneyDisplay();
       this.lastWin = totalWin;
@@ -2310,6 +2317,7 @@ export class Game extends Phaser.Scene {
           }
         }
         this.fsActive = true;
+        this.backgroundManager.setFreeSpinsMode(true);
         this.txtFSRemaining
           .setText(`${this.grid.freeSpinsRemaining} FREE SPINS`)
           .setVisible(true);

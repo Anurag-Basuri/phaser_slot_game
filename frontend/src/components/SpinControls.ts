@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { Theme } from '../constants/theme';
 
 /**
  * SpinControls — Industry-grade spin button, bet +/- buttons, and autoplay toggle.
@@ -43,7 +44,7 @@ export class SpinControls {
     this.spinHit = this.scene.add.rectangle(0, 0, 150, 150, 0xffffff, 0)
       .setInteractive({ useHandCursor: true }).setDepth(21);
     this.spinLabel = this.scene.add.text(0, 0, '', {
-      fontFamily: '"Outfit", "Inter", sans-serif',
+      fontFamily: Theme.fonts.label.family,
       fontStyle: '700',
     }).setOrigin(0.5).setDepth(21);
 
@@ -63,7 +64,7 @@ export class SpinControls {
     this.autoHit = this.scene.add.rectangle(0, 0, 100, 30, 0xffffff, 0)
       .setInteractive({ useHandCursor: true }).setDepth(22);
     this.autoTxt = this.scene.add.text(0, 0, 'AUTO', {
-      fontFamily: '"Inter", "Arial", sans-serif',
+      fontFamily: Theme.fonts.body.family,
       fontStyle: '800',
       color: '#ffffff',
       shadow: { offsetX: 0, offsetY: 1, color: '#000000', blur: 2, fill: true }
