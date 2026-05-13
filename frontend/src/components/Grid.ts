@@ -357,7 +357,7 @@ export class Grid {
           const sprite = this.scene.add.sprite(this.getX(c), startY, this.symbolKeys[symId]);
           sprite.setData('symId', symId);
 
-          const scale = (this.cellSize * 0.82) / Math.max(sprite.width, sprite.height);
+          const scale = (this.cellSize * 0.78) / Math.max(sprite.width, sprite.height);
           sprite.setScale(Math.min(scale, 1));
           sprite.setDepth(10);
           sprite.setAlpha(0);
@@ -558,7 +558,7 @@ export class Grid {
         const sprite = this.sprites[r][c];
         if (sprite) {
           sprite.setPosition(this.getX(c), this.getY(r));
-          const scale = (this.cellSize * 0.82) / Math.max(sprite.width, sprite.height);
+          const scale = (this.cellSize * 0.78) / Math.max(sprite.width, sprite.height);
           sprite.setScale(Math.min(scale, 1));
         }
         // Redraw multiplier UI
@@ -611,51 +611,39 @@ export class Grid {
     const cx = this.getX(c);
     const cy = this.getY(r);
     
-    // Badge dimensions — plump candy wrapper shape
-    const badgeW = this.cellSize * 0.75;
-    const badgeH = this.cellSize * 0.50;
-    const radius = badgeH * 0.5;
+    // Compact corner badge — sits at bottom-right of cell, behind the candy sprite
+    const badgeRadius = this.cellSize * 0.22;
+    const badgeCX = cx + this.cellSize * 0.28;
+    const badgeCY = cy + this.cellSize * 0.28;
     const tierColor = parseInt(tier.fill.replace('#', ''), 16);
     const tierStroke = parseInt(tier.stroke.replace('#', ''), 16);
 
     const drawBadge = (gfx: Phaser.GameObjects.Graphics) => {
       gfx.clear();
       
-      // 1. Outer glow
-      gfx.fillStyle(tierColor, 0.35);
-      gfx.fillRoundedRect(cx - badgeW/2 - 4, cy - badgeH/2 - 4, badgeW + 8, badgeH + 8, radius + 4);
+      // 1. Outer glow ring
+      gfx.fillStyle(tierColor, 0.25);
+      gfx.fillCircle(badgeCX, badgeCY, badgeRadius + 4);
 
       // 2. Drop shadow
-      gfx.fillStyle(0x000000, 0.35);
-      gfx.fillRoundedRect(cx - badgeW/2 + 2, cy - badgeH/2 + 4, badgeW, badgeH, radius);
+      gfx.fillStyle(0x000000, 0.4);
+      gfx.fillCircle(badgeCX + 1, badgeCY + 2, badgeRadius);
 
-      // 3. Candy wrapper ears (triangles on left and right)
-      const earW = badgeW * 0.2;
-      const earH = badgeH * 0.65;
+      // 3. Main body — solid vibrant circle
       gfx.fillStyle(tierColor, 1);
-      gfx.fillTriangle(cx - badgeW/2 + 6, cy, cx - badgeW/2 - earW, cy - earH/2, cx - badgeW/2 - earW, cy + earH/2);
-      gfx.fillTriangle(cx + badgeW/2 - 6, cy, cx + badgeW/2 + earW, cy - earH/2, cx + badgeW/2 + earW, cy + earH/2);
+      gfx.fillCircle(badgeCX, badgeCY, badgeRadius);
 
-      // Ear borders
-      gfx.lineStyle(2, tierStroke, 1);
-      gfx.strokeTriangle(cx - badgeW/2 + 6, cy, cx - badgeW/2 - earW, cy - earH/2, cx - badgeW/2 - earW, cy + earH/2);
-      gfx.strokeTriangle(cx + badgeW/2 - 6, cy, cx + badgeW/2 + earW, cy - earH/2, cx + badgeW/2 + earW, cy + earH/2);
+      // 4. Border stroke
+      gfx.lineStyle(2.5, tierStroke, 1);
+      gfx.strokeCircle(badgeCX, badgeCY, badgeRadius);
 
-      // 4. Main body — Vibrant candy pill
-      gfx.fillStyle(tierColor, 1);
-      gfx.fillRoundedRect(cx - badgeW/2, cy - badgeH/2, badgeW, badgeH, radius);
-
-      // 5. Border stroke
-      gfx.lineStyle(3, tierStroke, 1);
-      gfx.strokeRoundedRect(cx - badgeW/2, cy - badgeH/2, badgeW, badgeH, radius);
-
-      // 6. Glossy top highlight
-      gfx.fillStyle(0xffffff, 0.45);
-      gfx.fillRoundedRect(cx - badgeW/2 + 4, cy - badgeH/2 + 3, badgeW - 8, badgeH * 0.35, radius - 2);
+      // 5. Glossy top highlight
+      gfx.fillStyle(0xffffff, 0.4);
+      gfx.fillEllipse(badgeCX, badgeCY - badgeRadius * 0.35, badgeRadius * 1.2, badgeRadius * 0.7);
     };
 
     if (!this.multiplierGraphics[r][c]) {
-      const gfx = this.scene.add.graphics().setDepth(12);
+      const gfx = this.scene.add.graphics().setDepth(8);
       drawBadge(gfx);
       
       this.multiplierGraphics[r][c] = gfx;
@@ -698,9 +686,9 @@ export class Grid {
       
       // Shockwave ring on upgrade
       if (!this.turboMode && this._activeEmitterCount < Grid.MAX_EMITTERS) {
-        const ring = this.scene.add.graphics().setDepth(11);
+        const ring = this.scene.add.graphics().setDepth(9);
         ring.lineStyle(2, tierColor, 0.6);
-        ring.strokeCircle(cx, cy, badgeW * 0.3);
+        ring.strokeCircle(badgeCX, badgeCY, badgeRadius * 0.6);
         ring.setScale(0.5);
         ring.setAlpha(1);
         this.scene.tweens.add({
@@ -715,15 +703,15 @@ export class Grid {
 
     if (mult > 1) {
       if (!this.multiplierTexts[r][c]) {
-        const fontSize = mult >= 128 ? Math.max(14, this.cellSize * 0.28) : Math.max(18, this.cellSize * 0.36);
-        const txt = this.scene.add.text(cx, cy + 1, `×${mult}`, {
+        const fontSize = mult >= 128 ? Math.max(10, this.cellSize * 0.18) : Math.max(12, this.cellSize * 0.24);
+        const txt = this.scene.add.text(badgeCX, badgeCY + 1, `×${mult}`, {
           fontFamily: '"Luckiest Guy", cursive, sans-serif',
           fontSize: `${Math.round(fontSize)}px`,
           color: '#ffffff',
           stroke: tier.stroke,
-          strokeThickness: Math.max(3, this.cellSize * 0.07),
-          shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 4, stroke: true, fill: true }
-        }).setOrigin(0.5).setDepth(13);
+          strokeThickness: Math.max(2, this.cellSize * 0.05),
+          shadow: { offsetX: 0, offsetY: 1, color: '#000000', blur: 3, stroke: true, fill: true }
+        }).setOrigin(0.5).setDepth(9);
 
         this.multiplierTexts[r][c] = txt;
 
@@ -739,11 +727,11 @@ export class Grid {
         });
       } else {
         const txt = this.multiplierTexts[r][c]!;
-        const fontSize = mult >= 128 ? Math.max(14, this.cellSize * 0.28) : Math.max(18, this.cellSize * 0.36);
+        const fontSize = mult >= 128 ? Math.max(10, this.cellSize * 0.18) : Math.max(12, this.cellSize * 0.24);
         txt.setText(`×${mult}`);
         txt.setFontSize(`${Math.round(fontSize)}px`);
         txt.setColor('#ffffff');
-        txt.setStroke(tier.stroke, Math.max(3, this.cellSize * 0.07));
+        txt.setStroke(tier.stroke, Math.max(2, this.cellSize * 0.05));
         
         // Punch scale on text
         this.scene.tweens.add({
@@ -802,7 +790,7 @@ export class Grid {
         const sprite = this.sprites[rr]?.[cc];
         if (!sprite) return;
         const symId = sprite.getData('symId') ?? 0;
-        const symColors = [0xffaa44, 0xcc66ff, 0xff4466, 0x44ff88, 0xaa44ff, 0xff8844, 0xff66aa];
+        const symColors = [0x44ddcc, 0x4466ff, 0xff44aa, 0xffdd44, 0xaa44ff, 0xff2244, 0x44ffaa];
         const glowColor = symColors[symId % symColors.length];
 
         // Outer glow border
@@ -849,7 +837,7 @@ export class Grid {
       const connectionGfx = this.scene.add.graphics().setDepth(11).setAlpha(0);
       clusters.forEach(cluster => {
         const symId = cluster.symbolId;
-        const symColors = [0xffaa44, 0xcc66ff, 0xff4466, 0x44ff88, 0xaa44ff, 0xff8844, 0xff66aa];
+        const symColors = [0x44ddcc, 0x4466ff, 0xff44aa, 0xffdd44, 0xaa44ff, 0xff2244, 0x44ffaa];
         const lineColor = symColors[symId % symColors.length];
 
         // Build adjacency connections
@@ -940,7 +928,7 @@ export class Grid {
       // Radial cell highlight glow (symbol-colored)
       if (!this.turboMode) {
         const symId = sprite.getData('symId') ?? 0;
-        const symColors = [0xffaa44, 0xcc66ff, 0xff4466, 0x44ff88, 0xaa44ff, 0xff8844, 0xff66aa];
+        const symColors = [0x44ddcc, 0x4466ff, 0xff44aa, 0xffdd44, 0xaa44ff, 0xff2244, 0x44ffaa];
         const glowColor = symColors[symId % symColors.length];
         
         const glow = this.scene.add.graphics().setDepth(9);
@@ -986,7 +974,7 @@ export class Grid {
             const symId = sprite.getData('symId') ?? 0;
 
             // Symbol color for colored effects
-            const symColors = [0xffaa44, 0xcc66ff, 0xff4466, 0x44ff88, 0xaa44ff, 0xff8844, 0xff66aa];
+            const symColors = [0x44ddcc, 0x4466ff, 0xff44aa, 0xffdd44, 0xaa44ff, 0xff2244, 0x44ffaa];
             const burstColor = symColors[symId % symColors.length];
 
             // Primary burst particles
@@ -1067,7 +1055,7 @@ export class Grid {
 
               // ═══ Phase 5: Starburst Lines ═══
               // Procedural radiating lines for candy shatter feel
-              const star = this.scene.add.graphics().setDepth(12);
+              const star = this.scene.add.graphics().setDepth(14);
               const starCx = this.getX(c);
               const starCy = this.getY(r);
               const rays = 8;
