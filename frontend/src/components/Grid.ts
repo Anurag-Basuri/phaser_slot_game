@@ -149,40 +149,27 @@ export class Grid {
       );
     }
 
-    // ═══ Phase 1: Warm Candy Pink Gradient (Sugar Rush 1000 palette) ═══
-    const stops = [
-      { t: 0.0,  r: 255, g: 210, b: 230 }, // Soft candy pink
-      { t: 0.20, r: 250, g: 200, b: 225 }, // Rose blush
-      { t: 0.40, r: 245, g: 195, b: 220 }, // Warm rose
-      { t: 0.60, r: 248, g: 200, b: 228 }, // Mid candy
-      { t: 0.80, r: 252, g: 208, b: 235 }, // Light rose
-      { t: 1.0,  r: 255, g: 215, b: 238 }, // Candy cream
-    ];
-    const gradSteps = 56;
-    const stripH = totalSize / gradSteps;
-    for (let i = 0; i < gradSteps; i++) {
-      const t = i / (gradSteps - 1);
-      let s0 = stops[0], s1 = stops[1];
-      for (let j = 0; j < stops.length - 1; j++) {
-        if (t >= stops[j].t && t <= stops[j + 1].t) {
-          s0 = stops[j]; s1 = stops[j + 1]; break;
-        }
-      }
-      const localT = (t - s0.t) / (s1.t - s0.t || 1);
-      const cr = Math.round(s0.r + (s1.r - s0.r) * localT);
-      const cg = Math.round(s0.g + (s1.g - s0.g) * localT);
-      const cb = Math.round(s0.b + (s1.b - s0.b) * localT);
-      this.cellBackgrounds.fillStyle((cr << 16) | (cg << 8) | cb, 1);
-      this.cellBackgrounds.fillRect(gx, gy + i * stripH, totalSize, Math.ceil(stripH) + 1);
-    }
+    // ═══ Phase 1: Frosted Glass Panel (Premium Sugar Rush 1000 style) ═══
+    // Instead of a solid pink, we use a translucent dark-berry glass that 
+    // lets the vibrant game background subtly bleed through, providing depth.
+    this.cellBackgrounds.fillGradientStyle(0x3a0d2d, 0x24081c, 0x1a0414, 0x0c010a, 0.65, 0.65, 0.85, 0.85);
+    this.cellBackgrounds.fillRect(gx, gy, totalSize, totalSize);
+    
+    // Soft inner glow rim to separate the grid from the outer frame
+    // Uses rounded rect to match the outer frame's rounded corners
+    const innerRadius = Math.max(6, this.cellSize * 0.15);
+    this.cellBackgrounds.lineStyle(2, 0xff88cc, 0.3);
+    this.cellBackgrounds.strokeRoundedRect(gx, gy, totalSize, totalSize, innerRadius);
 
-    // ═══ Checkerboard cell tint (warm candy alternation) ═══
+    // ═══ Phase 2: Checkerboard cell tint (soft translucent candy colors) ═══
     for (let r = 0; r < size; r++) {
       for (let c = 0; c < size; c++) {
         if ((r + c) % 2 === 0) {
-          this.cellBackgrounds.fillStyle(0xffffff, 0.10);
+          // Lighter cells
+          this.cellBackgrounds.fillStyle(0xffaadd, 0.08);
         } else {
-          this.cellBackgrounds.fillStyle(0xcc4488, 0.04);
+          // Darker cells
+          this.cellBackgrounds.fillStyle(0x000000, 0.15);
         }
         this.cellBackgrounds.fillRect(
           gx + c * this.cellSize, gy + r * this.cellSize,
@@ -624,50 +611,53 @@ export class Grid {
     const cx = this.getX(c);
     const cy = this.getY(r);
     
-    // Badge dimensions — compact candy pill shape
-    const badgeW = this.cellSize * 0.85;
-    const badgeH = this.cellSize * 0.46;
-    const radius = badgeH * 0.42;
+    // Badge dimensions — plump candy wrapper shape
+    const badgeW = this.cellSize * 0.75;
+    const badgeH = this.cellSize * 0.50;
+    const radius = badgeH * 0.5;
     const tierColor = parseInt(tier.fill.replace('#', ''), 16);
     const tierStroke = parseInt(tier.stroke.replace('#', ''), 16);
 
+    const drawBadge = (gfx: Phaser.GameObjects.Graphics) => {
+      gfx.clear();
+      
+      // 1. Outer glow
+      gfx.fillStyle(tierColor, 0.35);
+      gfx.fillRoundedRect(cx - badgeW/2 - 4, cy - badgeH/2 - 4, badgeW + 8, badgeH + 8, radius + 4);
+
+      // 2. Drop shadow
+      gfx.fillStyle(0x000000, 0.35);
+      gfx.fillRoundedRect(cx - badgeW/2 + 2, cy - badgeH/2 + 4, badgeW, badgeH, radius);
+
+      // 3. Candy wrapper ears (triangles on left and right)
+      const earW = badgeW * 0.2;
+      const earH = badgeH * 0.65;
+      gfx.fillStyle(tierColor, 1);
+      gfx.fillTriangle(cx - badgeW/2 + 6, cy, cx - badgeW/2 - earW, cy - earH/2, cx - badgeW/2 - earW, cy + earH/2);
+      gfx.fillTriangle(cx + badgeW/2 - 6, cy, cx + badgeW/2 + earW, cy - earH/2, cx + badgeW/2 + earW, cy + earH/2);
+
+      // Ear borders
+      gfx.lineStyle(2, tierStroke, 1);
+      gfx.strokeTriangle(cx - badgeW/2 + 6, cy, cx - badgeW/2 - earW, cy - earH/2, cx - badgeW/2 - earW, cy + earH/2);
+      gfx.strokeTriangle(cx + badgeW/2 - 6, cy, cx + badgeW/2 + earW, cy - earH/2, cx + badgeW/2 + earW, cy + earH/2);
+
+      // 4. Main body — Vibrant candy pill
+      gfx.fillStyle(tierColor, 1);
+      gfx.fillRoundedRect(cx - badgeW/2, cy - badgeH/2, badgeW, badgeH, radius);
+
+      // 5. Border stroke
+      gfx.lineStyle(3, tierStroke, 1);
+      gfx.strokeRoundedRect(cx - badgeW/2, cy - badgeH/2, badgeW, badgeH, radius);
+
+      // 6. Glossy top highlight
+      gfx.fillStyle(0xffffff, 0.45);
+      gfx.fillRoundedRect(cx - badgeW/2 + 4, cy - badgeH/2 + 3, badgeW - 8, badgeH * 0.35, radius - 2);
+    };
+
     if (!this.multiplierGraphics[r][c]) {
       const gfx = this.scene.add.graphics().setDepth(12);
+      drawBadge(gfx);
       
-      // 1. Outer glow ring (tier-colored, subtle)
-      gfx.fillStyle(tierColor, 0.20);
-      gfx.fillRoundedRect(cx - badgeW/2 - 3, cy - badgeH/2 - 3, badgeW + 6, badgeH + 6, radius + 3);
-      
-      // 2. Drop shadow
-      gfx.fillStyle(0x000000, 0.45);
-      gfx.fillRoundedRect(cx - badgeW/2 + 2, cy - badgeH/2 + 3, badgeW, badgeH, radius);
-      
-      // 3. Main body — dark base layer
-      gfx.fillStyle(0x1a0a2e, 0.92);
-      gfx.fillRoundedRect(cx - badgeW/2, cy - badgeH/2, badgeW, badgeH, radius);
-      
-      // 4. Inner gradient band — tier-colored horizontal stripe
-      gfx.fillStyle(tierColor, 0.35);
-      gfx.fillRoundedRect(cx - badgeW/2 + 3, cy - badgeH/2 + 3, badgeW - 6, badgeH - 6, radius - 2);
-      
-      // 5. Top highlight — glossy candy surface
-      gfx.fillStyle(0xffffff, 0.22);
-      gfx.fillRoundedRect(cx - badgeW/2 + 6, cy - badgeH/2 + 2, badgeW - 12, badgeH * 0.35, radius - 4);
-      
-      // 6. Left/right candy wrapper folds
-      const foldW = Math.max(4, badgeW * 0.07);
-      gfx.fillStyle(tierColor, 0.55);
-      gfx.fillRect(cx - badgeW/2, cy - badgeH/2 + 4, foldW, badgeH - 8);
-      gfx.fillRect(cx + badgeW/2 - foldW, cy - badgeH/2 + 4, foldW, badgeH - 8);
-      
-      // 7. Border stroke — tier-colored edge
-      gfx.lineStyle(1.5, tierStroke, 0.9);
-      gfx.strokeRoundedRect(cx - badgeW/2, cy - badgeH/2, badgeW, badgeH, radius);
-      
-      // 8. Inner bright accent line (top)
-      gfx.lineStyle(1, tierColor, 0.5);
-      gfx.strokeRoundedRect(cx - badgeW/2 + 2, cy - badgeH/2 + 2, badgeW - 4, badgeH - 4, radius - 2);
-
       this.multiplierGraphics[r][c] = gfx;
 
       // Entrance animation — pop in with rotation
@@ -678,31 +668,24 @@ export class Grid {
         scaleX: 1, scaleY: 1, alpha: 1,
         duration: 350,
         ease: 'Back.easeOut',
+        onComplete: () => {
+          // P1 Fix: Idle breathing pulse — keeps multiplier spots feeling alive
+          if (gfx && gfx.scene) {
+            this.scene.tweens.add({
+              targets: gfx,
+              scaleX: 1.04, scaleY: 1.04,
+              yoyo: true,
+              repeat: -1,
+              duration: 1800,
+              ease: 'Sine.easeInOut',
+            });
+          }
+        },
       });
     } else {
       // Existing badge — pulse on upgrade with tier-color flash
       const gfx = this.multiplierGraphics[r][c]!;
-      
-      // Redraw with new tier colors
-      gfx.clear();
-      gfx.fillStyle(tierColor, 0.25);
-      gfx.fillRoundedRect(cx - badgeW/2 - 3, cy - badgeH/2 - 3, badgeW + 6, badgeH + 6, radius + 3);
-      gfx.fillStyle(0x000000, 0.45);
-      gfx.fillRoundedRect(cx - badgeW/2 + 2, cy - badgeH/2 + 3, badgeW, badgeH, radius);
-      gfx.fillStyle(0x1a0a2e, 0.92);
-      gfx.fillRoundedRect(cx - badgeW/2, cy - badgeH/2, badgeW, badgeH, radius);
-      gfx.fillStyle(tierColor, 0.40);
-      gfx.fillRoundedRect(cx - badgeW/2 + 3, cy - badgeH/2 + 3, badgeW - 6, badgeH - 6, radius - 2);
-      gfx.fillStyle(0xffffff, 0.22);
-      gfx.fillRoundedRect(cx - badgeW/2 + 6, cy - badgeH/2 + 2, badgeW - 12, badgeH * 0.35, radius - 4);
-      const foldW = Math.max(4, badgeW * 0.07);
-      gfx.fillStyle(tierColor, 0.55);
-      gfx.fillRect(cx - badgeW/2, cy - badgeH/2 + 4, foldW, badgeH - 8);
-      gfx.fillRect(cx + badgeW/2 - foldW, cy - badgeH/2 + 4, foldW, badgeH - 8);
-      gfx.lineStyle(1.5, tierStroke, 0.9);
-      gfx.strokeRoundedRect(cx - badgeW/2, cy - badgeH/2, badgeW, badgeH, radius);
-      gfx.lineStyle(1, tierColor, 0.5);
-      gfx.strokeRoundedRect(cx - badgeW/2 + 2, cy - badgeH/2 + 2, badgeW - 4, badgeH - 4, radius - 2);
+      drawBadge(gfx);
       
       // Satisfying scale pulse
       this.scene.tweens.add({
@@ -805,6 +788,60 @@ export class Grid {
     });
 
     const anticipationDuration = this.turboMode ? 80 : 250;
+
+    // ──────── P0 Fix: Bright glow outline highlight before explosion ────────
+    // Matching Sugar Rush 1000: a pulsing bright outline appears around winning cells
+    // before they get removed, clearly signaling which symbols will explode.
+    if (!this.turboMode) {
+      const highlightGfx = this.scene.add.graphics().setDepth(10.5).setAlpha(0);
+      const halfCell = this.cellSize / 2;
+      const pad = 2;
+
+      winPositions.forEach(key => {
+        const [rr, cc] = key.split(',').map(Number);
+        const sprite = this.sprites[rr]?.[cc];
+        if (!sprite) return;
+        const symId = sprite.getData('symId') ?? 0;
+        const symColors = [0xffaa44, 0xcc66ff, 0xff4466, 0x44ff88, 0xaa44ff, 0xff8844, 0xff66aa];
+        const glowColor = symColors[symId % symColors.length];
+
+        // Outer glow border
+        highlightGfx.lineStyle(4, glowColor, 0.8);
+        highlightGfx.strokeRoundedRect(
+          this.getX(cc) - halfCell + pad, this.getY(rr) - halfCell + pad,
+          this.cellSize - pad * 2, this.cellSize - pad * 2, 6
+        );
+        // Inner white rim for contrast
+        highlightGfx.lineStyle(1.5, 0xffffff, 0.5);
+        highlightGfx.strokeRoundedRect(
+          this.getX(cc) - halfCell + pad + 3, this.getY(rr) - halfCell + pad + 3,
+          this.cellSize - pad * 2 - 6, this.cellSize - pad * 2 - 6, 4
+        );
+      });
+
+      // Flash in, pulse, then fade before explosion
+      this.scene.tweens.add({
+        targets: highlightGfx,
+        alpha: { from: 0, to: 1 },
+        duration: 100,
+      });
+      this.scene.tweens.add({
+        targets: highlightGfx,
+        alpha: { from: 1, to: 0.5 },
+        yoyo: true,
+        repeat: 1,
+        duration: 70,
+        delay: 100,
+      });
+      this.scene.time.delayedCall(anticipationDuration + 60, () => {
+        this.scene.tweens.add({
+          targets: highlightGfx,
+          alpha: 0,
+          duration: 120,
+          onComplete: () => highlightGfx.destroy(),
+        });
+      });
+    }
 
     // ──────── Phase 4: Cluster Connection Lines ────────
     // Draw glowing lines connecting adjacent cluster members

@@ -105,10 +105,11 @@ export class AutoPlayOverlay {
     bg.on('pointerdown', () => this.hide());
     this.container.add(bg);
 
-    // Panel
+    // Responsive panel sizing
     const isMobile = w < 768;
-    const pW = isMobile ? w * 0.95 : 600;
-    const pH = isMobile ? h * 0.7 : 500;
+    const isTablet = w >= 768 && w < 1024;
+    const pW = isMobile ? w * 0.95 : isTablet ? w * 0.8 : Math.min(600, w * 0.9);
+    const pH = Math.min(500, h * 0.85);
     const pX = (w - pW) / 2;
     const pY = (h - pH) / 2;
 

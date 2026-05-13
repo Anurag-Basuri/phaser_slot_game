@@ -258,4 +258,80 @@ export class BackgroundManager {
       }
     });
   }
+
+  /**
+   * P0 Fix: Switch background to Free Spins mode or back to base game.
+   * During free spins the background becomes more dramatic:
+   * - Deeper purple tint overlay (more saturated)
+   * - God rays intensified and rotated faster
+   * - Floating candies get a golden tint
+   */
+  public setFreeSpinsMode(active: boolean) {
+    const w = this.scene.cameras.main.width;
+    const h = this.scene.cameras.main.height;
+
+    if (active) {
+      // Intensify: deeper purple overlay + brighter rays
+      this.baseRayAlpha = 0.30;
+      this.drawRays(w, h, this.baseRayAlpha);
+      
+      // Warm golden tint on overlay during free spins
+      this.scene.tweens.add({
+        targets: this.overlay,
+        alpha: 0.25,
+        duration: 800,
+        ease: 'Sine.easeInOut',
+      });
+      this.overlay.setFillStyle(0xffcc44, 0.25);
+      
+      // Speed up ray rotation
+      this.scene.tweens.killTweensOf(this.raysContainer);
+      this.scene.tweens.add({
+        targets: this.raysContainer,
+        angle: this.raysContainer.angle + 360,
+        duration: 40000,
+        repeat: -1,
+        ease: 'Linear'
+      });
+
+      // Tint floating candies golden
+      for (const candy of this.floaters) {
+        if (candy && candy.scene) {
+          candy.setTint(0xffdd88);
+          candy.setAlpha(candy.scaleX * 0.7);
+        }
+      }
+    } else {
+      // Reset to base game
+      this.baseRayAlpha = 0.15;
+      this.drawRays(w, h, this.baseRayAlpha);
+      
+      // Restore pink tint overlay
+      this.scene.tweens.add({
+        targets: this.overlay,
+        alpha: 0.1,
+        duration: 800,
+        ease: 'Sine.easeInOut',
+      });
+      this.overlay.setFillStyle(0xffbbdd, 0.1);
+      
+      // Restore normal ray rotation speed
+      this.scene.tweens.killTweensOf(this.raysContainer);
+      this.scene.tweens.add({
+        targets: this.raysContainer,
+        angle: this.raysContainer.angle + 360,
+        duration: 120000,
+        repeat: -1,
+        ease: 'Linear'
+      });
+
+      // Reset candy tints
+      for (const candy of this.floaters) {
+        if (candy && candy.scene) {
+          candy.setTint(0xffccdd);
+          candy.setAlpha(candy.scaleX * 0.5);
+        }
+      }
+    }
+  }
 }
