@@ -57,9 +57,9 @@ export class SettingsOverlay {
     bg.on('pointerdown', () => this.hide());
     this.container.add(bg);
 
-    // Panel
+    // Responsive Panel
     const panelW = Math.min(420, w * 0.85);
-    const panelH = 460;
+    const panelH = Math.min(460, h * 0.85);
     const panelX = (w - panelW) / 2;
     const panelY = (h - panelH) / 2;
 

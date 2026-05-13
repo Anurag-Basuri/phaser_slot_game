@@ -3,6 +3,7 @@ import { DisplayBalance } from '../helpers/Currency';
 import { T } from '../helpers/I18n';
 import { getStakeEngine } from '../engine';
 import options, { BET_PRESETS } from '../options';
+import { Theme } from '../constants/theme';
 
 /**
  * BottomBarHUD — Industry-grade glassmorphic bottom bar.
@@ -42,8 +43,8 @@ export class BottomBarHUD {
   private readonly COL_LABEL = '#ffaacc';  // Warm candy pink labels
   private readonly COL_VALUE = '#ffffff';
   private readonly COL_WIN = '#66ffaa';    // Bright candy mint
-  private readonly FONT_LABEL = '"Outfit", "Inter", sans-serif';
-  private readonly FONT_VALUE = '"Inter", "Arial", sans-serif';
+  private readonly FONT_LABEL = Theme.fonts.label.family;
+  private readonly FONT_VALUE = Theme.fonts.numeric.family;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
