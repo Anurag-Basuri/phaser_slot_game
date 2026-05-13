@@ -42,14 +42,14 @@ export class Preload extends Phaser.Scene {
 
     // Premium UI Assets
     this.load.image('btn_spin', 'images/ui/btn_spin.png');
-    this.load.svg('icon_sound', 'icons/sound.svg');
-    this.load.svg('icon_sound_off', 'icons/sound-off.svg');
-    this.load.svg('icon_settings', 'icons/settings.svg');
-    this.load.svg('icon_lightning', 'icons/lightning.svg');
-    this.load.svg('icon_auto', 'icons/auto.svg');
-    this.load.svg('icon_spin', 'icons/spin.svg');
-    this.load.svg('icon_info', 'icons/info.svg');
-    this.load.svg('icon_fullscreen', 'icons/fullscreen.svg');
+    this.load.svg('icon_sound', 'icons/sound.svg', { width: 32, height: 32 });
+    this.load.svg('icon_sound_off', 'icons/sound-off.svg', { width: 32, height: 32 });
+    this.load.svg('icon_settings', 'icons/settings.svg', { width: 32, height: 32 });
+    this.load.svg('icon_lightning', 'icons/lightning.svg', { width: 32, height: 32 });
+    this.load.svg('icon_auto', 'icons/auto.svg', { width: 32, height: 32 });
+    this.load.svg('icon_spin', 'icons/spin.svg', { width: 32, height: 32 });
+    this.load.svg('icon_info', 'icons/info.svg', { width: 32, height: 32 });
+    this.load.svg('icon_fullscreen', 'icons/fullscreen.svg', { width: 32, height: 32 });
 
     // Audio (including previously unused lose.mp3)
     this.load.audio('backgroundDefault', 'audio/background-default.mp3');

@@ -101,16 +101,11 @@ export class BottomBarHUD {
     bb.fillGradientStyle(0x2a0833, 0x220828, 0x180420, 0x100318, 0.85, 0.85, 0.7, 0.7);
     bb.fillRect(0, h - barH, w, barH);
 
-    // Candy stripe top edge (multicolor candy ribbon)
+    // Smooth candy gradient top edge to prevent rendering artifacts
     const stripeH = 3;
     const stripeY = h - barH;
-    const stripeSegments = Math.ceil(w / 24);
-    const stripeColors = [0xff006a, 0xffcc00, 0x44ddff, 0xff66aa, 0x88ff44, 0xff8833];
-    for (let i = 0; i < stripeSegments; i++) {
-      const col = stripeColors[i % stripeColors.length];
-      bb.fillStyle(col, 0.9);
-      bb.fillRect(i * 24, stripeY, 24, stripeH);
-    }
+    bb.fillGradientStyle(0xff006a, 0x44ddff, 0xff006a, 0x44ddff, 1, 1, 1, 1);
+    bb.fillRect(0, stripeY, w, stripeH);
 
     // Warm pink glow beneath the stripe
     bb.fillGradientStyle(0xff3388, 0xff006a, 0x2a0833, 0x2a0833, 0.25, 0.25, 0, 0);
@@ -122,6 +117,7 @@ export class BottomBarHUD {
 
     // Candy sprinkle dots on the backdrop (subtle but thematic)
     const sprinkleCount = Math.max(6, Math.floor(w / 60));
+    const stripeColors = [0xff006a, 0xffcc00, 0x44ddff, 0xff66aa, 0x88ff44, 0xff8833];
     for (let i = 0; i < sprinkleCount; i++) {
       const sx = (w / (sprinkleCount + 1)) * (i + 1) + ((i * 17) % 11 - 5);
       const sy = h - barH / 2 + ((i * 7) % 9 - 4);

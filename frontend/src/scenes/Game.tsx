@@ -273,51 +273,56 @@ export class Game extends Phaser.Scene {
     logoBanner.lineStyle(2, 0xffcc44, 0.8);
     logoBanner.strokeRoundedRect(-190, -52, 380, 58, 12);
 
-    // Apply premium styling with gradient and thick border with shadow
-    this.logoText1 = this.add
+    // Shadow layer for 'SUGAR BLAST'
+    const titleShadow = this.add
       .text(0, -22, 'SUGAR BLAST', {
-        fontFamily: '"Lilita One", "Luckiest Guy", cursive, sans-serif',
+        fontFamily: '"Luckiest Guy", cursive, sans-serif',
         fontSize: '46px',
-        fontStyle: 'normal',
-        color: '#ffffff',
-        stroke: '#ffffff',
-        strokeThickness: 22,
+        fontStyle: 'bold',
+        color: '#ff006a',
+        stroke: '#ff006a',
+        strokeThickness: 16,
+        shadow: { offsetX: 0, offsetY: 4, color: '#000000', blur: 4, stroke: true, fill: true },
       })
-      .setOrigin(0.5, 0.5)
-      .setShadow(0, 12, '#660022', 0, true, false);
+      .setOrigin(0.5, 0.5);
 
-    this.logoText1.updateText();
-    const gradient1 = this.logoText1.context.createLinearGradient(0, 0, 0, this.logoText1.height);
-    gradient1.addColorStop(0, '#ffffff');
-    gradient1.addColorStop(0.25, '#ffaacc');
-    gradient1.addColorStop(0.55, '#ff3388');
-    gradient1.addColorStop(0.8, '#dd0055');
-    gradient1.addColorStop(1, '#880033');
-    this.logoText1.setFill(gradient1);
+    // Main layer for 'SUGAR BLAST'
+    this.logoText1 = this.add
+      .text(0, -24, 'SUGAR BLAST', {
+        fontFamily: '"Luckiest Guy", cursive, sans-serif',
+        fontSize: '46px',
+        fontStyle: 'bold',
+        color: '#ffffff',
+        stroke: '#ff006a',
+        strokeThickness: 8,
+        shadow: { offsetX: 0, offsetY: 4, color: '#000000', blur: 0, stroke: true, fill: true },
+      })
+      .setOrigin(0.5, 0.5);
 
-    // "1000" - golden candy number with a candy-drip shadow
-    this.logoText2 = this.add
-      .text(0, 36, '1000', {
+    // Shadow layer for '1000'
+    const num1000Shadow = this.add
+      .text(0, 24, '1000', {
         fontFamily: '"Slackey", "Chango", "Comic Sans MS", "Impact", sans-serif',
         fontSize: '62px',
-        fontStyle: 'normal',
-        color: '#ffffff',
-        stroke: '#ffffff',
-        strokeThickness: 22,
+        fontStyle: 'bold',
+        color: '#442200',
       })
-      .setOrigin(0.5, 0.5)
-      .setShadow(0, 12, '#774400', 0, true, false);
+      .setOrigin(0.5, 0.5);
 
-    this.logoText2.updateText();
-    const gradient2 = this.logoText2.context.createLinearGradient(0, 0, 0, this.logoText2.height);
-    gradient2.addColorStop(0, '#ffffff');
-    gradient2.addColorStop(0.2, '#ffee88');
-    gradient2.addColorStop(0.5, '#ffcc00');
-    gradient2.addColorStop(0.8, '#ee8800');
-    gradient2.addColorStop(1, '#aa5500');
-    this.logoText2.setFill(gradient2);
+    // Main layer for '1000'
+    this.logoText2 = this.add
+      .text(0, 20, '1000', {
+        fontFamily: '"Slackey", "Chango", "Comic Sans MS", "Impact", sans-serif',
+        fontSize: '62px',
+        fontStyle: 'bold',
+        color: '#ffcc00',
+        stroke: '#ff8800',
+        strokeThickness: 10,
+        shadow: { offsetX: 0, offsetY: 6, color: '#000000', blur: 0, stroke: true, fill: true },
+      })
+      .setOrigin(0.5, 0.5);
 
-    this.logoContainer.add([logoBanner, this.logoText1, this.logoText2]);
+    this.logoContainer.add([logoBanner, titleShadow, this.logoText1, num1000Shadow, this.logoText2]);
 
     // Buy buttons setup
     const btnStyle = {
@@ -362,7 +367,7 @@ export class Game extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(21);
     this.buyRegularTxt2 = this.add
-      .text(0, 0, '1000X', {
+      .text(0, 0, '100X', {
         ...btnStyle,
         color: '#ffe600',
         stroke: '#000000',
@@ -932,29 +937,32 @@ export class Game extends Phaser.Scene {
     this.anteBetIcon.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
 
     if (showFeatures) {
-      this.drawBuyPanel(this.panelSuperGraphics, buyW, buyH, true);
-      this.buySuperHit.setPosition(buyX, buyY1).setSize(buyW, buyH);
-      this.panelSuperGraphics.setPosition(buyX, buyY1);
-      this.updateBuyText(
-        this.buySuperTxt1,
-        this.buySuperTxt2,
-        buyX,
-        buyY1,
-        buyH,
-        'SUPER',
-      );
-
+      // Regular Buy on top (buyY1)
       this.drawBuyPanel(this.panelRegularGraphics, buyW, buyH, false);
-      this.buyRegularHit.setPosition(buyX, buyY2).setSize(buyW, buyH);
-      this.panelRegularGraphics.setPosition(buyX, buyY2);
+      this.buyRegularHit.setPosition(buyX, buyY1).setSize(buyW, buyH);
+      this.panelRegularGraphics.setPosition(buyX, buyY1);
       this.updateBuyText(
         this.buyRegularTxt1,
         this.buyRegularTxt2,
         buyX,
+        buyY1,
+        buyH,
+        'REGULAR',
+      );
+
+      // Super Buy on bottom (buyY2)
+      this.drawBuyPanel(this.panelSuperGraphics, buyW, buyH, true);
+      this.buySuperHit.setPosition(buyX, buyY2).setSize(buyW, buyH);
+      this.panelSuperGraphics.setPosition(buyX, buyY2);
+      this.updateBuyText(
+        this.buySuperTxt1,
+        this.buySuperTxt2,
+        buyX,
         buyY2,
         buyH,
-        'BUY',
+        'SUPER',
       );
+
 
       this.anteBetHit.setPosition(buyX, anteY).setSize(anteW, anteH);
       this.anteBetBtn.setPosition(buyX, anteY);
