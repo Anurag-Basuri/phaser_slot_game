@@ -7,7 +7,6 @@ export class BackgroundManager {
   private raysGraphics!: Phaser.GameObjects.Graphics;
   private raysContainer!: Phaser.GameObjects.Container;
   private dustEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
-  private floaters: Phaser.GameObjects.Sprite[] = [];
   
   // Reactivity
   private pulseTween: Phaser.Tweens.Tween | null = null;
@@ -22,7 +21,6 @@ export class BackgroundManager {
     this.createBase();
     this.createGodRays();
     this.createSugarDust();
-    this.createFloatingCandies();
   }
 
   private createBase() {
@@ -118,69 +116,7 @@ export class BackgroundManager {
     }).setDepth(0);
   }
 
-  private createFloatingCandies() {
-    const w = this.scene.cameras.main.width;
-    const h = this.scene.cameras.main.height;
-    const candyCount = 8;
-    const candyKeys = ['candy_0', 'candy_1', 'candy_2', 'candy_3', 'candy_4', 'candy_5', 'candy_6'];
 
-    for (let i = 0; i < candyCount; i++) {
-      const key = Phaser.Math.RND.pick(candyKeys);
-      const x = Phaser.Math.Between(0, w);
-      const y = Phaser.Math.Between(0, h);
-      
-      const candy = this.scene.add.sprite(x, y, key).setDepth(0);
-      
-      // Depth simulation: smaller scale = farther = slower + more transparent
-      const scale = Phaser.Math.FloatBetween(0.3, 0.8);
-      candy.setScale(scale);
-      candy.setAlpha(scale * 0.5);
-      candy.setTint(0xffccdd);
-
-      this.floaters.push(candy);
-      this.animateFloater(candy, w, h);
-    }
-  }
-
-  private animateFloater(candy: Phaser.GameObjects.Sprite, w: number, h: number) {
-    if (!candy.scene) return;
-
-    const scale = candy.scaleX;
-    const durationX = Phaser.Math.Between(20000, 35000) / scale;
-    const durationY = Phaser.Math.Between(25000, 40000) / scale;
-    
-    const destX = Phaser.Math.Between(candy.x - 300, candy.x + 300);
-
-    // X axis drift
-    this.scene.tweens.add({
-      targets: candy,
-      x: destX,
-      duration: durationX,
-      ease: 'Sine.easeInOut',
-      yoyo: true,
-      repeat: -1
-    });
-
-    // Y axis drift (generally drifts up slowly)
-    this.scene.tweens.add({
-      targets: candy,
-      y: candy.y - Phaser.Math.Between(200, 500),
-      duration: durationY,
-      ease: 'Sine.easeInOut',
-      yoyo: true,
-      repeat: -1
-    });
-
-    // Gentle tumbling rotation
-    this.scene.tweens.add({
-      targets: candy,
-      angle: Phaser.Math.Between(-180, 180),
-      duration: Phaser.Math.Between(15000, 30000),
-      ease: 'Linear',
-      yoyo: true,
-      repeat: -1
-    });
-  }
 
   public resize(w: number, h: number) {
     // Base image
@@ -206,19 +142,6 @@ export class BackgroundManager {
     if (this.dustEmitter) {
       this.dustEmitter.particleX = { min: 0, max: w } as any;
       this.dustEmitter.particleY = { min: -100, max: h + 100 } as any;
-    }
-    
-    // Clamp floating candies to visible bounds
-    for (const candy of this.floaters) {
-      if (candy && candy.scene) {
-        // If a floater drifted way out of the new bounds, nudge it back
-        if (candy.x < -200 || candy.x > w + 200) {
-          candy.x = Phaser.Math.Between(50, w - 50);
-        }
-        if (candy.y < -200 || candy.y > h + 200) {
-          candy.y = Phaser.Math.Between(50, h - 50);
-        }
-      }
     }
   }
 
@@ -293,14 +216,6 @@ export class BackgroundManager {
         repeat: -1,
         ease: 'Linear'
       });
-
-      // Tint floating candies golden
-      for (const candy of this.floaters) {
-        if (candy && candy.scene) {
-          candy.setTint(0xffdd88);
-          candy.setAlpha(candy.scaleX * 0.7);
-        }
-      }
     } else {
       // Reset to base game
       this.baseRayAlpha = 0.15;
@@ -324,14 +239,6 @@ export class BackgroundManager {
         repeat: -1,
         ease: 'Linear'
       });
-
-      // Reset candy tints
-      for (const candy of this.floaters) {
-        if (candy && candy.scene) {
-          candy.setTint(0xffccdd);
-          candy.setAlpha(candy.scaleX * 0.5);
-        }
-      }
     }
   }
 }

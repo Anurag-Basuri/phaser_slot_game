@@ -65,12 +65,12 @@ export class Grid {
   public offsetY = 0;
   public cellSize = 100;
 
-  // Dynamic timing based on turbo mode — snappier for premium feel
-  private get cascadeDelay() { return this.turboMode ? 50 : 120; }
-  private get explodeDuration() { return this.turboMode ? 100 : 250; }
-  private get dropDuration() { return this.turboMode ? 120 : 300; }
-  private get postDropDelay() { return this.turboMode ? 150 : 400; }
-  private get sweepDuration() { return this.turboMode ? 120 : 220; }
+  // Dynamic timing — fast and snappy for Sugar Rush 1000 feel
+  private get cascadeDelay() { return this.turboMode ? 30 : 80; }
+  private get explodeDuration() { return this.turboMode ? 80 : 180; }
+  private get dropDuration() { return this.turboMode ? 100 : 200; }
+  private get postDropDelay() { return this.turboMode ? 100 : 250; }
+  private get sweepDuration() { return this.turboMode ? 80 : 140; }
   private cellBackgrounds!: Phaser.GameObjects.Graphics;
 
   // Multiplier text color tiers (wrapper is always golden)
@@ -204,26 +204,21 @@ export class Grid {
       }
     }
 
-    // ═══ Subtle candy-tinted grid separators (not harsh white) ═══
-    // Column separators — soft pink-tinted inset groove
+    // ═══ Grid separators — visible candy-tinted grooves ═══
     for (let c = 1; c < size; c++) {
       const x = gx + c * this.cellSize;
-      // Shadow (left side of groove)
-      this.cellBackgrounds.lineStyle(1, 0x994477, 0.12);
+      this.cellBackgrounds.lineStyle(1, 0x220011, 0.2);
       this.cellBackgrounds.lineBetween(x - 1, gy, x - 1, gy + totalSize);
-      // Main separator — soft pink-white
-      this.cellBackgrounds.lineStyle(1.5, 0xffccdd, 0.35);
+      this.cellBackgrounds.lineStyle(1, 0xffccee, 0.22);
       this.cellBackgrounds.lineBetween(x, gy, x, gy + totalSize);
-      // Highlight (right side)
-      this.cellBackgrounds.lineStyle(1, 0xffeeff, 0.08);
+      this.cellBackgrounds.lineStyle(1, 0xffeeff, 0.06);
       this.cellBackgrounds.lineBetween(x + 1, gy, x + 1, gy + totalSize);
     }
-    // Row separators — delicate candy lines
     for (let r = 1; r < size; r++) {
       const y = gy + r * this.cellSize;
-      this.cellBackgrounds.lineStyle(1, 0x994477, 0.08);
+      this.cellBackgrounds.lineStyle(1, 0x220011, 0.15);
       this.cellBackgrounds.lineBetween(gx, y + 1, gx + totalSize, y + 1);
-      this.cellBackgrounds.lineStyle(1.5, 0xffccdd, 0.18);
+      this.cellBackgrounds.lineStyle(1, 0xffccee, 0.18);
       this.cellBackgrounds.lineBetween(gx, y, gx + totalSize, y);
     }
 
@@ -260,33 +255,27 @@ export class Grid {
     }
   }
 
-  /** Premium idle shimmer — random candy gets a smooth breathing glow + gentle wobble */
+  /** Idle sparkle — symbols get a brief brightness flash, NO scale change to stay in cell */
   private startIdleShimmer() {
     if (this._shimmerTimer) this._shimmerTimer.remove();
     this._shimmerTimer = this.scene.time.addEvent({
-      delay: 1800,
+      delay: 2000,
       loop: true,
       callback: () => {
         if (this.isProcessing) return;
-        // Pick 2 random cells for staggered highlights
-        for (let n = 0; n < 2; n++) {
+        // Pick 3 random cells for a quick brightness flash
+        for (let n = 0; n < 3; n++) {
           const r = Phaser.Math.Between(0, options.gridSize - 1);
           const c = Phaser.Math.Between(0, options.gridSize - 1);
           const sprite = this.sprites[r]?.[c];
           if (sprite && !this.scene.tweens.isTweening(sprite)) {
-            const origScale = sprite.scaleX;
-            // Smooth breathing scale pulse with subtle rotation
-            this.scene.tweens.add({
-              targets: sprite,
-              scaleX: origScale * 1.08,
-              scaleY: origScale * 1.08,
-              angle: Phaser.Math.Between(-3, 3),
-              yoyo: true,
-              duration: 400,
-              delay: n * 200,
-              ease: 'Sine.easeInOut',
-              onComplete: () => {
-                if (sprite && sprite.scene) sprite.setAngle(0);
+            // Brief bright tint — no scale, stays perfectly in cell
+            this.scene.time.delayedCall(n * 150, () => {
+              if (sprite && sprite.scene) {
+                sprite.setTint(0xffffff);
+                this.scene.time.delayedCall(250, () => {
+                  if (sprite && sprite.scene) sprite.clearTint();
+                });
               }
             });
           }
@@ -369,21 +358,19 @@ export class Grid {
 
           this.sprites[r][c] = sprite;
 
-          // Stagger: column offset + row offset for a cascading waterfall feel
-          const colDelay = c * 30;
-          const rowDelay = (size - 1 - r) * 20;
-          const delay = colDelay + rowDelay;
-          const dropDur = this.dropDuration + (dropCounts[c] - currentDropIndex) * 40;
+          // Clean fast drop with punchy landing
+          const delay = c * 18 + (size - 1 - r) * 8;
+          const dropDur = this.dropDuration + (dropCounts[c] - currentDropIndex) * 15;
 
-          // Fade in as it enters the grid area
+          // Instant visibility
           this.scene.tweens.add({
             targets: sprite,
             alpha: 1,
-            duration: 60,
+            duration: 30,
             delay,
           });
 
-          // Main drop with smooth cubic ease + overshoot bounce
+          // Fast gravity fall
           this.scene.tweens.add({
             targets: sprite,
             y: this.getY(r),
@@ -392,15 +379,15 @@ export class Grid {
             delay,
             onComplete: () => {
               if (!sprite || !sprite.scene) return;
-              // Satisfying squash-and-stretch landing
               const sx = sprite.scaleX;
               const sy = sprite.scaleY;
+              // Punchy squash-and-stretch landing with bounce
               this.scene.tweens.chain({
                 targets: sprite,
                 tweens: [
-                  { scaleY: sy * 0.78, scaleX: sx * 1.15, duration: 80, ease: 'Quad.easeOut' },
-                  { scaleY: sy * 1.06, scaleX: sx * 0.96, duration: 70, ease: 'Quad.easeOut' },
-                  { scaleY: sy, scaleX: sx, duration: 60, ease: 'Sine.easeOut' },
+                  { scaleY: sy * 0.65, scaleX: sx * 1.25, y: this.getY(r) + 3, duration: 50, ease: 'Quad.easeOut' },
+                  { scaleY: sy * 1.1, scaleX: sx * 0.92, y: this.getY(r) - 6, duration: 70, ease: 'Sine.easeOut' },
+                  { scaleY: sy, scaleX: sx, y: this.getY(r), duration: 50, ease: 'Sine.easeInOut' },
                 ]
               });
             }
@@ -455,17 +442,16 @@ export class Grid {
       for (let c = 0; c < options.gridSize; c++) {
         if (this.sprites[r][c]) {
           const s = this.sprites[r][c]!;
-          const delay = c * 12 + r * 8;
-          // Smooth scale-down and slide away
+          // Instant dissolve sweep — symbols shrink and vanish fast
+          const delay = r * 8 + c * 5;
           this.scene.tweens.add({
             targets: s,
-            scaleX: s.scaleX * 0.4,
-            scaleY: s.scaleY * 0.4,
+            scaleX: 0,
+            scaleY: 0,
             alpha: 0,
-            y: s.y + this.cellSize * 0.3,
             duration: this.sweepDuration,
             delay,
-            ease: 'Quad.easeIn',
+            ease: 'Back.easeIn',
             onComplete: () => { s.destroy(); }
           });
           this.sprites[r][c] = null;
@@ -599,94 +585,58 @@ export class Grid {
     const cx = this.getX(c);
     const cy = this.getY(r);
     
-    // Compact corner badge — sits at bottom-right of cell, behind the candy sprite
-    const badgeRadius = this.cellSize * 0.22;
-    const badgeCX = cx + this.cellSize * 0.28;
-    const badgeCY = cy + this.cellSize * 0.28;
+    // Small compact badge — sits at BOTTOM-CENTER of cell, fully inside
+    const badgeRadius = this.cellSize * 0.14;
+    const badgeCX = cx;
+    const badgeCY = cy + this.cellSize * 0.32;
     const tierColor = parseInt(tier.fill.replace('#', ''), 16);
     const tierStroke = parseInt(tier.stroke.replace('#', ''), 16);
 
     const drawBadge = (gfx: Phaser.GameObjects.Graphics) => {
       gfx.clear();
       
-      // 1. Outer glow ring
-      gfx.fillStyle(tierColor, 0.25);
-      gfx.fillCircle(badgeCX, badgeCY, badgeRadius + 4);
-
-      // 2. Drop shadow
+      // 1. Drop shadow
       gfx.fillStyle(0x000000, 0.4);
-      gfx.fillCircle(badgeCX + 1, badgeCY + 2, badgeRadius);
+      gfx.fillCircle(badgeCX, badgeCY + 1, badgeRadius + 1);
 
-      // 3. Main body — solid vibrant circle
+      // 2. Main body
       gfx.fillStyle(tierColor, 1);
       gfx.fillCircle(badgeCX, badgeCY, badgeRadius);
 
-      // 4. Border stroke
-      gfx.lineStyle(2.5, tierStroke, 1);
+      // 3. Border stroke
+      gfx.lineStyle(2, tierStroke, 1);
       gfx.strokeCircle(badgeCX, badgeCY, badgeRadius);
 
-      // 5. Glossy top highlight
+      // 4. Glossy top highlight
       gfx.fillStyle(0xffffff, 0.4);
-      gfx.fillEllipse(badgeCX, badgeCY - badgeRadius * 0.35, badgeRadius * 1.2, badgeRadius * 0.7);
+      gfx.fillEllipse(badgeCX, badgeCY - badgeRadius * 0.3, badgeRadius * 1.0, badgeRadius * 0.5);
     };
 
     if (!this.multiplierGraphics[r][c]) {
-      const gfx = this.scene.add.graphics().setDepth(8);
+      const gfx = this.scene.add.graphics().setDepth(12);
       drawBadge(gfx);
-      
       this.multiplierGraphics[r][c] = gfx;
 
-      // Entrance animation — pop in with rotation
+      // Quick pop-in entrance
       gfx.setScale(0);
       gfx.setAlpha(0);
       this.scene.tweens.add({
         targets: gfx,
         scaleX: 1, scaleY: 1, alpha: 1,
-        duration: 350,
+        duration: 250,
         ease: 'Back.easeOut',
-        onComplete: () => {
-          // P1 Fix: Idle breathing pulse — keeps multiplier spots feeling alive
-          if (gfx && gfx.scene) {
-            this.scene.tweens.add({
-              targets: gfx,
-              scaleX: 1.04, scaleY: 1.04,
-              yoyo: true,
-              repeat: -1,
-              duration: 1800,
-              ease: 'Sine.easeInOut',
-            });
-          }
-        },
       });
     } else {
-      // Existing badge — pulse on upgrade with tier-color flash
+      // Existing badge — redraw and quick pulse on upgrade
       const gfx = this.multiplierGraphics[r][c]!;
       drawBadge(gfx);
-      
-      // Satisfying scale pulse
       this.scene.tweens.add({
         targets: gfx,
-        scaleX: 1.18, scaleY: 1.18,
+        scaleX: 1.15, scaleY: 1.15,
         yoyo: true,
-        duration: 180,
+        duration: 150,
         ease: 'Quad.easeOut',
       });
-      
-      // Shockwave ring on upgrade
-      if (!this.turboMode && this._activeEmitterCount < Grid.MAX_EMITTERS) {
-        const ring = this.scene.add.graphics().setDepth(9);
-        ring.lineStyle(2, tierColor, 0.6);
-        ring.strokeCircle(badgeCX, badgeCY, badgeRadius * 0.6);
-        ring.setScale(0.5);
-        ring.setAlpha(1);
-        this.scene.tweens.add({
-          targets: ring,
-          scaleX: 2.0, scaleY: 2.0, alpha: 0,
-          duration: 400,
-          ease: 'Quad.easeOut',
-          onComplete: () => ring.destroy(),
-        });
-      }
     }
 
     if (mult > 1) {
@@ -699,7 +649,7 @@ export class Grid {
           stroke: tier.stroke,
           strokeThickness: Math.max(2, this.cellSize * 0.05),
           shadow: { offsetX: 0, offsetY: 1, color: '#000000', blur: 3, stroke: true, fill: true }
-        }).setOrigin(0.5).setDepth(9);
+        }).setOrigin(0.5).setDepth(13);
 
         this.multiplierTexts[r][c] = txt;
 
@@ -762,163 +712,59 @@ export class Grid {
     clusters.forEach(cluster => {
       cluster.positions.forEach(pos => winPositions.add(`${pos.row},${pos.col}`));
     });
+    // ── Clean anticipation: synchronized bright flash + pop ──
+    // Sugar Rush 1000 style: simple, clean, all winning symbols flash together
+    const anticipationDuration = this.turboMode ? 60 : 200;
 
-    const anticipationDuration = this.turboMode ? 80 : 250;
-
-    // ──────── P0 Fix: Bright glow outline highlight before explosion ────────
-    // Matching Sugar Rush 1000: a pulsing bright outline appears around winning cells
-    // before they get removed, clearly signaling which symbols will explode.
+    // Bright cell highlight behind winning symbols
     if (!this.turboMode) {
-      const highlightGfx = this.scene.add.graphics().setDepth(10.5).setAlpha(0);
+      const highlightGfx = this.scene.add.graphics().setDepth(9.5);
       const halfCell = this.cellSize / 2;
-      const pad = 2;
-
       winPositions.forEach(key => {
         const [rr, cc] = key.split(',').map(Number);
-        const sprite = this.sprites[rr]?.[cc];
-        if (!sprite) return;
-        const symId = sprite.getData('symId') ?? 0;
-        const symColors = [0x44ddcc, 0x4466ff, 0xff44aa, 0xffdd44, 0xaa44ff, 0xff2244, 0x44ffaa];
-        const glowColor = symColors[symId % symColors.length];
-
-        // Outer glow border
-        highlightGfx.lineStyle(4, glowColor, 0.8);
-        highlightGfx.strokeRoundedRect(
-          this.getX(cc) - halfCell + pad, this.getY(rr) - halfCell + pad,
-          this.cellSize - pad * 2, this.cellSize - pad * 2, 6
-        );
-        // Inner white rim for contrast
-        highlightGfx.lineStyle(1.5, 0xffffff, 0.5);
-        highlightGfx.strokeRoundedRect(
-          this.getX(cc) - halfCell + pad + 3, this.getY(rr) - halfCell + pad + 3,
-          this.cellSize - pad * 2 - 6, this.cellSize - pad * 2 - 6, 4
+        // Soft white glow behind the symbol
+        highlightGfx.fillStyle(0xffffff, 0.35);
+        highlightGfx.fillRoundedRect(
+          this.getX(cc) - halfCell + 2, this.getY(rr) - halfCell + 2,
+          this.cellSize - 4, this.cellSize - 4, 5
         );
       });
-
-      // Flash in, pulse, then fade before explosion
+      highlightGfx.setAlpha(0);
+      // Quick flash in/out
       this.scene.tweens.add({
         targets: highlightGfx,
         alpha: { from: 0, to: 1 },
-        duration: 100,
-      });
-      this.scene.tweens.add({
-        targets: highlightGfx,
-        alpha: { from: 1, to: 0.5 },
         yoyo: true,
         repeat: 1,
-        duration: 70,
-        delay: 100,
-      });
-      this.scene.time.delayedCall(anticipationDuration + 60, () => {
-        this.scene.tweens.add({
-          targets: highlightGfx,
-          alpha: 0,
-          duration: 120,
-          onComplete: () => highlightGfx.destroy(),
-        });
+        duration: anticipationDuration * 0.4,
+        ease: 'Sine.easeInOut',
+        onComplete: () => highlightGfx.destroy(),
       });
     }
 
-    // ──────── Phase 4: Cluster Connection Lines ────────
-    // Draw glowing lines connecting adjacent cluster members
-    if (!this.turboMode) {
-      const connectionGfx = this.scene.add.graphics().setDepth(11).setAlpha(0);
-      clusters.forEach(cluster => {
-        const symId = cluster.symbolId;
-        const symColors = [0x44ddcc, 0x4466ff, 0xff44aa, 0xffdd44, 0xaa44ff, 0xff2244, 0x44ffaa];
-        const lineColor = symColors[symId % symColors.length];
-
-        // Build adjacency connections
-        const posSet = new Set(cluster.positions.map(p => `${p.row},${p.col}`));
-        cluster.positions.forEach(pos => {
-          const cx = this.getX(pos.col);
-          const cy = this.getY(pos.row);
-          // Check right neighbor
-          if (posSet.has(`${pos.row},${pos.col + 1}`)) {
-            const nx = this.getX(pos.col + 1);
-            // Thick glow line
-            connectionGfx.lineStyle(6, lineColor, 0.15);
-            connectionGfx.lineBetween(cx, cy, nx, cy);
-            // Core bright line
-            connectionGfx.lineStyle(2, lineColor, 0.5);
-            connectionGfx.lineBetween(cx, cy, nx, cy);
-          }
-          // Check bottom neighbor
-          if (posSet.has(`${pos.row + 1},${pos.col}`)) {
-            const ny = this.getY(pos.row + 1);
-            connectionGfx.lineStyle(6, lineColor, 0.15);
-            connectionGfx.lineBetween(cx, cy, cx, ny);
-            connectionGfx.lineStyle(2, lineColor, 0.5);
-            connectionGfx.lineBetween(cx, cy, cx, ny);
-          }
-        });
-      });
-      // Fade in the connection lines, then destroy after anticipation
-      this.scene.tweens.add({
-        targets: connectionGfx,
-        alpha: { from: 0, to: 1 },
-        duration: 120,
-      });
-      this.scene.time.delayedCall(anticipationDuration + 100, () => {
-        this.scene.tweens.add({
-          targets: connectionGfx,
-          alpha: 0,
-          duration: 150,
-          onComplete: () => connectionGfx.destroy(),
-        });
-      });
-    }
-
-    // ──────── Anticipation — rhythmic bounce + connected glow ────────
-    let staggerIndex = 0;
-    
+    // Synchronized scale pop on all winning symbols
     winPositions.forEach(key => {
       const [rr, cc] = key.split(',').map(Number);
       const sprite = this.sprites[rr]?.[cc];
       if (!sprite) return;
-      
-      const staggerDelay = this.turboMode ? 0 : staggerIndex * 8;
-      staggerIndex++;
-      
       const origSX = sprite.scaleX;
       const origSY = sprite.scaleY;
 
-      // Synchronized pulse — all winning symbols pop together
+      // Quick pop up then back — all at once, no stagger
       this.scene.tweens.add({
         targets: sprite,
-        scaleX: origSX * 1.18,
-        scaleY: origSY * 1.18,
-        duration: anticipationDuration * 0.5,
-        delay: staggerDelay,
+        scaleX: origSX * 1.2,
+        scaleY: origSY * 1.2,
+        duration: anticipationDuration * 0.45,
         ease: 'Back.easeOut',
         yoyo: true,
       });
 
-      // Bright white flash tint on winning symbols
+      // White flash tint
       sprite.setTint(0xffffff);
-      this.scene.time.delayedCall(anticipationDuration + staggerDelay, () => {
+      this.scene.time.delayedCall(anticipationDuration, () => {
         if (sprite && sprite.scene) sprite.clearTint();
       });
-
-      // Radial cell highlight glow (symbol-colored)
-      if (!this.turboMode) {
-        const symId = sprite.getData('symId') ?? 0;
-        const symColors = [0x44ddcc, 0x4466ff, 0xff44aa, 0xffdd44, 0xaa44ff, 0xff2244, 0x44ffaa];
-        const glowColor = symColors[symId % symColors.length];
-        
-        const glow = this.scene.add.graphics().setDepth(9);
-        glow.fillStyle(glowColor, 0.18);
-        glow.fillCircle(this.getX(cc), this.getY(rr), this.cellSize * 0.42);
-        glow.setAlpha(0);
-        this.scene.tweens.add({
-          targets: glow,
-          alpha: { from: 0, to: 0.8 },
-          yoyo: true,
-          duration: anticipationDuration * 0.7,
-          delay: staggerDelay,
-          onComplete: () => glow.destroy(),
-        });
-      }
     });
 
     // ──────── Phase 2: Process wins and explode ────────
@@ -984,89 +830,37 @@ export class Grid {
               this.scene.time.delayedCall(650, () => { debrisEmitter.destroy(); this._activeEmitterCount--; });
             }
 
-            // Clean 2-stage destruction: pop out → fade
-            this.scene.tweens.add({
+            // ── Clean pop-and-vanish explosion (Sugar Rush 1000 style) ──
+            // Sharp snap inward then burst outward and fade
+            this.scene.tweens.chain({
               targets: sprite,
-              scaleX: sprite.scaleX * 1.4,
-              scaleY: sprite.scaleY * 1.4,
-              alpha: 0,
-              duration: this.explodeDuration,
-              ease: 'Quad.easeOut',
-              onComplete: () => {
-                sprite.destroy();
-                this.sprites[r][c] = null;
-              }
+              tweens: [
+                // Snap inward (quick squeeze)
+                { scaleX: sprite.scaleX * 0.5, scaleY: sprite.scaleY * 0.5, duration: 40, ease: 'Quad.easeIn' },
+                // Burst outward and fade
+                { scaleX: sprite.scaleX * 1.6, scaleY: sprite.scaleY * 1.6, alpha: 0, duration: this.explodeDuration * 0.7, ease: 'Quad.easeOut',
+                  onComplete: () => {
+                    sprite.destroy();
+                    this.sprites[r][c] = null;
+                  }
+                },
+              ]
             });
 
-            // Colored cell flash for impact
+            // Clean white flash on cell
             if (!this.turboMode) {
               const flash = this.scene.add.graphics().setDepth(11);
               const halfCell = this.cellSize / 2;
-              // Colored flash
-              flash.fillStyle(burstColor, 0.30);
+              flash.fillStyle(0xffffff, 0.5);
               flash.fillRoundedRect(
                 this.getX(c) - halfCell, this.getY(r) - halfCell,
                 this.cellSize, this.cellSize, 4
               );
-              // White core flash — brighter and larger
-              flash.fillStyle(0xffffff, 0.55);
-              flash.fillCircle(this.getX(c), this.getY(r), halfCell * 0.6);
-              
               this.scene.tweens.add({
-                targets: flash, alpha: 0, duration: 250,
+                targets: flash, alpha: 0, duration: 180,
                 ease: 'Quad.easeOut',
                 onComplete: () => flash.destroy(),
               });
-
-              // ═══ Phase 5: Starburst Lines ═══
-              // Procedural radiating lines for candy shatter feel
-              const star = this.scene.add.graphics().setDepth(14);
-              const starCx = this.getX(c);
-              const starCy = this.getY(r);
-              const rays = 8;
-              const rayLen = this.cellSize * 0.45;
-              for (let i = 0; i < rays; i++) {
-                const angle = (i / rays) * Math.PI * 2 + Math.random() * 0.3;
-                const ex = starCx + Math.cos(angle) * rayLen;
-                const ey = starCy + Math.sin(angle) * rayLen;
-                // Outer glow ray
-                star.lineStyle(3, burstColor, 0.3);
-                star.lineBetween(starCx, starCy, ex, ey);
-                // Inner bright ray
-                star.lineStyle(1.5, 0xffffff, 0.6);
-                star.lineBetween(starCx, starCy, ex * 0.7 + starCx * 0.3, ey * 0.7 + starCy * 0.3);
-              }
-              star.setScale(0.3);
-              this.scene.tweens.add({
-                targets: star,
-                scaleX: 1.2, scaleY: 1.2, alpha: 0,
-                duration: 300,
-                ease: 'Quad.easeOut',
-                onComplete: () => star.destroy(),
-              });
-
-              // Sugar crystal scatter (small colored dots with gravity)
-              const crystalCount = 4 + Math.floor(Math.random() * 3);
-              for (let i = 0; i < crystalCount; i++) {
-                const crystal = this.scene.add.graphics().setDepth(14);
-                const cSize = 2 + Math.random() * 3;
-                crystal.fillStyle(burstColor, 0.9);
-                crystal.fillCircle(0, 0, cSize);
-                crystal.fillStyle(0xffffff, 0.5);
-                crystal.fillCircle(-0.5, -0.5, cSize * 0.4);
-                crystal.setPosition(starCx, starCy);
-                const vx = (Math.random() - 0.5) * 200;
-                const vy = -100 - Math.random() * 150;
-                this.scene.tweens.add({
-                  targets: crystal,
-                  x: starCx + vx * 0.8,
-                  y: starCy + vy * 0.3 + 120,
-                  alpha: 0,
-                  duration: 400 + Math.random() * 200,
-                  ease: 'Quad.easeIn',
-                  onComplete: () => crystal.destroy(),
-                });
-              }
             }
 
             // Advance multiplier
@@ -1268,8 +1062,8 @@ export class Grid {
               const dropDistance = r - k;
               maxDropDistance = Math.max(maxDropDistance, dropDistance);
 
-              // Natural gravity acceleration — longer drops take proportionally longer
-              const dropDur = 100 + dropDistance * 35;
+              // Clean fast cascade drop
+              const dropDur = 80 + dropDistance * 20;
               const targetY = this.getY(r);
 
               this.scene.tweens.add({
@@ -1279,16 +1073,16 @@ export class Grid {
                 ease: 'Cubic.easeIn',
                 onComplete: () => {
                   if (!sprite || !sprite.scene) return;
-                  // Squash-stretch landing with proper chain
                   const sx = sprite.scaleX;
                   const sy = sprite.scaleY;
-                  const squashAmount = Math.min(dropDistance * 0.05, 0.2);
+                  // Punchy squash landing — intensity scales with drop distance
+                  const squash = Math.min(0.35, dropDistance * 0.06);
                   this.scene.tweens.chain({
                     targets: sprite,
                     tweens: [
-                      { scaleY: sy * (1 - squashAmount), scaleX: sx * (1 + squashAmount * 0.7), duration: 70, ease: 'Quad.easeOut' },
-                      { scaleY: sy * 1.03, scaleX: sx * 0.98, duration: 60, ease: 'Sine.easeOut' },
-                      { scaleY: sy, scaleX: sx, duration: 50, ease: 'Sine.easeOut' },
+                      { scaleY: sy * (1 - squash), scaleX: sx * (1 + squash * 0.8), y: targetY + 2, duration: 45, ease: 'Quad.easeOut' },
+                      { scaleY: sy * 1.06, scaleX: sx * 0.95, y: targetY - 4, duration: 55, ease: 'Sine.easeOut' },
+                      { scaleY: sy, scaleX: sx, y: targetY, duration: 40, ease: 'Sine.easeInOut' },
                     ]
                   });
                 }
@@ -1300,8 +1094,8 @@ export class Grid {
       }
     }
 
-    // Wait for the longest drop to finish before filling new symbols
-    const waitTime = 100 + maxDropDistance * 35 + 80;
+    // Wait for the longest drop to finish then fill new symbols
+    const waitTime = 80 + maxDropDistance * 20 + 60;
     this.scene.time.delayedCall(waitTime, () => {
       this.fillEmpty();
       this.scene.time.delayedCall(this.postDropDelay, () => {
