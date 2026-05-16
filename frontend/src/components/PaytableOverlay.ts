@@ -32,8 +32,8 @@ export class PaytableOverlay {
   private readonly COL_GOLD = '#ffe600';
 
   private symbolNames = [
-    'Amber Gummy Bear', 'Indigo Gummy Bear', 'Magenta Gummy Bear',
-    'Lime Star Candy', 'Lavender Jellybean', 'Cherry Heart', 'Teal Candy Ball'
+    'Orange Sherbet Ball', 'Blue Spiral Lollipop', 'Green Wrapped Toffee',
+    'Yellow Star Candy', 'Red Candy Cane', 'Purple Gumball', 'Teal Rock Candy'
   ];
 
   private T(text: string): string {
