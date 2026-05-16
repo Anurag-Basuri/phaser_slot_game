@@ -279,8 +279,22 @@ export class Game extends Phaser.Scene {
     logoBanner.fillTriangle(190, -52, 210, -42, 190, -32);
     logoBanner.fillTriangle(190, 6, 210, -4, 190, -14);
     // Ribbon gloss highlight
-    logoBanner.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.3, 0.3, 0, 0);
-    logoBanner.fillRoundedRect(-188, -50, 376, 22, { tl: 10, tr: 10, bl: 0, br: 0 } as any);
+    logoBanner.fillGradientStyle(
+      0xffffff,
+      0xffffff,
+      0xffffff,
+      0xffffff,
+      0.3,
+      0.3,
+      0,
+      0,
+    );
+    logoBanner.fillRoundedRect(-188, -50, 376, 22, {
+      tl: 10,
+      tr: 10,
+      bl: 0,
+      br: 0,
+    } as any);
     // Gold trim on ribbon edges
     logoBanner.lineStyle(2, 0xffcc44, 0.8);
     logoBanner.strokeRoundedRect(-190, -52, 380, 58, 12);
@@ -294,7 +308,14 @@ export class Game extends Phaser.Scene {
         color: '#ff006a',
         stroke: '#ff006a',
         strokeThickness: 16,
-        shadow: { offsetX: 0, offsetY: 4, color: '#000000', blur: 4, stroke: true, fill: true },
+        shadow: {
+          offsetX: 0,
+          offsetY: 4,
+          color: '#000000',
+          blur: 4,
+          stroke: true,
+          fill: true,
+        },
       })
       .setOrigin(0.5, 0.5);
 
@@ -307,14 +328,22 @@ export class Game extends Phaser.Scene {
         color: '#ffffff',
         stroke: '#ff006a',
         strokeThickness: 8,
-        shadow: { offsetX: 0, offsetY: 4, color: '#000000', blur: 0, stroke: true, fill: true },
+        shadow: {
+          offsetX: 0,
+          offsetY: 4,
+          color: '#000000',
+          blur: 0,
+          stroke: true,
+          fill: true,
+        },
       })
       .setOrigin(0.5, 0.5);
 
     // Shadow layer for '1000'
     const num1000Shadow = this.add
       .text(0, 24, '1000', {
-        fontFamily: '"Slackey", "Chango", "Comic Sans MS", "Impact", sans-serif',
+        fontFamily:
+          '"Slackey", "Chango", "Comic Sans MS", "Impact", sans-serif',
         fontSize: '62px',
         fontStyle: 'bold',
         color: '#442200',
@@ -324,17 +353,31 @@ export class Game extends Phaser.Scene {
     // Main layer for '1000'
     this.logoText2 = this.add
       .text(0, 20, '1000', {
-        fontFamily: '"Slackey", "Chango", "Comic Sans MS", "Impact", sans-serif',
+        fontFamily:
+          '"Slackey", "Chango", "Comic Sans MS", "Impact", sans-serif',
         fontSize: '62px',
         fontStyle: 'bold',
         color: '#ffcc00',
         stroke: '#ff8800',
         strokeThickness: 10,
-        shadow: { offsetX: 0, offsetY: 6, color: '#000000', blur: 0, stroke: true, fill: true },
+        shadow: {
+          offsetX: 0,
+          offsetY: 6,
+          color: '#000000',
+          blur: 0,
+          stroke: true,
+          fill: true,
+        },
       })
       .setOrigin(0.5, 0.5);
 
-    this.logoContainer.add([logoBanner, titleShadow, this.logoText1, num1000Shadow, this.logoText2]);
+    this.logoContainer.add([
+      logoBanner,
+      titleShadow,
+      this.logoText1,
+      num1000Shadow,
+      this.logoText2,
+    ]);
 
     // Buy buttons setup
     const btnStyle = {
@@ -379,7 +422,7 @@ export class Game extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(21);
     this.buyRegularTxt2 = this.add
-      .text(0, 0, '1000X', {
+      .text(0, 0, '100X', {
         ...btnStyle,
         color: '#ffe600',
         stroke: '#000000',
@@ -434,10 +477,14 @@ export class Game extends Phaser.Scene {
         this.audio.playSound('button');
       });
     this.btnFeaturesMenuIcon = this.add
-      .text(0, 0, '⋮', {
-        fontSize: '32px',
-        color: '#ffffff',
+      .text(0, 0, 'BUY', {
+        fontSize: '20px',
+        color: '#ffe600',
         fontStyle: 'bold',
+        fontFamily: '"Luckiest Guy", cursive, sans-serif',
+        stroke: '#000000',
+        strokeThickness: 3,
+        align: 'center',
       })
       .setOrigin(0.5)
       .setDepth(21);
@@ -637,8 +684,12 @@ export class Game extends Phaser.Scene {
     let gridY: number;
 
     if (isStacked) {
-      const topSpace = Math.max(100, h * 0.12);
-      const bottomSpace = isPortrait ? Math.max(200, h * 0.22) : 100;
+      // Guarantee enough space for the toolbar + logo + explicit generous padding
+      const maxLogoHeight = 150 * 0.85; // LOGO_BASE_H * MAX_LOGO_SCALE
+      const topSpace = toolY + (isMobile ? 25 : 35) + maxLogoHeight + 25;
+      
+      // Ensure enough bottom space for Spin Controls + Buy Buttons + Ante Bet
+      const bottomSpace = isPortrait ? Math.max(300, h * 0.35) : 180;
       const availableH = safeH - topSpace - bottomSpace;
       gridTotalSize = Math.min(w * 0.92, availableH);
       gridTotalSize = Math.max(gridTotalSize, 150); // minimum
@@ -687,12 +738,32 @@ export class Game extends Phaser.Scene {
     f.fillRoundedRect(frameX, frameY, frameW, frameH, frameR);
 
     // Top half highlight overlay (lighter plastic shine)
-    f.fillGradientStyle(0xffffff, 0xffffff, 0xffaadd, 0xffaadd, 0.9, 0.9, 0.1, 0.1);
-    f.fillRoundedRect(frameX, frameY, frameW, frameH * 0.4, { tl: frameR, tr: frameR, bl: 0, br: 0 } as any);
+    f.fillGradientStyle(
+      0xffffff,
+      0xffffff,
+      0xffaadd,
+      0xffaadd,
+      0.9,
+      0.9,
+      0.1,
+      0.1,
+    );
+    f.fillRoundedRect(frameX, frameY, frameW, frameH * 0.4, {
+      tl: frameR,
+      tr: frameR,
+      bl: 0,
+      br: 0,
+    } as any);
 
     // Glass sheen on top edge of rim
     f.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.8, 0.8, 0, 0);
-    f.fillRoundedRect(frameX + 4, frameY + 2, frameW - 8, borderThickness * 0.5, { tl: frameR - 2, tr: frameR - 2, bl: 0, br: 0 } as any);
+    f.fillRoundedRect(
+      frameX + 4,
+      frameY + 2,
+      frameW - 8,
+      borderThickness * 0.5,
+      { tl: frameR - 2, tr: frameR - 2, bl: 0, br: 0 } as any,
+    );
 
     // --- Layer 3: Inner recess (dark well holding the grid) ---
     const innerX = frameX + borderThickness;
@@ -703,7 +774,13 @@ export class Game extends Phaser.Scene {
 
     // Dark inset shadow to create depth (just a border rim shadow now)
     f.fillStyle(0x000000, 0.35);
-    f.fillRoundedRect(innerX - 2, innerY - 2, innerW + 4, innerH + 4, innerR + 2);
+    f.fillRoundedRect(
+      innerX - 2,
+      innerY - 2,
+      innerW + 4,
+      innerH + 4,
+      innerR + 2,
+    );
 
     // We intentionally do NOT draw a solid background here (like the old dark purple plate).
     // This allows the Grid.ts Phase 1 frosted glass background to shine through organically,
@@ -717,7 +794,13 @@ export class Game extends Phaser.Scene {
     f.lineStyle(2, 0xffccdd, 0.7);
     f.strokeRoundedRect(frameX, frameY, frameW, frameH, frameR);
     f.lineStyle(1, 0xffffff, 0.2);
-    f.strokeRoundedRect(frameX + 1, frameY + 1, frameW - 2, frameH - 2, frameR - 1);
+    f.strokeRoundedRect(
+      frameX + 1,
+      frameY + 1,
+      frameW - 2,
+      frameH - 2,
+      frameR - 1,
+    );
 
     // --- Layer 5: Glass glare diagonal across the grid ---
     f.beginPath();
@@ -750,28 +833,44 @@ export class Game extends Phaser.Scene {
       f.fillStyle(0xffffff, 0.6);
       f.fillCircle(bp.x - boltR * 0.25, bp.y - boltR * 0.25, boltR * 0.4);
       // Bolt rim
-      f.lineStyle(1, 0x777777, 0.5);
       f.strokeCircle(bp.x, bp.y, boltR);
     }
 
     // ==========================================
-    // 2. BUY PANELS & ANTE BET
+    // 2. SPIN BUTTON GROUP (Calculated early for anchoring)
+    // ==========================================
+    const { spinX, spinY, spinSize } = this.spinControls.layout(
+      w,
+      h,
+      gridX,
+      gridY,
+      gridTotalSize,
+      barH,
+      isStacked,
+      isLandscapeMobile,
+    );
+    this.updateSpinButtonState();
+    this.updateAutoSpinDisplay();
+
+    // ==========================================
+    // 3. BUY PANELS & ANTE BET
     // ==========================================
     const availableWidthForFeatures = gridX;
     const availableHeightForFeatures = safeH - (gridY + gridTotalSize);
 
     const useFeaturesMenu =
-      isLandscapeMobile ||
-      (isStacked && availableHeightForFeatures < 170) ||
-      (!isStacked && availableWidthForFeatures < 160);
+      isLandscapeMobile || (!isStacked && availableWidthForFeatures < 160);
 
-    let buyW = isStacked ? w * 0.42 : Math.min(200, gridX * 0.75);
-    let buyH = isStacked ? 55 : Math.min(100, safeH * 0.14);
-    let buyGap = isStacked ? 8 : 12;
-    let anteW = buyW;
-    let anteH = isStacked ? 40 : 45;
+    // Slightly reduced sizes per user request for mobile playing buttons
+    let buyW = isStacked ? Math.min(170, w * 0.38) : Math.min(200, gridX * 0.75);
+    let buyH = isStacked ? Math.min(50, safeH * 0.065) : Math.min(100, safeH * 0.14);
+    let buyGap = isStacked ? Math.max(8, w * 0.03) : 12;
+    let anteW = isStacked ? buyW * 2 + buyGap : buyW;
+    let anteH = isStacked ? buyH * 0.8 : 45;
 
-    let buyX: number = 0;
+    let buyX1: number = 0;
+    let buyX2: number = 0;
+    let anteX: number = 0;
     let buyY1: number = 0;
     let buyY2: number = 0;
     let anteY: number = 0;
@@ -782,18 +881,19 @@ export class Game extends Phaser.Scene {
       this.btnFeaturesMenuHit.setVisible(true);
       this.btnFeaturesMenuIcon.setVisible(true);
 
-      const toggleX = isLandscapeMobile ? 35 : w * 0.15;
-      const toggleY = isLandscapeMobile ? safeH / 2 : toolY + 60;
+      // Position toggle vertically centered with the grid on the left edge
+      const toggleX = isLandscapeMobile ? 35 : Math.max(30, w * 0.08);
+      const toggleY = gridY + gridTotalSize / 2;
 
-      this.btnFeaturesMenuHit.setPosition(toggleX, toggleY).setSize(50, 50);
-      // Glassmorphic toggle pill
+      this.btnFeaturesMenuHit.setPosition(toggleX, toggleY).setSize(60, 60);
+      // Glassmorphic toggle pill for BUY feature
       this.btnFeaturesMenuGraphics.fillStyle(0x000000, 0.5);
       this.btnFeaturesMenuGraphics.fillRoundedRect(
-        toggleX - 22,
-        toggleY - 22 + 3,
-        44,
-        44,
-        14,
+        toggleX - 30,
+        toggleY - 30 + 4,
+        60,
+        60,
+        16,
       );
       this.btnFeaturesMenuGraphics.fillGradientStyle(
         0xff006a,
@@ -803,36 +903,37 @@ export class Game extends Phaser.Scene {
         1,
       );
       this.btnFeaturesMenuGraphics.fillRoundedRect(
-        toggleX - 22,
-        toggleY - 22,
-        44,
-        44,
-        14,
+        toggleX - 30,
+        toggleY - 30,
+        60,
+        60,
+        16,
       );
+      // Glass highlight
       this.btnFeaturesMenuGraphics.fillGradientStyle(
         0xffffff,
         0xffffff,
         0xffffff,
         0xffffff,
-        0.3,
-        0.3,
+        0.35,
+        0.35,
         0,
         0,
       );
       this.btnFeaturesMenuGraphics.fillRoundedRect(
-        toggleX - 20,
-        toggleY - 20,
-        40,
-        18,
-        { tl: 12, tr: 12, bl: 0, br: 0 } as any,
+        toggleX - 28,
+        toggleY - 28,
+        56,
+        25,
+        { tl: 14, tr: 14, bl: 0, br: 0 } as any,
       );
-      this.btnFeaturesMenuGraphics.lineStyle(2, 0xffffff, 0.6);
+      this.btnFeaturesMenuGraphics.lineStyle(2, 0xffffff, 0.8);
       this.btnFeaturesMenuGraphics.strokeRoundedRect(
-        toggleX - 22,
-        toggleY - 22,
-        44,
-        44,
-        14,
+        toggleX - 30,
+        toggleY - 30,
+        60,
+        60,
+        16,
       );
       this.btnFeaturesMenuIcon.setPosition(toggleX, toggleY);
 
@@ -895,7 +996,9 @@ export class Game extends Phaser.Scene {
           18,
         );
 
-        buyX = popupX;
+        buyX1 = popupX;
+        buyX2 = popupX;
+        anteX = popupX;
         buyY1 = popupY - popupH / 2 + 20 + buyH / 2;
         buyY2 = buyY1 + buyH + buyGap;
         anteY = buyY2 + buyH / 2 + buyGap + anteH / 2;
@@ -913,20 +1016,30 @@ export class Game extends Phaser.Scene {
       this.btnFeaturesMenuIcon.setVisible(false);
 
       if (isStacked) {
-        buyX = buyW / 2 + 10;
-        const blockHeight = buyH * 2 + buyGap * 2 + anteH;
-        const blockStartY = safeH - blockHeight - 15;
-        buyY1 = blockStartY + buyH / 2;
-        buyY2 = buyY1 + buyH + buyGap;
+        // Stacked mobile: anchored ABOVE the spin button
+        const blockBottom = spinY - spinSize / 2 - Math.max(10, safeH * 0.02);
+        
+        anteX = w / 2;
+        anteY = blockBottom - anteH / 2;
+        
+        // Buy buttons placed side-by-side above Ante Bet
+        buyY1 = anteY - anteH / 2 - Math.max(8, safeH * 0.015) - buyH / 2;
+        buyY2 = buyY1; // Same row
+        
+        buyX1 = w / 2 - buyW / 2 - buyGap / 2; // Left side
+        buyX2 = w / 2 + buyW / 2 + buyGap / 2; // Right side
       } else {
-        buyX = gridX / 2;
-        buyX = Math.max(buyX, buyW / 2 + 10);
+        // Desktop placement: stacked vertically on the left side
+        buyX1 = Math.max(gridX / 2, buyW / 2 + 10);
+        buyX2 = buyX1;
+        anteX = buyX1;
+        
         const blockHeight = buyH * 2 + buyGap * 2 + anteH;
         const blockStartY = gridY + (gridTotalSize - blockHeight) / 2;
         buyY1 = blockStartY + buyH / 2;
         buyY2 = buyY1 + buyH + buyGap;
+        anteY = buyY2 + buyH / 2 + buyGap + anteH / 2 + 10;
       }
-      anteY = buyY2 + buyH / 2 + buyGap + anteH / 2 + 10;
     }
 
     const showFeatures = !useFeaturesMenu || this.isFeaturesMenuOpen;
@@ -957,66 +1070,49 @@ export class Game extends Phaser.Scene {
     this.anteBetIcon.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
 
     if (showFeatures) {
-      // Regular Buy on top (buyY1)
+      // Regular Buy
       this.drawBuyPanel(this.panelRegularGraphics, buyW, buyH, false);
-      this.buyRegularHit.setPosition(buyX, buyY1).setSize(buyW, buyH);
-      this.panelRegularGraphics.setPosition(buyX, buyY1);
+      this.buyRegularHit.setPosition(buyX1, buyY1).setSize(buyW, buyH);
+      this.panelRegularGraphics.setPosition(buyX1, buyY1);
       this.updateBuyText(
         this.buyRegularTxt1,
         this.buyRegularTxt2,
-        buyX,
+        buyX1,
         buyY1,
         buyH,
         'REGULAR',
       );
 
-      // Super Buy on bottom (buyY2)
+      // Super Buy
       this.drawBuyPanel(this.panelSuperGraphics, buyW, buyH, true);
-      this.buySuperHit.setPosition(buyX, buyY2).setSize(buyW, buyH);
-      this.panelSuperGraphics.setPosition(buyX, buyY2);
+      this.buySuperHit.setPosition(buyX2, buyY2).setSize(buyW, buyH);
+      this.panelSuperGraphics.setPosition(buyX2, buyY2);
       this.updateBuyText(
         this.buySuperTxt1,
         this.buySuperTxt2,
-        buyX,
+        buyX2,
         buyY2,
         buyH,
         'SUPER',
       );
 
-
-      this.anteBetHit.setPosition(buyX, anteY).setSize(anteW, anteH);
-      this.anteBetBtn.setPosition(buyX, anteY);
+      this.anteBetHit.setPosition(anteX, anteY).setSize(anteW, anteH);
+      this.anteBetBtn.setPosition(anteX, anteY);
       this.drawAnteBetButton(anteW, anteH);
       this.anteBetIcon
-        .setPosition(buyX - anteW * 0.25, anteY)
-        .setFontSize(22)
+        .setPosition(anteX - anteW * 0.25, anteY)
+        .setFontSize(Math.max(16, anteH * 0.45))
         .setOrigin(0.5);
       this.anteBetTxt
-        .setPosition(buyX - anteW * 0.15, anteY)
-        .setFontSize(16)
+        .setPosition(anteX - anteW * 0.15, anteY)
+        .setFontSize(Math.max(14, anteH * 0.35))
         .setOrigin(0, 0.5);
     }
 
     // ==========================================
-    // 3. BOTTOM BAR & HUD (delegated to BottomBarHUD)
+    // 4. BOTTOM BAR & HUD (delegated to BottomBarHUD)
     // ==========================================
     this.bottomBarHUD.layout(w, h, barH, isStacked, isMobile);
-
-    // ==========================================
-    // 4. SPIN BUTTON GROUP (delegated to SpinControls)
-    // ==========================================
-    const { spinX, spinY, spinSize } = this.spinControls.layout(
-      w,
-      h,
-      gridX,
-      gridY,
-      gridTotalSize,
-      barH,
-      isStacked,
-      isLandscapeMobile,
-    );
-    this.updateSpinButtonState();
-    this.updateAutoSpinDisplay();
 
     // ==========================================
     // 5. TOOLBAR ICONS (Top Left)
@@ -1051,7 +1147,7 @@ export class Game extends Phaser.Scene {
     // Increased base width to 460 to account for thick fonts and stroke, preventing overlap
     const LOGO_BASE_W = 460;
     const LOGO_BASE_H = 150;
-    const MAX_LOGO_SCALE = 1.1; // Slightly reduced max scale
+    const MAX_LOGO_SCALE = 0.85; // Scaled down per user request
     const MIN_LOGO_SCALE = 0.35; // Hide if space requires scaling smaller than this
 
     let logoScale = 1;
@@ -1063,16 +1159,17 @@ export class Game extends Phaser.Scene {
       // Portrait: above the grid
       const availW = w * 0.9;
       const availH = gridY - 10;
-      
+
       if (availH > 40) {
         const scaleW = availW / LOGO_BASE_W;
         const scaleH = availH / LOGO_BASE_H;
         logoScale = Math.min(scaleW, scaleH, MAX_LOGO_SCALE);
-        
+
         if (logoScale >= MIN_LOGO_SCALE) {
           showLogo = true;
           logoX = w / 2;
-          logoY = (gridY / 2) + 5; // Center vertically in top space
+          // Place logo safely below the toolbar icons
+          logoY = toolY + (isMobile ? 25 : 35) + (LOGO_BASE_H * logoScale) / 2;
         }
       }
     } else if (isLandscapeMobile || rightMargin < 140) {
@@ -1084,7 +1181,7 @@ export class Game extends Phaser.Scene {
         const scaleW = availW / LOGO_BASE_W;
         const scaleH = availH / LOGO_BASE_H;
         logoScale = Math.min(scaleW, scaleH, MAX_LOGO_SCALE);
-        
+
         if (logoScale >= MIN_LOGO_SCALE) {
           showLogo = true;
           logoX = w / 2;
@@ -1107,14 +1204,17 @@ export class Game extends Phaser.Scene {
           showLogo = true;
           // Fix to the right wall (with 20px padding) to maximize distance from the grid
           const actualLogoWidth = LOGO_BASE_W * logoScale;
-          logoX = w - (actualLogoWidth / 2) - 20;
-          logoY = logoRegionTop + availH * 0.25; 
+          logoX = w - actualLogoWidth / 2 - 20;
+          logoY = logoRegionTop + availH * 0.25;
         }
       }
     }
 
     if (showLogo) {
-      this.logoWrapper.setVisible(true).setPosition(logoX, logoY).setScale(logoScale);
+      this.logoWrapper
+        .setVisible(true)
+        .setPosition(logoX, logoY)
+        .setScale(logoScale);
     } else {
       this.logoWrapper.setVisible(false);
     }
@@ -1164,7 +1264,13 @@ export class Game extends Phaser.Scene {
       obj.fillCircle(cx, cy + 3, radius + 3);
 
       // Thick colored candy rim (outer ring)
-      obj.fillGradientStyle(rimColor, rimColor, isSoundOff ? 0x332233 : 0x881144, isSoundOff ? 0x332233 : 0x881144, 1);
+      obj.fillGradientStyle(
+        rimColor,
+        rimColor,
+        isSoundOff ? 0x332233 : 0x881144,
+        isSoundOff ? 0x332233 : 0x881144,
+        1,
+      );
       obj.fillCircle(cx, cy, radius + 3);
 
       // Glass sheen on rim top half
@@ -1216,7 +1322,7 @@ export class Game extends Phaser.Scene {
     h: number,
     type: string,
   ) {
-    const fsTitle = Math.min(16, h * 0.20);
+    const fsTitle = Math.min(16, h * 0.2);
     const fsSub = Math.min(30, h * 0.36);
     const title = type === 'SUPER' ? 'SUPER\nFREE SPINS' : 'BUY\nFREE SPINS';
     txt1
@@ -1225,7 +1331,10 @@ export class Game extends Phaser.Scene {
       .setFontSize(fsTitle)
       .setFontFamily('"Lilita One", "Luckiest Guy", cursive, sans-serif')
       .setLineSpacing(-2);
-    txt1.setColor('#ffffff').setStroke('#000000', 3).setShadow(0, 2, '#000000', 4, true, true);
+    txt1
+      .setColor('#ffffff')
+      .setStroke('#000000', 3)
+      .setShadow(0, 2, '#000000', 4, true, true);
     txt2.setPosition(x, y + h * 0.28).setFontSize(fsSub);
     txt2
       .setFontFamily('"Lilita One", "Luckiest Guy", cursive, sans-serif')
@@ -1260,17 +1369,38 @@ export class Game extends Phaser.Scene {
 
     // Curved glass hemisphere reflection on top half
     gfx.fillGradientStyle(
-      0xffffff, 0xffffff, 0xffffff, 0xffffff,
-      0.55, 0.55, 0.05, 0.05,
+      0xffffff,
+      0xffffff,
+      0xffffff,
+      0xffffff,
+      0.55,
+      0.55,
+      0.05,
+      0.05,
     );
     gfx.fillRoundedRect(-w / 2 + 3, -h / 2 + 2, w - 6, h * 0.4, {
-      tl: r - 2, tr: r - 2, bl: 0, br: 0,
+      tl: r - 2,
+      tr: r - 2,
+      bl: 0,
+      br: 0,
     } as any);
 
     // Bottom darkened recess for 3D depth
-    gfx.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.3, 0.3);
+    gfx.fillGradientStyle(
+      0x000000,
+      0x000000,
+      0x000000,
+      0x000000,
+      0,
+      0,
+      0.3,
+      0.3,
+    );
     gfx.fillRoundedRect(-w / 2 + 2, -h / 2 + h * 0.65, w - 4, h * 0.35 - 2, {
-      tl: 0, tr: 0, bl: r - 2, br: r - 2,
+      tl: 0,
+      tr: 0,
+      bl: r - 2,
+      br: r - 2,
     } as any);
 
     // Accent border
@@ -1294,16 +1424,30 @@ export class Game extends Phaser.Scene {
       this.anteBetBtn.fillRoundedRect(x + 2, y + 4, bw, bh, rad);
 
       this.anteBetBtn.fillGradientStyle(
-        0xffbb33, 0xffbb33, 0x885500, 0x885500, 1
+        0xffbb33,
+        0xffbb33,
+        0x885500,
+        0x885500,
+        1,
       );
       this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
 
       // Glass hemisphere
       this.anteBetBtn.fillGradientStyle(
-        0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.45, 0.45, 0.05, 0.05
+        0xffffff,
+        0xffffff,
+        0xffffff,
+        0xffffff,
+        0.45,
+        0.45,
+        0.05,
+        0.05,
       );
       this.anteBetBtn.fillRoundedRect(x + 2, y + 1, bw - 4, bh * 0.4, {
-        tl: rad - 1, tr: rad - 1, bl: 0, br: 0,
+        tl: rad - 1,
+        tr: rad - 1,
+        bl: 0,
+        br: 0,
       } as any);
 
       this.anteBetBtn.lineStyle(2, 0xffeebb, 0.9);
@@ -1321,16 +1465,30 @@ export class Game extends Phaser.Scene {
       this.anteBetBtn.fillRoundedRect(x + 2, y + 4, bw, bh, rad);
 
       this.anteBetBtn.fillGradientStyle(
-        0x2a1a3a, 0x2a1a3a, 0x110518, 0x110518, 0.95
+        0x2a1a3a,
+        0x2a1a3a,
+        0x110518,
+        0x110518,
+        0.95,
       );
       this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
 
       // Glass hemisphere
       this.anteBetBtn.fillGradientStyle(
-        0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.2, 0.2, 0, 0
+        0xffffff,
+        0xffffff,
+        0xffffff,
+        0xffffff,
+        0.2,
+        0.2,
+        0,
+        0,
       );
       this.anteBetBtn.fillRoundedRect(x + 2, y + 1, bw - 4, bh * 0.4, {
-        tl: rad - 1, tr: rad - 1, bl: 0, br: 0,
+        tl: rad - 1,
+        tr: rad - 1,
+        bl: 0,
+        br: 0,
       } as any);
 
       this.anteBetBtn.lineStyle(2, 0x442266, 1);
@@ -1390,7 +1548,7 @@ export class Game extends Phaser.Scene {
     // Icon (plus/minus) — thicker and drop shadowed
     const arm = size * 0.22;
     const thick = Math.max(3, size * 0.12);
-    
+
     // Icon shadow (inset into the candy)
     gfx.fillStyle(0x550022, 0.8);
     if (isPlus) {
@@ -1463,7 +1621,7 @@ export class Game extends Phaser.Scene {
     // Play triangle icon
     const triSize = candyR * 0.45;
     const triX = x + triSize * 0.15; // slight offset right for visual centering
-    
+
     // Triangle shadow for depth
     g.fillStyle(0x550022, 0.8);
     g.beginPath();
@@ -1500,11 +1658,19 @@ export class Game extends Phaser.Scene {
     // Visual transformation: Play ▶ ↔ Stop ■ (Sugar Rush 1000 standard)
     if (this._spinLock || this.autoSpinActive) {
       // During a spin or autoplay: show the STOP button (crimson + square icon)
-      this.spinControls.drawStopButton(0, 0, this.spinControls['_lastSpinSize'] || 100);
+      this.spinControls.drawStopButton(
+        0,
+        0,
+        this.spinControls['_lastSpinSize'] || 100,
+      );
       this.spinControls.spinGfx.setAlpha(1);
     } else {
       // Idle: show the normal PLAY button (pink + triangle icon)
-      this.spinControls.drawSpinButton(0, 0, this.spinControls['_lastSpinSize'] || 100);
+      this.spinControls.drawSpinButton(
+        0,
+        0,
+        this.spinControls['_lastSpinSize'] || 100,
+      );
       this.spinControls.spinGfx.setAlpha(1);
     }
   }
@@ -1615,7 +1781,13 @@ export class Game extends Phaser.Scene {
 
     // Bet controls — directly cycle through bet presets (Sugar Rush 1000 behavior)
     this.spinControls.betMinusHit.on('pointerdown', () => {
-      if (this._spinLock || this.fsActive || this.autoSpinActive || this.anyOverlayOpen()) return;
+      if (
+        this._spinLock ||
+        this.fsActive ||
+        this.autoSpinActive ||
+        this.anyOverlayOpen()
+      )
+        return;
       if (this.betPresetIndex > 0) {
         this.betPresetIndex--;
         options.betAmount = BET_PRESETS[this.betPresetIndex];
@@ -1624,7 +1796,13 @@ export class Game extends Phaser.Scene {
       }
     });
     this.spinControls.betPlusHit.on('pointerdown', () => {
-      if (this._spinLock || this.fsActive || this.autoSpinActive || this.anyOverlayOpen()) return;
+      if (
+        this._spinLock ||
+        this.fsActive ||
+        this.autoSpinActive ||
+        this.anyOverlayOpen()
+      )
+        return;
       if (this.betPresetIndex < BET_PRESETS.length - 1) {
         this.betPresetIndex++;
         options.betAmount = BET_PRESETS[this.betPresetIndex];
@@ -1817,7 +1995,9 @@ export class Game extends Phaser.Scene {
     const spinY = this.spinControls['_lastSpinY'] || 0;
     const spinSize = this.spinControls['_lastSpinSize'] || 100;
     this.spinControls.drawAutoButton(
-      spinX, spinY, spinSize,
+      spinX,
+      spinY,
+      spinSize,
       this.autoSpinActive,
       this.autoSpinRemaining,
     );
@@ -1830,7 +2010,7 @@ export class Game extends Phaser.Scene {
         this.valueMoney += actualWin;
         this.updateMoneyDisplay();
         this.lastWin += actualWin;
-        
+
         const symKey = symbolId !== undefined ? `candy_${symbolId}` : undefined;
         this.updateLastWinDisplay(symKey);
       }
@@ -1838,7 +2018,7 @@ export class Game extends Phaser.Scene {
       // the Grid's totalFreeSpinsWin is authoritative
 
       this.audio.playWin(actualWin / this.getEffectiveBet());
-      
+
       // Pulse background intensity based on win size
       const pulseIntensity = Math.min(actualWin / this.getEffectiveBet(), 3);
       this.backgroundManager.triggerWinPulse(pulseIntensity);
@@ -1849,13 +2029,18 @@ export class Game extends Phaser.Scene {
       const winFS = Math.max(28, this.grid.cellSize * 0.7);
       const winStroke = Math.max(3, winFS * 0.18);
       const winText = this.add
-        .text(cx, cy, `+${DisplayBalance({ amount: actualWin, currency: this.currency })}`, {
-          fontSize: `${winFS}px`,
-          color: '#ffe600',
-          fontStyle: 'bold',
-          stroke: '#000',
-          strokeThickness: winStroke,
-        })
+        .text(
+          cx,
+          cy,
+          `+${DisplayBalance({ amount: actualWin, currency: this.currency })}`,
+          {
+            fontSize: `${winFS}px`,
+            color: '#ffe600',
+            fontStyle: 'bold',
+            stroke: '#000',
+            strokeThickness: winStroke,
+          },
+        )
         .setOrigin(0.5)
         .setDepth(25);
 
@@ -1890,10 +2075,10 @@ export class Game extends Phaser.Scene {
     this.grid.onFreeSpinsEnd = (totalWin) => {
       this.fsActive = false;
       this.txtFSRemaining.setVisible(false);
-      
+
       // P0 Fix: Restore normal background visuals
       this.backgroundManager.setFreeSpinsMode(false);
-      
+
       this.valueMoney += totalWin;
       this.updateMoneyDisplay();
       this.lastWin = totalWin;
@@ -2101,7 +2286,7 @@ export class Game extends Phaser.Scene {
 
   updateLastWinDisplay(symbolKey?: string) {
     const target = this.lastWin;
-    
+
     // Update symbol icon in HUD
     this.bottomBarHUD.setWinSymbol(symbolKey);
     if (this._winCountTween) {
@@ -2198,7 +2383,11 @@ export class Game extends Phaser.Scene {
         );
         // Keep icon position synced as text width changes
         if (this.bottomBarHUD.winSymbolIcon.visible) {
-          this.bottomBarHUD.winSymbolIcon.x = this.bottomBarHUD.txtLastWin.x - (this.bottomBarHUD.txtLastWin.width * this.bottomBarHUD.txtLastWin.scaleX) - 18;
+          this.bottomBarHUD.winSymbolIcon.x =
+            this.bottomBarHUD.txtLastWin.x -
+            this.bottomBarHUD.txtLastWin.width *
+              this.bottomBarHUD.txtLastWin.scaleX -
+            18;
         }
       },
       onComplete: () => {
@@ -2320,7 +2509,8 @@ export class Game extends Phaser.Scene {
 
       // Read free spins count from server's fsTrigger event (authoritative)
       const fsEvent = stateEvents.find((e: any) => e.type === 'fsTrigger');
-      const fsAwarded = fsEvent?.totalSpins || options.freeSpinsByScatter[3] || 10;
+      const fsAwarded =
+        fsEvent?.totalSpins || options.freeSpinsByScatter[3] || 10;
 
       this.freeSpinsIntro.play(fsAwarded, () => {
         // Set up free spins state AFTER the intro finishes
@@ -2405,7 +2595,10 @@ export class Game extends Phaser.Scene {
 
       try {
         // Send BASE bet to RGS (not ante-adjusted) — the server applies ante multiplier via mode
-        const result = await this.stakeEngine.play(BET_PRESETS[this.betPresetIndex], triggerType);
+        const result = await this.stakeEngine.play(
+          BET_PRESETS[this.betPresetIndex],
+          triggerType,
+        );
 
         // RGS returns round.state as the events array from our math engine.
         // The first 'reveal' event contains the board state.

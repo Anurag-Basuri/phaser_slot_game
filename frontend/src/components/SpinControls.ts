@@ -133,7 +133,8 @@ export class SpinControls {
     // ── Spin button size — proportional, clamped (Slightly larger) ──
     let spinSize: number;
     if (isStacked) {
-      spinSize = Math.max(60, Math.min(95, w * 0.15, safeH * 0.12));
+      // Adjusted spin size to be slightly smaller per user request
+      spinSize = Math.max(65, Math.min(90, w * 0.18, safeH * 0.10));
     } else if (isLandscapeMobile) {
       spinSize = Math.min(85, rightMargin * 0.45, safeH * 0.20);
     } else {
@@ -144,9 +145,10 @@ export class SpinControls {
     // ── Spin position ──
     let spinX: number, spinY: number;
     if (isStacked) {
-      // In stacked/portrait: spin sits above bottom bar, right side
-      spinX = w - spinSize / 2 - 14;
-      spinY = safeH - spinSize / 2 - 8;
+      // In stacked/portrait: spin sits centered at the bottom, leaving room for autoplay below
+      spinX = w / 2;
+      // Increased bottom padding to lift all playing buttons slightly higher
+      spinY = safeH - spinSize / 2 - Math.max(45, safeH * 0.05);
     } else {
       spinX = rightColCenter;
       spinY = safeH * 0.72; // Moved lower down the screen
@@ -164,17 +166,12 @@ export class SpinControls {
     const autoFS = Math.max(8, Math.min(14, spinSize * 0.13));
     const autoPillW = Math.max(60, spinSize * 1.0);
     const autoPillH = Math.max(22, spinSize * 0.28);
-    const autoY = spinY + spinSize / 2 + (isStacked ? 24 : 32);
-    if (isStacked && autoY > safeH - 2) {
-      // Hide autoplay if it would clip into the bar
-      this.autoHit.setVisible(false);
-      this.autoTxt.setVisible(false);
-      this.autoGfx.setVisible(false);
-    } else {
-      this.autoHit.setVisible(true).setPosition(spinX, autoY).setSize(autoPillW, autoPillH);
-      this.autoTxt.setVisible(true).setPosition(spinX, autoY).setFontSize(autoFS);
-      this.autoGfx.setVisible(true);
-    }
+    const autoY = spinY + spinSize / 2 + (isStacked ? 16 : 32);
+    
+    // Always show autoplay since we've now mathematically made room for it above safeH
+    this.autoHit.setVisible(true).setPosition(spinX, autoY).setSize(autoPillW, autoPillH);
+    this.autoTxt.setVisible(true).setPosition(spinX, autoY).setFontSize(autoFS);
+    this.autoGfx.setVisible(true);
 
     // ── Bet +/- buttons (Slightly larger) ──
     let bBtnSize: number;
@@ -187,27 +184,15 @@ export class SpinControls {
     }
 
     if (isStacked) {
-      // Portrait: place +/- on the left side of the spin button, horizontally
-      const btnY = spinY;
-      const gap = bBtnSize * 0.3;
-      const minusX = spinX - spinSize / 2 - bBtnSize / 2 - gap - 4;
-      const plusX = spinX - spinSize / 2 - bBtnSize / 2 - gap - 4 - bBtnSize - gap;
+      // Portrait: place +/- on the left and right of the centered spin button
+      const betBtnOffset = spinSize / 2 + bBtnSize / 2 + Math.max(10, w * 0.04);
+      const minusX = spinX - betBtnOffset;
+      const plusX = spinX + betBtnOffset;
 
-      // If they'd go off screen, stack vertically instead
-      if (plusX - bBtnSize / 2 < 8) {
-        // Vertical: above and below the spin button
-        const vOffset = spinSize / 2 + bBtnSize / 2 + 6;
-        this.betMinusHit.setPosition(spinX, spinY + vOffset).setSize(bBtnSize * 1.4, bBtnSize * 1.4);
-        this.drawBetButton(this.betMinusGfx, spinX, spinY + vOffset, bBtnSize, false);
-        this.betPlusHit.setPosition(spinX, spinY - vOffset).setSize(bBtnSize * 1.4, bBtnSize * 1.4);
-        this.drawBetButton(this.betPlusGfx, spinX, spinY - vOffset, bBtnSize, true);
-      } else {
-        // Horizontal to the left
-        this.betMinusHit.setPosition(minusX, btnY).setSize(bBtnSize * 1.4, bBtnSize * 1.4);
-        this.drawBetButton(this.betMinusGfx, minusX, btnY, bBtnSize, false);
-        this.betPlusHit.setPosition(plusX, btnY).setSize(bBtnSize * 1.4, bBtnSize * 1.4);
-        this.drawBetButton(this.betPlusGfx, plusX, btnY, bBtnSize, true);
-      }
+      this.betMinusHit.setPosition(minusX, spinY).setSize(bBtnSize * 1.4, bBtnSize * 1.4);
+      this.drawBetButton(this.betMinusGfx, minusX, spinY, bBtnSize, false);
+      this.betPlusHit.setPosition(plusX, spinY).setSize(bBtnSize * 1.4, bBtnSize * 1.4);
+      this.drawBetButton(this.betPlusGfx, plusX, spinY, bBtnSize, true);
     } else {
       // Landscape: left & right of spin button
       const betBtnOffset = spinSize / 2 + bBtnSize / 2 + 14;

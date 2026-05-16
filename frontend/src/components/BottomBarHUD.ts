@@ -223,9 +223,13 @@ export class BottomBarHUD {
 
     this._winPillBounds = { x: winX, w: winW, y: h - barH + 5, h: barH - 10 };
 
-    // Demo label — top of the bar, centered
+    // Demo label — top right of the screen, unobtrusive
     if (this.demoLabel.text) {
-      this.demoLabel.setPosition(w / 2, h - barH - 10).setFontSize(Math.max(9, barH * 0.18));
+      this.demoLabel
+        .setPosition(w - 20, 20)
+        .setOrigin(1, 0)
+        .setFontSize(14)
+        .setDepth(100);
     }
   }
 
