@@ -672,9 +672,10 @@ export class Game extends Phaser.Scene {
     const safeH = h - barH;
 
     // Toolbar dimensions (used by multiple elements for alignment)
-    const toolY = Math.max(25, safeH * 0.04);
-    const toolPad = isMobile ? 25 : 35;
-    const toolGap = isLandscapeMobile ? 38 : isMobile ? 42 : 50;
+    // Settings & Top toolbar spacing (Added breathing room per user request)
+    const toolPad = isMobile ? 22 : 35;
+    const toolGap = isLandscapeMobile ? 38 : isMobile ? 45 : 50;
+    const toolY = Math.max(20, safeH * 0.03);
 
     // ==========================================
     // 1. GRID SCALING & POSITIONING
@@ -687,7 +688,7 @@ export class Game extends Phaser.Scene {
       // Guarantee enough space for the toolbar + logo + explicit generous padding
       const maxLogoHeight = 150 * 0.85; // LOGO_BASE_H * MAX_LOGO_SCALE
       const topSpace = toolY + (isMobile ? 25 : 35) + maxLogoHeight + 25;
-      
+
       // Ensure enough bottom space for Spin Controls + Buy Buttons + Ante Bet
       const bottomSpace = isPortrait ? Math.max(300, h * 0.35) : 180;
       const availableH = safeH - topSpace - bottomSpace;
@@ -861,12 +862,16 @@ export class Game extends Phaser.Scene {
     const useFeaturesMenu =
       isLandscapeMobile || (!isStacked && availableWidthForFeatures < 160);
 
-    // Slightly reduced sizes per user request for mobile playing buttons
-    let buyW = isStacked ? Math.min(170, w * 0.38) : Math.min(200, gridX * 0.75);
-    let buyH = isStacked ? Math.min(50, safeH * 0.065) : Math.min(100, safeH * 0.14);
-    let buyGap = isStacked ? Math.max(8, w * 0.03) : 12;
+    // Further reduced sizes for mobile playing buttons per user request
+    let buyW = isStacked
+      ? Math.min(140, w * 0.34)
+      : Math.min(200, gridX * 0.75);
+    let buyH = isStacked
+      ? Math.min(42, safeH * 0.055)
+      : Math.min(100, safeH * 0.14);
+    let buyGap = isStacked ? Math.max(6, w * 0.02) : 12;
     let anteW = isStacked ? buyW * 2 + buyGap : buyW;
-    let anteH = isStacked ? buyH * 0.8 : 45;
+    let anteH = isStacked ? buyH * 0.75 : 45;
 
     let buyX1: number = 0;
     let buyX2: number = 0;
@@ -875,7 +880,10 @@ export class Game extends Phaser.Scene {
     let buyY2: number = 0;
     let anteY: number = 0;
 
-    if (useFeaturesMenu) {
+    let showFeaturesToggle = useFeaturesMenu;
+    const showPopup = this.isFeaturesMenuOpen;
+
+    if (showFeaturesToggle) {
       // Show the toggle button
       this.btnFeaturesMenuGraphics.setVisible(true).clear();
       this.btnFeaturesMenuHit.setVisible(true);
@@ -893,13 +901,13 @@ export class Game extends Phaser.Scene {
         toggleY - 30 + 4,
         60,
         60,
-        16,
+        15,
       );
       this.btnFeaturesMenuGraphics.fillGradientStyle(
         0xff006a,
         0xff006a,
-        0x880033,
-        0x880033,
+        0xcc0055,
+        0xcc0055,
         1,
       );
       this.btnFeaturesMenuGraphics.fillRoundedRect(
@@ -907,25 +915,7 @@ export class Game extends Phaser.Scene {
         toggleY - 30,
         60,
         60,
-        16,
-      );
-      // Glass highlight
-      this.btnFeaturesMenuGraphics.fillGradientStyle(
-        0xffffff,
-        0xffffff,
-        0xffffff,
-        0xffffff,
-        0.35,
-        0.35,
-        0,
-        0,
-      );
-      this.btnFeaturesMenuGraphics.fillRoundedRect(
-        toggleX - 28,
-        toggleY - 28,
-        56,
-        25,
-        { tl: 14, tr: 14, bl: 0, br: 0 } as any,
+        15,
       );
       this.btnFeaturesMenuGraphics.lineStyle(2, 0xffffff, 0.8);
       this.btnFeaturesMenuGraphics.strokeRoundedRect(
@@ -933,113 +923,116 @@ export class Game extends Phaser.Scene {
         toggleY - 30,
         60,
         60,
-        16,
+        15,
       );
+
       this.btnFeaturesMenuIcon.setPosition(toggleX, toggleY);
-
-      if (this.isFeaturesMenuOpen) {
-        // Position inside popup
-        this.featuresMenuHitOverlay
-          .setVisible(true)
-          .setPosition(w / 2, h / 2)
-          .setSize(w, h);
-        this.featuresMenuPopupBg.setVisible(true).clear();
-
-        buyW = Math.min(220, w * 0.8);
-        buyH = 60;
-        anteW = buyW;
-        anteH = 45;
-        buyGap = 15;
-
-        const popupW = buyW + 40;
-        const popupH = buyH * 2 + anteH + buyGap * 3 + 20;
-        const popupX = w / 2;
-        const popupY = h / 2;
-
-        // Premium popup backdrop
-        this.featuresMenuPopupBg.fillStyle(0x000000, 0.6);
-        this.featuresMenuPopupBg.fillRoundedRect(
-          popupX - popupW / 2 + 4,
-          popupY - popupH / 2 + 6,
-          popupW,
-          popupH,
-          22,
-        );
-        this.featuresMenuPopupBg.fillGradientStyle(
-          0x1a0a24,
-          0x1a0a24,
-          0x0d0512,
-          0x0d0512,
-          0.98,
-        );
-        this.featuresMenuPopupBg.fillRoundedRect(
-          popupX - popupW / 2,
-          popupY - popupH / 2,
-          popupW,
-          popupH,
-          20,
-        );
-        this.featuresMenuPopupBg.lineStyle(2, 0xff006a, 0.8);
-        this.featuresMenuPopupBg.strokeRoundedRect(
-          popupX - popupW / 2,
-          popupY - popupH / 2,
-          popupW,
-          popupH,
-          20,
-        );
-        this.featuresMenuPopupBg.lineStyle(1, 0xffffff, 0.15);
-        this.featuresMenuPopupBg.strokeRoundedRect(
-          popupX - popupW / 2 + 2,
-          popupY - popupH / 2 + 2,
-          popupW - 4,
-          popupH - 4,
-          18,
-        );
-
-        buyX1 = popupX;
-        buyX2 = popupX;
-        anteX = popupX;
-        buyY1 = popupY - popupH / 2 + 20 + buyH / 2;
-        buyY2 = buyY1 + buyH + buyGap;
-        anteY = buyY2 + buyH / 2 + buyGap + anteH / 2;
-      } else {
-        this.featuresMenuHitOverlay.setVisible(false);
-        this.featuresMenuPopupBg.setVisible(false);
-      }
     } else {
-      // Normal placement
-      this.isFeaturesMenuOpen = false;
-      this.featuresMenuHitOverlay.setVisible(false);
-      this.featuresMenuPopupBg.setVisible(false);
       this.btnFeaturesMenuGraphics.setVisible(false);
       this.btnFeaturesMenuHit.setVisible(false);
       this.btnFeaturesMenuIcon.setVisible(false);
+    }
 
-      if (isStacked) {
-        // Stacked mobile: anchored ABOVE the spin button
-        const blockBottom = spinY - spinSize / 2 - Math.max(10, safeH * 0.02);
-        
-        anteX = w / 2;
-        anteY = blockBottom - anteH / 2;
-        
-        // Buy buttons placed side-by-side above Ante Bet
-        buyY1 = anteY - anteH / 2 - Math.max(8, safeH * 0.015) - buyH / 2;
-        buyY2 = buyY1; // Same row
-        
-        buyX1 = w / 2 - buyW / 2 - buyGap / 2; // Left side
-        buyX2 = w / 2 + buyW / 2 + buyGap / 2; // Right side
-      } else {
-        // Desktop placement: stacked vertically on the left side
-        buyX1 = Math.max(gridX / 2, buyW / 2 + 10);
-        buyX2 = buyX1;
-        anteX = buyX1;
-        
-        const blockHeight = buyH * 2 + buyGap * 2 + anteH;
-        const blockStartY = gridY + (gridTotalSize - blockHeight) / 2;
-        buyY1 = blockStartY + buyH / 2;
-        buyY2 = buyY1 + buyH + buyGap;
-        anteY = buyY2 + buyH / 2 + buyGap + anteH / 2 + 10;
+    // Determine base layout before popup
+    if (isStacked) {
+      // Stacked mobile: unified "BUY FEATURES" alongside "ANTE BET"
+      const blockBottom = spinY - spinSize / 2 - 12 - Math.max(18, safeH * 0.03);
+
+      anteW = Math.min(160, w * 0.42);
+      buyW = anteW;
+
+      anteY = blockBottom - anteH / 2;
+      buyY1 = anteY;
+      
+      const totalW = buyW + anteW + buyGap;
+      buyX1 = w / 2 - totalW / 2 + buyW / 2;
+      anteX = w / 2 + totalW / 2 - anteW / 2;
+
+      // Super buy is hidden unless popup is open
+      buyX2 = -9999;
+      buyY2 = -9999;
+    } else {
+      // Desktop placement: stacked vertically on the left side
+      buyX1 = Math.max(gridX / 2, buyW / 2 + 10);
+      buyY1 = gridY + gridTotalSize / 2 - buyH / 2 - buyGap / 2;
+
+      buyX2 = buyX1;
+      buyY2 = gridY + gridTotalSize / 2 + buyH / 2 + buyGap / 2;
+
+      anteX = buyX1;
+      anteY = buyY2 + buyH / 2 + buyGap * 1.5 + anteH / 2;
+    }
+
+    if (showPopup) {
+      this.featuresMenuHitOverlay
+        .setVisible(true)
+        .setPosition(w / 2, h / 2)
+        .setSize(w, h);
+      this.featuresMenuPopupBg.setVisible(true).clear();
+
+      buyW = Math.min(220, w * 0.8);
+      buyH = 60;
+      anteW = buyW;
+      anteH = 45;
+      buyGap = 15;
+
+      const popupW = buyW + 40;
+      const popupH = isStacked ? (buyH * 2 + buyGap + 20) : (buyH * 2 + anteH + buyGap * 3 + 20);
+      const popupX = w / 2;
+      const popupY = h / 2;
+
+      // Premium popup backdrop
+      this.featuresMenuPopupBg.fillStyle(0x000000, 0.6);
+      this.featuresMenuPopupBg.fillRoundedRect(
+        popupX - popupW / 2 + 4,
+        popupY - popupH / 2 + 6,
+        popupW,
+        popupH,
+        22,
+      );
+      this.featuresMenuPopupBg.fillGradientStyle(
+        0x1a0a24,
+        0x1a0a24,
+        0x0d0512,
+        0x0d0512,
+        0.98,
+      );
+      this.featuresMenuPopupBg.fillRoundedRect(
+        popupX - popupW / 2,
+        popupY - popupH / 2,
+        popupW,
+        popupH,
+        20,
+      );
+      this.featuresMenuPopupBg.lineStyle(2, 0xff006a, 0.8);
+      this.featuresMenuPopupBg.strokeRoundedRect(
+        popupX - popupW / 2,
+        popupY - popupH / 2,
+        popupW,
+        popupH,
+        20,
+      );
+      this.featuresMenuPopupBg.lineStyle(1, 0xffffff, 0.15);
+      this.featuresMenuPopupBg.strokeRoundedRect(
+        popupX - popupW / 2 + 2,
+        popupY - popupH / 2 + 2,
+        popupW - 4,
+        popupH - 4,
+        18,
+      );
+
+      buyX1 = popupX;
+      buyX2 = popupX;
+      buyY1 = popupY - popupH / 2 + 20 + buyH / 2;
+      buyY2 = buyY1 + buyH + buyGap;
+      
+      if (!isStacked) {
+        anteX = popupX;
+        anteY = buyY2 + buyH / 2 + buyGap + anteH / 2;
       }
+    } else {
+      this.featuresMenuHitOverlay.setVisible(false);
+      this.featuresMenuPopupBg.setVisible(false);
     }
 
     const showFeatures = !useFeaturesMenu || this.isFeaturesMenuOpen;
@@ -1101,11 +1094,11 @@ export class Game extends Phaser.Scene {
       this.drawAnteBetButton(anteW, anteH);
       this.anteBetIcon
         .setPosition(anteX - anteW * 0.25, anteY)
-        .setFontSize(Math.max(16, anteH * 0.45))
+        .setFontSize(Math.max(12, anteH * 0.4))
         .setOrigin(0.5);
       this.anteBetTxt
         .setPosition(anteX - anteW * 0.15, anteY)
-        .setFontSize(Math.max(14, anteH * 0.35))
+        .setFontSize(Math.max(11, anteH * 0.32))
         .setOrigin(0, 0.5);
     }
 
@@ -1123,7 +1116,7 @@ export class Game extends Phaser.Scene {
     this.btnFullscreen.setPosition(toolPad + toolGap * 3, toolY);
 
     // Reposition icon images on top of their parent toolbar buttons
-    const targetSize = isMobile ? 20 : 24;
+    const targetSize = isMobile ? 16 : 24;
     [
       this.iconSettings,
       this.iconPaytable,
@@ -1147,8 +1140,8 @@ export class Game extends Phaser.Scene {
     // Increased base width to 460 to account for thick fonts and stroke, preventing overlap
     const LOGO_BASE_W = 460;
     const LOGO_BASE_H = 150;
-    const MAX_LOGO_SCALE = 0.85; // Scaled down per user request
-    const MIN_LOGO_SCALE = 0.35; // Hide if space requires scaling smaller than this
+    const MAX_LOGO_SCALE = isStacked ? 0.65 : 0.85; // Significantly scaled down for stacked mobile
+    const MIN_LOGO_SCALE = 0.25; // Hide if space requires scaling smaller than this
 
     let logoScale = 1;
     let logoX = 0;
@@ -1322,24 +1315,33 @@ export class Game extends Phaser.Scene {
     h: number,
     type: string,
   ) {
-    const fsTitle = Math.min(16, h * 0.2);
-    const fsSub = Math.min(30, h * 0.36);
-    const title = type === 'SUPER' ? 'SUPER\nFREE SPINS' : 'BUY\nFREE SPINS';
+    const fsTitle = Math.min(15, h * 0.20);
+    const fsSub = Math.min(22, h * 0.32);
+    const isStacked = this.scale.width < 650 || this.scale.height > this.scale.width;
+    const isCombinedButton = isStacked && type === 'REGULAR' && !this.isFeaturesMenuOpen;
+    
+    const title = type === 'SUPER' ? 'SUPER\nFREE SPINS' : isCombinedButton ? 'BUY\nFEATURES' : 'BUY\nFREE SPINS';
+    const subText = isCombinedButton ? '100X / 500X' : (type === 'SUPER' ? '500X' : '100X');
+    const strokeCol = type === 'SUPER' ? '#552200' : '#550022';
+    const strokeThick = Math.max(3, fsSub * 0.15);
+
     txt1
       .setText(title)
-      .setPosition(x, y - h * 0.15)
+      .setPosition(x, y - h * 0.16)
       .setFontSize(fsTitle)
       .setFontFamily('"Lilita One", "Luckiest Guy", cursive, sans-serif')
-      .setLineSpacing(-2);
-    txt1
+      .setLineSpacing(-2)
       .setColor('#ffffff')
-      .setStroke('#000000', 3)
-      .setShadow(0, 2, '#000000', 4, true, true);
-    txt2.setPosition(x, y + h * 0.28).setFontSize(fsSub);
+      .setStroke(strokeCol, Math.max(2, fsTitle * 0.15))
+      .setShadow(0, 2, '#000000', 3, true, true);
+
     txt2
+      .setText(subText)
+      .setPosition(x, y + h * 0.25)
+      .setFontSize(fsSub)
       .setFontFamily('"Lilita One", "Luckiest Guy", cursive, sans-serif')
       .setColor('#ffe600')
-      .setStroke('#000000', 6)
+      .setStroke(strokeCol, strokeThick)
       .setShadow(0, 3, '#000000', 0, true, true);
   }
 
@@ -1460,15 +1462,15 @@ export class Game extends Phaser.Scene {
         .setColor('#ffffff')
         .setShadow(0, 0, '#ffcc00', 6, true, true);
     } else {
-      // Inactive - Dark purple pill
-      this.anteBetBtn.fillStyle(0x000000, 0.5);
+      // Inactive - Premium soft purple pill
+      this.anteBetBtn.fillStyle(0x000000, 0.4);
       this.anteBetBtn.fillRoundedRect(x + 2, y + 4, bw, bh, rad);
 
       this.anteBetBtn.fillGradientStyle(
-        0x2a1a3a,
-        0x2a1a3a,
-        0x110518,
-        0x110518,
+        0x5a3a7a,
+        0x5a3a7a,
+        0x2a1a4a,
+        0x2a1a4a,
         0.95,
       );
       this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
@@ -1479,10 +1481,10 @@ export class Game extends Phaser.Scene {
         0xffffff,
         0xffffff,
         0xffffff,
-        0.2,
-        0.2,
-        0,
-        0,
+        0.25,
+        0.25,
+        0.05,
+        0.05,
       );
       this.anteBetBtn.fillRoundedRect(x + 2, y + 1, bw - 4, bh * 0.4, {
         tl: rad - 1,
@@ -1491,12 +1493,12 @@ export class Game extends Phaser.Scene {
         br: 0,
       } as any);
 
-      this.anteBetBtn.lineStyle(2, 0x442266, 1);
+      this.anteBetBtn.lineStyle(2, 0x8866bb, 0.8);
       this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, rad);
 
       this.anteBetTxt
-        .setColor('#8877aa')
-        .setShadow(0, 0, '#000000', 0, false, false);
+        .setColor('#ddccff')
+        .setShadow(0, 1, '#000000', 2, true, true);
       this.anteBetIcon
         .setColor('#ff8844')
         .setShadow(0, 0, '#000', 0, false, false);
@@ -1895,7 +1897,15 @@ export class Game extends Phaser.Scene {
         yoyo: true,
         duration: 80,
       });
-      this.requestPurchase(1, 1000);
+
+      const isStacked = this.scale.width < 650 || this.scale.height > this.scale.width;
+      if (isStacked && !this.isFeaturesMenuOpen) {
+        this.audio.playSound('button');
+        this.isFeaturesMenuOpen = true;
+        this.layoutAll();
+      } else {
+        this.requestPurchase(1, 100);
+      }
     });
 
     // Ante Bet toggle
@@ -1991,13 +2001,7 @@ export class Game extends Phaser.Scene {
 
   /** Update auto-spin button display — delegates to SpinControls (single render path) */
   private updateAutoSpinDisplay() {
-    const spinX = this.spinControls['_lastSpinX'] || 0;
-    const spinY = this.spinControls['_lastSpinY'] || 0;
-    const spinSize = this.spinControls['_lastSpinSize'] || 100;
     this.spinControls.drawAutoButton(
-      spinX,
-      spinY,
-      spinSize,
       this.autoSpinActive,
       this.autoSpinRemaining,
     );

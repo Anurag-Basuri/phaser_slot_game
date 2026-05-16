@@ -133,8 +133,8 @@ export class SpinControls {
     // ── Spin button size — proportional, clamped (Slightly larger) ──
     let spinSize: number;
     if (isStacked) {
-      // Adjusted spin size to be slightly smaller per user request
-      spinSize = Math.max(65, Math.min(90, w * 0.18, safeH * 0.10));
+      // Adjusted spin size to be smaller per user request
+      spinSize = Math.max(55, Math.min(80, w * 0.15, safeH * 0.09));
     } else if (isLandscapeMobile) {
       spinSize = Math.min(85, rightMargin * 0.45, safeH * 0.20);
     } else {
@@ -163,10 +163,10 @@ export class SpinControls {
     this.drawSpinButton(0, 0, spinSize);
 
     // ── AutoPlay pill — directly beneath spin, scaled proportionally ──
-    const autoFS = Math.max(8, Math.min(14, spinSize * 0.13));
-    const autoPillW = Math.max(60, spinSize * 1.0);
-    const autoPillH = Math.max(22, spinSize * 0.28);
-    const autoY = spinY + spinSize / 2 + (isStacked ? 16 : 32);
+    const autoFS = Math.max(9, Math.min(14, spinSize * 0.15));
+    const autoPillW = Math.max(70, spinSize * 1.3);
+    const autoPillH = Math.max(24, spinSize * 0.35);
+    const autoY = spinY + spinSize / 2 + (isStacked ? 18 : 32);
     
     // Always show autoplay since we've now mathematically made room for it above safeH
     this.autoHit.setVisible(true).setPosition(spinX, autoY).setSize(autoPillW, autoPillH);
@@ -185,7 +185,8 @@ export class SpinControls {
 
     if (isStacked) {
       // Portrait: place +/- on the left and right of the centered spin button
-      const betBtnOffset = spinSize / 2 + bBtnSize / 2 + Math.max(10, w * 0.04);
+      // Increased the offset to provide generous horizontal space between the spin button and the setting (+/-) buttons
+      const betBtnOffset = spinSize / 2 + bBtnSize / 2 + Math.max(22, w * 0.07);
       const minusX = spinX - betBtnOffset;
       const plusX = spinX + betBtnOffset;
 
@@ -405,14 +406,18 @@ export class SpinControls {
   }
 
   /** Draw the autoplay button at its last known position */
-  drawAutoButton(spinX: number, spinY: number, spinSize: number, isActive: boolean, remaining: number) {
+  drawAutoButton(isActive: boolean, remaining: number) {
     if (!this.autoGfx.visible) return;
-    const autoY = spinY + spinSize / 2 + 32;
+    
+    const autoX = this.autoHit.x;
+    const autoY = this.autoHit.y;
     this.autoGfx.clear();
-    this.autoGfx.setPosition(spinX, autoY);
-    this.autoTxt.setPosition(spinX, autoY);
+    this.autoGfx.setPosition(autoX, autoY);
+    this.autoTxt.setPosition(autoX, autoY);
 
-    const bw = 88, bh = 28, rad = bh / 2;
+    const bw = this.autoHit.width || 88;
+    const bh = this.autoHit.height || 28;
+    const rad = bh / 2;
     const x = -bw / 2;
     const y = -bh / 2;
 
