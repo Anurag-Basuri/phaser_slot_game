@@ -63,7 +63,8 @@ export class Grid {
   // Layout — set dynamically by Game.tsx
   public offsetX = 0;
   public offsetY = 0;
-  public cellSize = 100;
+  public cellW = 100;
+  public cellH = 100;
 
   // Dynamic timing — fast and snappy for Sugar Rush 1000 feel
   private get cascadeDelay() { return this.turboMode ? 30 : 80; }
@@ -103,8 +104,8 @@ export class Grid {
     this.gridMask.fillRect(
       this.offsetX - 5,
       this.offsetY - 5,
-      this.cellSize * options.gridSize + 10,
-      this.cellSize * options.gridSize + 10
+      this.cellW * options.gridSize + 10,
+      this.cellW * options.gridSize + 10
     );
     this.cellBackgrounds = this.scene.add.graphics().setDepth(2);
     this.drawCellBackgrounds();
@@ -120,7 +121,7 @@ export class Grid {
     }).setOrigin(0.5).setDepth(25).setVisible(false);
 
     // NOTE: fillEmpty() is NOT called here — it must be called after
-    // layoutAll() sets the correct offsetX/offsetY/cellSize so that
+    // layoutAll() sets the correct offsetX/offsetY/cellW so that
     // sprites spawn at the right screen positions.
     this.startIdleShimmer();
   }
@@ -134,16 +135,16 @@ export class Grid {
   public drawCellBackgrounds() {
     this.cellBackgrounds.clear();
     const size = options.gridSize;
-    const totalSize = this.cellSize * size;
+    const totalW = this.cellW * size; const totalH = this.cellH * size;
     const gx = this.offsetX;
     const gy = this.offsetY;
-    const cs = this.cellSize;
+    const cs = this.cellW;
 
     // Update mask geometry to match new layout
     if (this.gridMask) {
       this.gridMask.clear();
       this.gridMask.fillStyle(0x000000, 1);
-      this.gridMask.fillRect(gx - 5, gy - 5, totalSize + 10, totalSize + 10);
+      this.gridMask.fillRect(gx - 5, gy - 5, totalW + 10, totalH + 10);
     }
 
     // ═══ Layer 1: Deep dark base panel ═══
@@ -151,7 +152,7 @@ export class Grid {
       0x1a0818, 0x140610, 0x0e030a, 0x080206,
       0.92, 0.92, 0.96, 0.96
     );
-    this.cellBackgrounds.fillRect(gx, gy, totalSize, totalSize);
+    this.cellBackgrounds.fillRect(gx, gy, totalW, totalH);
 
     // ═══ Layer 2: Vertical Glass Tube columns ═══
     // Each column gets a translucent highlight down the center,
@@ -163,8 +164,8 @@ export class Grid {
       // Dark column edges (tube shadow)
       const edgeW = cs * 0.18;
       this.cellBackgrounds.fillStyle(0x000000, 0.35);
-      this.cellBackgrounds.fillRect(colX, gy, edgeW, totalSize);
-      this.cellBackgrounds.fillRect(colX + cs - edgeW, gy, edgeW, totalSize);
+      this.cellBackgrounds.fillRect(colX, gy, edgeW, totalH);
+      this.cellBackgrounds.fillRect(colX + cs - edgeW, gy, edgeW, totalH);
 
       // Center highlight (glass refraction glow)
       const glowW = cs * 0.5;
@@ -174,13 +175,13 @@ export class Grid {
         this.cellBackgrounds.fillStyle(0xffccee, gAlpha);
         this.cellBackgrounds.fillRect(
           tubeCenter - glowW / 2 - g * 3, gy,
-          glowW + g * 6, totalSize
+          glowW + g * 6, totalH
         );
       }
 
       // Thin bright specular line down the tube (left-of-center)
       this.cellBackgrounds.fillStyle(0xffffff, 0.06);
-      this.cellBackgrounds.fillRect(tubeCenter - cs * 0.12, gy, 2, totalSize);
+      this.cellBackgrounds.fillRect(tubeCenter - cs * 0.12, gy, 2, totalH);
     }
 
     // ═══ Layer 3: Subtle horizontal row separators ═══
@@ -188,9 +189,9 @@ export class Grid {
     for (let r = 1; r < size; r++) {
       const y = gy + r * cs;
       this.cellBackgrounds.fillStyle(0x000000, 0.25);
-      this.cellBackgrounds.fillRect(gx, y - 1, totalSize, 2);
+      this.cellBackgrounds.fillRect(gx, y - 1, totalW, 2);
       this.cellBackgrounds.fillStyle(0xffaadd, 0.1);
-      this.cellBackgrounds.fillRect(gx, y + 1, totalSize, 1);
+      this.cellBackgrounds.fillRect(gx, y + 1, totalW, 1);
     }
 
     // ═══ Layer 4: Column dividers (tube wall seams) ═══
@@ -198,10 +199,10 @@ export class Grid {
       const x = gx + c * cs;
       // Dark seam
       this.cellBackgrounds.fillStyle(0x000000, 0.5);
-      this.cellBackgrounds.fillRect(x - 1, gy, 2, totalSize);
+      this.cellBackgrounds.fillRect(x - 1, gy, 2, totalH);
       // Light edge (glass refraction at tube join)
       this.cellBackgrounds.fillStyle(0xffddee, 0.12);
-      this.cellBackgrounds.fillRect(x + 1, gy, 1, totalSize);
+      this.cellBackgrounds.fillRect(x + 1, gy, 1, totalH);
     }
 
     // ═══ Layer 5: Multiplier Cell Glow Tints ═══
@@ -231,27 +232,27 @@ export class Grid {
       const d = i * 1.5;
       this.cellBackgrounds.fillStyle(0x000000, a);
       // Top edge
-      this.cellBackgrounds.fillRect(gx, gy + d, totalSize, 2);
+      this.cellBackgrounds.fillRect(gx, gy + d, totalW, 2);
       // Bottom edge
-      this.cellBackgrounds.fillRect(gx, gy + totalSize - d - 2, totalSize, 2);
+      this.cellBackgrounds.fillRect(gx, gy + totalW - d - 2, totalH, 2);
       // Left edge
-      this.cellBackgrounds.fillRect(gx + d, gy, 2, totalSize);
+      this.cellBackgrounds.fillRect(gx + d, gy, 2, totalH);
       // Right edge
-      this.cellBackgrounds.fillRect(gx + totalSize - d - 2, gy, 2, totalSize);
+      this.cellBackgrounds.fillRect(gx + totalW - d - 2, gy, 2, totalH);
     }
 
     // Inner light rim (candy glass edge catching light)
     this.cellBackgrounds.lineStyle(1, 0xffaacc, 0.15);
-    this.cellBackgrounds.strokeRect(gx + 1, gy + 1, totalSize - 2, totalSize - 2);
+    this.cellBackgrounds.strokeRect(gx + 1, gy + 1, totalH - 2, totalH - 2);
 
     // ═══ Layer 7: Warm radial center glow ═══
-    const cx = gx + totalSize / 2;
-    const cy = gy + totalSize / 2;
+    const cx = gx + totalW / 2;
+    const cy = gy + totalH / 2;
     for (let i = 0; i < 6; i++) {
       const glowAlpha = 0.03 - i * 0.004;
       if (glowAlpha <= 0) break;
       this.cellBackgrounds.fillStyle(0xffbbdd, glowAlpha);
-      this.cellBackgrounds.fillCircle(cx, cy, totalSize * 0.15 + i * 25);
+      this.cellBackgrounds.fillCircle(cx, cy, Math.max(totalW, totalH) * 0.15 + i * 25);
     }
   }
 
@@ -301,7 +302,7 @@ export class Grid {
           const sparkleGfx = this.scene.add.graphics().setDepth(14);
           const sx = this.getX(sc);
           const sy = this.getY(sr);
-          const sparkleR = this.cellSize * 0.18;
+          const sparkleR = this.cellW * 0.18;
           // Draw a 4-pointed star sparkle
           sparkleGfx.fillStyle(0xffffff, 0.8);
           sparkleGfx.fillCircle(sx, sy, sparkleR * 0.3);
@@ -325,11 +326,11 @@ export class Grid {
   }
 
   private getX(col: number) {
-    return this.offsetX + col * this.cellSize + this.cellSize / 2;
+    return this.offsetX + col * this.cellW + this.cellW / 2;
   }
 
   private getY(row: number) {
-    return this.offsetY + row * this.cellSize + this.cellSize / 2;
+    return this.offsetY + row * this.cellH + this.cellH / 2;
   }
 
   /** Pick a weighted random symbol ID (0-7) or scatter (8). */
@@ -382,11 +383,11 @@ export class Grid {
             symId = this.pickSymbol();
           }
 
-          const startY = this.getY(r) - (dropCounts[c] + 1) * this.cellSize;
+          const startY = this.getY(r) - (dropCounts[c] + 1) * this.cellW;
           const sprite = this.scene.add.sprite(this.getX(c), startY, this.symbolKeys[symId]);
           sprite.setData('symId', symId);
 
-          const scale = (this.cellSize * 0.78) / Math.max(sprite.width, sprite.height);
+          const scale = (this.cellW * 0.78) / Math.max(sprite.width, sprite.height);
           sprite.setScale(Math.min(scale, 1));
           sprite.setDepth(10);
           sprite.setAlpha(0);
@@ -594,7 +595,7 @@ export class Grid {
         const sprite = this.sprites[r][c];
         if (sprite) {
           sprite.setPosition(this.getX(c), this.getY(r));
-          const scale = (this.cellSize * 0.78) / Math.max(sprite.width, sprite.height);
+          const scale = (this.cellW * 0.78) / Math.max(sprite.width, sprite.height);
           sprite.setScale(Math.min(scale, 1));
         }
         // Redraw multiplier UI
@@ -611,8 +612,8 @@ export class Grid {
       this.gridMask.fillRect(
         this.offsetX - 5,
         this.offsetY - 5,
-        this.cellSize * size + 10,
-        this.cellSize * size + 10
+        this.cellW * size + 10,
+        this.cellW * size + 10
       );
     }
     // Redraw cell backgrounds
@@ -646,7 +647,7 @@ export class Grid {
     const tier = this.getMultTier(Math.max(2, mult));
     const cx = this.getX(c);
     const cy = this.getY(r);
-    const cs = this.cellSize;
+    const cs = this.cellW;
     
     // Candy wrapper badge — sits at BOTTOM-CENTER of cell
     const badgeW = cs * 0.52;
@@ -815,7 +816,7 @@ export class Grid {
     // colored glow in its symbol's color that persists during anticipation
     const cellGlowGraphics: Phaser.GameObjects.Graphics[] = [];
     if (!this.turboMode) {
-      const halfCell = this.cellSize / 2;
+      const halfCell = this.cellW / 2;
       const symGlowColors = [0xff8822, 0x2288ff, 0x44cc44, 0xffcc00, 0xff2222, 0x9944ff, 0x00cccc];
       winPositions.forEach(key => {
         const [rr, cc] = key.split(',').map(Number);
@@ -829,7 +830,7 @@ export class Grid {
 
         // Layered radial glow
         cellGlow.fillStyle(glowColor, 0.25);
-        cellGlow.fillRoundedRect(cx - halfCell + 1, cy - halfCell + 1, this.cellSize - 2, this.cellSize - 2, 4);
+        cellGlow.fillRoundedRect(cx - halfCell + 1, cy - halfCell + 1, this.cellW - 2, this.cellW - 2, 4);
         cellGlow.fillStyle(glowColor, 0.15);
         cellGlow.fillCircle(cx, cy, halfCell * 0.9);
         cellGlow.fillStyle(0xffffff, 0.12);
@@ -981,7 +982,7 @@ export class Grid {
             // Symbol-colored radial burst flash on cell
             if (!this.turboMode) {
               const flash = this.scene.add.graphics().setDepth(11);
-              const halfCell = this.cellSize / 2;
+              const halfCell = this.cellW / 2;
               const flashCx = this.getX(c);
               const flashCy = this.getY(r);
               // Outer colored glow
@@ -1017,9 +1018,9 @@ export class Grid {
 
       // Premium cascade tumble counter with frosted pill backdrop
       if (this.cascadeDepth > 0) {
-        const totalSize = this.cellSize * options.gridSize;
-        const counterFS = Math.max(16, Math.min(36, this.cellSize * 0.45));
-        const counterOffset = Math.max(22, this.cellSize * 0.55);
+        const totalSize = this.cellW * options.gridSize;
+        const counterFS = Math.max(16, Math.min(36, this.cellW * 0.45));
+        const counterOffset = Math.max(22, this.cellW * 0.55);
         const counterStroke = Math.max(4, counterFS * 0.25);
         const counterX = this.offsetX + totalSize / 2;
         const counterY = this.offsetY - counterOffset;
@@ -1068,7 +1069,7 @@ export class Grid {
           const popY = this.getY(Math.round(avgR));
           const clusterWin = options.payvalues[cluster.symbolId][Math.min(cluster.positions.length - 5, 10)] * options.betAmount;
 
-          const winPopFS = Math.max(14, Math.min(28, this.cellSize * 0.38));
+          const winPopFS = Math.max(14, Math.min(28, this.cellW * 0.38));
           const winPop = this.scene.add.text(popX, popY, `+${clusterWin.toFixed(2)}`, {
             fontFamily: '"Luckiest Guy", cursive, sans-serif',
             fontSize: `${Math.round(winPopFS)}px`,
@@ -1080,7 +1081,7 @@ export class Grid {
 
           this.scene.tweens.add({
             targets: winPop,
-            y: popY - this.cellSize * 0.8,
+            y: popY - this.cellW * 0.8,
             scaleX: 1.1, scaleY: 1.1,
             alpha: { from: 0, to: 1 },
             duration: 400,
@@ -1088,7 +1089,7 @@ export class Grid {
             onComplete: () => {
               this.scene.tweens.add({
                 targets: winPop,
-                y: popY - this.cellSize * 1.3,
+                y: popY - this.cellW * 1.3,
                 alpha: 0,
                 duration: 350,
                 delay: 200,

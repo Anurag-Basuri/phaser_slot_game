@@ -40,7 +40,7 @@ export class BottomBarHUD {
   private _winCountTween: Phaser.Tweens.Tween | null = null;
   private _iconTargetScale = 0.2;
 
-  private readonly COL_LABEL = '#ffaacc';  // Warm candy pink labels
+  private readonly COL_LABEL = '#bbbbcc';  // Premium subtle silver/gray for labels
   private readonly COL_VALUE = '#ffffff';
   private readonly COL_WIN = '#66ffaa';    // Bright candy mint
   private readonly FONT_LABEL = Theme.fonts.label.family;
@@ -128,100 +128,83 @@ export class BottomBarHUD {
     }
 
     const txtY = h - barH / 2;
-    const sidePad = isMobile ? 8 : 20;
-    const labelFS = Math.max(8, Math.min(11, barH * 0.20));
-    const valFS = Math.max(11, Math.min(18, barH * 0.34));
-    const pillPad = isMobile ? 10 : 16;
-
-    // ── Pill renderer (candy-themed with distinct accent per pill) ──
-    const drawPill = (x: number, width: number, accent: number, accentDark: number) => {
-      const py = h - barH + 5;
-      const ph = barH - 10;
-      const rad = ph / 2;
-
-      // Drop shadow
-      bb.fillStyle(0x000000, 0.4);
-      bb.fillRoundedRect(x + 1, py + 2, width, ph, rad);
-
-      // Body — deep candy glass with subtle accent tint
-      bb.fillGradientStyle(accentDark, accentDark, 0x120820, 0x120820, 0.6, 0.6, 0.45, 0.45);
-      bb.fillRoundedRect(x, py, width, ph, rad);
-
-      // Candy glass sheen (top hemisphere highlight)
-      bb.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.12, 0.12, 0, 0);
-      bb.fillRoundedRect(x + 2, py + 1, width - 4, ph * 0.35, { tl: rad, tr: rad, bl: 0, br: 0 } as any);
-
-      // Accent border (candy-colored rim with glow)
-      bb.lineStyle(1.5, accent, 0.45);
-      bb.strokeRoundedRect(x, py, width, ph, rad);
-
-      // Inner glass rim
-      bb.lineStyle(0.5, 0xffffff, 0.08);
-      bb.strokeRoundedRect(x + 1, py + 1, width - 2, ph - 2, rad - 1);
-    };
-
-    // ── Calculate pill widths dynamically ──
-    const gap = isMobile ? 5 : 10;
-    const usableW = w - sidePad * 2 - gap * 2;
-
-    // Uniform layout: all three pills share the available width equally
-    const pillW = usableW / 3;
-    const balW = pillW;
-    const betW = pillW;
-    const winW = pillW;
+    const sidePad = isMobile ? 12 : 24;
+    const labelFS = Math.max(9, Math.min(13, barH * 0.28));
+    const valFS = Math.max(12, Math.min(18, barH * 0.42));
     
-    // Abbreviate labels on small screens to save space
     const isSmall = w < 600;
     const isSocial = getStakeEngine().isSocialMode();
     this.txtMoneyLabel.setText(isSmall ? 'BAL' : T('BALANCE', isSocial));
     this.txtLastWinLabel.setText(isSmall ? 'WIN' : T('LAST WIN', isSocial));
 
-    // Helper to prevent text overflow in pills
-    const fitTextInPill = (label: Phaser.GameObjects.Text, value: Phaser.GameObjects.Text, availableWidth: number, iconWidth: number = 0) => {
-      label.setScale(1);
-      value.setScale(1);
-      const totalContentW = label.width + value.width + iconWidth + 10; // 10px spacing
-      if (totalContentW > availableWidth) {
-        const scale = availableWidth / totalContentW;
-        label.setScale(scale);
-        value.setScale(scale);
+    // Reset scales in case they were shrunken previously
+    this.txtMoneyLabel.setScale(1);
+    this.txtMoney.setScale(1);
+    this.txtBetLabel.setScale(1);
+    this.txtBet.setScale(1);
+    this.txtLastWinLabel.setScale(1);
+    this.txtLastWin.setScale(1);
+
+    // ── Pre-calculate text sizing to prevent overlap ──
+    const zoneLimit = (w - sidePad * 2) / 3 - (isSmall ? 2 : 10);
+    
+    const applyFit = (lbl: Phaser.GameObjects.Text, val: Phaser.GameObjects.Text, gap: number, extraW: number = 0) => {
+      const total = lbl.width + gap + val.width + extraW;
+      if (total > zoneLimit) {
+        const s = zoneLimit / total;
+        lbl.setScale(s);
+        val.setScale(s);
       }
     };
 
-    // ── Position pills (each with a distinct candy accent color) ──
-    const balX = sidePad;
-    drawPill(balX, balW, 0xff88bb, 0x2a0828);  // Pink candy accent for Balance
-    this.txtMoneyLabel.setPosition(balX + pillPad, txtY).setFontSize(labelFS);
-    this.txtMoney.setPosition(balX + balW - pillPad, txtY).setFontSize(valFS);
-    fitTextInPill(this.txtMoneyLabel, this.txtMoney, balW - pillPad * 2);
+    const balGap = isSmall ? 6 : 12;
+    applyFit(this.txtMoneyLabel, this.txtMoney, balGap);
 
-    const betX = balX + balW + gap;
-    drawPill(betX, betW, 0xffaa44, 0x2a1808);  // Golden candy accent for Bet
-    this.txtBetLabel.setPosition(betX + pillPad, txtY).setFontSize(labelFS);
-    this.txtBet.setPosition(betX + betW - pillPad, txtY).setFontSize(valFS);
-    this.betPillHit.setPosition(betX + betW / 2, txtY).setSize(betW, barH - 4);
-    fitTextInPill(this.txtBetLabel, this.txtBet, betW - pillPad * 2);
+    const betGap = isSmall ? 6 : 10;
+    applyFit(this.txtBetLabel, this.txtBet, betGap);
 
-    const winX = betX + betW + gap;
-    drawPill(winX, winW, 0x44ffaa, 0x082a18);  // Mint candy accent for Win
-    this.txtLastWinLabel.setVisible(true).setPosition(winX + pillPad, txtY).setFontSize(labelFS);
-    
-    // Icon sits just to the left of the win value text
-    // The pill height is barH - 10. We want the icon to fit comfortably inside it (about 75% of pill height).
-    const targetIconHeight = Math.max(10, (barH - 10) * 0.8);
+    const targetIconHeight = Math.max(14, barH * 0.45);
     const baseHeight = this.winSymbolIcon.height > 0 ? this.winSymbolIcon.height : 256;
     this._iconTargetScale = targetIconHeight / baseHeight;
-    const expectedIconWidth = this.winSymbolIcon.visible ? targetIconHeight : 0; // Rough width
+    const iconOffset = this.winSymbolIcon.visible ? targetIconHeight + 8 : 0;
+    const winGap = isSmall ? 8 : 16;
+    applyFit(this.txtLastWinLabel, this.txtLastWin, winGap, iconOffset);
 
-    // Position the win value and icon. If icon is visible, we shift the text.
-    const winValX = winX + winW - pillPad;
-    this.txtLastWin.setVisible(true).setPosition(winValX, txtY).setFontSize(valFS);
-    
-    fitTextInPill(this.txtLastWinLabel, this.txtLastWin, winW - pillPad * 2, expectedIconWidth + 18);
-    
-    this.winSymbolIcon.setPosition(winValX - (this.txtLastWin.width * this.txtLastWin.scaleX) - 18, txtY).setScale(this._iconTargetScale);
+    // ── Zone 1: BALANCE (Far Left) ──
+    this.txtMoneyLabel.setPosition(sidePad, txtY).setFontSize(labelFS).setOrigin(0, 0.5);
+    const balLblVisualW = this.txtMoneyLabel.width * this.txtMoneyLabel.scaleX;
+    this.txtMoney.setPosition(sidePad + balLblVisualW + balGap * this.txtMoneyLabel.scaleX, txtY).setFontSize(valFS).setOrigin(0, 0.5);
 
-    this._winPillBounds = { x: winX, w: winW, y: h - barH + 5, h: barH - 10 };
+    // ── Zone 3: WIN (Far Right) ──
+    this.txtLastWin.setVisible(true).setPosition(w - sidePad, txtY).setFontSize(valFS).setOrigin(1, 0.5);
+    const winValVisualW = this.txtLastWin.width * this.txtLastWin.scaleX;
+    const scaledIconOffset = iconOffset * this.txtLastWin.scaleX;
+    
+    if (this.winSymbolIcon.visible) {
+      this.winSymbolIcon.setPosition(w - sidePad - winValVisualW - 12 * this.txtLastWin.scaleX, txtY).setScale(this._iconTargetScale);
+    }
+    
+    this.txtLastWinLabel.setVisible(true)
+      .setPosition(w - sidePad - winValVisualW - scaledIconOffset - winGap * this.txtLastWin.scaleX, txtY)
+      .setFontSize(labelFS)
+      .setOrigin(1, 0.5);
+
+    // ── Zone 2: BET (Center) ──
+    const centerX = w / 2;
+    this.txtBetLabel.setFontSize(labelFS).setOrigin(1, 0.5);
+    this.txtBet.setFontSize(valFS).setOrigin(0, 0.5);
+    
+    const scaledBetGap = betGap * this.txtBetLabel.scaleX;
+    const scaledBetLblW = this.txtBetLabel.width * this.txtBetLabel.scaleX;
+    const scaledBetValW = this.txtBet.width * this.txtBet.scaleX;
+    const betTotalW = scaledBetLblW + scaledBetGap + scaledBetValW;
+    
+    this.txtBetLabel.setPosition(centerX - betTotalW / 2 + scaledBetLblW, txtY);
+    this.txtBet.setPosition(centerX - betTotalW / 2 + scaledBetLblW + scaledBetGap, txtY);
+    this.betPillHit.setPosition(centerX, txtY).setSize(Math.max(120, betTotalW + 40), barH);
+
+    // Define win bounds for particle effect targeting
+    this._winPillBounds = { x: w - sidePad - winValVisualW - 50, w: 100, y: h - barH, h: barH };
 
     // Demo label — top right of the screen, unobtrusive
     if (this.demoLabel.text) {
