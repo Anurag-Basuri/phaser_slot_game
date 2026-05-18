@@ -686,13 +686,16 @@ export class Game extends Phaser.Scene {
 
     if (isStacked) {
       // Guarantee enough space for the toolbar + logo + explicit generous padding
-      const maxLogoHeight = 150 * 0.85; // LOGO_BASE_H * MAX_LOGO_SCALE
-      const topSpace = toolY + (isMobile ? 25 : 35) + maxLogoHeight + 25;
+      const maxLogoHeight = 150 * 0.65; // LOGO_BASE_H * MAX_LOGO_SCALE (0.65 for mobile)
+      const topSpace = toolY + (isMobile ? 25 : 35) + maxLogoHeight + 20;
 
       // Ensure enough bottom space for Spin Controls + Buy Buttons + Ante Bet
-      const bottomSpace = isPortrait ? Math.max(300, h * 0.35) : 180;
+      // Reduced significantly because playing buttons now occupy a single row
+      const bottomSpace = isPortrait ? Math.max(190, h * 0.25) : 150;
       const availableH = safeH - topSpace - bottomSpace;
-      gridTotalSize = Math.min(w * 0.92, availableH);
+      
+      // Increased grid constraint to 98% of screen width to make it visibly larger
+      gridTotalSize = Math.min(w * 0.98, availableH);
       gridTotalSize = Math.max(gridTotalSize, 150); // minimum
       gridX = (w - gridTotalSize) / 2;
       gridY = topSpace + (availableH - gridTotalSize) / 2;
@@ -702,10 +705,10 @@ export class Game extends Phaser.Scene {
       gridX = (w - gridTotalSize) / 2;
       gridY = (safeH - gridTotalSize) / 2;
     } else {
-      // Desktop column mode
-      gridTotalSize = Math.min(w * 0.5, safeH * 0.88);
+      // Desktop column mode: scale down the grid slightly per user request
+      gridTotalSize = Math.min(w * 0.42, safeH * 0.78);
       gridX = (w - gridTotalSize) / 2;
-      gridY = (safeH - gridTotalSize) / 2 + 5;
+      gridY = (safeH - gridTotalSize) / 2 + 10;
     }
 
     this.grid.offsetX = gridX;
@@ -972,12 +975,15 @@ export class Game extends Phaser.Scene {
 
       buyW = Math.min(220, w * 0.8);
       buyH = 60;
-      anteW = buyW;
-      anteH = 45;
       buyGap = 15;
+      
+      if (!isStacked) {
+        anteW = buyW;
+        anteH = 45;
+      }
 
       const popupW = buyW + 40;
-      const popupH = isStacked ? (buyH * 2 + buyGap + 20) : (buyH * 2 + anteH + buyGap * 3 + 20);
+      const popupH = isStacked ? (buyH * 2 + buyGap + 40) : (buyH * 2 + anteH + buyGap * 3 + 40);
       const popupX = w / 2;
       const popupY = h / 2;
 
@@ -1036,8 +1042,7 @@ export class Game extends Phaser.Scene {
     }
 
     const showFeatures = !useFeaturesMenu || this.isFeaturesMenuOpen;
-    const featuresDepthBase =
-      useFeaturesMenu && this.isFeaturesMenuOpen ? 62 : 20;
+    const featuresDepthBase = this.isFeaturesMenuOpen ? 1501 : 20;
 
     this.panelSuperGraphics
       .setVisible(showFeatures)
@@ -1098,7 +1103,7 @@ export class Game extends Phaser.Scene {
         .setOrigin(0.5);
       this.anteBetTxt
         .setPosition(anteX - anteW * 0.15, anteY)
-        .setFontSize(Math.max(11, anteH * 0.32))
+        .setFontSize(Math.max(9, anteH * 0.25))
         .setOrigin(0, 0.5);
     }
 
@@ -1321,28 +1326,36 @@ export class Game extends Phaser.Scene {
     const isCombinedButton = isStacked && type === 'REGULAR' && !this.isFeaturesMenuOpen;
     
     const title = type === 'SUPER' ? 'SUPER\nFREE SPINS' : isCombinedButton ? 'BUY\nFEATURES' : 'BUY\nFREE SPINS';
-    const subText = isCombinedButton ? '100X / 500X' : (type === 'SUPER' ? '500X' : '100X');
+    const subText = isCombinedButton ? '500X / 1000X' : (type === 'SUPER' ? '1000X' : '500X');
     const strokeCol = type === 'SUPER' ? '#552200' : '#550022';
     const strokeThick = Math.max(3, fsSub * 0.15);
 
+    const finalFsTitle = isCombinedButton ? Math.min(12, fsTitle * 0.8) : fsTitle;
+    const finalFsSub = isCombinedButton ? Math.min(16, fsSub * 0.75) : fsSub;
+
+    const disabled = options.anteBetEnabled;
+    const alpha = disabled ? 0.4 : 1;
+
     txt1
       .setText(title)
-      .setPosition(x, y - h * 0.16)
-      .setFontSize(fsTitle)
+      .setPosition(x, y - h * 0.18)
+      .setFontSize(finalFsTitle)
       .setFontFamily('"Lilita One", "Luckiest Guy", cursive, sans-serif')
       .setLineSpacing(-2)
       .setColor('#ffffff')
-      .setStroke(strokeCol, Math.max(2, fsTitle * 0.15))
-      .setShadow(0, 2, '#000000', 3, true, true);
+      .setStroke(strokeCol, Math.max(2, finalFsTitle * 0.15))
+      .setShadow(0, 2, '#000000', 3, true, true)
+      .setAlpha(alpha);
 
     txt2
       .setText(subText)
-      .setPosition(x, y + h * 0.25)
-      .setFontSize(fsSub)
+      .setPosition(x, y + h * 0.22)
+      .setFontSize(finalFsSub)
       .setFontFamily('"Lilita One", "Luckiest Guy", cursive, sans-serif')
       .setColor('#ffe600')
-      .setStroke(strokeCol, strokeThick)
-      .setShadow(0, 3, '#000000', 0, true, true);
+      .setStroke(strokeCol, Math.max(2, finalFsSub * 0.15))
+      .setShadow(0, 3, '#000000', 0, true, true)
+      .setAlpha(alpha);
   }
 
   private drawBuyPanel(
@@ -1357,16 +1370,23 @@ export class Game extends Phaser.Scene {
     const accentBot = isSuper ? 0xcc7700 : 0xbb0044;
     const accentMid = isSuper ? 0xffaa00 : 0xff0066;
 
+    const disabled = options.anteBetEnabled;
+    const alpha = disabled ? 0.4 : 1;
+
     // Outer soft glow
-    gfx.fillStyle(accentMid, 0.18);
+    gfx.fillStyle(accentMid, 0.18 * alpha);
     gfx.fillRoundedRect(-w / 2 - 8, -h / 2 - 8, w + 16, h + 16, r + 4);
 
     // Drop shadow
-    gfx.fillStyle(0x000000, 0.5);
+    gfx.fillStyle(0x000000, 0.5 * alpha);
     gfx.fillRoundedRect(-w / 2 + 3, -h / 2 + 5, w, h, r);
 
-    // Main body gradient (vibrant candy)
-    gfx.fillGradientStyle(accentTop, accentTop, accentBot, accentBot, 1);
+    // Main body gradient (vibrant candy or disabled gray)
+    if (disabled) {
+      gfx.fillGradientStyle(0x333333, 0x333333, 0x1a1a1a, 0x1a1a1a, 1);
+    } else {
+      gfx.fillGradientStyle(accentTop, accentTop, accentBot, accentBot, 1);
+    }
     gfx.fillRoundedRect(-w / 2, -h / 2, w, h, r);
 
     // Curved glass hemisphere reflection on top half
@@ -1420,6 +1440,8 @@ export class Game extends Phaser.Scene {
     const y = -bh / 2;
     const rad = bh / 2; // Pill shape
 
+    this.anteBetIcon.setVisible(true);
+
     if (options.anteBetEnabled) {
       // Active state - bright amber pill
       this.anteBetBtn.fillStyle(0x000000, 0.4);
@@ -1456,6 +1478,7 @@ export class Game extends Phaser.Scene {
       this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, rad);
 
       this.anteBetTxt
+        .setText('ANTE BET ON\nDouble Chance')
         .setColor('#ffffff')
         .setShadow(0, 2, '#000000', 0, true, true);
       this.anteBetIcon
@@ -1497,6 +1520,7 @@ export class Game extends Phaser.Scene {
       this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, rad);
 
       this.anteBetTxt
+        .setText('ANTE BET OFF\nDouble Chance')
         .setColor('#ddccff')
         .setShadow(0, 1, '#000000', 2, true, true);
       this.anteBetIcon
@@ -1882,7 +1906,7 @@ export class Game extends Phaser.Scene {
         yoyo: true,
         duration: 80,
       });
-      this.requestPurchase(2, 500);
+      this.requestPurchase(2, 1000);
     });
     this.buyRegularHit.on('pointerdown', () => {
       if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
@@ -1904,7 +1928,7 @@ export class Game extends Phaser.Scene {
         this.isFeaturesMenuOpen = true;
         this.layoutAll();
       } else {
-        this.requestPurchase(1, 100);
+        this.requestPurchase(1, 500);
       }
     });
 
@@ -1912,6 +1936,10 @@ export class Game extends Phaser.Scene {
     this.anteBetHit.on('pointerdown', () => {
       if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
       options.anteBetEnabled = !options.anteBetEnabled;
+      if (options.anteBetEnabled) {
+        this.isFeaturesMenuOpen = false;
+        this.layoutAll();
+      }
       this.audio.playSound('button');
       this.drawAnteBetButton(this.anteBetHit.width, this.anteBetHit.height);
       this.updateBetDisplay();
@@ -2442,6 +2470,11 @@ export class Game extends Phaser.Scene {
   private requestPurchase(triggerType: number, betMultCost: number) {
     if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
 
+    if (options.anteBetEnabled) {
+      this.errorManager.showToast('DISABLE ANTE BET TO BUY FEATURES', '#ffaa00');
+      return;
+    }
+
     const baseBet = BET_PRESETS[this.betPresetIndex];
     const cost = baseBet * betMultCost;
     const label =
@@ -2599,9 +2632,11 @@ export class Game extends Phaser.Scene {
 
       try {
         // Send BASE bet to RGS (not ante-adjusted) — the server applies ante multiplier via mode
+        // Override triggerType to 3 ('ante') if ante bet is enabled for a base spin
+        const finalTrigger = (triggerType === 0 && options.anteBetEnabled) ? 3 : triggerType;
         const result = await this.stakeEngine.play(
           BET_PRESETS[this.betPresetIndex],
-          triggerType,
+          finalTrigger,
         );
 
         // RGS returns round.state as the events array from our math engine.

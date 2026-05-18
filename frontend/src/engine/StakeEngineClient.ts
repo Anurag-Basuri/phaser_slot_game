@@ -450,6 +450,7 @@ export class StakeEngineClient {
       0: 'base',
       1: 'bonus',
       2: 'super',
+      3: 'ante',
     };
     const mode = modeMap[featureType] || 'base';
 
@@ -596,7 +597,8 @@ export class StakeEngineClient {
     featureType: number,
   ): StakePlayResponse {
     const gridSize = 7;
-    const symbolWeights = [18, 16, 15, 14, 13, 12, 9, 3];
+    // Scatter is index 7. Increase its weight drastically if Ante Bet (featureType === 3) is active
+    const symbolWeights = [18, 16, 15, 14, 13, 12, 9, featureType === 3 ? 12 : 3];
     const totalWeight = symbolWeights.reduce((a, b) => a + b, 0);
     const symbolNames = ['L3', 'L2', 'L1', 'H4', 'H3', 'H2', 'H1', 'S'];
 
