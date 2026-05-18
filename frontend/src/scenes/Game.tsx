@@ -680,7 +680,8 @@ export class Game extends Phaser.Scene {
     // ==========================================
     // 1. GRID SCALING & POSITIONING
     // ==========================================
-    let gridTotalSize: number;
+    let gridW: number;
+    let gridH: number;
     let gridX: number;
     let gridY: number;
 
@@ -690,30 +691,36 @@ export class Game extends Phaser.Scene {
       const topSpace = toolY + (isMobile ? 25 : 35) + maxLogoHeight + 20;
 
       // Ensure enough bottom space for Spin Controls + Buy Buttons + Ante Bet
-      // Reduced significantly because playing buttons now occupy a single row
-      const bottomSpace = isPortrait ? Math.max(190, h * 0.25) : 150;
+      // Generous bottom space to strictly prevent grid collision on tiny mobile screens
+      const bottomSpace = isPortrait ? Math.max(250, h * 0.35) : 160;
       const availableH = safeH - topSpace - bottomSpace;
       
-      // Increased grid constraint to 98% of screen width to make it visibly larger
-      gridTotalSize = Math.min(w * 0.98, availableH);
-      gridTotalSize = Math.max(gridTotalSize, 150); // minimum
-      gridX = (w - gridTotalSize) / 2;
-      gridY = topSpace + (availableH - gridTotalSize) / 2;
+      // Allow the grid to be slightly rectangular to fill the screen better
+      gridW = Math.min(w * 0.96, availableH * 1.2); 
+      gridH = Math.min(availableH, w * 1.2); // Not strictly square
+      gridW = Math.max(gridW, 150);
+      gridH = Math.max(gridH, 150);
+
+      gridX = (w - gridW) / 2;
+      gridY = topSpace + (availableH - gridH) / 2;
     } else if (isLandscapeMobile) {
       // Short landscape: grid takes center, maximize height
-      gridTotalSize = Math.min(safeH * 0.92, w * 0.45);
-      gridX = (w - gridTotalSize) / 2;
-      gridY = (safeH - gridTotalSize) / 2;
+      gridH = Math.min(safeH * 0.92, w * 0.45);
+      gridW = gridH; // Keep square for landscape
+      gridX = (w - gridW) / 2;
+      gridY = (safeH - gridH) / 2;
     } else {
       // Desktop column mode: scale down the grid slightly per user request
-      gridTotalSize = Math.min(w * 0.42, safeH * 0.78);
-      gridX = (w - gridTotalSize) / 2;
-      gridY = (safeH - gridTotalSize) / 2 + 10;
+      gridH = Math.min(w * 0.42, safeH * 0.78);
+      gridW = gridH; // Keep square for desktop
+      gridX = (w - gridW) / 2;
+      gridY = (safeH - gridH) / 2 + 10;
     }
 
     this.grid.offsetX = gridX;
     this.grid.offsetY = gridY;
-    this.grid.cellSize = gridTotalSize / 7;
+    this.grid.cellW = gridW / 7;
+    this.grid.cellH = gridH / 7;
     this.grid.drawCellBackgrounds();
     this.grid.repositionSprites();
 
@@ -724,13 +731,13 @@ export class Game extends Phaser.Scene {
     this.gridFrame.clear();
     const f = this.gridFrame;
 
-    const borderThickness = Math.max(10, gridTotalSize * 0.022);
+    const borderThickness = Math.max(10, Math.min(gridW, gridH) * 0.022);
     const framePadding = borderThickness + 4;
-    const frameW = gridTotalSize + framePadding * 2;
-    const frameH = gridTotalSize + framePadding * 2;
+    const frameW = gridW + framePadding * 2;
+    const frameH = gridH + framePadding * 2;
     const frameX = gridX - framePadding;
     const frameY = gridY - framePadding;
-    const frameR = Math.max(16, gridTotalSize * 0.03);
+    const frameR = Math.max(16, Math.min(gridW, gridH) * 0.03);
 
     // --- Layer 1: Deep outer shadow ---
     f.fillStyle(0x000000, 0.45);
@@ -808,17 +815,17 @@ export class Game extends Phaser.Scene {
 
     // --- Layer 5: Glass glare diagonal across the grid ---
     f.beginPath();
-    const glareW = gridTotalSize * 0.15;
-    f.moveTo(gridX + gridTotalSize * 0.05, gridY);
-    f.lineTo(gridX + gridTotalSize * 0.05 + glareW, gridY);
-    f.lineTo(gridX, gridY + gridTotalSize * 0.3);
-    f.lineTo(gridX, gridY + gridTotalSize * 0.15);
+    const glareW = gridW * 0.15;
+    f.moveTo(gridX + gridW * 0.05, gridY);
+    f.lineTo(gridX + gridW * 0.05 + glareW, gridY);
+    f.lineTo(gridX, gridY + gridH * 0.3);
+    f.lineTo(gridX, gridY + gridH * 0.15);
     f.closePath();
     f.fillStyle(0xffffff, 0.08);
     f.fillPath();
 
     // --- Layer 6: Decorative candy-bolt corner accents ---
-    const boltR = Math.max(5, gridTotalSize * 0.012);
+    const boltR = Math.max(5, Math.min(gridW, gridH) * 0.012);
     const boltInset = borderThickness * 0.55;
     const boltPositions = [
       { x: frameX + boltInset, y: frameY + boltInset },
@@ -848,7 +855,7 @@ export class Game extends Phaser.Scene {
       h,
       gridX,
       gridY,
-      gridTotalSize,
+      gridH, // Use gridH for spin control layout since it's vertical sizing
       barH,
       isStacked,
       isLandscapeMobile,
@@ -860,7 +867,7 @@ export class Game extends Phaser.Scene {
     // 3. BUY PANELS & ANTE BET
     // ==========================================
     const availableWidthForFeatures = gridX;
-    const availableHeightForFeatures = safeH - (gridY + gridTotalSize);
+    const availableHeightForFeatures = safeH - (gridY + gridH);
 
     const useFeaturesMenu =
       isLandscapeMobile || (!isStacked && availableWidthForFeatures < 160);
@@ -894,7 +901,7 @@ export class Game extends Phaser.Scene {
 
       // Position toggle vertically centered with the grid on the left edge
       const toggleX = isLandscapeMobile ? 35 : Math.max(30, w * 0.08);
-      const toggleY = gridY + gridTotalSize / 2;
+      const toggleY = gridY + gridH / 2;
 
       this.btnFeaturesMenuHit.setPosition(toggleX, toggleY).setSize(60, 60);
       // Glassmorphic toggle pill for BUY feature
@@ -957,10 +964,10 @@ export class Game extends Phaser.Scene {
     } else {
       // Desktop placement: stacked vertically on the left side
       buyX1 = Math.max(gridX / 2, buyW / 2 + 10);
-      buyY1 = gridY + gridTotalSize / 2 - buyH / 2 - buyGap / 2;
+      buyY1 = gridY + gridH / 2 - buyH / 2 - buyGap / 2;
 
       buyX2 = buyX1;
-      buyY2 = gridY + gridTotalSize / 2 + buyH / 2 + buyGap / 2;
+      buyY2 = gridY + gridH / 2 + buyH / 2 + buyGap / 2;
 
       anteX = buyX1;
       anteY = buyY2 + buyH / 2 + buyGap * 1.5 + anteH / 2;
@@ -1137,8 +1144,8 @@ export class Game extends Phaser.Scene {
     this.drawToolbarIcons();
 
     // Recalculate margins for logo placement
-    const rightMargin = w - gridX - gridTotalSize;
-    const rightColCenter = gridX + gridTotalSize + rightMargin / 2;
+    const rightMargin = w - gridX - gridH;
+    const rightColCenter = gridX + gridH + rightMargin / 2;
     // ==========================================
     // 6. LOGO — responsive placement with premium glow
     // ==========================================
@@ -1938,10 +1945,9 @@ export class Game extends Phaser.Scene {
       options.anteBetEnabled = !options.anteBetEnabled;
       if (options.anteBetEnabled) {
         this.isFeaturesMenuOpen = false;
-        this.layoutAll();
       }
+      this.layoutAll();
       this.audio.playSound('button');
-      this.drawAnteBetButton(this.anteBetHit.width, this.anteBetHit.height);
       this.updateBetDisplay();
     });
 
@@ -2056,9 +2062,9 @@ export class Game extends Phaser.Scene {
       this.backgroundManager.triggerWinPulse(pulseIntensity);
 
       // Floating win text
-      const cx = this.grid.offsetX + this.grid.cellSize * 3.5;
-      const cy = this.grid.offsetY + this.grid.cellSize * 3.5;
-      const winFS = Math.max(28, this.grid.cellSize * 0.7);
+      const cx = this.grid.offsetX + this.grid.cellH * 3.5;
+      const cy = this.grid.offsetY + this.grid.cellH * 3.5;
+      const winFS = Math.max(28, this.grid.cellH * 0.7);
       const winStroke = Math.max(3, winFS * 0.18);
       const winText = this.add
         .text(
@@ -2078,7 +2084,7 @@ export class Game extends Phaser.Scene {
 
       this.tweens.add({
         targets: winText,
-        y: cy - this.grid.cellSize * 1.2,
+        y: cy - this.grid.cellH * 1.2,
         alpha: 0,
         duration: 1200,
         ease: 'Power1',
