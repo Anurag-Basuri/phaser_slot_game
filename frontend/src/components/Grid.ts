@@ -41,6 +41,11 @@ export class Grid {
   private _activeEmitterCount = 0;
   private static readonly MAX_EMITTERS = 30;
 
+  // Scatter anticipation state
+  private _scatterAnticipationActive = false;
+  private _anticipationOverlay: Phaser.GameObjects.Graphics | null = null;
+  private _anticipationSpotlights: Phaser.GameObjects.Graphics[] = [];
+
   // Idle shimmer
   private _shimmerTimer?: Phaser.Time.TimerEvent;
 
@@ -110,6 +115,9 @@ export class Grid {
     this.cellBackgrounds = this.scene.add.graphics().setDepth(2);
     this.drawCellBackgrounds();
 
+    // Generate procedural candy shard textures for debris
+    this.generateDebrisTextures();
+
     // Phase 6: Cascade depth counter text — font scales with grid
     this.cascadeCounterTxt = this.scene.add.text(0, 0, '', {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
@@ -124,6 +132,43 @@ export class Grid {
     // layoutAll() sets the correct offsetX/offsetY/cellW so that
     // sprites spawn at the right screen positions.
     this.startIdleShimmer();
+  }
+
+  /**
+   * Generate procedural candy shard textures for premium explosion debris.
+   * Creates small triangular/polygonal fragments in each candy color.
+   */
+  private generateDebrisTextures() {
+    const shardColors = [
+      0xff8822, 0x2288ff, 0x44cc44, 0xffcc00, 0xff2222, 0x9944ff, 0x00cccc,
+    ];
+    shardColors.forEach((color, i) => {
+      const key = `shard_${i}`;
+      if (this.scene.textures.exists(key)) return;
+      const g = this.scene.add.graphics();
+      g.fillStyle(color, 1);
+      g.beginPath();
+      g.moveTo(0, 2);
+      g.lineTo(6, 0);
+      g.lineTo(10, 5);
+      g.lineTo(7, 10);
+      g.lineTo(1, 8);
+      g.closePath();
+      g.fillPath();
+      g.fillStyle(0xffffff, 0.6);
+      g.fillTriangle(2, 3, 6, 1, 5, 5);
+      g.generateTexture(key, 10, 10);
+      g.destroy();
+    });
+    if (!this.scene.textures.exists('sugar_dust')) {
+      const g = this.scene.add.graphics();
+      g.fillStyle(0xffffff, 1);
+      g.fillCircle(3, 3, 3);
+      g.fillStyle(0xffffff, 0.4);
+      g.fillCircle(3, 2, 2);
+      g.generateTexture('sugar_dust', 6, 6);
+      g.destroy();
+    }
   }
 
   /**
@@ -943,21 +988,43 @@ export class Grid {
               this.scene.time.delayedCall(700, () => { emitter.destroy(); this._activeEmitterCount--; });
             }
 
-            // Secondary candy debris (gravity-affected sugar dust)
+            // Secondary candy shard debris — triangular fragments with 3D tumble
             if (this._activeEmitterCount < Grid.MAX_EMITTERS && symId < 7) {
-              const debrisEmitter = this.scene.add.particles(sprite.x, sprite.y, `candy_${symId}`, {
-                speed: { min: 80, max: 280 },
-                angle: { min: 200, max: 340 },
-                scale: { start: 0.18, end: 0 },
-                lifespan: 650,
-                quantity: 6,
-                gravityY: 700,
-                alpha: { start: 1, end: 0 },
-                rotate: { min: -90, max: 90 },
-              }).setDepth(15);
-              debrisEmitter.explode(6);
-              this._activeEmitterCount++;
-              this.scene.time.delayedCall(750, () => { debrisEmitter.destroy(); this._activeEmitterCount--; });
+              const shardKey = `shard_${symId}`;
+              if (this.scene.textures.exists(shardKey)) {
+                const shardEmitter = this.scene.add.particles(sprite.x, sprite.y, shardKey, {
+                  speed: { min: 200, max: 650 },
+                  angle: { min: 0, max: 360 },
+                  scale: { start: 1.8, end: 0.3 },
+                  lifespan: 900,
+                  quantity: 10,
+                  gravityY: 800,
+                  alpha: { start: 1, end: 0 },
+                  rotate: { start: 0, end: 720 },
+                }).setDepth(16);
+                shardEmitter.explode(10);
+                this._activeEmitterCount++;
+                this.scene.time.delayedCall(1000, () => { shardEmitter.destroy(); this._activeEmitterCount--; });
+              }
+            }
+
+            // Sugar dust cloud — white powdery particles rising from impact
+            if (this._activeEmitterCount < Grid.MAX_EMITTERS && !this.turboMode) {
+              if (this.scene.textures.exists('sugar_dust')) {
+                const dustEmitter = this.scene.add.particles(sprite.x, sprite.y, 'sugar_dust', {
+                  speed: { min: 30, max: 120 },
+                  angle: { min: 230, max: 310 },
+                  scale: { start: 1.5, end: 0 },
+                  lifespan: 800,
+                  quantity: 6,
+                  gravityY: -50,
+                  alpha: { start: 0.8, end: 0 },
+                  tint: [burstColor, 0xffffff, burstColor],
+                }).setDepth(15);
+                dustEmitter.explode(6);
+                this._activeEmitterCount++;
+                this.scene.time.delayedCall(900, () => { dustEmitter.destroy(); this._activeEmitterCount--; });
+              }
             }
 
             // ── Visceral pop-and-vanish explosion ──
@@ -1182,51 +1249,226 @@ export class Grid {
       }
     }
 
-    if (scatters >= 3) {
-      // Animate scatters with a premium glow burst
-      scatterPositions.forEach((pos, i) => {
-        const s = this.sprites[pos.r][pos.c];
-        if (s) {
-          // Dramatic scale pulse
-          this.scene.tweens.add({
-            targets: s,
-            scale: s.scaleX * 1.8,
-            yoyo: true,
-            repeat: 1,
-            duration: 300,
-            delay: i * 80,
-            onComplete: () => { s.destroy(); this.sprites[pos.r][pos.c] = null; }
-          });
-          // Rainbow glow burst
-          if (this._activeEmitterCount < Grid.MAX_EMITTERS) {
-            const burst = this.scene.add.particles(this.getX(pos.c), this.getY(pos.r), 'scatter', {
-              speed: { min: 150, max: 500 },
-              angle: { min: 0, max: 360 },
-              scale: { start: 0.25, end: 0 },
-              lifespan: 600,
-              quantity: 6,
-              blendMode: 'ADD',
-            });
-            burst.explode(6);
-            this._activeEmitterCount++;
-            this.scene.time.delayedCall(700, () => { burst.destroy(); this._activeEmitterCount--; });
-          }
+    // ═══════════════════════════════════════════════════════════════
+    // SCATTER ANTICIPATION — "THE TEASE" (AAA Standard)
+    // When 2+ scatters detected, dim grid, spotlight scatter positions,
+    // play dramatic reveal sequence before announcing free spins
+    // ═══════════════════════════════════════════════════════════════
+    if (scatters >= 2 && !this.turboMode) {
+      this.playScatterAnticipation(scatterPositions, scatters, () => {
+        this.clearAnticipationEffects();
+        if (scatters >= 3) {
+          this.triggerFreeSpinsFromScatters(scatterPositions, scatters);
+        } else {
+          // Only 2 scatters — tease ends, resume normal flow
+          this.continueAfterScatters();
         }
-      });
-
-      const fsAwarded = options.freeSpinsByScatter[Math.min(scatters, 7)] || 10;
-      this.freeSpinsRemaining += fsAwarded;
-
-      if (this.onFreeSpinsStart) this.onFreeSpinsStart(this.freeSpinsRemaining);
-
-      // Delay for scatter animation, then cascade
-      this.scene.time.delayedCall(1200, () => {
-        this.cascadeSymbols();
       });
       return;
     }
 
+    if (scatters >= 3) {
+      this.triggerFreeSpinsFromScatters(scatterPositions, scatters);
+      return;
+    }
+
     // No scatters — tumble is fully over
+    if (this.freeSpinsRemaining > 0) {
+      this.freeSpinsRemaining--;
+      if (this.freeSpinsRemaining > 0) {
+        if (this.onFreeSpinsStart) this.onFreeSpinsStart(this.freeSpinsRemaining);
+        this.scene.time.delayedCall(this.turboMode ? 400 : 1000, () => {
+          this.isProcessing = false;
+          if (this.onNextFreeSpinNeeded) {
+            this.onNextFreeSpinNeeded();
+          }
+        });
+      } else {
+        this.finishFreeSpins();
+      }
+    } else {
+      this.finishRound();
+    }
+  }
+
+  /**
+   * Play the scatter anticipation sequence — dims the grid, spotlights scatter
+   * positions with pulsating beams, and creates dramatic tension.
+   */
+  private playScatterAnticipation(
+    scatterPositions: { r: number; c: number }[],
+    scatterCount: number,
+    onComplete: () => void
+  ) {
+    this._scatterAnticipationActive = true;
+    const totalW = this.cellW * options.gridSize;
+    const totalH = this.cellH * options.gridSize;
+
+    // 1. Dim overlay over the entire grid
+    this._anticipationOverlay = this.scene.add.graphics().setDepth(17);
+    this._anticipationOverlay.fillStyle(0x000000, 0);
+    this._anticipationOverlay.fillRect(this.offsetX, this.offsetY, totalW, totalH);
+    // Fade in the dim
+    const overlayTarget = { alpha: 0 };
+    this.scene.tweens.add({
+      targets: overlayTarget,
+      alpha: 0.6,
+      duration: 400,
+      ease: 'Quad.easeOut',
+      onUpdate: () => {
+        if (this._anticipationOverlay && this._anticipationOverlay.scene) {
+          this._anticipationOverlay.clear();
+          this._anticipationOverlay.fillStyle(0x000000, overlayTarget.alpha);
+          this._anticipationOverlay.fillRect(this.offsetX, this.offsetY, totalW, totalH);
+        }
+      }
+    });
+
+    // 2. Spotlight beams on each scatter position
+    scatterPositions.forEach((pos, i) => {
+      const sx = this.getX(pos.c);
+      const sy = this.getY(pos.r);
+      const spotlight = this.scene.add.graphics().setDepth(18).setAlpha(0);
+
+      // Draw radial spotlight cone
+      spotlight.fillStyle(0xffdd00, 0.25);
+      spotlight.fillCircle(sx, sy, this.cellW * 0.8);
+      spotlight.fillStyle(0xffffff, 0.35);
+      spotlight.fillCircle(sx, sy, this.cellW * 0.4);
+
+      this._anticipationSpotlights.push(spotlight);
+
+      // Fade in with stagger
+      this.scene.tweens.add({
+        targets: spotlight,
+        alpha: 1,
+        duration: 300,
+        delay: i * 150,
+        ease: 'Sine.easeOut'
+      });
+
+      // Pulsating heartbeat effect on scatter symbols
+      const scatter = this.sprites[pos.r]?.[pos.c];
+      if (scatter) {
+        const origScale = scatter.scaleX;
+        this.scene.tweens.add({
+          targets: scatter,
+          scaleX: origScale * 1.3,
+          scaleY: origScale * 1.3,
+          duration: 350,
+          yoyo: true,
+          repeat: 3,
+          delay: 400 + i * 100,
+          ease: 'Sine.easeInOut',
+        });
+      }
+
+      // Spotlight pulse
+      this.scene.tweens.add({
+        targets: spotlight,
+        alpha: { from: 0.6, to: 1 },
+        duration: 400,
+        yoyo: true,
+        repeat: 3,
+        delay: 400,
+        ease: 'Sine.easeInOut',
+      });
+    });
+
+    // 3. Camera heartbeat pulse (subtle zoom in/out)
+    this.scene.cameras.main.zoomTo(1.015, 350, 'Sine.easeInOut');
+    this.scene.time.delayedCall(350, () => {
+      this.scene.cameras.main.zoomTo(1, 350, 'Sine.easeInOut');
+    });
+
+    // 4. Screen shake buildup
+    this.scene.time.delayedCall(800, () => {
+      this.scene.cameras.main.shake(300, 0.003);
+    });
+
+    // Duration of anticipation scales with scatter count
+    const anticipationDuration = scatterCount >= 3 ? 2200 : 1800;
+    this.scene.time.delayedCall(anticipationDuration, onComplete);
+  }
+
+  /** Clean up all anticipation visual effects */
+  private clearAnticipationEffects() {
+    this._scatterAnticipationActive = false;
+    if (this._anticipationOverlay && this._anticipationOverlay.scene) {
+      this.scene.tweens.add({
+        targets: this._anticipationOverlay,
+        alpha: 0,
+        duration: 200,
+        onComplete: () => {
+          if (this._anticipationOverlay) {
+            this._anticipationOverlay.destroy();
+            this._anticipationOverlay = null;
+          }
+        }
+      });
+    }
+    this._anticipationSpotlights.forEach(s => {
+      if (s && s.scene) {
+        this.scene.tweens.add({
+          targets: s,
+          alpha: 0,
+          duration: 200,
+          onComplete: () => s.destroy()
+        });
+      }
+    });
+    this._anticipationSpotlights = [];
+  }
+
+  /** Trigger free spins from scatter wins with premium glow burst */
+  private triggerFreeSpinsFromScatters(
+    scatterPositions: { r: number; c: number }[],
+    scatterCount: number
+  ) {
+    // Animate scatters with a premium glow burst
+    scatterPositions.forEach((pos, i) => {
+      const s = this.sprites[pos.r][pos.c];
+      if (s) {
+        // Dramatic scale pulse
+        this.scene.tweens.add({
+          targets: s,
+          scale: s.scaleX * 1.8,
+          yoyo: true,
+          repeat: 1,
+          duration: 300,
+          delay: i * 80,
+          onComplete: () => { s.destroy(); this.sprites[pos.r][pos.c] = null; }
+        });
+        // Rainbow glow burst
+        if (this._activeEmitterCount < Grid.MAX_EMITTERS) {
+          const burst = this.scene.add.particles(this.getX(pos.c), this.getY(pos.r), 'scatter', {
+            speed: { min: 150, max: 500 },
+            angle: { min: 0, max: 360 },
+            scale: { start: 0.25, end: 0 },
+            lifespan: 600,
+            quantity: 6,
+            blendMode: 'ADD',
+          });
+          burst.explode(6);
+          this._activeEmitterCount++;
+          this.scene.time.delayedCall(700, () => { burst.destroy(); this._activeEmitterCount--; });
+        }
+      }
+    });
+
+    const fsAwarded = options.freeSpinsByScatter[Math.min(scatterCount, 7)] || 10;
+    this.freeSpinsRemaining += fsAwarded;
+
+    if (this.onFreeSpinsStart) this.onFreeSpinsStart(this.freeSpinsRemaining);
+
+    // Delay for scatter animation, then cascade
+    this.scene.time.delayedCall(1200, () => {
+      this.cascadeSymbols();
+    });
+  }
+
+  /** Continue normal flow after scatter anticipation (< 3 scatters) */
+  private continueAfterScatters() {
     if (this.freeSpinsRemaining > 0) {
       this.freeSpinsRemaining--;
       if (this.freeSpinsRemaining > 0) {
