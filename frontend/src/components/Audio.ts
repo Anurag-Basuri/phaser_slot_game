@@ -170,14 +170,23 @@ export class Audio {
 
   /** Play a dynamic cascade drop sound based on cascade depth */
   public playCascadeDrop(depth: number) {
-    const detuneRaw = Math.min(depth * 50, 600); 
+    // Musical pitch increase per tumble (e.g., up a whole step each cascade)
+    const stingerPitch = Math.min(depth * 200, 1200); // Max 1 octave up
+    
+    // Play the standard drop thud
     this.playSound('reelStop', { 
       volume: 0.25, 
-      detune: detuneRaw
+      detune: Math.min(depth * 50, 300)
+    });
+
+    // Layer a musical stinger on top
+    this.playSound('button', {
+      volume: 0.35,
+      detune: stingerPitch
     });
   }
 
-  /** Dynamic main Win Sound based on multiplier */
+  /** Dynamic main Win Sound based on multiplier (used for individual cascade wins) */
   public playWin(multiplier: number) {
     let vol = 0.5;
     let pitch = 0;
@@ -189,6 +198,24 @@ export class Audio {
     else { vol = 0.45; pitch = 0; }
 
     this.playSound('win', { volume: vol, detune: pitch });
+  }
+
+  /** Massive bell tolls and coin-clinking avalanche when WinCelebration finishes */
+  public playBigWinAvalanche(multiplier: number) {
+    let vol = 0.8;
+    
+    // Simulate massive bell toll by detuning 'win' down heavily and adding echo
+    this.playSound('win', { volume: vol, detune: -1200 }); // Octave down for weight
+    this.playSound('button', { volume: vol, detune: -500 });
+    
+    // Extra coin clinking avalanche for larger wins
+    const clinkCount = multiplier >= 100 ? 8 : multiplier >= 50 ? 5 : multiplier >= 25 ? 3 : 1;
+    for(let i = 0; i < clinkCount; i++) {
+      this.scene.time.delayedCall(i * 150, () => {
+        this.playSound('button', { volume: 0.4, detune: 600 + (Math.random() * 400) });
+        this.playSound('win', { volume: 0.3, detune: 1200 }); // High pitched chime
+      });
+    }
   }
 
   /** 
@@ -205,7 +232,7 @@ export class Audio {
     const progressDetune = progress * 700; 
     
     this.playSound('button', { 
-      volume: 0.08, 
+      volume: 0.08 + (progress * 0.1), // Tick gets slightly louder as it reaches the end
       detune: 300 + baseDetune + progressDetune 
     });
   }

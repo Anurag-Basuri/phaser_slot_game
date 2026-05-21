@@ -1076,6 +1076,11 @@ export class Grid {
             } else {
               this.multipliers[r][c] = Math.min(this.multipliers[r][c] * 2, 1024);
               
+              // Trigger Mascot Zap for significant upgrades
+              if (this.multipliers[r][c] >= 4) {
+                this.scene.events.emit('mascotZap', this.getX(c), this.getY(r));
+              }
+
               // GRID SHOCKWAVE: Massive multiplier reached or utilized
               if (this.multipliers[r][c] >= 128 && !this.turboMode) {
                 // Intensity scales with the multiplier size
@@ -1351,6 +1356,12 @@ export class Grid {
       const scatter = this.sprites[pos.r]?.[pos.c];
       if (scatter) {
         const origScale = scatter.scaleX;
+        
+        // Mascot zaps the scatter symbol to tease it
+        this.scene.time.delayedCall(i * 150, () => {
+          this.scene.events.emit('mascotZap', sx, sy);
+        });
+
         this.scene.tweens.add({
           targets: scatter,
           scaleX: origScale * 1.3,

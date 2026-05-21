@@ -272,6 +272,7 @@ export class WinCelebration {
     // Count-up animation with cubic easing
     const countDuration = Math.min(2400, multiplier * 25);
     let elapsed = 0;
+    let winSoundPlayed = false;
     const countTimer = this.scene.time.addEvent({
       delay: 16,
       repeat: Math.floor(countDuration / 16),
@@ -283,26 +284,23 @@ export class WinCelebration {
         const currentAmount = winAmount * eased;
         amountText.setText(`$${currentAmount.toFixed(2)}`);
 
-        // Play tick sound with frequency based on progress
+        // Play tick sound with frequency and pitch based on progress
         try {
           const audio = (this.scene as any).audio;
           if (
             audio &&
-            typeof audio.playSound === 'function' &&
-            progress < 0.95
+            typeof audio.playWinTick === 'function' &&
+            progress < 1
           ) {
-            const tickVolume = Math.min(progress * 0.3, 0.15);
-            // Play subtle tick at intervals
-            if (elapsed % 100 < 16) {
-              audio.playSound('tick', tickVolume);
-            }
+            audio.playWinTick(progress, multiplier);
           }
         } catch {
           /* ignore audio errors */
         }
 
-        // Final celebration bounce
-        if (progress >= 1) {
+        // Final celebration bounce and massive avalanche sound
+        if (progress >= 1 && !winSoundPlayed) {
+          winSoundPlayed = true;
           activeTweens.push(
             this.scene.tweens.add({
               targets: amountText,
@@ -312,6 +310,15 @@ export class WinCelebration {
               ease: Theme.animation.easeBounce,
             }),
           );
+
+          try {
+            const audio = (this.scene as any).audio;
+            if (audio && typeof audio.playBigWinAvalanche === 'function') {
+              audio.playBigWinAvalanche(multiplier);
+            }
+          } catch {
+            /* ignore audio errors */
+          }
         }
       },
     });
