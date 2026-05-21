@@ -14,6 +14,7 @@ import {
   BottomBarHUD,
   SpinControls,
   BackgroundManager,
+  IntroSplash,
 } from '../components';
 import { getStakeEngine } from '../engine';
 import { SpinEventData, StakeEngineClient } from '../engine/StakeEngineClient';
@@ -38,6 +39,7 @@ export class Game extends Phaser.Scene {
   betOverlay!: BetOverlay;
   bottomBarHUD!: BottomBarHUD;
   spinControls!: SpinControls;
+  introSplash!: IntroSplash;
 
   private stakeEngine!: StakeEngineClient;
   private skipScreensActive = false;
@@ -189,6 +191,7 @@ export class Game extends Phaser.Scene {
     }
 
     this.audio = new Audio(this);
+    this.introSplash = new IntroSplash(this);
     this.winCelebration = new WinCelebration(this);
     this.confirmDialog = new ConfirmDialog(this);
     this.freeSpinsIntro = new FreeSpinsIntro(this);
@@ -243,6 +246,10 @@ export class Game extends Phaser.Scene {
     // Execute any pending rounds recovered from authentication
     if (pendingRound) {
       this.handlePendingRound(pendingRound);
+    } else {
+      if (!this.stakeEngine.isReplayMode()) {
+        this.introSplash.show(() => {});
+      }
     }
   }
 
@@ -1426,7 +1433,7 @@ export class Game extends Phaser.Scene {
     const fsSub = Math.max(12, Math.min(22, h * 0.34));
 
     const title = isCombinedButton ? 'BUY FEATURE' : (type === 'SUPER' ? 'SUPER FREE SPINS' : 'BUY FREE SPINS');
-    const subText = isCombinedButton ? '500X / 1000X' : (type === 'SUPER' ? '1000X' : '500X');
+    const subText = isCombinedButton ? '100X / 500X' : (type === 'SUPER' ? '500X' : '100X');
 
     const disabled = options.anteBetEnabled;
     const alpha = disabled ? 0.4 : 1;
@@ -1495,6 +1502,19 @@ export class Game extends Phaser.Scene {
       gfx.fillRoundedRect(-w / 2 + 2, -h / 2 + 1, w - 4, h * 0.35, {
         tl: r - 1, tr: r - 1, bl: 0, br: 0,
       } as any);
+    }
+
+    // Super-specific visual flair: Gold stars / sparkles inside the button
+    if (isSuper && !disabled) {
+      gfx.fillStyle(0xffffff, 0.6);
+      gfx.fillCircle(-w/3, -h/4, 2);
+      gfx.fillCircle(w/4, h/3, 2.5);
+      gfx.fillCircle(w/2.5, -h/3, 1.5);
+      gfx.fillCircle(-w/4, h/4, 2);
+      
+      // Distinct inner gold glow
+      gfx.lineStyle(2, 0xffffee, 0.5);
+      gfx.strokeRoundedRect(-w / 2 + 3, -h / 2 + 3, w - 6, h - 6, r - 2);
     }
 
     // 4. Single clean border
@@ -1950,7 +1970,7 @@ export class Game extends Phaser.Scene {
         yoyo: true,
         duration: 80,
       });
-      this.requestPurchase(2, 1000);
+      this.requestPurchase(2, 500);
     });
     this.buyRegularHit.on('pointerdown', () => {
       if (this._spinLock || this.fsActive || this.anyOverlayOpen()) return;
@@ -1972,7 +1992,7 @@ export class Game extends Phaser.Scene {
         this.isFeaturesMenuOpen = true;
         this.layoutAll();
       } else {
-        this.requestPurchase(1, 500);
+        this.requestPurchase(1, 100);
       }
     });
 

@@ -12,3 +12,4 @@ export { SpinControls } from './SpinControls';
 export { WinCelebration } from './WinCelebration';
 export { AutoPlayOverlay } from './AutoPlayOverlay';
 export { BackgroundManager } from './BackgroundManager';
+export { IntroSplash } from './IntroSplash';
