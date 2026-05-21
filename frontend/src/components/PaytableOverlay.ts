@@ -515,7 +515,7 @@ export class PaytableOverlay {
   }
 
   // ─────────────────────────────────────────────
-  // PAGE 5: BUY FEATURES (1000× / 500×)
+  // PAGE 5: BUY FEATURES (1000× ULTRA / 500× SUPER)
   // ─────────────────────────────────────────────
   private buildPage5_BuyFeatures(parent: Phaser.GameObjects.Container, w: number, h: number) {
     const page = this.scene.add.container(0, 0).setVisible(false);
@@ -530,10 +530,10 @@ export class PaytableOverlay {
     }).setOrigin(0.5));
     yPos += 30;
 
-    // ───── 1000× Card ─────
-    this.drawCard(page, pad, yPos - 5, w - pad * 2, 170, true);
+    // ───── 1000× ULTRA Card (TOP TIER) ─────
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 195, true);
     // Title row
-    page.add(this.scene.add.text(pad + 25, yPos + 8, this.T('\ud83c\udf6c  BUY FREE SPINS'), {
+    page.add(this.scene.add.text(pad + 25, yPos + 8, this.T('\ud83d\udc8e  ULTRA FREE SPINS'), {
       fontSize: '18px', color: '#ffffff', fontStyle: 'bold', fontFamily: '"Outfit", "Inter", sans-serif'
     }));
     page.add(this.scene.add.text(w - pad - 25, yPos + 8, this.T('1,000× BET'), {
@@ -543,11 +543,13 @@ export class PaytableOverlay {
 
     const buy1000Rules = [
       '\u2022  Costs 1,000× your current base bet amount.',
-      '\u2022  Instantly triggers the Free Spins bonus round.',
+      '\u2022  Instantly triggers the ULTRA Free Spins bonus round.',
       '\u2022  3-7 Scatter symbols land on the board (server-determined).',
       '\u2022  Awards 10-30 Free Spins based on Scatter count.',
-      '\u2022  Multiplier spots start empty (standard progression).',
-      '\u2022  Multipliers persist across all spins in the round.',
+      '\u2022  All 49 grid spots start pre-loaded with ×4 multipliers!',
+      '\u2022  Multipliers double on each hit: ×4 → ×8 → ×16 → ... → ×1024.',
+      '\u2022  Multipliers persist and compound across all spins.',
+      '\u2022  Best chance to hit the 25,000× MAX WIN cap.',
     ];
     buy1000Rules.forEach((line, i) => {
       page.add(this.scene.add.text(pad + 25, yPos + i * 19, this.T(line), {
@@ -555,10 +557,10 @@ export class PaytableOverlay {
         wordWrap: { width: w - pad * 2 - 60 }
       }));
     });
-    yPos += 145;
+    yPos += 170;
 
-    // ───── 500× Card ─────
-    this.drawCard(page, pad, yPos - 5, w - pad * 2, 190, true);
+    // ───── 500× SUPER Card ─────
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 175, true);
     // Title row
     page.add(this.scene.add.text(pad + 25, yPos + 8, this.T('\u2b50  SUPER FREE SPINS'), {
       fontSize: '18px', color: '#ffffff', fontStyle: 'bold', fontFamily: '"Outfit", "Inter", sans-serif'
@@ -573,7 +575,7 @@ export class PaytableOverlay {
       '\u2022  Instantly triggers the SUPER Free Spins bonus round.',
       '\u2022  3-7 Scatter symbols land on the board (server-determined).',
       '\u2022  Awards 10-30 Free Spins based on Scatter count.',
-      '\u2022  All 49 grid spots start pre-loaded with ×2 multipliers!',
+      '\u2022  All 49 grid spots start pre-loaded with ×2 multipliers.',
       '\u2022  Multipliers double on each hit: ×2 → ×4 → ×8 → ... → ×1024.',
       '\u2022  Multipliers persist and compound across all spins.',
     ];
@@ -642,7 +644,7 @@ export class PaytableOverlay {
     page.add(this.scene.add.text(pad + 20, yPos + 8, this.T('RTP (Return to Player)'), {
       fontSize: '13px', color: this.COL_MUTED, fontStyle: 'bold', fontFamily: this.FONT_BODY
     }));
-    page.add(this.scene.add.text(pad + 20, yPos + 30, this.T('Base: 96.53%  |  Buy FS: 96.52%  |  Super: 96.44%'), {
+    page.add(this.scene.add.text(pad + 20, yPos + 30, this.T('Base: 96.53%  |  Ultra FS: 96.50%  |  Super: 96.44%'), {
       fontSize: '14px', color: '#ffffff', fontFamily: this.FONT_BODY
     }));
     page.add(this.scene.add.text(pad + 20, yPos + 55, this.T(`Bet: ${BET_PRESETS[0].toFixed(2)} \u2013 ${BET_PRESETS[BET_PRESETS.length - 1].toFixed(2)}  |  Max Win: ${options.maxWinMultiplier.toLocaleString()}\u00d7`), {
@@ -795,7 +797,7 @@ export class PaytableOverlay {
     page.add(sep);
     yPos += 15;
 
-    page.add(this.scene.add.text(w / 2, yPos, this.T('BUY FREE SPINS: Pay 1,000× total bet to trigger FREE SPINS.\nBUY SUPER FREE SPINS: Pay 500× total bet with ×2 starting multipliers.'), {
+    page.add(this.scene.add.text(w / 2, yPos, this.T('BUY ULTRA FREE SPINS: Pay 1,000× total bet with ×4 starting multipliers.\nBUY SUPER FREE SPINS: Pay 500× total bet with ×2 starting multipliers.'), {
       fontSize: '13px', color: '#aaaaaa', align: 'center', lineSpacing: 6, fontFamily: '"Inter", "Arial", sans-serif'
     }).setOrigin(0.5, 0));
 

@@ -442,7 +442,7 @@ export class Game extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(21);
     this.buyRegularTxt2 = this.add
-      .text(0, 0, '100X', {
+      .text(0, 0, '1000X', {
         ...btnStyle,
         color: '#ffe600',
         stroke: '#000000',
@@ -1453,8 +1453,8 @@ export class Game extends Phaser.Scene {
     const fsTitle = Math.max(9, Math.min(16, h * 0.22));
     const fsSub = Math.max(12, Math.min(22, h * 0.34));
 
-    const title = isCombinedButton ? 'BUY FEATURE' : (type === 'SUPER' ? 'SUPER FREE SPINS' : 'BUY FREE SPINS');
-    const subText = isCombinedButton ? '100X / 500X' : (type === 'SUPER' ? '500X' : '100X');
+    const title = isCombinedButton ? 'BUY FEATURE' : (type === 'SUPER' ? 'SUPER FREE SPINS' : 'ULTRA FREE SPINS');
+    const subText = isCombinedButton ? '1000X / 500X' : (type === 'SUPER' ? '500X' : '1000X');
 
     const disabled = options.anteBetEnabled;
     const alpha = disabled ? 0.4 : 1;
@@ -1462,7 +1462,7 @@ export class Game extends Phaser.Scene {
     // At small sizes: NO stroke, only a tight 1px shadow for contrast.
     // At larger sizes: thin stroke is fine.
     const strokeThick = isSmall ? 0 : Math.max(1, fsTitle * 0.08);
-    const strokeCol = type === 'SUPER' ? '#553300' : '#550022';
+    const strokeCol = type === 'SUPER' ? '#550022' : '#553300';
 
     txt1
       .setText(title)
@@ -1498,9 +1498,9 @@ export class Game extends Phaser.Scene {
   ) {
     gfx.clear();
     const r = Math.min(h / 2, 22);
-    const accentTop = isSuper ? 0xffdd44 : 0xff4499;
-    const accentBot = isSuper ? 0xcc8800 : 0xcc0055;
-    const accentMid = isSuper ? 0xffaa00 : 0xff0066;
+    const accentTop = isSuper ? 0xff4499 : 0xffdd44;
+    const accentBot = isSuper ? 0xcc0055 : 0xcc8800;
+    const accentMid = isSuper ? 0xff0066 : 0xffaa00;
     const isSmall = h < 50;
 
     const disabled = options.anteBetEnabled;
@@ -1525,8 +1525,8 @@ export class Game extends Phaser.Scene {
       } as any);
     }
 
-    // Super-specific visual flair: Gold stars / sparkles inside the button
-    if (isSuper && !disabled) {
+    // ULTRA-specific visual flair: Gold stars / sparkles inside the button
+    if (!isSuper && !disabled) {
       gfx.fillStyle(0xffffff, 0.6);
       gfx.fillCircle(-w/3, -h/4, 2);
       gfx.fillCircle(w/4, h/3, 2.5);
@@ -2013,7 +2013,7 @@ export class Game extends Phaser.Scene {
         this.isFeaturesMenuOpen = true;
         this.layoutAll();
       } else {
-        this.requestPurchase(1, 100);
+        this.requestPurchase(1, 1000);
       }
     });
 
@@ -2571,7 +2571,7 @@ export class Game extends Phaser.Scene {
     const label =
       triggerType === 2
         ? T('SUPER FREE SPINS', this.stakeEngine.isSocialMode())
-        : T('BUY FREE SPINS', this.stakeEngine.isSocialMode());
+        : T('ULTRA FREE SPINS', this.stakeEngine.isSocialMode());
 
     if (this.valueMoney < cost) {
       this.errorManager.showToast('INSUFFICIENT FUNDS', '#ff4466');
@@ -2643,9 +2643,18 @@ export class Game extends Phaser.Scene {
       this.freeSpinsIntro.play(fsAwarded, () => {
         // Set up free spins state AFTER the intro finishes
         this.grid.freeSpinsRemaining = fsAwarded;
-        if (triggerType === 2) {
+        if (triggerType === 1) {
           this.grid.isSuperFreeSpins = true;
-          // Super Free Spins: x2 starting multipliers on ALL grid spots
+          // ULTRA Free Spins (1000x): x4 starting multipliers on ALL grid spots
+          for (let r = 0; r < options.gridSize; r++) {
+            for (let c = 0; c < options.gridSize; c++) {
+              (this.grid as any).multipliers[r][c] = 4;
+              (this.grid as any).drawMultiplierUI(r, c);
+            }
+          }
+        } else if (triggerType === 2) {
+          this.grid.isSuperFreeSpins = true;
+          // Super Free Spins (500x): x2 starting multipliers on ALL grid spots
           for (let r = 0; r < options.gridSize; r++) {
             for (let c = 0; c < options.gridSize; c++) {
               (this.grid as any).multipliers[r][c] = 2;
@@ -2842,7 +2851,7 @@ export class Game extends Phaser.Scene {
       const bp = BET_PRESETS[i];
       const distBase = Math.abs(totalAmount - bp);
       const distAnte = Math.abs(totalAmount - bp * 1.25);
-      const distBonus = Math.abs(totalAmount - bp * 100);
+      const distBonus = Math.abs(totalAmount - bp * 1000);
       const distSuper = Math.abs(totalAmount - bp * 500);
 
       const minThis = Math.min(distBase, distAnte, distBonus, distSuper);
