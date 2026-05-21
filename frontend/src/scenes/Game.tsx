@@ -81,6 +81,8 @@ export class Game extends Phaser.Scene {
   private btnFeaturesMenuIcon!: Phaser.GameObjects.Text;
   private featuresMenuPopupBg!: Phaser.GameObjects.Graphics;
   private featuresMenuHitOverlay!: Phaser.GameObjects.Rectangle;
+  private featuresMenuTitleTxt!: Phaser.GameObjects.Text;
+  private featuresMenuCloseBtn!: Phaser.GameObjects.Text;
   private isFeaturesMenuOpen = false;
 
   // Replay UI
@@ -464,6 +466,31 @@ export class Game extends Phaser.Scene {
     this.featuresMenuPopupBg = this.add
       .graphics()
       .setDepth(61)
+      .setVisible(false);
+
+    this.featuresMenuTitleTxt = this.add
+      .text(0, 0, 'BUY FEATURES', {
+        fontFamily: '"Outfit", "Inter", sans-serif',
+        fontStyle: '900',
+        color: '#ffffff',
+      })
+      .setOrigin(0.5, 0.5)
+      .setDepth(62)
+      .setVisible(false);
+
+    this.featuresMenuCloseBtn = this.add
+      .text(0, 0, 'X', {
+        fontFamily: '"Outfit", "Inter", sans-serif',
+        fontStyle: '900',
+        color: '#ffffff',
+      })
+      .setOrigin(0.5, 0.5)
+      .setDepth(62)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => {
+        this.isFeaturesMenuOpen = false;
+        this.layoutAll();
+      })
       .setVisible(false);
 
     this.btnFeaturesMenuGraphics = this.add.graphics().setDepth(20);
@@ -978,36 +1005,42 @@ export class Game extends Phaser.Scene {
         .setVisible(true)
         .setPosition(w / 2, h / 2)
         .setSize(w, h);
-      this.featuresMenuPopupBg.setVisible(true).clear();
+      this.featuresMenuTitleTxt.setVisible(true);
+      this.featuresMenuCloseBtn.setVisible(true);
 
-      buyW = Math.min(220, w * 0.8);
-      buyH = 60;
-      buyGap = 15;
+      buyW = Math.min(240, w * 0.85);
+      buyH = 65;
+      buyGap = 18;
       
       if (!isStacked) {
         anteW = buyW;
         anteH = 45;
       }
 
+      // Calculate heights to include the new title header
+      const headerH = 40;
+      const contentH = isStacked ? (buyH * 2 + buyGap) : (buyH * 2 + anteH + buyGap * 2);
       const popupW = buyW + 40;
-      const popupH = isStacked ? (buyH * 2 + buyGap + 40) : (buyH * 2 + anteH + buyGap * 3 + 40);
+      const popupH = contentH + headerH + 50;
       const popupX = w / 2;
       const popupY = h / 2;
 
       // Premium popup backdrop
       this.featuresMenuPopupBg.fillStyle(0x000000, 0.6);
       this.featuresMenuPopupBg.fillRoundedRect(
-        popupX - popupW / 2 + 4,
-        popupY - popupH / 2 + 6,
+        popupX - popupW / 2 + 6,
+        popupY - popupH / 2 + 8,
         popupW,
         popupH,
-        22,
+        24,
       );
+      
+      // Main Glass Panel
       this.featuresMenuPopupBg.fillGradientStyle(
-        0x1a0a24,
-        0x1a0a24,
-        0x0d0512,
-        0x0d0512,
+        0x2d1b4e,
+        0x2d1b4e,
+        0x150b29,
+        0x150b29,
         0.98,
       );
       this.featuresMenuPopupBg.fillRoundedRect(
@@ -1017,7 +1050,44 @@ export class Game extends Phaser.Scene {
         popupH,
         20,
       );
-      this.featuresMenuPopupBg.lineStyle(2, 0xff006a, 0.8);
+      
+      // Header Background (Candy Pink)
+      this.featuresMenuPopupBg.fillGradientStyle(
+        0xff006a,
+        0xff006a,
+        0xcc0055,
+        0xcc0055,
+        1,
+      );
+      this.featuresMenuPopupBg.fillRoundedRect(
+        popupX - popupW / 2,
+        popupY - popupH / 2,
+        popupW,
+        headerH + 20,
+        { tl: 20, tr: 20, bl: 0, br: 0 } as any
+      );
+
+      // Inner Header Highlight
+      this.featuresMenuPopupBg.fillGradientStyle(
+        0xffffff,
+        0xffffff,
+        0xffffff,
+        0xffffff,
+        0.2,
+        0.2,
+        0,
+        0,
+      );
+      this.featuresMenuPopupBg.fillRoundedRect(
+        popupX - popupW / 2 + 2,
+        popupY - popupH / 2 + 2,
+        popupW - 4,
+        (headerH + 20) * 0.4,
+        { tl: 18, tr: 18, bl: 0, br: 0 } as any
+      );
+
+      // Border Outline
+      this.featuresMenuPopupBg.lineStyle(2, 0xff88bb, 0.9);
       this.featuresMenuPopupBg.strokeRoundedRect(
         popupX - popupW / 2,
         popupY - popupH / 2,
@@ -1025,7 +1095,7 @@ export class Game extends Phaser.Scene {
         popupH,
         20,
       );
-      this.featuresMenuPopupBg.lineStyle(1, 0xffffff, 0.15);
+      this.featuresMenuPopupBg.lineStyle(1, 0xffffff, 0.3);
       this.featuresMenuPopupBg.strokeRoundedRect(
         popupX - popupW / 2 + 2,
         popupY - popupH / 2 + 2,
@@ -1034,9 +1104,20 @@ export class Game extends Phaser.Scene {
         18,
       );
 
+      // Position Header Text
+      this.featuresMenuTitleTxt
+        .setPosition(popupX, popupY - popupH / 2 + headerH / 2 + 10)
+        .setFontSize(22)
+        .setShadow(0, 2, '#000000', 3, true, true);
+        
+      this.featuresMenuCloseBtn
+        .setPosition(popupX + popupW / 2 - 20, popupY - popupH / 2 + headerH / 2 + 10)
+        .setFontSize(24)
+        .setShadow(0, 2, '#000000', 2, true, true);
+
       buyX1 = popupX;
       buyX2 = popupX;
-      buyY1 = popupY - popupH / 2 + 20 + buyH / 2;
+      buyY1 = popupY - popupH / 2 + headerH + 30 + buyH / 2;
       buyY2 = buyY1 + buyH + buyGap;
       
       if (!isStacked) {
@@ -1046,6 +1127,8 @@ export class Game extends Phaser.Scene {
     } else {
       this.featuresMenuHitOverlay.setVisible(false);
       this.featuresMenuPopupBg.setVisible(false);
+      this.featuresMenuTitleTxt.setVisible(false);
+      this.featuresMenuCloseBtn.setVisible(false);
     }
 
     const showFeatures = !useFeaturesMenu || this.isFeaturesMenuOpen;
@@ -1104,14 +1187,21 @@ export class Game extends Phaser.Scene {
       this.anteBetHit.setPosition(anteX, anteY).setSize(anteW, anteH);
       this.anteBetBtn.setPosition(anteX, anteY);
       this.drawAnteBetButton(anteW, anteH);
+      
+      // Icon + Text centered as a pair inside the pill
+      const anteFontSize = Math.max(10, Math.min(14, anteH * 0.3));
+      const iconSize = Math.max(14, Math.min(20, anteH * 0.45));
+      
       this.anteBetIcon
-        .setPosition(anteX - anteW * 0.25, anteY)
-        .setFontSize(Math.max(12, anteH * 0.4))
-        .setOrigin(0.5);
+        .setPosition(anteX - anteW * 0.30, anteY)
+        .setFontSize(iconSize)
+        .setOrigin(0.5, 0.5);
+        
       this.anteBetTxt
-        .setPosition(anteX - anteW * 0.15, anteY)
-        .setFontSize(Math.max(9, anteH * 0.25))
-        .setOrigin(0, 0.5);
+        .setPosition(anteX + iconSize * 0.15, anteY)
+        .setOrigin(0.5, 0.5)
+        .setAlign('center')
+        .setFontSize(anteFontSize);
     }
 
     // ==========================================
@@ -1236,7 +1326,6 @@ export class Game extends Phaser.Scene {
     }
   }
 
-  /** Draw glossy candy-arcade toolbar icons */
   private drawToolbarIcons() {
     const isMobile = this.scale.width < 768;
     const iconR = isMobile ? 16 : 20;
@@ -1259,63 +1348,64 @@ export class Game extends Phaser.Scene {
       obj.clear();
       const cx = 0,
         cy = 0;
-      const radius = iconR + 2;
+      const radius = iconR;
       const isSoundOff = type === 'sound_off';
-      const accentColor = isSoundOff ? 0x553344 : 0xff006a;
-      const rimColor = isSoundOff ? 0x664455 : 0xdd5599;
+      
+      const borderColor = isSoundOff ? 0xff006a : 0xff006a;
+      const borderAlpha = isSoundOff ? 0.35 : 1.0;
+      const rimColor = isSoundOff ? 0xff88ff : 0xff88ff;
 
-      // Drop shadow
-      obj.fillStyle(0x000000, 0.5);
-      obj.fillCircle(cx, cy + 3, radius + 3);
+      // 1. Soft Drop Shadow
+      obj.fillStyle(0x000000, 0.55);
+      obj.fillCircle(cx, cy + 2.5, radius + 2);
 
-      // Thick colored candy rim (outer ring)
+      // 2. Main Glass Face (Deep gradient)
       obj.fillGradientStyle(
-        rimColor,
-        rimColor,
-        isSoundOff ? 0x332233 : 0x881144,
-        isSoundOff ? 0x332233 : 0x881144,
-        1,
+        0x2d174d, // Top-Left
+        0x2d174d, // Top-Right
+        0x0f0722, // Bottom-Left
+        0x0f0722, // Bottom-Right
+        0.9, 0.9, 0.95, 0.95 // Transparent alpha blend
       );
-      obj.fillCircle(cx, cy, radius + 3);
-
-      // Glass sheen on rim top half
-      obj.beginPath();
-      obj.arc(cx, cy, radius + 3, Math.PI, 0, false);
-      obj.closePath();
-      obj.fillStyle(0xffffff, 0.25);
-      obj.fillPath();
-
-      // Inner dark circle (the button face)
-      obj.fillGradientStyle(0x1a0a2e, 0x1a0a2e, 0x0d0518, 0x0d0518, 1);
       obj.fillCircle(cx, cy, radius);
 
-      // Glass top hemisphere highlight on inner face
+      // 3. Glare Sheen (Top Hemisphere highlight)
+      obj.fillStyle(0xffffff, 0.16);
       obj.beginPath();
-      obj.arc(cx, cy, radius, Math.PI, 0, false);
+      obj.arc(cx, cy, radius - 1, Math.PI, 0, false);
       obj.closePath();
-      obj.fillStyle(0xffffff, 0.15);
       obj.fillPath();
 
-      // Accent inner ring (pressed recess)
-      obj.lineStyle(1.5, accentColor, isSoundOff ? 0.3 : 0.7);
-      obj.strokeCircle(cx, cy, radius);
+      // 4. Sharp Neon Pink Outer Rim
+      obj.lineStyle(2, borderColor, borderAlpha);
+      obj.strokeCircle(cx, cy, radius + 1);
 
-      // Subtle inner rim for depth
-      obj.lineStyle(0.5, 0xffffff, 0.1);
-      obj.strokeCircle(cx, cy, radius - 2);
+      // 5. Beveled Inner Inner Edge Glow
+      obj.lineStyle(1.0, rimColor, isSoundOff ? 0.15 : 0.4);
+      obj.strokeCircle(cx, cy, radius - 0.5);
 
-      // Outer rim highlight
-      obj.lineStyle(1, 0xffffff, 0.2);
-      obj.strokeCircle(cx, cy, radius + 3);
+      // 6. Outer Subtle Glow Ring
+      if (!isSoundOff) {
+        obj.lineStyle(0.5, 0xffffff, 0.2);
+        obj.strokeCircle(cx, cy, radius + 2.5);
+      }
 
       // Update icon state
       if (icon) {
-        icon.setAlpha(isSoundOff ? 0.4 : 0.9);
+        icon.setAlpha(isSoundOff ? 0.35 : 0.95);
       }
       if (type === 'sound_on' && this.iconSound)
         this.iconSound.setTexture('icon_sound');
       if (type === 'sound_off' && this.iconSound)
         this.iconSound.setTexture('icon_sound_off');
+
+      // Dynamically define non-overlapping hit areas
+      const hitRadius = isMobile ? 17 : 23;
+      obj.setInteractive(
+        new Phaser.Geom.Circle(cx, cy, hitRadius),
+        Phaser.Geom.Circle.Contains,
+      );
+      if (obj.input) obj.input.cursor = 'pointer';
     }
   }
 
@@ -1327,42 +1417,49 @@ export class Game extends Phaser.Scene {
     h: number,
     type: string,
   ) {
-    const fsTitle = Math.min(15, h * 0.20);
-    const fsSub = Math.min(22, h * 0.32);
     const isStacked = this.scale.width < 650 || this.scale.height > this.scale.width;
     const isCombinedButton = isStacked && type === 'REGULAR' && !this.isFeaturesMenuOpen;
-    
-    const title = type === 'SUPER' ? 'SUPER\nFREE SPINS' : isCombinedButton ? 'BUY\nFEATURES' : 'BUY\nFREE SPINS';
-    const subText = isCombinedButton ? '500X / 1000X' : (type === 'SUPER' ? '1000X' : '500X');
-    const strokeCol = type === 'SUPER' ? '#552200' : '#550022';
-    const strokeThick = Math.max(3, fsSub * 0.15);
+    const isSmall = h < 50;
 
-    const finalFsTitle = isCombinedButton ? Math.min(12, fsTitle * 0.8) : fsTitle;
-    const finalFsSub = isCombinedButton ? Math.min(16, fsSub * 0.75) : fsSub;
+    // Adaptive font sizes: generous for large buttons, crisp floor for small
+    const fsTitle = Math.max(9, Math.min(16, h * 0.22));
+    const fsSub = Math.max(12, Math.min(22, h * 0.34));
+
+    const title = isCombinedButton ? 'BUY FEATURE' : (type === 'SUPER' ? 'SUPER FREE SPINS' : 'BUY FREE SPINS');
+    const subText = isCombinedButton ? '500X / 1000X' : (type === 'SUPER' ? '1000X' : '500X');
 
     const disabled = options.anteBetEnabled;
     const alpha = disabled ? 0.4 : 1;
 
+    // At small sizes: NO stroke, only a tight 1px shadow for contrast.
+    // At larger sizes: thin stroke is fine.
+    const strokeThick = isSmall ? 0 : Math.max(1, fsTitle * 0.08);
+    const strokeCol = type === 'SUPER' ? '#553300' : '#550022';
+
     txt1
       .setText(title)
-      .setPosition(x, y - h * 0.18)
-      .setFontSize(finalFsTitle)
-      .setFontFamily('"Lilita One", "Luckiest Guy", cursive, sans-serif')
-      .setLineSpacing(-2)
+      .setPosition(x, y - h * 0.16)
+      .setFontSize(fsTitle)
+      .setFontFamily('"Inter", "Outfit", sans-serif')
+      .setFontStyle('800')
+      .setLineSpacing(0)
       .setColor('#ffffff')
-      .setStroke(strokeCol, Math.max(2, finalFsTitle * 0.15))
-      .setShadow(0, 2, '#000000', 3, true, true)
-      .setAlpha(alpha);
+      .setStroke(strokeCol, strokeThick)
+      .setShadow(0, 1, '#000000', isSmall ? 1 : 3, true, true)
+      .setAlpha(alpha)
+      .setAlign('center');
 
     txt2
       .setText(subText)
-      .setPosition(x, y + h * 0.22)
-      .setFontSize(finalFsSub)
-      .setFontFamily('"Lilita One", "Luckiest Guy", cursive, sans-serif')
+      .setPosition(x, y + h * 0.18)
+      .setFontSize(fsSub)
+      .setFontFamily('"Inter", "Outfit", sans-serif')
+      .setFontStyle('900')
       .setColor('#ffe600')
-      .setStroke(strokeCol, Math.max(2, finalFsSub * 0.15))
-      .setShadow(0, 3, '#000000', 0, true, true)
-      .setAlpha(alpha);
+      .setStroke(strokeCol, isSmall ? 0 : Math.max(1, fsSub * 0.08))
+      .setShadow(0, 1, '#000000', isSmall ? 1 : 2, true, true)
+      .setAlpha(alpha)
+      .setAlign('center');
   }
 
   private drawBuyPanel(
@@ -1372,164 +1469,104 @@ export class Game extends Phaser.Scene {
     isSuper: boolean,
   ) {
     gfx.clear();
-    const r = Math.min(h / 2, 28); // Pill-shaped: heavily rounded corners
+    const r = Math.min(h / 2, 22);
     const accentTop = isSuper ? 0xffdd44 : 0xff4499;
-    const accentBot = isSuper ? 0xcc7700 : 0xbb0044;
+    const accentBot = isSuper ? 0xcc8800 : 0xcc0055;
     const accentMid = isSuper ? 0xffaa00 : 0xff0066;
+    const isSmall = h < 50;
 
     const disabled = options.anteBetEnabled;
-    const alpha = disabled ? 0.4 : 1;
 
-    // Outer soft glow
-    gfx.fillStyle(accentMid, 0.18 * alpha);
-    gfx.fillRoundedRect(-w / 2 - 8, -h / 2 - 8, w + 16, h + 16, r + 4);
+    // 1. Drop shadow — simple, no glow fuzz
+    gfx.fillStyle(0x000000, disabled ? 0.2 : 0.45);
+    gfx.fillRoundedRect(-w / 2 + 2, -h / 2 + 3, w, h, r);
 
-    // Drop shadow
-    gfx.fillStyle(0x000000, 0.5 * alpha);
-    gfx.fillRoundedRect(-w / 2 + 3, -h / 2 + 5, w, h, r);
-
-    // Main body gradient (vibrant candy or disabled gray)
+    // 2. Main body — clean solid gradient
     if (disabled) {
-      gfx.fillGradientStyle(0x333333, 0x333333, 0x1a1a1a, 0x1a1a1a, 1);
+      gfx.fillGradientStyle(0x444444, 0x444444, 0x222222, 0x222222, 1);
     } else {
       gfx.fillGradientStyle(accentTop, accentTop, accentBot, accentBot, 1);
     }
     gfx.fillRoundedRect(-w / 2, -h / 2, w, h, r);
 
-    // Curved glass hemisphere reflection on top half
-    gfx.fillGradientStyle(
-      0xffffff,
-      0xffffff,
-      0xffffff,
-      0xffffff,
-      0.55,
-      0.55,
-      0.05,
-      0.05,
-    );
-    gfx.fillRoundedRect(-w / 2 + 3, -h / 2 + 2, w - 6, h * 0.4, {
-      tl: r - 2,
-      tr: r - 2,
-      bl: 0,
-      br: 0,
-    } as any);
+    // 3. Top highlight — crisp, not blurred
+    if (!isSmall) {
+      gfx.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.4, 0.4, 0, 0);
+      gfx.fillRoundedRect(-w / 2 + 2, -h / 2 + 1, w - 4, h * 0.35, {
+        tl: r - 1, tr: r - 1, bl: 0, br: 0,
+      } as any);
+    }
 
-    // Bottom darkened recess for 3D depth
-    gfx.fillGradientStyle(
-      0x000000,
-      0x000000,
-      0x000000,
-      0x000000,
-      0,
-      0,
-      0.3,
-      0.3,
-    );
-    gfx.fillRoundedRect(-w / 2 + 2, -h / 2 + h * 0.65, w - 4, h * 0.35 - 2, {
-      tl: 0,
-      tr: 0,
-      bl: r - 2,
-      br: r - 2,
-    } as any);
-
-    // Accent border
-    gfx.lineStyle(2.5, accentMid, 0.9);
+    // 4. Single clean border
+    gfx.lineStyle(isSmall ? 1.5 : 2, disabled ? 0x666666 : accentMid, disabled ? 0.5 : 0.9);
     gfx.strokeRoundedRect(-w / 2, -h / 2, w, h, r);
-
-    // Outer bright rim (candy shell edge)
-    gfx.lineStyle(1.5, 0xffffff, 0.45);
-    gfx.strokeRoundedRect(-w / 2 - 1.5, -h / 2 - 1.5, w + 3, h + 3, r + 1);
   }
 
   private drawAnteBetButton(bw: number, bh: number) {
     this.anteBetBtn.clear();
     const x = -bw / 2;
     const y = -bh / 2;
-    const rad = bh / 2; // Pill shape
+    const rad = bh / 2;
+    const isSmall = bh < 40;
+    const g = this.anteBetBtn;
 
     this.anteBetIcon.setVisible(true);
 
     if (options.anteBetEnabled) {
-      // Active state - bright amber pill
-      this.anteBetBtn.fillStyle(0x000000, 0.4);
-      this.anteBetBtn.fillRoundedRect(x + 2, y + 4, bw, bh, rad);
+      // Active — amber pill
+      g.fillStyle(0x000000, 0.35);
+      g.fillRoundedRect(x + 2, y + 3, bw, bh, rad);
 
-      this.anteBetBtn.fillGradientStyle(
-        0xffbb33,
-        0xffbb33,
-        0x885500,
-        0x885500,
-        1,
-      );
-      this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
+      g.fillGradientStyle(0xffcc44, 0xffcc44, 0x996600, 0x996600, 1);
+      g.fillRoundedRect(x, y, bw, bh, rad);
 
-      // Glass hemisphere
-      this.anteBetBtn.fillGradientStyle(
-        0xffffff,
-        0xffffff,
-        0xffffff,
-        0xffffff,
-        0.45,
-        0.45,
-        0.05,
-        0.05,
-      );
-      this.anteBetBtn.fillRoundedRect(x + 2, y + 1, bw - 4, bh * 0.4, {
-        tl: rad - 1,
-        tr: rad - 1,
-        bl: 0,
-        br: 0,
-      } as any);
+      if (!isSmall) {
+        g.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.35, 0.35, 0, 0);
+        g.fillRoundedRect(x + 2, y + 1, bw - 4, bh * 0.35, {
+          tl: rad - 1, tr: rad - 1, bl: 0, br: 0,
+        } as any);
+      }
 
-      this.anteBetBtn.lineStyle(2, 0xffeebb, 0.9);
-      this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, rad);
+      g.lineStyle(isSmall ? 1 : 1.5, 0xffeebb, 0.9);
+      g.strokeRoundedRect(x, y, bw, bh, rad);
 
       this.anteBetTxt
         .setText('ANTE BET ON\nDouble Chance')
+        .setFontFamily('"Inter", "Outfit", sans-serif')
+        .setFontStyle('700')
         .setColor('#ffffff')
-        .setShadow(0, 2, '#000000', 0, true, true);
+        .setLineSpacing(isSmall ? -4 : -2)
+        .setStroke('#000000', 0)
+        .setShadow(0, 1, '#000000', 1, true, true);
       this.anteBetIcon
         .setColor('#ffffff')
-        .setShadow(0, 0, '#ffcc00', 6, true, true);
+        .setShadow(0, 0, '#ffcc00', isSmall ? 2 : 4, true, true);
     } else {
-      // Inactive - Premium soft purple pill
-      this.anteBetBtn.fillStyle(0x000000, 0.4);
-      this.anteBetBtn.fillRoundedRect(x + 2, y + 4, bw, bh, rad);
+      // Inactive — soft purple pill
+      g.fillStyle(0x000000, 0.35);
+      g.fillRoundedRect(x + 2, y + 3, bw, bh, rad);
 
-      this.anteBetBtn.fillGradientStyle(
-        0x5a3a7a,
-        0x5a3a7a,
-        0x2a1a4a,
-        0x2a1a4a,
-        0.95,
-      );
-      this.anteBetBtn.fillRoundedRect(x, y, bw, bh, rad);
+      g.fillGradientStyle(0x5a3a7a, 0x5a3a7a, 0x2a1a4a, 0x2a1a4a, 0.95);
+      g.fillRoundedRect(x, y, bw, bh, rad);
 
-      // Glass hemisphere
-      this.anteBetBtn.fillGradientStyle(
-        0xffffff,
-        0xffffff,
-        0xffffff,
-        0xffffff,
-        0.25,
-        0.25,
-        0.05,
-        0.05,
-      );
-      this.anteBetBtn.fillRoundedRect(x + 2, y + 1, bw - 4, bh * 0.4, {
-        tl: rad - 1,
-        tr: rad - 1,
-        bl: 0,
-        br: 0,
-      } as any);
+      if (!isSmall) {
+        g.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.18, 0.18, 0, 0);
+        g.fillRoundedRect(x + 2, y + 1, bw - 4, bh * 0.35, {
+          tl: rad - 1, tr: rad - 1, bl: 0, br: 0,
+        } as any);
+      }
 
-      this.anteBetBtn.lineStyle(2, 0x8866bb, 0.8);
-      this.anteBetBtn.strokeRoundedRect(x, y, bw, bh, rad);
+      g.lineStyle(isSmall ? 1 : 1.5, 0x8866bb, 0.7);
+      g.strokeRoundedRect(x, y, bw, bh, rad);
 
       this.anteBetTxt
         .setText('ANTE BET OFF\nDouble Chance')
+        .setFontFamily('"Inter", "Outfit", sans-serif')
+        .setFontStyle('700')
         .setColor('#ddccff')
-        .setShadow(0, 1, '#000000', 2, true, true);
+        .setLineSpacing(isSmall ? -4 : -2)
+        .setStroke('#000000', 0)
+        .setShadow(0, 1, '#000000', 1, true, true);
       this.anteBetIcon
         .setColor('#ff8844')
         .setShadow(0, 0, '#000', 0, false, false);

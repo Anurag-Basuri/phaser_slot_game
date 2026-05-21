@@ -40,6 +40,7 @@ export class Boot extends Phaser.Scene {
   private footerCopy!: Phaser.GameObjects.Text;
 
   private _resizeTimer?: NodeJS.Timeout;
+  private hasStarted = false;
 
   constructor() {
     super({ key: 'Boot' });
@@ -424,18 +425,42 @@ export class Boot extends Phaser.Scene {
     });
     
     this.playBtnHit.on('pointerdown', () => {
-      this.tweens.add({
-        targets: [this.btnBg, this.playText],
-        scale: 0.95,
-        duration: 80,
-        yoyo: true
+      this.startGame();
+    });
+
+    // Spacebar mapping to play
+    let spaceKey: Phaser.Input.Keyboard.Key | null = null;
+    if (this.input.keyboard) {
+      spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+      spaceKey.on('down', () => {
+        this.startGame();
       });
-      
-      // Smooth fade transition to the game
-      this.cameras.main.fade(400, 0, 0, 0);
-      this.cameras.main.once('camerafadeoutcomplete', () => {
-        this.scene.start('Game');
-      });
+    }
+
+    this.events.once('shutdown', () => {
+      if (spaceKey) {
+        spaceKey.removeAllListeners();
+      }
+    });
+  }
+
+  private startGame() {
+    if (this.hasStarted) return;
+    this.hasStarted = true;
+
+    // Direct visual feedback on the button
+    this.tweens.add({
+      targets: [this.btnBg, this.playText],
+      scale: 0.95,
+      duration: 80,
+      yoyo: true,
+      onComplete: () => {
+        // Smooth fade transition to the game
+        this.cameras.main.fade(400, 0, 0, 0);
+        this.cameras.main.once('camerafadeoutcomplete', () => {
+          this.scene.start('Game');
+        });
+      }
     });
   }
 }
