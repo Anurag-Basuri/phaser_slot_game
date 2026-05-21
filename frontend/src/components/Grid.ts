@@ -1008,6 +1008,26 @@ export class Grid {
               this.multipliers[r][c] = 2; // First multiplier value
             } else {
               this.multipliers[r][c] = Math.min(this.multipliers[r][c] * 2, 1024);
+              
+              // GRID SHOCKWAVE: Massive multiplier reached or utilized
+              if (this.multipliers[r][c] >= 128 && !this.turboMode) {
+                // Intensity scales with the multiplier size
+                const shakeIntensity = 0.005 + (this.multipliers[r][c] / 1024) * 0.015;
+                this.scene.cameras.main.shake(200, shakeIntensity);
+                
+                // Add a chromatic aberration / bright flash effect over the grid
+                const flash = this.scene.add.graphics().setDepth(30);
+                flash.fillStyle(0xffffff, 0.4);
+                flash.fillRect(this.offsetX, this.offsetY, this.cellW * options.gridSize, this.cellW * options.gridSize);
+                flash.setBlendMode(Phaser.BlendModes.ADD);
+                this.scene.tweens.add({
+                  targets: flash,
+                  alpha: 0,
+                  duration: 250,
+                  ease: 'Quad.easeOut',
+                  onComplete: () => flash.destroy()
+                });
+              }
             }
             this.drawMultiplierUI(r, c);
           }

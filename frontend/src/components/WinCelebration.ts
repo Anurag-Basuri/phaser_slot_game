@@ -86,6 +86,44 @@ export class WinCelebration {
     this.scene = scene;
   }
 
+  private createCoinTexture() {
+    if (this.scene.textures.exists('gold_coin')) return;
+    const g = this.scene.add.graphics();
+    // Shadow edge
+    g.fillStyle(0xcc7700, 1);
+    g.fillCircle(16, 16, 16);
+    // Base gold circle
+    g.fillStyle(0xffaa00, 1);
+    g.fillCircle(16, 15, 15);
+    // Inner rim
+    g.fillStyle(0xffcc00, 1);
+    g.fillCircle(16, 15, 11);
+    // Center star
+    g.fillStyle(0xffffee, 1);
+    g.beginPath();
+    g.moveTo(16, 7);
+    g.lineTo(18.5, 12);
+    g.lineTo(24, 13);
+    g.lineTo(19.5, 17);
+    g.lineTo(21, 22.5);
+    g.lineTo(16, 19.5);
+    g.lineTo(11, 22.5);
+    g.lineTo(12.5, 17);
+    g.lineTo(8, 13);
+    g.lineTo(13.5, 12);
+    g.closePath();
+    g.fillPath();
+    // Sheen
+    g.fillStyle(0xffffff, 0.4);
+    g.beginPath();
+    g.arc(16, 15, 15, Math.PI, Math.PI * 1.5);
+    g.lineTo(16, 15);
+    g.closePath();
+    g.fillPath();
+    g.generateTexture('gold_coin', 32, 32);
+    g.destroy();
+  }
+
   /** External skip — call from Game scene to instantly dismiss */
   public skip(): void {
     if (this._finishFn) this._finishFn();
@@ -103,6 +141,8 @@ export class WinCelebration {
     onComplete: () => void,
   ): void {
     if (this._isVisible) return;
+
+    this.createCoinTexture();
 
     const multiplier = winAmount / betAmount;
 
@@ -322,6 +362,43 @@ export class WinCelebration {
         );
         activeTimers.push(stopTimer);
       });
+
+      // MASSIVE GOLD COIN SHOWER FOR MEGA/EPIC/ULTRA WINS
+      if (multiplier >= 25) {
+        const coinDensity = multiplier >= 100 ? 10 : multiplier >= 50 ? 20 : 35;
+        const coinEmitter = this.scene.add.particles(
+          0,
+          -50,
+          'gold_coin',
+          {
+            x: { min: 0, max: w },
+            y: -50,
+            speedY: { min: 400, max: 900 },
+            speedX: { min: -80, max: 80 },
+            accelerationY: 600,
+            scale: { min: 0.6, max: 1.3 },
+            alpha: { start: 1, end: 0.7 },
+            rotate: { start: 0, end: 1080 }, // Tumbling/spinning effect over lifespan
+            lifespan: 3500,
+            quantity: 2,
+            frequency: coinDensity,
+            blendMode: 'NORMAL'
+          }
+        );
+        this.container.add(coinEmitter);
+        emitters.push(coinEmitter);
+        
+        // Stop coin shower slightly before the counter finishes, so they clear out
+        const coinStopTimer = this.scene.time.delayedCall(
+          countDuration, 
+          () => {
+            coinEmitter.stop();
+            const killTimer = this.scene.time.delayedCall(3500, () => coinEmitter.destroy());
+            activeTimers.push(killTimer);
+          }
+        );
+        activeTimers.push(coinStopTimer);
+      }
     }
 
     // ═══════════════════════════════════════════════════
