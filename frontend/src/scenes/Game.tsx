@@ -15,6 +15,7 @@ import {
   SpinControls,
   BackgroundManager,
   IntroSplash,
+  Mascot,
 } from '../components';
 import { getStakeEngine } from '../engine';
 import { SpinEventData, StakeEngineClient } from '../engine/StakeEngineClient';
@@ -40,6 +41,7 @@ export class Game extends Phaser.Scene {
   bottomBarHUD!: BottomBarHUD;
   spinControls!: SpinControls;
   introSplash!: IntroSplash;
+  mascot!: Mascot;
 
   private stakeEngine!: StakeEngineClient;
   private skipScreensActive = false;
@@ -266,6 +268,15 @@ export class Game extends Phaser.Scene {
     // === GRID ===
     this.grid = new Grid(this);
     this.wireGridCallbacks();
+
+    // === MASCOT (Character interaction) ===
+    this.mascot = new Mascot(this);
+    this.mascot.init(0, 0);
+    
+    // Wire Mascot Events
+    this.events.on('mascotZap', (x: number, y: number) => this.mascot.playZap(x, y), this);
+    this.events.on('mascotCheer', () => this.mascot.playCheer(), this);
+    this.events.on('mascotSad', () => this.mascot.playDisappointment(), this);
 
     // === GRID FRAME (subtle overlay for cell delineation) ===
     this.gridFrame = this.add.graphics({ x: 0, y: 0 }).setDepth(2);
@@ -757,6 +768,16 @@ export class Game extends Phaser.Scene {
     this.grid.cellH = gridH / 7;
     this.grid.drawCellBackgrounds();
     this.grid.repositionSprites();
+
+    // === MASCOT POSITIONING ===
+    if (this.mascot) {
+      const mascotScale = isStacked ? Math.min(0.8, gridW / 350) : Math.min(1.2, gridW / 400);
+      // Position Mascot to the left of the grid frame, anchoring near bottom
+      const mascotX = gridX - (60 * mascotScale);
+      const mascotY = gridY + gridH - (70 * mascotScale);
+      this.mascot.setPosition(mascotX, mascotY);
+      this.mascot.setScale(mascotScale);
+    }
 
     // === GRID PANEL IMAGE ===
     this.gridPanel.setVisible(false); // Hide the old background image
@@ -2308,6 +2329,13 @@ export class Game extends Phaser.Scene {
           .catch((e) => console.warn('[Game] endRound error:', e));
         this.saveSpinRecord(this.lastWin, 'base');
         this.updateSpinButtonState();
+        
+        // Mascot Reactions
+        if (this.lastWin === 0) {
+          this.events.emit('mascotSad');
+        } else if (this.lastWin / this.getEffectiveBet() >= 5) {
+          this.events.emit('mascotCheer');
+        }
 
         // Auto-spin continuation
         if (this.autoSpinActive) {
