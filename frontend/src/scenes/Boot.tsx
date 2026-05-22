@@ -67,6 +67,7 @@ export class Boot extends Phaser.Scene {
     this.titleContainer = this.add.container(0, 0).setDepth(10);
     const titleShadowSettings = { offsetX: 0, offsetY: 4, color: '#000000', blur: 6, stroke: true, fill: true };
     this.titleShadow = this.add.text(0, 0, 'SUGAR BLAST', {
+        resolution: 2,
         fontFamily: '"Luckiest Guy", cursive, sans-serif',
         fontStyle: 'bold',
         color: '#ff006a',
@@ -76,6 +77,7 @@ export class Boot extends Phaser.Scene {
     }).setOrigin(0.5);
 
     this.titleMain = this.add.text(0, 0, 'SUGAR BLAST', {
+        resolution: 2,
         fontFamily: '"Luckiest Guy", cursive, sans-serif',
         fontStyle: 'bold',
         color: '#ffffff',
@@ -90,12 +92,14 @@ export class Boot extends Phaser.Scene {
     // ═══════════════════════════════════════════════════
     this.num1000Container = this.add.container(0, 0).setDepth(10);
     this.num1000Shadow = this.add.text(0, 0, '1000', {
+        resolution: 2,
         fontFamily: Theme.fonts.mono,
         fontStyle: 'bold',
         color: '#442200' // Darker backing
     }).setOrigin(0.5);
     
     this.num1000Main = this.add.text(0, 0, '1000', {
+        resolution: 2,
         fontFamily: Theme.fonts.mono,
         fontStyle: 'bold',
         color: Theme.colors.secondary,
@@ -110,6 +114,7 @@ export class Boot extends Phaser.Scene {
     this.subtitleContainer = this.add.container(0, 0).setDepth(10);
     this.subtitlePill = this.add.graphics();
     this.subtitleTxt = this.add.text(0, 0, '7×7 CLUSTER PAYS  •  CASCADING REELS  •  UP TO 25,000× WIN', {
+        resolution: 2,
         fontFamily: Theme.fonts.sans,
         fontStyle: 'bold',
         color: '#ffffff',
@@ -124,6 +129,7 @@ export class Boot extends Phaser.Scene {
     this.btnGlow = this.add.graphics();
     this.btnBg = this.add.graphics();
     this.playText = this.add.text(0, 0, '▶  PLAY', {
+        resolution: 2,
         fontFamily: Theme.fonts.display,
         fontStyle: 'bold',
         color: Theme.colors.textPrimary,
@@ -136,12 +142,14 @@ export class Boot extends Phaser.Scene {
     // FOOTERS
     // ═══════════════════════════════════════════════════
     this.footerRTP = this.add.text(0, 0, 'RTP: 96.50%  |  High Volatility  |  Cluster Pays', {
+        resolution: 2,
         fontFamily: Theme.fonts.sans,
         color: '#cccccc', // Brighter for better contrast on dark bg
         align: 'center'
     }).setOrigin(0.5).setDepth(10);
     
     this.footerCopy = this.add.text(0, 0, '© 2026 Stake Engine  |  Version 1.0.0', {
+        resolution: 2,
         fontFamily: Theme.fonts.sans,
         color: '#999999',
         align: 'center'

@@ -15,7 +15,6 @@ import {
   SpinControls,
   BackgroundManager,
   IntroSplash,
-  Mascot,
 } from '../components';
 import { getStakeEngine } from '../engine';
 import { SpinEventData, StakeEngineClient } from '../engine/StakeEngineClient';
@@ -41,7 +40,6 @@ export class Game extends Phaser.Scene {
   bottomBarHUD!: BottomBarHUD;
   spinControls!: SpinControls;
   introSplash!: IntroSplash;
-  mascot!: Mascot;
 
   private stakeEngine!: StakeEngineClient;
   private skipScreensActive = false;
@@ -269,15 +267,6 @@ export class Game extends Phaser.Scene {
     this.grid = new Grid(this);
     this.wireGridCallbacks();
 
-    // === MASCOT (Character interaction) ===
-    this.mascot = new Mascot(this);
-    this.mascot.init(0, 0);
-    
-    // Wire Mascot Events
-    this.events.on('mascotZap', (x: number, y: number) => this.mascot.playZap(x, y), this);
-    this.events.on('mascotCheer', () => this.mascot.playCheer(), this);
-    this.events.on('mascotSad', () => this.mascot.playDisappointment(), this);
-
     // === GRID FRAME (subtle overlay for cell delineation) ===
     this.gridFrame = this.add.graphics({ x: 0, y: 0 }).setDepth(2);
 
@@ -322,6 +311,7 @@ export class Game extends Phaser.Scene {
     // Shadow layer for 'SUGAR BLAST'
     const titleShadow = this.add
       .text(0, -22, 'SUGAR BLAST', {
+        resolution: 2,
         fontFamily: '"Luckiest Guy", cursive, sans-serif',
         fontSize: '46px',
         fontStyle: 'bold',
@@ -342,6 +332,7 @@ export class Game extends Phaser.Scene {
     // Main layer for 'SUGAR BLAST'
     this.logoText1 = this.add
       .text(0, -24, 'SUGAR BLAST', {
+        resolution: 2,
         fontFamily: '"Luckiest Guy", cursive, sans-serif',
         fontSize: '46px',
         fontStyle: 'bold',
@@ -362,8 +353,9 @@ export class Game extends Phaser.Scene {
     // Shadow layer for '1000'
     const num1000Shadow = this.add
       .text(0, 24, '1000', {
+        resolution: 2,
         fontFamily:
-          '"Slackey", "Chango", "Comic Sans MS", "Impact", sans-serif',
+          '"Montserrat", "Poppins", sans-serif',
         fontSize: '62px',
         fontStyle: 'bold',
         color: '#442200',
@@ -373,8 +365,9 @@ export class Game extends Phaser.Scene {
     // Main layer for '1000'
     this.logoText2 = this.add
       .text(0, 20, '1000', {
+        resolution: 2,
         fontFamily:
-          '"Slackey", "Chango", "Comic Sans MS", "Impact", sans-serif',
+          '"Montserrat", "Poppins", sans-serif',
         fontSize: '62px',
         fontStyle: 'bold',
         color: '#ffcc00',
@@ -401,6 +394,7 @@ export class Game extends Phaser.Scene {
 
     // Buy buttons setup
     const btnStyle = {
+      resolution: 2,
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
       fontStyle: 'normal',
       align: 'center',
@@ -458,12 +452,13 @@ export class Game extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .setDepth(21);
     this.anteBetIcon = this.add
-      .text(0, 0, '⚡', { fontFamily: '"Outfit", sans-serif' })
+      .text(0, 0, '⚡', { resolution: 2, fontFamily: '"Poppins", sans-serif' })
       .setOrigin(0.5)
       .setDepth(21);
     this.anteBetTxt = this.add
       .text(0, 0, T('ANTE BET', this.stakeEngine.isSocialMode()), {
-        fontFamily: '"Inter", "Arial", sans-serif',
+        resolution: 2,
+        fontFamily: '"Poppins", sans-serif',
         fontStyle: 'bold',
         color: '#ffffff',
       })
@@ -488,7 +483,8 @@ export class Game extends Phaser.Scene {
 
     this.featuresMenuTitleTxt = this.add
       .text(0, 0, 'BUY FEATURES', {
-        fontFamily: '"Outfit", "Inter", sans-serif',
+        resolution: 2,
+        fontFamily: '"Poppins", sans-serif',
         fontStyle: '900',
         color: '#ffffff',
       })
@@ -498,7 +494,8 @@ export class Game extends Phaser.Scene {
 
     this.featuresMenuCloseBtn = this.add
       .text(0, 0, 'X', {
-        fontFamily: '"Outfit", "Inter", sans-serif',
+        resolution: 2,
+        fontFamily: '"Poppins", sans-serif',
         fontStyle: '900',
         color: '#ffffff',
       })
@@ -523,6 +520,7 @@ export class Game extends Phaser.Scene {
       });
     this.btnFeaturesMenuIcon = this.add
       .text(0, 0, 'BUY', {
+        resolution: 2,
         fontSize: '20px',
         color: '#ffe600',
         fontStyle: 'bold',
@@ -540,6 +538,7 @@ export class Game extends Phaser.Scene {
     // === FREE SPINS COUNTER ===
     this.txtFSRemaining = this.add
       .text(0, 0, '', {
+        resolution: 2,
         fontSize: '36px',
         color: '#ffffff',
         align: 'center',
@@ -687,6 +686,7 @@ export class Game extends Phaser.Scene {
         .on('pointerdown', () => this.executeReplay());
       this.replayBtnTxt = this.add
         .text(0, 0, '▶ START REPLAY', {
+          resolution: 2,
           fontSize: '24px',
           fontFamily: '"Luckiest Guy", cursive, sans-serif',
           color: '#fff',
@@ -768,16 +768,6 @@ export class Game extends Phaser.Scene {
     this.grid.cellH = gridH / 7;
     this.grid.drawCellBackgrounds();
     this.grid.repositionSprites();
-
-    // === MASCOT POSITIONING ===
-    if (this.mascot) {
-      const mascotScale = isStacked ? Math.min(0.8, gridW / 350) : Math.min(1.2, gridW / 400);
-      // Position Mascot to the left of the grid frame, anchoring near bottom
-      const mascotX = gridX - (60 * mascotScale);
-      const mascotY = gridY + gridH - (70 * mascotScale);
-      this.mascot.setPosition(mascotX, mascotY);
-      this.mascot.setScale(mascotScale);
-    }
 
     // === GRID PANEL IMAGE ===
     this.gridPanel.setVisible(false); // Hide the old background image
@@ -2150,6 +2140,7 @@ export class Game extends Phaser.Scene {
           cy,
           `+${DisplayBalance({ amount: actualWin, currency: this.currency })}`,
           {
+            resolution: 2,
             fontSize: `${winFS}px`,
             color: '#ffe600',
             fontStyle: 'bold',
@@ -2212,6 +2203,7 @@ export class Game extends Phaser.Scene {
             this.scale.height / 2,
             `FREE SPINS TOTAL\n${DisplayBalance({ amount: totalWin, currency: this.currency })}`,
             {
+              resolution: 2,
               fontSize: '64px',
               color: '#ffe600',
               align: 'center',
@@ -2282,6 +2274,7 @@ export class Game extends Phaser.Scene {
       // MAX WIN reached — show special celebration
       const maxText = this.add
         .text(this.scale.width / 2, this.scale.height * 0.35, 'MAX WIN!', {
+          resolution: 2,
           fontSize: '96px',
           color: '#ffe600',
           fontStyle: 'bold',
@@ -2329,13 +2322,6 @@ export class Game extends Phaser.Scene {
           .catch((e) => console.warn('[Game] endRound error:', e));
         this.saveSpinRecord(this.lastWin, 'base');
         this.updateSpinButtonState();
-        
-        // Mascot Reactions
-        if (this.lastWin === 0) {
-          this.events.emit('mascotSad');
-        } else if (this.lastWin / this.getEffectiveBet() >= 5) {
-          this.events.emit('mascotCheer');
-        }
 
         // Auto-spin continuation
         if (this.autoSpinActive) {
