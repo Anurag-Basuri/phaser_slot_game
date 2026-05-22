@@ -93,7 +93,7 @@ export class PaytableOverlay {
 
   /** Add a section title with underline accent */
   private addSectionTitle(page: Phaser.GameObjects.Container, x: number, y: number, text: string): number {
-    page.add(this.scene.add.text(x, y, this.T(text), {
+    page.add(this.scene.add.text(x, y, this.T(text), { resolution: 2,
       fontSize: '22px', fontFamily: this.FONT_TITLE, color: '#ffffff', fontStyle: '700'
     }).setOrigin(0.5));
     const g = this.scene.add.graphics();
@@ -106,7 +106,7 @@ export class PaytableOverlay {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    this.container = this.scene.add.container(0, 0).setDepth(50).setVisible(false);
+    this.container = this.scene.add.container(0, 0).setDepth(100).setVisible(false);
     this.build();
 
     this.scene.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
@@ -130,7 +130,7 @@ export class PaytableOverlay {
     h = h || this.scene.scale.height;
 
     const logicalW = 860;
-    const logicalH = 640;
+    const logicalH = 680;
 
     // Dark translucent backdrop
     const bg = this.scene.add.graphics();
@@ -172,7 +172,7 @@ export class PaytableOverlay {
 
     // Title
     const isSocial = getStakeEngine().isSocialMode();
-    pageWrapper.add(this.scene.add.text(logicalW / 2, 32, this.T(T('GAME RULES', isSocial)), {
+    pageWrapper.add(this.scene.add.text(logicalW / 2, 32, this.T(T('GAME RULES', isSocial)), { resolution: 2,
       fontSize: '26px', fontFamily: this.FONT_TITLE, color: '#ffffff', fontStyle: '800'
     }).setOrigin(0.5));
 
@@ -183,7 +183,7 @@ export class PaytableOverlay {
     closeBtnGfx.lineStyle(1.5, 0xff006a, 0.5);
     closeBtnGfx.strokeCircle(logicalW - 35, 33, 16);
     pageWrapper.add(closeBtnGfx);
-    const closeBtn = this.scene.add.text(logicalW - 35, 33, this.T('✕'), {
+    const closeBtn = this.scene.add.text(logicalW - 35, 33, this.T('✕'), { resolution: 2,
       fontSize: '22px', color: '#ffffff', fontFamily: this.FONT_BODY, fontStyle: 'bold'
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     closeBtn.on('pointerdown', () => {
@@ -208,7 +208,7 @@ export class PaytableOverlay {
     const navY = logicalH - 38;
     const navCenter = logicalW / 2;
 
-    const prevBtn = this.scene.add.text(navCenter - 120, navY, this.T('< PREV'), {
+    const prevBtn = this.scene.add.text(navCenter - 120, navY, this.T('< PREV'), { resolution: 2,
       fontSize: '20px', color: '#ff006a', fontStyle: 'bold', fontFamily: this.FONT_BODY,
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     prevBtn.on('pointerdown', () => {
@@ -219,7 +219,7 @@ export class PaytableOverlay {
     prevBtn.on('pointerout', () => prevBtn.setColor('#ff006a'));
     pageWrapper.add(prevBtn);
 
-    const nextBtn = this.scene.add.text(navCenter + 120, navY, this.T('NEXT >'), {
+    const nextBtn = this.scene.add.text(navCenter + 120, navY, this.T('NEXT >'), { resolution: 2,
       fontSize: '20px', color: '#ff006a', fontStyle: 'bold', fontFamily: this.FONT_BODY,
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     nextBtn.on('pointerdown', () => {
@@ -235,15 +235,15 @@ export class PaytableOverlay {
     for (let i = 0; i < 8; i++) {
       const dot = this.scene.add.graphics();
       const dx = navCenter - 56 + i * 16;
-      dot.fillStyle(i === 0 ? 0xff006a : 0x332244, 1);
+      dot.fillStyle(i === 0 ? 0xffffff : 0x65627a, 1);
       dot.fillCircle(dx, navY, i === 0 ? 5 : 4);
-      if (i === 0) { dot.lineStyle(1, 0xff006a, 0.5); dot.strokeCircle(dx, navY, 7); }
+      if (i === 0) { dot.lineStyle(1, 0xffffff, 0.4); dot.strokeCircle(dx, navY, 7); }
       pageWrapper.add(dot);
       this.dotIndicators.push(dot);
     }
 
     // Page label
-    this.txtPageNum = this.scene.add.text(logicalW - 70, navY, this.T('1 / 8'), {
+    this.txtPageNum = this.scene.add.text(logicalW - 70, navY, this.T('1 / 8'), { resolution: 2,
       fontSize: '14px', color: '#8888aa', fontFamily: this.FONT_BODY
     }).setOrigin(0.5);
     pageWrapper.add(this.txtPageNum);
@@ -265,7 +265,7 @@ export class PaytableOverlay {
     this.drawCard(page, pad - 5, yPos - 5, w - pad * 2 + 10, 370);
 
     // Intro text
-    page.add(this.scene.add.text(w / 2, yPos + 5, this.T('Cluster Pays: Min 5 connected symbols (horizontal/vertical) on a 7\u00d77 grid.'), {
+    page.add(this.scene.add.text(w / 2, yPos + 5, this.T('Cluster Pays: Min 5 connected symbols (horizontal/vertical) on a 7\u00d77 grid.'), { resolution: 2,
       fontSize: '13px', color: this.COL_MUTED, align: 'center', fontFamily: this.FONT_BODY
     }).setOrigin(0.5, 0));
     yPos += 30;
@@ -298,7 +298,7 @@ export class PaytableOverlay {
       }
       const tierLabel = tier >= 15 ? '15+' : `${tier}`;
       // Tier label
-      page.add(this.scene.add.text(startX - 8, rowY, this.T(tierLabel), {
+      page.add(this.scene.add.text(startX - 8, rowY, this.T(tierLabel), { resolution: 2,
         fontSize: '11px', color: this.COL_MUTED, fontStyle: 'bold', fontFamily: this.FONT_BODY
       }).setOrigin(1, 0));
       // Values
@@ -307,7 +307,7 @@ export class PaytableOverlay {
         const payIdx = tier >= 15 ? 10 : tier - 5;
         const val = options.payvalues[symId][payIdx];
         const color = rowIdx < 2 ? this.COL_GOLD : rowIdx < 5 ? '#ffcc77' : this.COL_BODY;
-        page.add(this.scene.add.text(cx, rowY, this.T(val.toFixed(2)), {
+        page.add(this.scene.add.text(cx, rowY, this.T(val.toFixed(2)), { resolution: 2,
           fontSize: '11px', color, fontFamily: this.FONT_BODY, fontStyle: 'bold'
         }).setOrigin(0.5, 0));
       });
@@ -320,10 +320,10 @@ export class PaytableOverlay {
     const scatterIcon = this.scene.add.sprite(pad + 35, yPos + 22, 'scatter');
     scatterIcon.setScale(Math.min(0.28, 42 / Math.max(scatterIcon.width, 1)));
     page.add(scatterIcon);
-    page.add(this.scene.add.text(pad + 75, yPos + 8, this.T('SCATTER \u2014 Appears on all reels. Triggers Free Spins.'), {
+    page.add(this.scene.add.text(pad + 75, yPos + 8, this.T('SCATTER \u2014 Appears on all reels. Triggers Free Spins.'), { resolution: 2,
       fontSize: '13px', color: this.COL_BODY, fontFamily: this.FONT_BODY
     }));
-    page.add(this.scene.add.text(pad + 75, yPos + 28, this.T('3 or more Scatters award 10-30 Free Spins.'), {
+    page.add(this.scene.add.text(pad + 75, yPos + 28, this.T('3 or more Scatters award 10-30 Free Spins.'), { resolution: 2,
       fontSize: '12px', color: this.COL_MUTED, fontFamily: this.FONT_BODY
     }));
 
@@ -352,7 +352,7 @@ export class PaytableOverlay {
       '\u2022  All wins are added to your balance after the full sequence.',
     ];
     tumbleRules.forEach((line, i) => {
-      page.add(this.scene.add.text(pad + 20, yPos + 10 + i * 38, this.T(line), {
+      page.add(this.scene.add.text(pad + 20, yPos + 10 + i * 38, this.T(line), { resolution: 2,
         fontSize: '15px', color: this.COL_BODY, fontFamily: this.FONT_BODY, lineSpacing: 4,
         wordWrap: { width: w - pad * 2 - 50 }
       }));
@@ -365,15 +365,15 @@ export class PaytableOverlay {
     const stepW = (w - pad * 2) / steps.length;
     steps.forEach((s, i) => {
       const sx = pad + i * stepW + stepW / 2;
-      page.add(this.scene.add.text(sx, yPos + 20, this.T(s), {
+      page.add(this.scene.add.text(sx, yPos + 20, this.T(s), { resolution: 2,
         fontSize: '14px', color: i === 4 ? this.COL_GOLD : '#ffffff', fontStyle: 'bold', fontFamily: this.FONT_BODY
       }).setOrigin(0.5));
       if (i < steps.length - 1) {
-        page.add(this.scene.add.text(sx + stepW / 2, yPos + 20, this.T('\u2192'), {
+        page.add(this.scene.add.text(sx + stepW / 2, yPos + 20, this.T('\u2192'), { resolution: 2,
           fontSize: '16px', color: this.COL_ACCENT, fontFamily: this.FONT_BODY
         }).setOrigin(0.5));
       }
-      page.add(this.scene.add.text(sx, yPos + 42, this.T(['Start', 'Cluster pays', 'Symbols vanish', 'Fill gaps', 'Until no wins'][i]), {
+      page.add(this.scene.add.text(sx, yPos + 42, this.T(['Start', 'Cluster pays', 'Symbols vanish', 'Fill gaps', 'Until no wins'][i]), { resolution: 2,
         fontSize: '10px', color: this.COL_MUTED, fontFamily: this.FONT_BODY
       }).setOrigin(0.5));
     });
@@ -402,7 +402,7 @@ export class PaytableOverlay {
       '\u2022  Base game: multipliers reset after tumble sequence.',
     ];
     rules.forEach((line, i) => {
-      page.add(this.scene.add.text(pad + 20, yPos + 10 + i * 32, this.T(line), {
+      page.add(this.scene.add.text(pad + 20, yPos + 10 + i * 32, this.T(line), { resolution: 2,
         fontSize: '15px', color: this.COL_BODY, fontFamily: this.FONT_BODY,
         wordWrap: { width: w - pad * 2 - 50 }
       }));
@@ -411,7 +411,7 @@ export class PaytableOverlay {
 
     // Multiplier progression visual card
     this.drawCard(page, pad, yPos, w - pad * 2, 90, true);
-    page.add(this.scene.add.text(w / 2, yPos + 15, this.T('MULTIPLIER PROGRESSION'), {
+    page.add(this.scene.add.text(w / 2, yPos + 15, this.T('MULTIPLIER PROGRESSION'), { resolution: 2,
       fontSize: '12px', color: this.COL_MUTED, fontStyle: 'bold', fontFamily: this.FONT_BODY
     }).setOrigin(0.5));
     const mults = ['\u00d72', '\u00d74', '\u00d78', '\u00d716', '\u00d732', '\u00d764', '...', '\u00d71024'];
@@ -419,12 +419,12 @@ export class PaytableOverlay {
     mults.forEach((m, i) => {
       const mx = pad + 20 + i * mw + mw / 2;
       const isMax = i === mults.length - 1;
-      page.add(this.scene.add.text(mx, yPos + 48, this.T(m), {
+      page.add(this.scene.add.text(mx, yPos + 48, this.T(m), { resolution: 2,
         fontSize: isMax ? '18px' : '16px', color: isMax ? this.COL_GOLD : '#ffffff',
         fontStyle: 'bold', fontFamily: this.FONT_BODY
       }).setOrigin(0.5));
       if (i < mults.length - 1 && m !== '...') {
-        page.add(this.scene.add.text(mx + mw / 2, yPos + 48, this.T('\u2192'), {
+        page.add(this.scene.add.text(mx + mw / 2, yPos + 48, this.T('\u2192'), { resolution: 2,
           fontSize: '14px', color: this.COL_ACCENT, fontFamily: this.FONT_BODY
         }).setOrigin(0.5));
       }
@@ -433,10 +433,10 @@ export class PaytableOverlay {
 
     // Free spins note
     this.drawCard(page, pad, yPos, w - pad * 2, 55);
-    page.add(this.scene.add.text(w / 2, yPos + 14, this.T('\u26a1 During Free Spins, multipliers persist across all spins!'), {
+    page.add(this.scene.add.text(w / 2, yPos + 14, this.T('\u26a1 During Free Spins, multipliers persist across all spins!'), { resolution: 2,
       fontSize: '14px', color: this.COL_GOLD, fontFamily: this.FONT_BODY, fontStyle: 'bold'
     }).setOrigin(0.5));
-    page.add(this.scene.add.text(w / 2, yPos + 36, this.T('They are only cleared when the bonus round ends.'), {
+    page.add(this.scene.add.text(w / 2, yPos + 36, this.T('They are only cleared when the bonus round ends.'), { resolution: 2,
       fontSize: '12px', color: this.COL_MUTED, fontFamily: this.FONT_BODY
     }).setOrigin(0.5));
 
@@ -463,7 +463,7 @@ export class PaytableOverlay {
       '\u2022  Additional free spins are added to the remaining count.',
     ];
     fsRules.forEach((line, i) => {
-      page.add(this.scene.add.text(pad + 20, yPos + 8 + i * 30, this.T(line), {
+      page.add(this.scene.add.text(pad + 20, yPos + 8 + i * 30, this.T(line), { resolution: 2,
         fontSize: '14px', color: this.COL_BODY, fontFamily: this.FONT_BODY,
         wordWrap: { width: w - pad * 2 - 50 }
       }));
@@ -472,7 +472,7 @@ export class PaytableOverlay {
 
     // Scatter table card
     this.drawCard(page, pad, yPos - 5, w - pad * 2, 175, true);
-    page.add(this.scene.add.text(w / 2, yPos + 6, this.T('SCATTER AWARDS'), {
+    page.add(this.scene.add.text(w / 2, yPos + 6, this.T('SCATTER AWARDS'), { resolution: 2,
       fontSize: '13px', color: '#ffffff', fontStyle: 'bold', fontFamily: this.FONT_BODY
     }).setOrigin(0.5));
     yPos += 28;
@@ -491,13 +491,13 @@ export class PaytableOverlay {
         bg.fillRect(pad + 10, yPos - 2, w - pad * 2 - 20, 24);
         page.add(bg);
       }
-      page.add(this.scene.add.text(w / 2 - 60, yPos, this.T(row.count), {
+      page.add(this.scene.add.text(w / 2 - 60, yPos, this.T(row.count), { resolution: 2,
         fontSize: '14px', color: '#ffffff', fontStyle: 'bold', fontFamily: this.FONT_BODY
       }).setOrigin(1, 0));
-      page.add(this.scene.add.text(w / 2 - 20, yPos, this.T('\u2192'), {
+      page.add(this.scene.add.text(w / 2 - 20, yPos, this.T('\u2192'), { resolution: 2,
         fontSize: '14px', color: this.COL_ACCENT, fontFamily: this.FONT_BODY
       }).setOrigin(0.5, 0));
-      page.add(this.scene.add.text(w / 2 + 20, yPos, this.T(row.spins), {
+      page.add(this.scene.add.text(w / 2 + 20, yPos, this.T(row.spins), { resolution: 2,
         fontSize: '14px', color: this.COL_GOLD, fontStyle: 'bold', fontFamily: this.FONT_BODY
       }));
       yPos += 26;
@@ -506,7 +506,7 @@ export class PaytableOverlay {
 
     // Note at bottom about buy features
     this.drawCard(page, pad, yPos - 5, w - pad * 2, 45);
-    page.add(this.scene.add.text(w / 2, yPos + 12, this.T('\u27a1 See next page for Buy Free Spins options (1,000× and 500×)'), {
+    page.add(this.scene.add.text(w / 2, yPos + 12, this.T('\u27a1 See next page for Buy Free Spins options (1,000× and 500×)'), { resolution: 2,
       fontSize: '13px', color: this.COL_GOLD, fontFamily: this.FONT_BODY, fontStyle: 'bold'
     }).setOrigin(0.5));
 
@@ -525,7 +525,7 @@ export class PaytableOverlay {
     yPos = this.addSectionTitle(page, w / 2, yPos, 'BUY FREE SPINS');
 
     // Intro text
-    page.add(this.scene.add.text(w / 2, yPos, this.T('Two premium options to instantly trigger the Free Spins bonus round.'), {
+    page.add(this.scene.add.text(w / 2, yPos, this.T('Two premium options to instantly trigger the Free Spins bonus round.'), { resolution: 2,
       fontSize: '14px', color: this.COL_MUTED, fontFamily: this.FONT_BODY, fontStyle: 'italic'
     }).setOrigin(0.5));
     yPos += 30;
@@ -533,10 +533,10 @@ export class PaytableOverlay {
     // ───── 1000× ULTRA Card (TOP TIER) ─────
     this.drawCard(page, pad, yPos - 5, w - pad * 2, 195, true);
     // Title row
-    page.add(this.scene.add.text(pad + 25, yPos + 8, this.T('\ud83d\udc8e  ULTRA FREE SPINS'), {
+    page.add(this.scene.add.text(pad + 25, yPos + 8, this.T('\ud83d\udc8e  ULTRA FREE SPINS'), { resolution: 2,
       fontSize: '18px', color: '#ffffff', fontStyle: 'bold', fontFamily: '"Outfit", "Inter", sans-serif'
     }));
-    page.add(this.scene.add.text(w - pad - 25, yPos + 8, this.T('1,000× BET'), {
+    page.add(this.scene.add.text(w - pad - 25, yPos + 8, this.T('1,000× BET'), { resolution: 2,
       fontSize: '18px', color: this.COL_GOLD, fontStyle: 'bold', fontFamily: '"Luckiest Guy", cursive, sans-serif'
     }).setOrigin(1, 0));
     yPos += 38;
@@ -552,7 +552,7 @@ export class PaytableOverlay {
       '\u2022  Best chance to hit the 25,000× MAX WIN cap.',
     ];
     buy1000Rules.forEach((line, i) => {
-      page.add(this.scene.add.text(pad + 25, yPos + i * 19, this.T(line), {
+      page.add(this.scene.add.text(pad + 25, yPos + i * 19, this.T(line), { resolution: 2,
         fontSize: '12px', color: this.COL_BODY, fontFamily: this.FONT_BODY,
         wordWrap: { width: w - pad * 2 - 60 }
       }));
@@ -562,10 +562,10 @@ export class PaytableOverlay {
     // ───── 500× SUPER Card ─────
     this.drawCard(page, pad, yPos - 5, w - pad * 2, 175, true);
     // Title row
-    page.add(this.scene.add.text(pad + 25, yPos + 8, this.T('\u2b50  SUPER FREE SPINS'), {
+    page.add(this.scene.add.text(pad + 25, yPos + 8, this.T('\u2b50  SUPER FREE SPINS'), { resolution: 2,
       fontSize: '18px', color: '#ffffff', fontStyle: 'bold', fontFamily: '"Outfit", "Inter", sans-serif'
     }));
-    page.add(this.scene.add.text(w - pad - 25, yPos + 8, this.T('500× BET'), {
+    page.add(this.scene.add.text(w - pad - 25, yPos + 8, this.T('500× BET'), { resolution: 2,
       fontSize: '18px', color: this.COL_GOLD, fontStyle: 'bold', fontFamily: '"Luckiest Guy", cursive, sans-serif'
     }).setOrigin(1, 0));
     yPos += 38;
@@ -580,7 +580,7 @@ export class PaytableOverlay {
       '\u2022  Multipliers persist and compound across all spins.',
     ];
     buy500Rules.forEach((line, i) => {
-      page.add(this.scene.add.text(pad + 25, yPos + i * 19, this.T(line), {
+      page.add(this.scene.add.text(pad + 25, yPos + i * 19, this.T(line), { resolution: 2,
         fontSize: '12px', color: this.COL_BODY, fontFamily: this.FONT_BODY,
         wordWrap: { width: w - pad * 2 - 60 }
       }));
@@ -589,7 +589,7 @@ export class PaytableOverlay {
 
     // Important notes
     this.drawCard(page, pad, yPos - 5, w - pad * 2, 80);
-    page.add(this.scene.add.text(w / 2, yPos + 8, this.T('IMPORTANT'), {
+    page.add(this.scene.add.text(w / 2, yPos + 8, this.T('IMPORTANT'), { resolution: 2,
       fontSize: '13px', color: this.COL_ACCENT, fontStyle: 'bold', fontFamily: this.FONT_BODY
     }).setOrigin(0.5));
     const notes = [
@@ -598,7 +598,7 @@ export class PaytableOverlay {
       '\u2022  Max win cap of 25,000× applies to all bonus rounds.',
     ];
     notes.forEach((line, i) => {
-      page.add(this.scene.add.text(pad + 25, yPos + 26 + i * 17, this.T(line), {
+      page.add(this.scene.add.text(pad + 25, yPos + 26 + i * 17, this.T(line), { resolution: 2,
         fontSize: '11px', color: this.COL_MUTED, fontFamily: this.FONT_BODY,
         wordWrap: { width: w - pad * 2 - 60 }
       }));
@@ -617,10 +617,10 @@ export class PaytableOverlay {
     let yPos = 70;
     yPos = this.addSectionTitle(page, w / 2, yPos, 'GAME RULES');
     this.drawCard(page, pad, yPos - 5, w - pad * 2, 50, true);
-    page.add(this.scene.add.text(w / 2 - 40, yPos + 18, this.T('VOLATILITY'), {
+    page.add(this.scene.add.text(w / 2 - 40, yPos + 18, this.T('VOLATILITY'), { resolution: 2,
       fontSize: '14px', color: '#ffffff', fontStyle: 'bold', fontFamily: this.FONT_BODY
     }).setOrigin(0.5));
-    page.add(this.scene.add.text(w / 2 + 60, yPos + 18, this.T('\u26a1\u26a1\u26a1\u26a1\u26a1'), {
+    page.add(this.scene.add.text(w / 2 + 60, yPos + 18, this.T('\u26a1\u26a1\u26a1\u26a1\u26a1'), { resolution: 2,
       fontSize: '16px', color: this.COL_GOLD
     }).setOrigin(0.5));
     yPos += 60;
@@ -634,24 +634,24 @@ export class PaytableOverlay {
       '\u2022  Ante Bet: costs 25% more, doubles scatter chance.',
     ];
     rules.forEach((line, i) => {
-      page.add(this.scene.add.text(pad + 20, yPos + 8 + i * 28, this.T(line), {
+      page.add(this.scene.add.text(pad + 20, yPos + 8 + i * 28, this.T(line), { resolution: 2,
         fontSize: '14px', color: this.COL_BODY, fontFamily: this.FONT_BODY,
         wordWrap: { width: w - pad * 2 - 50 }
       }));
     });
     yPos += 210;
     this.drawCard(page, pad, yPos - 5, w - pad * 2, 95);
-    page.add(this.scene.add.text(pad + 20, yPos + 8, this.T('RTP (Return to Player)'), {
+    page.add(this.scene.add.text(pad + 20, yPos + 8, this.T('RTP (Return to Player)'), { resolution: 2,
       fontSize: '13px', color: this.COL_MUTED, fontStyle: 'bold', fontFamily: this.FONT_BODY
     }));
-    page.add(this.scene.add.text(pad + 20, yPos + 30, this.T('Base: 96.53%  |  Ultra FS: 96.50%  |  Super: 96.44%'), {
+    page.add(this.scene.add.text(pad + 20, yPos + 30, this.T('Base: 96.53%  |  Ultra FS: 96.50%  |  Super: 96.44%'), { resolution: 2,
       fontSize: '14px', color: '#ffffff', fontFamily: this.FONT_BODY
     }));
-    page.add(this.scene.add.text(pad + 20, yPos + 55, this.T(`Bet: ${BET_PRESETS[0].toFixed(2)} \u2013 ${BET_PRESETS[BET_PRESETS.length - 1].toFixed(2)}  |  Max Win: ${options.maxWinMultiplier.toLocaleString()}\u00d7`), {
+    page.add(this.scene.add.text(pad + 20, yPos + 55, this.T(`Bet: ${BET_PRESETS[0].toFixed(2)} \u2013 ${BET_PRESETS[BET_PRESETS.length - 1].toFixed(2)}  |  Max Win: ${options.maxWinMultiplier.toLocaleString()}\u00d7`), { resolution: 2,
       fontSize: '14px', color: this.COL_GOLD, fontFamily: this.FONT_BODY, fontStyle: 'bold'
     }));
     yPos += 105;
-    page.add(this.scene.add.text(w / 2, yPos + 5, this.T('Malfunction voids all wins and plays. A consistent internet connection is required.\nIn the event of a disconnection, reload the game to finish any uncompleted rounds.\nThe expected return is calculated over many plays. The game display is not representative\nof any physical device and is for illustrative purposes only. Winnings are settled\naccording to the amount received from the Remote Game Server and not from events\nwithin the web browser. TM and © 2026 Stake Engine.'), {
+    page.add(this.scene.add.text(w / 2, yPos + 5, this.T('Malfunction voids all wins and plays. A consistent internet connection is required.\nIn the event of a disconnection, reload the game to finish any uncompleted rounds.\nThe expected return is calculated over many plays. The game display is not representative\nof any physical device and is for illustrative purposes only. Winnings are settled\naccording to the amount received from the Remote Game Server and not from events\nwithin the web browser. TM and © 2026 Stake Engine.'), { resolution: 2,
       fontSize: '11px', color: this.COL_MUTED, fontStyle: 'italic', fontFamily: this.FONT_BODY, align: 'center', lineSpacing: 2
     }).setOrigin(0.5, 0));
     parent.add(page);
@@ -665,7 +665,7 @@ export class PaytableOverlay {
     const page = this.scene.add.container(0, 0).setVisible(false);
     let yPos = 75;
 
-    page.add(this.scene.add.text(w / 2, yPos, this.T('HOW TO PLAY'), {
+    page.add(this.scene.add.text(w / 2, yPos, this.T('HOW TO PLAY'), { resolution: 2,
       fontSize: '24px', fontFamily: '"Outfit", "Inter", sans-serif',
       color: '#ffffff', fontStyle: '800',
     }).setOrigin(0.5));
@@ -677,14 +677,14 @@ export class PaytableOverlay {
       'Press the SPIN button to play.',
     ];
     howTo.forEach((line) => {
-      page.add(this.scene.add.text(w / 2, yPos, this.T(line), {
+      page.add(this.scene.add.text(w / 2, yPos, this.T(line), { resolution: 2,
         fontSize: '15px', color: '#e0e0e0', align: 'center', fontFamily: '"Inter", "Arial", sans-serif'
       }).setOrigin(0.5, 0));
       yPos += 26;
     });
 
     yPos += 15;
-    page.add(this.scene.add.text(w / 2, yPos, this.T('MAIN GAME INTERFACE'), {
+    page.add(this.scene.add.text(w / 2, yPos, this.T('MAIN GAME INTERFACE'), { resolution: 2,
       fontSize: '20px', fontFamily: '"Outfit", "Inter", sans-serif',
       color: '#ffffff', fontStyle: '700',
     }).setOrigin(0.5));
@@ -710,7 +710,7 @@ export class PaytableOverlay {
     ];
 
     uiInfo.forEach((line) => {
-      page.add(this.scene.add.text(w / 2, yPos, this.T(line), {
+      page.add(this.scene.add.text(w / 2, yPos, this.T(line), { resolution: 2,
         fontSize: '14px', color: '#e0e0e0', align: 'center', fontFamily: '"Inter", "Arial", sans-serif'
       }).setOrigin(0.5, 0));
       yPos += line === '' ? 10 : 22;
@@ -727,7 +727,7 @@ export class PaytableOverlay {
     const page = this.scene.add.container(0, 0).setVisible(false);
     let yPos = 75;
 
-    page.add(this.scene.add.text(w / 2, yPos, this.T('SETTINGS MENU'), {
+    page.add(this.scene.add.text(w / 2, yPos, this.T('SETTINGS MENU'), { resolution: 2,
       fontSize: '24px', fontFamily: '"Outfit", "Inter", sans-serif',
       color: '#ffffff', fontStyle: '800',
     }).setOrigin(0.5));
@@ -740,52 +740,52 @@ export class PaytableOverlay {
       'GAME HISTORY – opens the game history page',
     ];
     settingsInfo.forEach((line) => {
-      page.add(this.scene.add.text(w / 2, yPos, this.T(line), {
+      page.add(this.scene.add.text(w / 2, yPos, this.T(line), { resolution: 2,
         fontSize: '13px', color: '#cccccc', align: 'center',
       }).setOrigin(0.5, 0));
       yPos += 22;
     });
 
     yPos += 20;
-    page.add(this.scene.add.text(w / 2, yPos, this.T('INFORMATION SCREEN'), {
+    page.add(this.scene.add.text(w / 2, yPos, this.T('INFORMATION SCREEN'), { resolution: 2,
       fontSize: '20px', fontFamily: '"Outfit", "Inter", sans-serif',
       color: '#ffffff', fontStyle: '700',
     }).setOrigin(0.5));
     yPos += 35;
 
-    page.add(this.scene.add.text(w / 2, yPos, this.T('◀  and  ▶  scroll between information pages'), {
+    page.add(this.scene.add.text(w / 2, yPos, this.T('◀  and  ▶  scroll between information pages'), { resolution: 2,
       fontSize: '13px', color: '#cccccc', align: 'center',
     }).setOrigin(0.5, 0));
     yPos += 22;
-    page.add(this.scene.add.text(w / 2, yPos, this.T('✕  closes the information screen'), {
+    page.add(this.scene.add.text(w / 2, yPos, this.T('✕  closes the information screen'), { resolution: 2,
       fontSize: '13px', color: '#cccccc', align: 'center',
     }).setOrigin(0.5, 0));
     yPos += 35;
 
-    page.add(this.scene.add.text(w / 2, yPos, this.T('BET MENU'), {
+    page.add(this.scene.add.text(w / 2, yPos, this.T('BET MENU'), { resolution: 2,
       fontSize: '20px', fontFamily: '"Outfit", "Inter", sans-serif',
       color: '#ffffff', fontStyle: '700',
     }).setOrigin(0.5));
     yPos += 32;
 
-    page.add(this.scene.add.text(w / 2, yPos, this.T('The bet menu shows the bet multiplier available in the game,\nand the current total bet in both coins and cash.'), {
+    page.add(this.scene.add.text(w / 2, yPos, this.T('The bet menu shows the bet multiplier available in the game,\nand the current total bet in both coins and cash.'), { resolution: 2,
       fontSize: '13px', color: '#cccccc', align: 'center', lineSpacing: 4,
     }).setOrigin(0.5, 0));
     yPos += 40;
 
-    page.add(this.scene.add.text(w / 2, yPos, this.T('Use the  ⊕  and  ⊖  buttons in the BET and COIN VALUE\nfields to change the values.'), {
+    page.add(this.scene.add.text(w / 2, yPos, this.T('Use the  ⊕  and  ⊖  buttons in the BET and COIN VALUE\nfields to change the values.'), { resolution: 2,
       fontSize: '13px', color: '#cccccc', align: 'center', lineSpacing: 4,
     }).setOrigin(0.5, 0));
     yPos += 45;
 
     // MAX WIN
-    page.add(this.scene.add.text(w / 2, yPos, this.T('MAX WIN'), {
+    page.add(this.scene.add.text(w / 2, yPos, this.T('MAX WIN'), { resolution: 2,
       fontSize: '22px', fontFamily: '"Outfit", "Inter", sans-serif',
       color: '#ffe600', fontStyle: '800',
     }).setOrigin(0.5));
     yPos += 30;
 
-    page.add(this.scene.add.text(w / 2, yPos, this.T(`The maximum win amount is limited to ${options.maxWinMultiplier.toLocaleString()}× bet.\nIf the total win of a round reaches ${options.maxWinMultiplier.toLocaleString()}× bet the round\nimmediately ends, win is awarded and all remaining\nfree spins are forfeited.`), {
+    page.add(this.scene.add.text(w / 2, yPos, this.T(`The maximum win amount is limited to ${options.maxWinMultiplier.toLocaleString()}× bet.\nIf the total win of a round reaches ${options.maxWinMultiplier.toLocaleString()}× bet the round\nimmediately ends, win is awarded and all remaining\nfree spins are forfeited.`), { resolution: 2,
       fontSize: '13px', color: '#cccccc', align: 'center', lineSpacing: 4,
     }).setOrigin(0.5, 0));
 
@@ -797,7 +797,7 @@ export class PaytableOverlay {
     page.add(sep);
     yPos += 15;
 
-    page.add(this.scene.add.text(w / 2, yPos, this.T('BUY ULTRA FREE SPINS: Pay 1,000× total bet with ×4 starting multipliers.\nBUY SUPER FREE SPINS: Pay 500× total bet with ×2 starting multipliers.'), {
+    page.add(this.scene.add.text(w / 2, yPos, this.T('BUY ULTRA FREE SPINS: Pay 1,000× total bet with ×4 starting multipliers.\nBUY SUPER FREE SPINS: Pay 500× total bet with ×2 starting multipliers.'), { resolution: 2,
       fontSize: '13px', color: '#aaaaaa', align: 'center', lineSpacing: 6, fontFamily: '"Inter", "Arial", sans-serif'
     }).setOrigin(0.5, 0));
 
@@ -824,15 +824,15 @@ export class PaytableOverlay {
     // Update dot indicators
     if (this.dotIndicators.length > 0) {
       const navCenter = 860 / 2;
-      const navY = 640 - 38;
+      const navY = 680 - 38;
       this.dotIndicators.forEach((dot, i) => {
         dot.clear();
         const dx = navCenter - 56 + i * 16;
         if (i === index) {
-          dot.fillStyle(0xff006a, 1); dot.fillCircle(dx, navY, 5);
-          dot.lineStyle(1, 0xff006a, 0.4); dot.strokeCircle(dx, navY, 7);
+          dot.fillStyle(0xffffff, 1); dot.fillCircle(dx, navY, 5);
+          dot.lineStyle(1, 0xffffff, 0.4); dot.strokeCircle(dx, navY, 7);
         } else {
-          dot.fillStyle(0x332244, 1); dot.fillCircle(dx, navY, 4);
+          dot.fillStyle(0x65627a, 1); dot.fillCircle(dx, navY, 4);
         }
       });
     }

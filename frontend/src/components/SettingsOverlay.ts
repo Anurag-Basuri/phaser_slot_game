@@ -69,57 +69,52 @@ export class SettingsOverlay {
     const panel = this.scene.add.graphics();
     
     // Outer drop shadow
-    panel.fillStyle(0x000000, 0.7);
-    panel.fillRoundedRect(panelX + 4, panelY + 6, panelW, panelH, 24);
+    panel.fillStyle(0x000000, 0.4);
+    panel.fillRoundedRect(panelX + 6, panelY + 8, panelW, panelH, 20);
 
-    // Glassmorphic gradient body
-    panel.fillGradientStyle(0x2d1b4e, 0x2d1b4e, 0x150b29, 0x150b29, 0.98);
+    // Main panel (dark premium background)
+    panel.fillGradientStyle(0x130f24, 0x130f24, 0x0a0812, 0x0a0812, 0.98);
     panel.fillRoundedRect(panelX, panelY, panelW, panelH, 20);
 
-    // Candy-pink top header banner
-    const headerH = 50;
-    panel.fillGradientStyle(0xff006a, 0xff006a, 0xcc0055, 0xcc0055, 1);
+    // Header gradient (matches Paytable)
+    const headerH = 60;
+    panel.fillGradientStyle(0xff006a, 0xff3388, 0x130f24, 0x130f24, 0.2, 0.2, 0, 0);
     panel.fillRoundedRect(panelX, panelY, panelW, headerH, { tl: 20, tr: 20, bl: 0, br: 0 } as any);
 
-    // Inner header glass highlight
-    panel.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.2, 0.2, 0, 0);
-    panel.fillRoundedRect(panelX + 2, panelY + 2, panelW - 4, headerH * 0.4, { tl: 18, tr: 18, bl: 0, br: 0 } as any);
-
-    // Glowing border outline
-    panel.lineStyle(2.5, 0xff88bb, 0.9);
+    // Border
+    panel.lineStyle(2, 0xff006a, 0.6);
     panel.strokeRoundedRect(panelX, panelY, panelW, panelH, 20);
-    panel.lineStyle(1, 0xffffff, 0.3);
+    
+    // Inner rim
+    panel.lineStyle(1, 0xffffff, 0.05);
     panel.strokeRoundedRect(panelX + 2, panelY + 2, panelW - 4, panelH - 4, 18);
+    panel.setInteractive(new Phaser.Geom.Rectangle(panelX, panelY, panelW, panelH), Phaser.Geom.Rectangle.Contains);
     this.container.add(panel);
 
     // Title text
-    const titleText = this.scene.add.text(w / 2, panelY + headerH / 2, 'SETTINGS', {
-      fontSize: isShort ? '20px' : '24px',
+    const titleText = this.scene.add.text(w / 2, panelY + headerH / 2 - 2, 'SETTINGS', { resolution: 2,
+      fontSize: isShort ? '22px' : '26px',
       color: '#ffffff',
       fontFamily: '"Outfit", "Inter", sans-serif',
-      fontStyle: '900'
-    }).setOrigin(0.5).setShadow(0, 2, '#000000', 3, true, true);
+      fontStyle: '800'
+    }).setOrigin(0.5);
     this.container.add(titleText);
 
-    // Circular neon close button
-    const closeBtnX = panelX + panelW - 25;
+    // Circular neon close button (matches Paytable)
+    const closeBtnX = panelX + panelW - 35;
     const closeBtnY = panelY + headerH / 2;
     const closeGfx = this.scene.add.graphics();
     
-    const drawCloseCircle = (hover: boolean) => {
-      closeGfx.clear();
-      closeGfx.fillStyle(hover ? 0xff006a : 0x1a0a2e, hover ? 0.3 : 1);
-      closeGfx.fillCircle(closeBtnX, closeBtnY, 13);
-      closeGfx.lineStyle(1.5, hover ? 0xffffff : 0xff88bb, 0.9);
-      closeGfx.strokeCircle(closeBtnX, closeBtnY, 13);
-    };
-    drawCloseCircle(false);
+    closeGfx.fillStyle(0xff006a, 0.12);
+    closeGfx.fillCircle(closeBtnX, closeBtnY, 16);
+    closeGfx.lineStyle(1.5, 0xff006a, 0.5);
+    closeGfx.strokeCircle(closeBtnX, closeBtnY, 16);
     this.container.add(closeGfx);
 
-    const closeBtn = this.scene.add.text(closeBtnX, closeBtnY, '✕', {
-      fontSize: '12px',
+    const closeBtn = this.scene.add.text(closeBtnX, closeBtnY, '✕', { resolution: 2,
+      fontSize: '22px',
       color: '#ffffff',
-      fontFamily: '"Inter", Arial, sans-serif',
+      fontFamily: '"Inter", "Arial", sans-serif',
       fontStyle: 'bold'
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
@@ -127,14 +122,15 @@ export class SettingsOverlay {
       (this.scene as any).audio.playSound('button');
       this.hide();
     });
-    closeBtn.on('pointerover', () => drawCloseCircle(true));
-    closeBtn.on('pointerout', () => drawCloseCircle(false));
+    closeBtn.on('pointerover', () => closeBtn.setColor('#ff4488'));
+    closeBtn.on('pointerout', () => closeBtn.setColor('#ffffff'));
     this.container.add(closeBtn);
 
     const labelStyle: Phaser.Types.GameObjects.Text.TextStyle = {
+      resolution: 2,
       fontSize: isShort ? '14px' : '16px',
       color: '#ffffff',
-      fontFamily: '"Outfit", "Inter", sans-serif',
+      fontFamily: '"Poppins", "Outfit", sans-serif',
       fontStyle: '800'
     };
 
@@ -175,13 +171,13 @@ export class SettingsOverlay {
       const infoY = panelY + panelH - 42;
       
       const infoBox = this.scene.add.graphics();
-      infoBox.fillStyle(0x07030f, 0.5);
+      infoBox.fillStyle(0x0d0a18, 0.5);
       infoBox.fillRoundedRect(panelX + 20, infoY, panelW - 40, 28, 8);
-      infoBox.lineStyle(1, 0xffffff, 0.05);
+      infoBox.lineStyle(1, 0xffffff, 0.07);
       infoBox.strokeRoundedRect(panelX + 20, infoY, panelW - 40, 28, 8);
       this.container.add(infoBox);
 
-      const infoText = this.scene.add.text(w / 2, infoY + 14, 'Sugar Blast 1000  •  RTP: 96.53%  •  v1.0.0  •  High Volatility', {
+      const infoText = this.scene.add.text(w / 2, infoY + 14, 'Sugar Blast 1000  •  RTP: 96.53%  •  v1.0.0  •  High Volatility', { resolution: 2,
         fontSize: '11px',
         color: '#99aabb',
         fontFamily: '"Outfit", "Inter", sans-serif',
@@ -224,27 +220,27 @@ export class SettingsOverlay {
 
       // Bottom Info Box
       const infoBox = this.scene.add.graphics();
-      infoBox.fillStyle(0x07030f, 0.5);
+      infoBox.fillStyle(0x0d0a18, 0.5);
       infoBox.fillRoundedRect(panelX + 20, rowY, panelW - 40, 85, 12);
-      infoBox.lineStyle(1, 0xffffff, 0.05);
+      infoBox.lineStyle(1, 0xffffff, 0.07);
       infoBox.strokeRoundedRect(panelX + 20, rowY, panelW - 40, 85, 12);
       this.container.add(infoBox);
 
-      this.container.add(this.scene.add.text(w / 2, rowY + 18, 'Sugar Blast 1000', {
+      this.container.add(this.scene.add.text(w / 2, rowY + 18, 'Sugar Blast 1000', { resolution: 2,
         fontSize: '18px',
         color: '#ff006a',
         fontFamily: '"Outfit", "Inter", sans-serif',
         fontStyle: '900'
       }).setOrigin(0.5).setShadow(0, 1.5, '#000000', 2, true, true));
 
-      this.container.add(this.scene.add.text(w / 2, rowY + 44, 'RTP: 96.53%   •   Max Win: 25,000×', {
+      this.container.add(this.scene.add.text(w / 2, rowY + 44, 'RTP: 96.53%   •   Max Win: 25,000×', { resolution: 2,
         fontSize: '13px',
         color: '#99aabb',
         fontFamily: '"Outfit", "Inter", sans-serif',
         fontStyle: '800'
       }).setOrigin(0.5));
 
-      this.container.add(this.scene.add.text(w / 2, rowY + 65, 'v1.0.0   •   High Volatility', {
+      this.container.add(this.scene.add.text(w / 2, rowY + 65, 'v1.0.0   •   High Volatility', { resolution: 2,
         fontSize: '11px',
         color: '#778899',
         fontFamily: '"Outfit", "Inter", sans-serif',
@@ -263,9 +259,9 @@ export class SettingsOverlay {
 
     // Row backplate
     const backplate = this.scene.add.graphics();
-    backplate.fillStyle(0xffffff, 0.03);
+    backplate.fillStyle(0x0d0a18, 0.5);
     backplate.fillRoundedRect(tileX, tileY, tileW, tileH, 10);
-    backplate.lineStyle(1, 0xffffff, 0.06);
+    backplate.lineStyle(1, 0xffffff, 0.07);
     backplate.strokeRoundedRect(tileX, tileY, tileW, tileH, 10);
     this.container.add(backplate);
 
@@ -290,7 +286,7 @@ export class SettingsOverlay {
       toggleGfx.clear();
       
       // Interpolate backgrounds
-      toggleGfx.fillStyle(0x2a1a40, 1 - p);
+      toggleGfx.fillStyle(0x000000, (1 - p) * 0.5);
       toggleGfx.fillRoundedRect(toggleX, toggleY, toggleW, toggleH, toggleH / 2);
       
       toggleGfx.fillStyle(0xff006a, p);
@@ -353,9 +349,9 @@ export class SettingsOverlay {
 
     // Row backplate
     const backplate = this.scene.add.graphics();
-    backplate.fillStyle(0xffffff, 0.03);
+    backplate.fillStyle(0x0d0a18, 0.5);
     backplate.fillRoundedRect(tileX, tileY, tileW, tileH, 10);
-    backplate.lineStyle(1, 0xffffff, 0.06);
+    backplate.lineStyle(1, 0xffffff, 0.07);
     backplate.strokeRoundedRect(tileX, tileY, tileW, tileH, 10);
     this.container.add(backplate);
 
@@ -370,9 +366,9 @@ export class SettingsOverlay {
     const trackY = tileY + (tileH - trackH) / 2;
 
     const trackBg = this.scene.add.graphics();
-    trackBg.fillStyle(0x07030f, 0.6);
+    trackBg.fillStyle(0x000000, 0.5);
     trackBg.fillRoundedRect(trackX, trackY, trackW, trackH, trackH / 2);
-    trackBg.lineStyle(1, 0x2a1a40, 1);
+    trackBg.lineStyle(1, 0xffffff, 0.05);
     trackBg.strokeRoundedRect(trackX, trackY, trackW, trackH, trackH / 2);
     this.container.add(trackBg);
 
@@ -409,7 +405,7 @@ export class SettingsOverlay {
       const optX = trackX + i * segW + segW / 2;
       const optY = trackY + trackH / 2;
 
-      const txt = this.scene.add.text(optX, optY, displayOpt, {
+      const txt = this.scene.add.text(optX, optY, displayOpt, { resolution: 2,
         fontFamily: '"Outfit", "Inter", sans-serif',
         fontSize: isShort ? '10px' : '11px',
         fontStyle: '900',
@@ -467,9 +463,15 @@ export class SettingsOverlay {
     this.onTurboToggle = cb;
   }
 
-  public syncState(musicEnabled: boolean, sfxEnabled: boolean) {
+  public setQualityCallback(cb: (quality: string) => void) {
+    this.onQualityChange = cb;
+  }
+
+  public syncState(musicEnabled: boolean, sfxEnabled: boolean, turboMode: boolean, quality: string) {
     this.musicEnabled = musicEnabled;
     this.sfxEnabled = sfxEnabled;
+    this.turboMode = turboMode;
+    this.currentQuality = quality;
   }
 
   public isTurboMode(): boolean { return this.turboMode; }

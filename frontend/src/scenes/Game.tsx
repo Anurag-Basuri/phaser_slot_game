@@ -648,6 +648,11 @@ export class Game extends Phaser.Scene {
       if (this.stakeEngine.isTurboDisabled()) return;
       this.grid.turboMode = enabled;
     });
+    this.settings.setQualityCallback?.((quality: string) => {
+      (this as any).graphicsQuality = quality;
+      // Hook up actual engine quality logic here if needed (e.g. particle density)
+      console.log('[Game] Graphics Quality set to:', quality);
+    });
 
     // Enforce jurisdiction flags from auth config
     if (this.stakeEngine.isFullscreenDisabled()) {
@@ -2044,6 +2049,12 @@ export class Game extends Phaser.Scene {
     this.btnSettings.on('pointerdown', () => {
       if (this.anyOverlayOpen()) return;
       this.audio.playSound('button');
+      this.settings.syncState(
+        this.musicEnabled, 
+        this.sfxEnabled, 
+        this.grid.turboMode, 
+        (this as any).graphicsQuality || 'HIGH'
+      );
       this.settings.toggle();
     });
 
