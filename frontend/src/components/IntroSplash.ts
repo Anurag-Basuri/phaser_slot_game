@@ -27,7 +27,7 @@ export class IntroSplash {
 
     // Title
     const title = this.scene.add.text(0, 0, 'SUGAR BLAST 1000', {
-      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      resolution: 2, fontFamily: '"Luckiest Guy", cursive, sans-serif',
       fontSize: '48px',
       color: '#ff006a',
       stroke: '#ffffff',
@@ -39,7 +39,7 @@ export class IntroSplash {
 
     // Features
     const feat1 = this.scene.add.text(0, 0, '⭐ MULTIPLIER SPOTS UP TO 1024X', {
-      fontFamily: '"Inter", sans-serif',
+      resolution: 2, fontFamily: '"Poppins", sans-serif',
       fontSize: '22px',
       color: '#ffffff',
       fontStyle: '800'
@@ -48,7 +48,7 @@ export class IntroSplash {
     this.container.setData('feat1', feat1);
 
     const feat2 = this.scene.add.text(0, 0, '💰 25,000X MAX WIN', {
-      fontFamily: '"Inter", sans-serif',
+      resolution: 2, fontFamily: '"Poppins", sans-serif',
       fontSize: '22px',
       color: '#ffe600',
       fontStyle: '800'
@@ -62,7 +62,7 @@ export class IntroSplash {
     this.container.setData('btnGfx', btnGfx);
 
     const btnTxt = this.scene.add.text(0, 0, 'CONTINUE', {
-      fontFamily: '"Inter", sans-serif',
+      resolution: 2, fontFamily: '"Poppins", sans-serif',
       fontSize: '24px',
       color: '#ffffff',
       fontStyle: '900',

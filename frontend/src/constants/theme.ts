@@ -56,15 +56,14 @@ export const Theme = {
   // ═════════════════════ TYPOGRAPHY ═════════════════════
   fonts: {
     // Font families
-    sans: '"Outfit", "Montserrat", -apple-system, BlinkMacSystemFont, sans-serif',
-    display:
-      '"Space Grotesk", "Poppins", -apple-system, BlinkMacSystemFont, sans-serif',
-    mono: '"Orbitron", monospace',
+    sans: '"Poppins", "Outfit", sans-serif',
+    display: '"Montserrat", "Poppins", sans-serif',
+    mono: '"Montserrat", "Inter", sans-serif',
     brand: '"Luckiest Guy", cursive, sans-serif', // Legacy brand font
 
     // Text styles
-    h1: { size: 48, weight: 800, family: '"Space Grotesk"' },
-    h2: { size: 36, weight: 700, family: '"Space Grotesk"' },
+    h1: { size: 48, weight: 800, family: '"Montserrat"' },
+    h2: { size: 36, weight: 700, family: '"Montserrat"' },
     h3: { size: 28, weight: 600, family: '"Outfit"' },
     h4: { size: 22, weight: 600, family: '"Outfit"' },
     h5: { size: 18, weight: 600, family: '"Outfit"' },
@@ -77,7 +76,7 @@ export const Theme = {
     button: { size: 14, weight: 600, family: '"Outfit"' },
     buttonLarge: { size: 16, weight: 700, family: '"Outfit"' },
 
-    numeric: { size: 24, weight: 700, family: '"Orbitron"' },
+    numeric: { size: 24, weight: 700, family: '"Montserrat"' },
   },
 
   // ═════════════════════ SHADOWS ═════════════════════
