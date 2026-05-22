@@ -156,6 +156,7 @@ export class FreeSpinsIntro {
     // ═══════════════════════════════════════════════════
     const titleText = this.scene.add
       .text(w / 2, h * 0.5, 'FREE SPINS', {
+        resolution: 2,
         fontSize: '76px',
         fontFamily: Theme.fonts.display,
         fontStyle: 'bold',
@@ -192,6 +193,7 @@ export class FreeSpinsIntro {
     // ═══════════════════════════════════════════════════
     const countText = this.scene.add
       .text(w / 2, h * 0.63, '0', {
+        resolution: 2,
         fontSize: '104px',
         fontFamily: Theme.fonts.mono,
         fontStyle: 'bold',
@@ -263,6 +265,7 @@ export class FreeSpinsIntro {
     // ═══════════════════════════════════════════════════
     const subText = this.scene.add
       .text(w / 2, h * 0.76, 'MULTIPLIERS PERSIST!', {
+        resolution: 2,
         fontSize: '20px',
         fontFamily: Theme.fonts.sans,
         fontStyle: 'bold',
@@ -288,6 +291,7 @@ export class FreeSpinsIntro {
     // ═══════════════════════════════════════════════════
     const skipHint = this.scene.add
       .text(w / 2, h * 0.9, 'TAP TO CONTINUE', {
+        resolution: 2,
         fontSize: '13px',
         fontFamily: Theme.fonts.sans,
         color: Theme.colors.textMuted,

@@ -120,6 +120,7 @@ export class Grid {
 
     // Phase 6: Cascade depth counter text — font scales with grid
     this.cascadeCounterTxt = this.scene.add.text(0, 0, '', {
+      resolution: 2,
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
       fontSize: '22px', // Will be overridden dynamically on each display
       color: '#ffffff',
@@ -785,6 +786,7 @@ export class Grid {
       const fontSize = mult >= 128 ? Math.max(9, cs * 0.16) : Math.max(11, cs * 0.22);
       if (!this.multiplierTexts[r][c]) {
         const txt = this.scene.add.text(badgeCX, badgeCY + 1, `×${mult}`, {
+          resolution: 2,
           fontFamily: '"Luckiest Guy", cursive, sans-serif',
           fontSize: `${Math.round(fontSize)}px`,
           color: '#ffffff',
@@ -1076,11 +1078,6 @@ export class Grid {
             } else {
               this.multipliers[r][c] = Math.min(this.multipliers[r][c] * 2, 1024);
               
-              // Trigger Mascot Zap for significant upgrades
-              if (this.multipliers[r][c] >= 4) {
-                this.scene.events.emit('mascotZap', this.getX(c), this.getY(r));
-              }
-
               // GRID SHOCKWAVE: Massive multiplier reached or utilized
               if (this.multipliers[r][c] >= 128 && !this.turboMode) {
                 // Intensity scales with the multiplier size
@@ -1163,6 +1160,7 @@ export class Grid {
 
           const winPopFS = Math.max(14, Math.min(28, this.cellW * 0.38));
           const winPop = this.scene.add.text(popX, popY, `+${clusterWin.toFixed(2)}`, {
+            resolution: 2,
             fontFamily: '"Luckiest Guy", cursive, sans-serif',
             fontSize: `${Math.round(winPopFS)}px`,
             color: '#ffee00',
@@ -1357,11 +1355,6 @@ export class Grid {
       if (scatter) {
         const origScale = scatter.scaleX;
         
-        // Mascot zaps the scatter symbol to tease it
-        this.scene.time.delayedCall(i * 150, () => {
-          this.scene.events.emit('mascotZap', sx, sy);
-        });
-
         this.scene.tweens.add({
           targets: scatter,
           scaleX: origScale * 1.3,
