@@ -198,6 +198,7 @@ export class WinCelebration {
     // ═══════════════════════════════════════════════════
     const tierText = this.scene.add
       .text(w / 2, h * 0.32, tier.name, {
+        resolution: 2,
         fontSize: `${tier.fontSize}px`,
         fontFamily: Theme.fonts.display,
         fontStyle: 'bold',
@@ -236,6 +237,7 @@ export class WinCelebration {
     // ═══════════════════════════════════════════════════
     const amountText = this.scene.add
       .text(w / 2, h * 0.54, '$0.00', {
+        resolution: 2,
         fontSize: `${Math.floor(tier.fontSize * 0.65)}px`,
         fontFamily: Theme.fonts.mono,
         fontStyle: 'bold',
@@ -442,6 +444,7 @@ export class WinCelebration {
     // ═══════════════════════════════════════════════════
     const skipText = this.scene.add
       .text(w / 2, h * 0.85, 'TAP TO CONTINUE', {
+        resolution: 2,
         fontSize: '14px',
         fontFamily: Theme.fonts.sans,
         fontStyle: 'bold',
