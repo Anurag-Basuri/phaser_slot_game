@@ -55,11 +55,11 @@ export class BottomBarHUD {
     const isSocial = getStakeEngine().isSocialMode();
 
     const tLabel: Phaser.Types.GameObjects.Text.TextStyle = {
-      fontFamily: this.FONT_LABEL, fontStyle: '600',
+      resolution: 2, fontFamily: this.FONT_LABEL, fontStyle: '600',
       color: this.COL_LABEL, letterSpacing: 1.5,
     };
     const tVal: Phaser.Types.GameObjects.Text.TextStyle = {
-      fontFamily: this.FONT_VALUE, fontStyle: '700',
+      resolution: 2, fontFamily: this.FONT_VALUE, fontStyle: '700',
       color: this.COL_VALUE,
     };
 
@@ -79,7 +79,7 @@ export class BottomBarHUD {
     this.winSymbolIcon = this.scene.add.sprite(0, 0, 'candy_0').setDepth(50).setVisible(false);
 
     this.demoLabel = this.scene.add.text(0, 0, '', {
-      fontFamily: this.FONT_LABEL, fontStyle: '700', color: '#ff4466'
+      resolution: 2, fontFamily: this.FONT_LABEL, fontStyle: '700', color: '#ff4466'
     }).setOrigin(0.5, 0.5).setDepth(50).setAlpha(0.7);
 
     if (getStakeEngine().isDemoMode()) {
