@@ -28,30 +28,32 @@ export class IntroSplash {
     // Title
     const title = this.scene.add.text(0, 0, 'SUGAR BLAST 1000', {
       resolution: 2, fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      fontSize: '48px',
-      color: '#ff006a',
-      stroke: '#ffffff',
-      strokeThickness: 6,
-      shadow: { offsetX: 0, offsetY: 4, color: '#000000', blur: 4, stroke: true, fill: true }
+      fontSize: '58px',
+      color: '#ffffff',
+      stroke: '#ff006a',
+      strokeThickness: 8,
+      shadow: { offsetX: 0, offsetY: 6, color: '#000000', blur: 6, stroke: true, fill: true }
     }).setOrigin(0.5);
     this.container.add(title);
     this.container.setData('title', title);
 
     // Features
     const feat1 = this.scene.add.text(0, 0, '⭐ MULTIPLIER SPOTS UP TO 1024X', {
-      resolution: 2, fontFamily: '"Poppins", sans-serif',
-      fontSize: '22px',
+      resolution: 2, fontFamily: '"Outfit", "Inter", sans-serif',
+      fontSize: '20px',
       color: '#ffffff',
-      fontStyle: '800'
+      fontStyle: '800',
+      shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 3, stroke: false, fill: true }
     }).setOrigin(0.5);
     this.container.add(feat1);
     this.container.setData('feat1', feat1);
 
     const feat2 = this.scene.add.text(0, 0, '💰 25,000X MAX WIN', {
-      resolution: 2, fontFamily: '"Poppins", sans-serif',
+      resolution: 2, fontFamily: '"Outfit", "Inter", sans-serif',
       fontSize: '22px',
       color: '#ffe600',
-      fontStyle: '800'
+      fontStyle: '900',
+      shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 3, stroke: false, fill: true }
     }).setOrigin(0.5);
     this.container.add(feat2);
     this.container.setData('feat2', feat2);
@@ -62,8 +64,8 @@ export class IntroSplash {
     this.container.setData('btnGfx', btnGfx);
 
     const btnTxt = this.scene.add.text(0, 0, 'CONTINUE', {
-      resolution: 2, fontFamily: '"Poppins", sans-serif',
-      fontSize: '24px',
+      resolution: 2, fontFamily: '"Outfit", "Inter", sans-serif',
+      fontSize: '26px',
       color: '#ffffff',
       fontStyle: '900',
       shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 2, stroke: true, fill: true }
@@ -120,6 +122,7 @@ export class IntroSplash {
     if (!this.isVisible) return;
     const w = this.scene.scale.width;
     const h = this.scene.scale.height;
+    const isMobile = w < 600;
 
     const overlay = this.container.getData('overlay') as Phaser.GameObjects.Graphics;
     overlay.clear();
@@ -129,38 +132,77 @@ export class IntroSplash {
 
     const cx = w / 2;
     const cy = h / 2;
-    const modalW = Math.min(500, w * 0.95);
-    const modalH = 320;
+    const modalW = Math.min(520, w * 0.88);
+    const modalH = Math.min(340, h * 0.55);
 
     const bg = this.container.getData('bg') as Phaser.GameObjects.Graphics;
     bg.clear();
-    bg.fillStyle(0x1a0a2a, 0.95);
+    
+    // Outer drop shadow
+    bg.fillStyle(0x000000, 0.5);
+    bg.fillRoundedRect(cx - modalW / 2 + 8, cy - modalH / 2 + 10, modalW, modalH, 24);
+
+    // Premium dark gradient body
+    bg.fillGradientStyle(0x130f24, 0x130f24, 0x0a0812, 0x0a0812, 0.98);
     bg.fillRoundedRect(cx - modalW / 2, cy - modalH / 2, modalW, modalH, 20);
-    bg.lineStyle(3, 0xff006a, 1);
+
+    // Glowing border outline
+    bg.lineStyle(2, 0xff006a, 0.6);
     bg.strokeRoundedRect(cx - modalW / 2, cy - modalH / 2, modalW, modalH, 20);
 
+    // Inner rim highlight
+    bg.lineStyle(1, 0xffffff, 0.08);
+    bg.strokeRoundedRect(cx - modalW / 2 + 2, cy - modalH / 2 + 2, modalW - 4, modalH - 4, 18);
+
+    // Responsive font sizes
+    const titleFS = isMobile ? Math.min(32, modalW * 0.08) : Math.min(48, modalW * 0.10);
+    const titleStroke = isMobile ? Math.max(3, titleFS * 0.12) : Math.max(5, titleFS * 0.14);
+    const feat1FS = isMobile ? Math.min(14, modalW * 0.035) : Math.min(18, modalW * 0.04);
+    const feat2FS = isMobile ? Math.min(16, modalW * 0.04) : Math.min(20, modalW * 0.045);
+    const btnTxtFS = isMobile ? Math.min(20, modalW * 0.05) : Math.min(24, modalW * 0.055);
+
     const title = this.container.getData('title') as Phaser.GameObjects.Text;
-    title.setPosition(cx, cy - 90);
+    title.setPosition(cx, cy - modalH * 0.26);
+    title.setFontSize(titleFS);
+    title.setStroke('#ff006a', titleStroke);
 
     const feat1 = this.container.getData('feat1') as Phaser.GameObjects.Text;
-    feat1.setPosition(cx, cy - 10);
+    feat1.setPosition(cx, cy - modalH * 0.02);
+    feat1.setFontSize(feat1FS);
 
     const feat2 = this.container.getData('feat2') as Phaser.GameObjects.Text;
-    feat2.setPosition(cx, cy + 30);
+    feat2.setPosition(cx, cy + modalH * 0.10);
+    feat2.setFontSize(feat2FS);
 
-    const btnY = cy + 100;
-    const btnW = 200;
-    const btnH = 50;
+    const btnY = cy + modalH * 0.33;
+    const btnW = Math.min(220, modalW * 0.55);
+    const btnH = Math.min(50, modalH * 0.16);
+    const btnR = btnH / 2;
 
     const btnGfx = this.container.getData('btnGfx') as Phaser.GameObjects.Graphics;
     btnGfx.clear();
-    btnGfx.fillGradientStyle(0xff006a, 0xff006a, 0xcc0044, 0xcc0044, 1);
-    btnGfx.fillRoundedRect(cx - btnW / 2, btnY - btnH / 2, btnW, btnH, btnH / 2);
-    btnGfx.lineStyle(2, 0xffffff, 0.8);
-    btnGfx.strokeRoundedRect(cx - btnW / 2, btnY - btnH / 2, btnW, btnH, btnH / 2);
+    
+    // Outer drop shadow
+    btnGfx.fillStyle(0x000000, 0.4);
+    btnGfx.fillRoundedRect(cx - btnW / 2 + 4, btnY - btnH / 2 + 5, btnW, btnH, btnR);
+
+    // Candy-pink gradient body
+    btnGfx.fillGradientStyle(0xff006a, 0xff006a, 0xcc0055, 0xcc0055, 1);
+    btnGfx.fillRoundedRect(cx - btnW / 2, btnY - btnH / 2, btnW, btnH, btnR);
+
+    // Inner top highlight (glassmorphic pill)
+    btnGfx.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.35, 0.35, 0, 0);
+    btnGfx.fillRoundedRect(cx - btnW / 2 + 2, btnY - btnH / 2 + 2, btnW - 4, btnH * 0.4, {
+      tl: btnR - 2, tr: btnR - 2, bl: 0, br: 0
+    } as any);
+
+    // Crisp white border
+    btnGfx.lineStyle(2, 0xffffff, 0.9);
+    btnGfx.strokeRoundedRect(cx - btnW / 2, btnY - btnH / 2, btnW, btnH, btnR);
 
     const btnTxt = this.container.getData('btnTxt') as Phaser.GameObjects.Text;
     btnTxt.setPosition(cx, btnY);
+    btnTxt.setFontSize(btnTxtFS);
 
     const btnHit = this.container.getData('btnHit') as Phaser.GameObjects.Rectangle;
     btnHit.setPosition(cx, btnY).setSize(btnW, btnH);
