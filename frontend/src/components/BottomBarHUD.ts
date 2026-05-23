@@ -39,6 +39,12 @@ export class BottomBarHUD {
   private _prevMoney = -1;
   private _winCountTween: Phaser.Tweens.Tween | null = null;
   private _iconTargetScale = 0.2;
+  
+  // Layout State
+  private _lastW = 0;
+  private _lastH = 0;
+  private _lastBarH = 0;
+  private _lastIsMobile = false;
 
   private readonly COL_LABEL = '#bbbbcc';  // Premium subtle silver/gray for labels
   private readonly COL_VALUE = '#ffffff';
@@ -127,87 +133,12 @@ export class BottomBarHUD {
       bb.fillCircle(sx, sy, 3 + (i % 3));
     }
 
-    const txtY = h - barH / 2;
-    const sidePad = isMobile ? 12 : 24;
-    const labelFS = Math.max(9, Math.min(13, barH * 0.28));
-    const valFS = Math.max(12, Math.min(18, barH * 0.42));
-    
-    const isSmall = w < 600;
-    const isSocial = getStakeEngine().isSocialMode();
-    this.txtMoneyLabel.setText(isSmall ? 'BAL' : T('BALANCE', isSocial));
-    this.txtLastWinLabel.setText(isSmall ? 'WIN' : T('LAST WIN', isSocial));
+    this._lastW = w;
+    this._lastH = h;
+    this._lastBarH = barH;
+    this._lastIsMobile = isMobile;
 
-    // Reset scales in case they were shrunken previously
-    this.txtMoneyLabel.setScale(1);
-    this.txtMoney.setScale(1);
-    this.txtBetLabel.setScale(1);
-    this.txtBet.setScale(1);
-    this.txtLastWinLabel.setScale(1);
-    this.txtLastWin.setScale(1);
-
-    // ── Pre-calculate text sizing to prevent overlap ──
-    // Uses setFontSize() instead of setScale() for crisp text at any size.
-    // setScale() downsamples 2× pre-rendered textures causing blurriness.
-    const zoneLimit = (w - sidePad * 2) / 3 - (isSmall ? 2 : 10);
-    
-    const applyFit = (lbl: Phaser.GameObjects.Text, val: Phaser.GameObjects.Text, lblFS: number, vFS: number, gap: number, extraW: number = 0) => {
-      // First set the intended font sizes
-      lbl.setFontSize(lblFS);
-      val.setFontSize(vFS);
-      const total = lbl.width + gap + val.width + extraW;
-      if (total > zoneLimit) {
-        const shrink = zoneLimit / total;
-        lbl.setFontSize(Math.max(7, Math.round(lblFS * shrink)));
-        val.setFontSize(Math.max(9, Math.round(vFS * shrink)));
-      }
-    };
-
-    const balGap = isSmall ? 6 : 12;
-    applyFit(this.txtMoneyLabel, this.txtMoney, labelFS, valFS, balGap);
-
-    const betGap = isSmall ? 6 : 10;
-    applyFit(this.txtBetLabel, this.txtBet, labelFS, valFS, betGap);
-
-    const targetIconHeight = Math.max(14, barH * 0.45);
-    const baseHeight = this.winSymbolIcon.height > 0 ? this.winSymbolIcon.height : 256;
-    this._iconTargetScale = targetIconHeight / baseHeight;
-    const iconOffset = this.winSymbolIcon.visible ? targetIconHeight + 8 : 0;
-    const winGap = isSmall ? 8 : 16;
-    applyFit(this.txtLastWinLabel, this.txtLastWin, labelFS, valFS, winGap, iconOffset);
-
-    // ── Zone 1: BALANCE (Far Left) ──
-    // Scale is always 1 now (font size adjusted directly), so width == visual width
-    this.txtMoneyLabel.setPosition(sidePad, txtY).setOrigin(0, 0.5);
-    const balLblVisualW = this.txtMoneyLabel.width;
-    this.txtMoney.setPosition(sidePad + balLblVisualW + balGap, txtY).setOrigin(0, 0.5);
-
-    // ── Zone 3: WIN (Far Right) ──
-    this.txtLastWin.setVisible(true).setPosition(w - sidePad, txtY).setOrigin(1, 0.5);
-    const winValVisualW = this.txtLastWin.width;
-    
-    if (this.winSymbolIcon.visible) {
-      this.winSymbolIcon.setPosition(w - sidePad - winValVisualW - 12, txtY).setScale(this._iconTargetScale);
-    }
-    
-    this.txtLastWinLabel.setVisible(true)
-      .setPosition(w - sidePad - winValVisualW - iconOffset - winGap, txtY)
-      .setOrigin(1, 0.5);
-
-    // ── Zone 2: BET (Center) ──
-    const centerX = w / 2;
-    this.txtBetLabel.setOrigin(1, 0.5);
-    this.txtBet.setOrigin(0, 0.5);
-    
-    const betLblW = this.txtBetLabel.width;
-    const betValW = this.txtBet.width;
-    const betTotalW = betLblW + betGap + betValW;
-    
-    this.txtBetLabel.setPosition(centerX - betTotalW / 2 + betLblW, txtY);
-    this.txtBet.setPosition(centerX - betTotalW / 2 + betLblW + betGap, txtY);
-    this.betPillHit.setPosition(centerX, txtY).setSize(Math.max(120, betTotalW + 40), barH);
-
-    // Define win bounds for particle effect targeting
-    this._winPillBounds = { x: w - sidePad - winValVisualW - 50, w: 100, y: h - barH, h: barH };
+    this.realignText();
 
     // Demo label — top right of the screen, unobtrusive
     if (this.demoLabel.text) {
@@ -247,6 +178,8 @@ export class BottomBarHUD {
         onComplete: () => { this.txtMoney.setColor('#ffffff'); }
       });
     }
+
+    this.realignText();
   }
 
   updateBetDisplay(betPresetIndex: number, currency: string, anteBetEnabled: boolean) {
@@ -278,6 +211,8 @@ export class BottomBarHUD {
     } else {
       this.txtBet.setText(formatted);
     }
+    
+    this.realignText();
   }
 
   setWinSymbol(key?: string) {
@@ -292,8 +227,8 @@ export class BottomBarHUD {
       duration: 350,
       ease: 'Back.easeOut'
     });
-    // Position sync
-    this.winSymbolIcon.x = this.txtLastWin.x - (this.txtLastWin.width * this.txtLastWin.scaleX) - 18;
+    
+    this.realignText();
   }
 
   updateLastWinDisplay(target: number, currency: string, betAmount: number, symbolKey?: string) {
@@ -318,13 +253,7 @@ export class BottomBarHUD {
       ease: 'Cubic.easeOut',
       onUpdate: () => {
         this.txtLastWin.setText(DisplayBalance({ amount: counter.val, currency }));
-        // Keep icon position synced if text width changes
-        if (this.winSymbolIcon.visible) {
-          const winX = this._winPillBounds.x;
-          const winW = this._winPillBounds.w;
-          const pillPad = this.txtMoneyLabel.x - this.bar.x; // approximate padding
-          this.winSymbolIcon.x = winX + winW - 16 - (this.txtLastWin.width * this.txtLastWin.scaleX) - 18;
-        }
+        this.realignText();
       },
       onStart: () => {
         this.scene.tweens.add({
@@ -335,13 +264,13 @@ export class BottomBarHUD {
       },
       onComplete: () => {
         this.txtLastWin.setText(DisplayBalance({ amount: target, currency }));
+        this.realignText();
         this.txtLastWin.setColor(this.COL_WIN);
         this.scene.tweens.add({
           targets: this.txtLastWin,
           scaleX: 1.25, scaleY: 1.25,
           duration: 200, yoyo: true, ease: 'Back.easeOut',
         });
-        // Show winning candy icon next to the final win value
         if (symbolKey) {
           this.winSymbolIcon.setTexture(symbolKey).setVisible(true).setScale(0);
           this.scene.tweens.add({
@@ -375,5 +304,93 @@ export class BottomBarHUD {
     this.txtBetLabel.setVisible(false);
     this.txtBet.setVisible(false);
     this.betPillHit.setVisible(false);
+  }
+
+  private realignText() {
+    if (this._lastW === 0) return; // Not laid out yet
+
+    const w = this._lastW;
+    const h = this._lastH;
+    const barH = this._lastBarH;
+    const isMobile = this._lastIsMobile;
+
+    const txtY = h - barH / 2;
+    const sidePad = isMobile ? 12 : 24;
+    const labelFS = Math.max(9, Math.min(13, barH * 0.28));
+    const valFS = Math.max(12, Math.min(18, barH * 0.42));
+    
+    const isSmall = w < 600;
+    const isSocial = getStakeEngine().isSocialMode();
+    this.txtMoneyLabel.setText(isSmall ? 'BAL' : T('BALANCE', isSocial));
+    this.txtLastWinLabel.setText(isSmall ? 'WIN' : T('LAST WIN', isSocial));
+
+    // Reset scales in case they were shrunken previously
+    this.txtMoneyLabel.setScale(1);
+    this.txtMoney.setScale(1);
+    this.txtBetLabel.setScale(1);
+    this.txtBet.setScale(1);
+    this.txtLastWinLabel.setScale(1);
+    this.txtLastWin.setScale(1);
+
+    // ── Pre-calculate text sizing to prevent overlap ──
+    const zoneLimit = (w - sidePad * 2) / 3 - (isSmall ? 2 : 10);
+    
+    const applyFit = (lbl: Phaser.GameObjects.Text, val: Phaser.GameObjects.Text, lblFS: number, vFS: number, gap: number, extraW: number = 0) => {
+      // First set the intended font sizes
+      lbl.setFontSize(lblFS);
+      val.setFontSize(vFS);
+      const total = lbl.width + gap + val.width + extraW;
+      if (total > zoneLimit) {
+        const shrink = zoneLimit / total;
+        lbl.setFontSize(Math.max(7, Math.round(lblFS * shrink)));
+        val.setFontSize(Math.max(9, Math.round(vFS * shrink)));
+      }
+    };
+
+    const balGap = isSmall ? 6 : 12;
+    applyFit(this.txtMoneyLabel, this.txtMoney, labelFS, valFS, balGap);
+
+    const betGap = isSmall ? 6 : 10;
+    applyFit(this.txtBetLabel, this.txtBet, labelFS, valFS, betGap);
+
+    const targetIconHeight = Math.max(14, barH * 0.45);
+    const baseHeight = this.winSymbolIcon.height > 0 ? this.winSymbolIcon.height : 256;
+    this._iconTargetScale = targetIconHeight / baseHeight;
+    const iconOffset = this.winSymbolIcon.visible ? targetIconHeight + 8 : 0;
+    const winGap = isSmall ? 8 : 16;
+    applyFit(this.txtLastWinLabel, this.txtLastWin, labelFS, valFS, winGap, iconOffset);
+
+    // ── Zone 1: BALANCE (Far Left) ──
+    this.txtMoneyLabel.setPosition(sidePad, txtY).setOrigin(0, 0.5);
+    const balLblVisualW = this.txtMoneyLabel.width;
+    this.txtMoney.setPosition(sidePad + balLblVisualW + balGap, txtY).setOrigin(0, 0.5);
+
+    // ── Zone 3: WIN (Far Right) ──
+    this.txtLastWin.setVisible(true).setPosition(w - sidePad, txtY).setOrigin(1, 0.5);
+    const winValVisualW = this.txtLastWin.width;
+    
+    if (this.winSymbolIcon.visible) {
+      this.winSymbolIcon.setPosition(w - sidePad - winValVisualW - 12, txtY).setScale(this._iconTargetScale);
+    }
+    
+    this.txtLastWinLabel.setVisible(true)
+      .setPosition(w - sidePad - winValVisualW - iconOffset - winGap, txtY)
+      .setOrigin(1, 0.5);
+
+    // ── Zone 2: BET (Center) ──
+    const centerX = w / 2;
+    this.txtBetLabel.setOrigin(1, 0.5);
+    this.txtBet.setOrigin(0, 0.5);
+    
+    const betLblW = this.txtBetLabel.width;
+    const betValW = this.txtBet.width;
+    const betTotalW = betLblW + betGap + betValW;
+    
+    this.txtBetLabel.setPosition(centerX - betTotalW / 2 + betLblW, txtY);
+    this.txtBet.setPosition(centerX - betTotalW / 2 + betLblW + betGap, txtY);
+    this.betPillHit.setPosition(centerX, txtY).setSize(Math.max(120, betTotalW + 40), barH);
+
+    // Define win bounds for particle effect targeting
+    this._winPillBounds = { x: w - sidePad - winValVisualW - 50, w: 100, y: h - barH, h: barH };
   }
 }

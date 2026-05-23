@@ -39,8 +39,8 @@ const R = {
   // Autoplay pill dimensions as fraction of spinSize
   autoPillW: 1.15,
   autoPillH: 0.32,
-  autoGapPortrait: 0.20,   // gap between spin bottom and auto pill
-  autoGapLandscape: 0.32,
+  autoGapPortrait: 0.35,   // Increased gap to separate auto pill from spin button
+  autoGapLandscape: 0.40,
 
   // Toolbar icon radius as fraction of gridSize
   toolbarIcon: 0.05,
@@ -152,10 +152,10 @@ export function computeLayout(w: number, h: number): LayoutMetrics {
 
     // Bottom reserved: spin + autoplay + larger buy panels + padding
     // Increased significantly to give the buy/ante panels breathing room
-    const bottomEstimate = clamp(Math.round(h * 0.27), 160, 250);
+    const bottomEstimate = clamp(Math.round(h * 0.30), 200, 300);
 
     const availableH = safeH - topReserved - bottomEstimate;
-    const maxGridW = w * 0.92;
+    const maxGridW = w * 0.82;
 
     gridSize = Math.min(maxGridW, availableH);
     gridSize = Math.max(gridSize, CLAMP.gridMin);
@@ -212,8 +212,11 @@ export function computeLayout(w: number, h: number): LayoutMetrics {
     const availBottom = safeH - gridBottom;
     // Total vertical space needed: spinSize + autoGap + autoPillH
     const totalControlsH = spinSize + autoGap + autoPillH;
-    // Center the control group vertically in the available bottom space
-    const controlsTopY = gridBottom + Math.max(10, (availBottom - totalControlsH) / 2);
+    
+    // Push the control group towards the bottom bar to leave a large open space above it
+    // for the Buy Feature and Ante Bet panels.
+    const pushDownFactor = 0.85; // 0.5 = center, 1.0 = flush to bottom
+    const controlsTopY = gridBottom + Math.max(10, (availBottom - totalControlsH) * pushDownFactor);
     spinY = controlsTopY + spinSize / 2;
 
     // Safety clamps — ensure controls never overlap grid or bottom bar
