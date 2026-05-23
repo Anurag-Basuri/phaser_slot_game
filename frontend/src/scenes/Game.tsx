@@ -22,6 +22,7 @@ import { StakeError } from '../engine/StakeEngineClient';
 import options, { BET_PRESETS } from '../options';
 import { DisplayBalance } from '../helpers/Currency';
 import { T } from '../helpers/I18n';
+import { computeLayout } from '../constants/LayoutEngine';
 
 /**
  * Main Game Scene — Production-ready for Stake Engine.
@@ -711,69 +712,29 @@ export class Game extends Phaser.Scene {
       this.backgroundManager.resize(w, h);
     }
 
-    // Determine layout mode
-    const isPortrait = h > w;
-    const isMobile = w < 768;
-    const isStacked = isPortrait || w < 650;
-    const isLandscapeMobile = !isPortrait && h < 500;
+    // ═══ Unified layout computation (single source of truth) ═══
+    const m = computeLayout(w, h);
 
-    // Height of the bottom bar
-    const barH = isStacked ? Math.max(50, h * 0.065) : Math.max(45, h * 0.07);
-    const safeH = h - barH;
+    // Backward-compatible aliases used by downstream code in this method
+    const isStacked = m.mode === 'portrait';
+    const isMobile = m.isMobile;
+    const isLandscapeMobile = m.mode === 'landscape-compact';
+    const barH = m.barH;
+    const safeH = m.safeH;
+    const toolPad = m.toolbarPad;
+    const toolGap = m.toolbarGap;
+    const toolY = m.toolbarY;
+    const toolbarH = m.toolbarH;
 
-    // Toolbar dimensions — compact on mobile for breathing room
-    const toolPad = isMobile ? 16 : 35;
-    const toolGap = isLandscapeMobile ? 34 : isMobile ? 36 : 50;
-    const toolY = Math.max(16, safeH * 0.025);
-    const toolbarH = isMobile ? 32 : 40; // toolbar total visual height
-
-    // ==========================================
-    // 1. GRID SCALING & POSITIONING
-    // ==========================================
-    let gridW: number;
-    let gridH: number;
-    let gridX: number;
-    let gridY: number;
-
-    if (isStacked) {
-      // ── Mobile portrait: maximize grid while keeping clean spacing ──
-      // Top: toolbar + logo + explicit gap for FS counter/turbo indicator
-      // Scale logo height zone with screen height to prevent collapsing on short screens
-      const logoH = isMobile ? Math.max(35, Math.min(55, h * 0.08)) : Math.max(50, Math.min(80, h * 0.09));
-      const fsCounterGap = Math.max(12, Math.min(22, h * 0.03));
-      const topSpace = toolY + toolbarH + logoH + fsCounterGap;
-
-      // Bottom: compact controls area — scale with screen height
-      const bottomSpace = isPortrait ? Math.max(140, Math.min(220, h * 0.22)) : 110;
-      const availableH = safeH - topSpace - bottomSpace;
-      
-      // Grid uses 92% width — bigger cells, slight side margins
-      const maxGridW = w * 0.92;
-      gridW = Math.min(maxGridW, availableH);
-      gridH = Math.min(availableH, maxGridW);
-      gridW = Math.max(gridW, 140);
-      gridH = Math.max(gridH, 140);
-
-      gridX = (w - gridW) / 2;
-      gridY = topSpace + (availableH - gridH) / 2;
-    } else if (isLandscapeMobile) {
-      // Short landscape: grid takes center, maximize height
-      gridH = Math.min(safeH * 0.88, w * 0.42);
-      gridW = gridH;
-      gridX = (w - gridW) / 2;
-      gridY = (safeH - gridH) / 2 + 5;
-    } else {
-      // Desktop column mode
-      gridH = Math.min(w * 0.42, safeH * 0.78);
-      gridW = gridH;
-      gridX = (w - gridW) / 2;
-      gridY = (safeH - gridH) / 2 + 10;
-    }
+    const gridX = m.gridX;
+    const gridY = m.gridY;
+    const gridW = m.gridSize;
+    const gridH = m.gridSize;
 
     this.grid.offsetX = gridX;
     this.grid.offsetY = gridY;
-    this.grid.cellW = gridW / 7;
-    this.grid.cellH = gridH / 7;
+    this.grid.cellW = m.cellSize;
+    this.grid.cellH = m.cellSize;
     this.grid.drawCellBackgrounds();
     this.grid.repositionSprites();
 
@@ -906,16 +867,7 @@ export class Game extends Phaser.Scene {
     // ==========================================
     // 2. SPIN BUTTON GROUP (Calculated early for anchoring)
     // ==========================================
-    const { spinX, spinY, spinSize } = this.spinControls.layout(
-      w,
-      h,
-      gridX,
-      gridY,
-      gridH, // Use gridH for spin control layout since it's vertical sizing
-      barH,
-      isStacked,
-      isLandscapeMobile,
-    );
+    const { spinX, spinY, spinSize } = this.spinControls.layout(m);
     this.updateSpinButtonState();
     this.updateAutoSpinDisplay();
 
@@ -928,16 +880,16 @@ export class Game extends Phaser.Scene {
     const useFeaturesMenu =
       isLandscapeMobile || (!isStacked && availableWidthForFeatures < 160);
 
-    // Compact buy buttons on mobile — smaller to save vertical space
+    // Larger premium buy buttons
     let buyW = isStacked
-      ? Math.min(120, w * 0.30)
-      : Math.min(200, gridX * 0.75);
+      ? Math.min(180, w * 0.40)
+      : Math.min(280, gridX * 0.85);
     let buyH = isStacked
-      ? Math.min(36, safeH * 0.045)
-      : Math.min(100, safeH * 0.14);
-    let buyGap = isStacked ? Math.max(5, w * 0.015) : 12;
+      ? Math.min(50, safeH * 0.07)
+      : Math.min(110, safeH * 0.16);
+    let buyGap = isStacked ? Math.max(8, w * 0.02) : 16;
     let anteW = isStacked ? buyW * 2 + buyGap : buyW;
-    let anteH = isStacked ? Math.min(30, buyH * 0.7) : 45;
+    let anteH = isStacked ? Math.min(42, buyH * 0.85) : 55;
 
     let buyX1: number = 0;
     let buyX2: number = 0;
@@ -955,19 +907,21 @@ export class Game extends Phaser.Scene {
       this.btnFeaturesMenuHit.setVisible(true);
       this.btnFeaturesMenuIcon.setVisible(true);
 
-      // Position toggle vertically centered with the grid on the left edge
-      const toggleX = isLandscapeMobile ? 35 : Math.max(30, w * 0.08);
+      // Position toggle to the left of the grid — never overlapping
+      const toggleSize = isLandscapeMobile ? 44 : 52;
+      const toggleX = Math.min(gridX / 2, gridX - toggleSize / 2 - 8);
+      const clampedToggleX = Math.max(toggleSize / 2 + 6, toggleX);
       const toggleY = gridY + gridH / 2;
 
-      this.btnFeaturesMenuHit.setPosition(toggleX, toggleY).setSize(60, 60);
+      this.btnFeaturesMenuHit.setPosition(clampedToggleX, toggleY).setSize(toggleSize, toggleSize);
       // Glassmorphic toggle pill for BUY feature
       this.btnFeaturesMenuGraphics.fillStyle(0x000000, 0.5);
       this.btnFeaturesMenuGraphics.fillRoundedRect(
-        toggleX - 30,
-        toggleY - 30 + 4,
-        60,
-        60,
-        15,
+        clampedToggleX - toggleSize / 2,
+        toggleY - toggleSize / 2 + 4,
+        toggleSize,
+        toggleSize,
+        Math.round(toggleSize * 0.25),
       );
       this.btnFeaturesMenuGraphics.fillGradientStyle(
         0xff006a,
@@ -977,22 +931,22 @@ export class Game extends Phaser.Scene {
         1,
       );
       this.btnFeaturesMenuGraphics.fillRoundedRect(
-        toggleX - 30,
-        toggleY - 30,
-        60,
-        60,
-        15,
+        clampedToggleX - toggleSize / 2,
+        toggleY - toggleSize / 2,
+        toggleSize,
+        toggleSize,
+        Math.round(toggleSize * 0.25),
       );
       this.btnFeaturesMenuGraphics.lineStyle(2, 0xffffff, 0.8);
       this.btnFeaturesMenuGraphics.strokeRoundedRect(
-        toggleX - 30,
-        toggleY - 30,
-        60,
-        60,
-        15,
+        clampedToggleX - toggleSize / 2,
+        toggleY - toggleSize / 2,
+        toggleSize,
+        toggleSize,
+        Math.round(toggleSize * 0.25),
       );
 
-      this.btnFeaturesMenuIcon.setPosition(toggleX, toggleY);
+      this.btnFeaturesMenuIcon.setPosition(clampedToggleX, toggleY);
     } else {
       this.btnFeaturesMenuGraphics.setVisible(false);
       this.btnFeaturesMenuHit.setVisible(false);
@@ -1001,14 +955,32 @@ export class Game extends Phaser.Scene {
 
     // Determine base layout before popup
     if (isStacked) {
-      // Stacked mobile: compact "BUY" + "ANTE" side by side above spin
-      const blockBottom = spinY - spinSize / 2 - 8 - Math.max(10, safeH * 0.015);
+      // Stacked mobile: compact "BUY" + "ANTE" side by side
+      // Position them between gridBottom and spinY with proper spacing
+      const gridBottom = gridY + gridH;
+      const spinTop = spinY - spinSize / 2;
+      const gapBetweenGridAndSpin = spinTop - gridBottom;
+
+      // Buy panel row sits in the upper portion of the gap
+      const buyRowH = Math.max(buyH, 36);
+      const verticalPad = Math.max(8, gapBetweenGridAndSpin * 0.08);
+
+      // Place buy row just below grid with padding
+      buyY1 = gridBottom + verticalPad + buyRowH / 2;
+
+      // Clamp to never overlap spin button
+      const maxBuyY = spinTop - buyRowH / 2 - 8;
+      if (buyY1 > maxBuyY) {
+        buyY1 = maxBuyY;
+        // If still too tight, shrink buy buttons slightly
+        buyH = Math.max(30, Math.min(buyH, (gapBetweenGridAndSpin - 20) * 0.5));
+        buyY1 = gridBottom + verticalPad + buyH / 2;
+      }
 
       anteW = Math.min(130, w * 0.34);
       buyW = anteW;
 
-      anteY = blockBottom - anteH / 2;
-      buyY1 = anteY;
+      anteY = buyY1;
       
       const totalW = buyW + anteW + buyGap;
       buyX1 = w / 2 - totalW / 2 + buyW / 2;
@@ -1266,85 +1238,14 @@ export class Game extends Phaser.Scene {
     });
     this.drawToolbarIcons();
 
-    // Recalculate margins for logo placement
-    const rightMargin = w - gridX - gridH;
-    const rightColCenter = gridX + gridH + rightMargin / 2;
     // ==========================================
-    // 6. LOGO — responsive placement with premium glow
+    // 6. LOGO — uses pre-computed metrics from LayoutEngine
     // ==========================================
-    // Increased base width to 460 to account for thick fonts and stroke, preventing overlap
-    const LOGO_BASE_W = 460;
-    const LOGO_BASE_H = 150;
-    // Dynamic max logo scale to adapt to larger portrait screens (tablets) beautifully
-    const MAX_LOGO_SCALE = isStacked ? Math.min(0.80, Math.max(0.42, w / 900)) : 0.85;
-    const MIN_LOGO_SCALE = 0.18; // Slightly lowered to guarantee logo visibility on short devices
-
-    let logoScale = 1;
-    let logoX = 0;
-    let logoY = 0;
-    let showLogo = false;
-
-    if (isStacked) {
-      // Portrait: compact logo between toolbar and FS counter zone
-      const availW = w * 0.75; // Increased width availability for portrait logo
-      const logoZoneTop = toolY + toolbarH + 4;
-      const logoZoneBot = gridY - 18; // slightly tighter gap for better spacing
-      const availH = logoZoneBot - logoZoneTop;
-
-      if (availH > 20) { // lowered minimum height constraint to keep logo visible on shorter viewports
-        const scaleW = availW / LOGO_BASE_W;
-        const scaleH = availH / LOGO_BASE_H;
-        logoScale = Math.min(scaleW, scaleH, MAX_LOGO_SCALE);
-
-        if (logoScale >= MIN_LOGO_SCALE) {
-          showLogo = true;
-          logoX = w / 2;
-          logoY = logoZoneTop + availH / 2;
-        }
-      }
-    } else if (isLandscapeMobile || rightMargin < 140) {
-      // Tight landscape: above the grid
-      const availW = w * 0.5;
-      const availH = gridY - 5;
-
-      if (availH > 20) {
-        const scaleW = availW / LOGO_BASE_W;
-        const scaleH = availH / LOGO_BASE_H;
-        logoScale = Math.min(scaleW, scaleH, MAX_LOGO_SCALE);
-
-        if (logoScale >= MIN_LOGO_SCALE) {
-          showLogo = true;
-          logoX = w / 2;
-          logoY = gridY / 2;
-        }
-      }
-    } else {
-      // Desktop: right column between top of grid and spin button
-      const availW = rightMargin * 0.9;
-      const logoRegionTop = gridY;
-      const logoRegionBot = spinY - spinSize / 2 - 20;
-      const availH = logoRegionBot - logoRegionTop;
-
-      if (availW > 100 && availH > 60) {
-        const scaleW = availW / LOGO_BASE_W;
-        const scaleH = availH / LOGO_BASE_H;
-        logoScale = Math.min(scaleW, scaleH, MAX_LOGO_SCALE);
-
-        if (logoScale >= MIN_LOGO_SCALE) {
-          showLogo = true;
-          // Fix to the right wall (with 20px padding) to maximize distance from the grid
-          const actualLogoWidth = LOGO_BASE_W * logoScale;
-          logoX = w - actualLogoWidth / 2 - 20;
-          logoY = logoRegionTop + availH * 0.25;
-        }
-      }
-    }
-
-    if (showLogo) {
+    if (m.logoVisible) {
       this.logoWrapper
         .setVisible(true)
-        .setPosition(logoX, logoY)
-        .setScale(logoScale);
+        .setPosition(m.logoX, m.logoY)
+        .setScale(m.logoScale);
     } else {
       this.logoWrapper.setVisible(false);
     }
@@ -1521,13 +1422,21 @@ export class Game extends Phaser.Scene {
 
     const disabled = options.anteBetEnabled;
 
-    // 1. Drop shadow — simple, no glow fuzz
-    gfx.fillStyle(0x000000, disabled ? 0.2 : 0.45);
-    gfx.fillRoundedRect(-w / 2 + 2, -h / 2 + 3, w, h, r);
+    // 0. Outer ambient glow for premium visibility
+    if (!disabled) {
+      gfx.fillStyle(accentMid, 0.15);
+      gfx.fillRoundedRect(-w / 2 - 8, -h / 2 - 8, w + 16, h + 16, r + 4);
+      gfx.fillStyle(accentMid, 0.25);
+      gfx.fillRoundedRect(-w / 2 - 4, -h / 2 - 4, w + 8, h + 8, r + 2);
+    }
 
-    // 2. Main body — clean solid gradient
+    // 1. Drop shadow
+    gfx.fillStyle(0x000000, disabled ? 0.3 : 0.6);
+    gfx.fillRoundedRect(-w / 2, -h / 2 + 4, w, h, r);
+
+    // 2. Main body — bolder gradient
     if (disabled) {
-      gfx.fillGradientStyle(0x444444, 0x444444, 0x222222, 0x222222, 1);
+      gfx.fillGradientStyle(0x555555, 0x555555, 0x333333, 0x333333, 1);
     } else {
       gfx.fillGradientStyle(accentTop, accentTop, accentBot, accentBot, 1);
     }
@@ -1554,8 +1463,8 @@ export class Game extends Phaser.Scene {
       gfx.strokeRoundedRect(-w / 2 + 3, -h / 2 + 3, w - 6, h - 6, r - 2);
     }
 
-    // 4. Single clean border
-    gfx.lineStyle(isSmall ? 1.5 : 2, disabled ? 0x666666 : accentMid, disabled ? 0.5 : 0.9);
+    // 4. Single clean border — thicker and brighter
+    gfx.lineStyle(isSmall ? 2 : 3, disabled ? 0x777777 : accentMid, disabled ? 0.6 : 1);
     gfx.strokeRoundedRect(-w / 2, -h / 2, w, h, r);
   }
 
@@ -1570,21 +1479,26 @@ export class Game extends Phaser.Scene {
     this.anteBetIcon.setVisible(true);
 
     if (options.anteBetEnabled) {
-      // Active — amber pill
-      g.fillStyle(0x000000, 0.35);
-      g.fillRoundedRect(x + 2, y + 3, bw, bh, rad);
+      // Active — amber pill with glow
+      g.fillStyle(0xffaa00, 0.15);
+      g.fillRoundedRect(x - 8, y - 8, bw + 16, bh + 16, rad + 4);
+      g.fillStyle(0xffaa00, 0.25);
+      g.fillRoundedRect(x - 4, y - 4, bw + 8, bh + 8, rad + 2);
 
-      g.fillGradientStyle(0xffcc44, 0xffcc44, 0x996600, 0x996600, 1);
+      g.fillStyle(0x000000, 0.5);
+      g.fillRoundedRect(x, y + 4, bw, bh, rad);
+
+      g.fillGradientStyle(0xffdd55, 0xffbb22, 0xaa5500, 0x883300, 1);
       g.fillRoundedRect(x, y, bw, bh, rad);
 
       if (!isSmall) {
-        g.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.35, 0.35, 0, 0);
+        g.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.45, 0.45, 0, 0);
         g.fillRoundedRect(x + 2, y + 1, bw - 4, bh * 0.35, {
           tl: rad - 1, tr: rad - 1, bl: 0, br: 0,
         } as any);
       }
 
-      g.lineStyle(isSmall ? 1 : 1.5, 0xffeebb, 0.9);
+      g.lineStyle(isSmall ? 2 : 2.5, 0xffeedd, 1);
       g.strokeRoundedRect(x, y, bw, bh, rad);
 
       this.anteBetTxt
@@ -1602,18 +1516,24 @@ export class Game extends Phaser.Scene {
       // Inactive — soft purple pill
       g.fillStyle(0x000000, 0.35);
       g.fillRoundedRect(x + 2, y + 3, bw, bh, rad);
+      // Inactive — dark violet pill with subtle glow
+      g.fillStyle(0x8844ff, 0.08);
+      g.fillRoundedRect(x - 6, y - 6, bw + 12, bh + 12, rad + 3);
 
-      g.fillGradientStyle(0x5a3a7a, 0x5a3a7a, 0x2a1a4a, 0x2a1a4a, 0.95);
+      g.fillStyle(0x000000, 0.5);
+      g.fillRoundedRect(x, y + 4, bw, bh, rad);
+
+      g.fillGradientStyle(0x3d2b63, 0x3d2b63, 0x1a0a24, 0x1a0a24, 1);
       g.fillRoundedRect(x, y, bw, bh, rad);
 
       if (!isSmall) {
-        g.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.18, 0.18, 0, 0);
+        g.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.15, 0.15, 0, 0);
         g.fillRoundedRect(x + 2, y + 1, bw - 4, bh * 0.35, {
           tl: rad - 1, tr: rad - 1, bl: 0, br: 0,
         } as any);
       }
 
-      g.lineStyle(isSmall ? 1 : 1.5, 0x8866bb, 0.7);
+      g.lineStyle(isSmall ? 1.5 : 2, 0x9966ff, 0.6);
       g.strokeRoundedRect(x, y, bw, bh, rad);
 
       this.anteBetTxt
