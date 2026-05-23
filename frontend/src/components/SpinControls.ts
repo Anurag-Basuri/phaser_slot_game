@@ -135,22 +135,21 @@ export class SpinControls {
     // ── Spin button size — proportional, clamped (Slightly larger) ──
     let spinSize: number;
     if (isStacked) {
-      // Adjusted spin size to be smaller per user request
-      spinSize = Math.max(55, Math.min(80, w * 0.15, safeH * 0.09));
+      // Compact spin button on mobile to save vertical space
+      spinSize = Math.max(45, Math.min(65, w * 0.13, safeH * 0.08));
     } else if (isLandscapeMobile) {
-      spinSize = Math.min(85, rightMargin * 0.45, safeH * 0.20);
+      spinSize = Math.min(75, rightMargin * 0.40, safeH * 0.18);
     } else {
-      spinSize = Math.min(115, rightMargin * 0.46, safeH * 0.18);
+      spinSize = Math.min(110, rightMargin * 0.44, safeH * 0.17);
     }
-    spinSize = Math.max(50, spinSize);
+    spinSize = Math.max(42, spinSize);
 
     // ── Spin position ──
     let spinX: number, spinY: number;
     if (isStacked) {
-      // In stacked/portrait: spin sits centered at the bottom, leaving room for autoplay below
       spinX = w / 2;
-      // Increased bottom padding to lift all playing buttons slightly higher
-      spinY = safeH - spinSize / 2 - Math.max(45, safeH * 0.05);
+      // Generous bottom padding to avoid cramping
+      spinY = safeH - spinSize / 2 - Math.max(40, safeH * 0.045);
     } else {
       spinX = rightColCenter;
       spinY = safeH * 0.72; // Moved lower down the screen
@@ -164,11 +163,16 @@ export class SpinControls {
     this.spinGfx.setPosition(spinX, spinY);
     this.drawSpinButton(0, 0, spinSize);
 
+    // Scale spin label proportionally to button size
+    const spinLabelFS = Math.max(10, Math.min(18, spinSize * 0.18));
+    this.spinLabel.setFontSize(spinLabelFS);
+
     // ── AutoPlay pill — directly beneath spin, scaled proportionally ──
     const autoFS = Math.max(9, Math.min(14, spinSize * 0.15));
     const autoPillW = Math.max(70, spinSize * 1.3);
     const autoPillH = Math.max(24, spinSize * 0.35);
-    const autoY = spinY + spinSize / 2 + (isStacked ? 18 : 32);
+    const autoGap = isStacked ? Math.max(14, spinSize * 0.22) : Math.max(24, spinSize * 0.35);
+    const autoY = spinY + spinSize / 2 + autoGap;
     
     // Always show autoplay since we've now mathematically made room for it above safeH
     this.autoHit.setVisible(true).setPosition(spinX, autoY).setSize(autoPillW, autoPillH);
@@ -178,17 +182,16 @@ export class SpinControls {
     // ── Bet +/- buttons (Slightly larger) ──
     let bBtnSize: number;
     if (isStacked) {
-      bBtnSize = Math.max(26, Math.min(42, spinSize * 0.46));
+      bBtnSize = Math.max(22, Math.min(36, spinSize * 0.42));
     } else if (isLandscapeMobile) {
-      bBtnSize = Math.max(30, Math.min(48, rightMargin * 0.16));
+      bBtnSize = Math.max(26, Math.min(42, rightMargin * 0.14));
     } else {
-      bBtnSize = Math.max(36, Math.min(60, rightMargin * 0.16, spinSize * 0.58));
+      bBtnSize = Math.max(32, Math.min(55, rightMargin * 0.15, spinSize * 0.52));
     }
 
     if (isStacked) {
-      // Portrait: place +/- on the left and right of the centered spin button
-      // Increased the offset to provide generous horizontal space between the spin button and the setting (+/-) buttons
-      const betBtnOffset = spinSize / 2 + bBtnSize / 2 + Math.max(22, w * 0.07);
+      // Portrait: +/- flanking spin with tight but clear gap
+      const betBtnOffset = spinSize / 2 + bBtnSize / 2 + Math.max(16, w * 0.05);
       const minusX = spinX - betBtnOffset;
       const plusX = spinX + betBtnOffset;
 
