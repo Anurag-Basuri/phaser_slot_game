@@ -738,12 +738,13 @@ export class Game extends Phaser.Scene {
     if (isStacked) {
       // ── Mobile portrait: maximize grid while keeping clean spacing ──
       // Top: toolbar + logo + explicit gap for FS counter/turbo indicator
-      const logoH = isMobile ? 55 : 80;
-      const fsCounterGap = 22; // reserved strip above grid for FS counter + turbo
+      // Scale logo height zone with screen height to prevent collapsing on short screens
+      const logoH = isMobile ? Math.max(35, Math.min(55, h * 0.08)) : Math.max(50, Math.min(80, h * 0.09));
+      const fsCounterGap = Math.max(12, Math.min(22, h * 0.03));
       const topSpace = toolY + toolbarH + logoH + fsCounterGap;
 
-      // Bottom: compact controls area — reduced to give grid more room
-      const bottomSpace = isPortrait ? Math.max(180, h * 0.24) : 140;
+      // Bottom: compact controls area — scale with screen height
+      const bottomSpace = isPortrait ? Math.max(140, Math.min(220, h * 0.22)) : 110;
       const availableH = safeH - topSpace - bottomSpace;
       
       // Grid uses 92% width — bigger cells, slight side margins
@@ -1274,8 +1275,9 @@ export class Game extends Phaser.Scene {
     // Increased base width to 460 to account for thick fonts and stroke, preventing overlap
     const LOGO_BASE_W = 460;
     const LOGO_BASE_H = 150;
-    const MAX_LOGO_SCALE = isStacked ? 0.45 : 0.85; // Much smaller on mobile
-    const MIN_LOGO_SCALE = 0.22;
+    // Dynamic max logo scale to adapt to larger portrait screens (tablets) beautifully
+    const MAX_LOGO_SCALE = isStacked ? Math.min(0.80, Math.max(0.42, w / 900)) : 0.85;
+    const MIN_LOGO_SCALE = 0.18; // Slightly lowered to guarantee logo visibility on short devices
 
     let logoScale = 1;
     let logoX = 0;
@@ -1284,12 +1286,12 @@ export class Game extends Phaser.Scene {
 
     if (isStacked) {
       // Portrait: compact logo between toolbar and FS counter zone
-      const availW = w * 0.65;
+      const availW = w * 0.75; // Increased width availability for portrait logo
       const logoZoneTop = toolY + toolbarH + 4;
-      const logoZoneBot = gridY - 24; // leave room for FS counter strip
+      const logoZoneBot = gridY - 18; // slightly tighter gap for better spacing
       const availH = logoZoneBot - logoZoneTop;
 
-      if (availH > 25) {
+      if (availH > 20) { // lowered minimum height constraint to keep logo visible on shorter viewports
         const scaleW = availW / LOGO_BASE_W;
         const scaleH = availH / LOGO_BASE_H;
         logoScale = Math.min(scaleW, scaleH, MAX_LOGO_SCALE);
@@ -1305,7 +1307,7 @@ export class Game extends Phaser.Scene {
       const availW = w * 0.5;
       const availH = gridY - 5;
 
-      if (availH > 30) {
+      if (availH > 20) {
         const scaleW = availW / LOGO_BASE_W;
         const scaleH = availH / LOGO_BASE_H;
         logoScale = Math.min(scaleW, scaleH, MAX_LOGO_SCALE);
@@ -1323,7 +1325,7 @@ export class Game extends Phaser.Scene {
       const logoRegionBot = spinY - spinSize / 2 - 20;
       const availH = logoRegionBot - logoRegionTop;
 
-      if (availW > 100 && availH > 80) {
+      if (availW > 100 && availH > 60) {
         const scaleW = availW / LOGO_BASE_W;
         const scaleH = availH / LOGO_BASE_H;
         logoScale = Math.min(scaleW, scaleH, MAX_LOGO_SCALE);

@@ -144,12 +144,31 @@ export class SpinControls {
     }
     spinSize = Math.max(42, spinSize);
 
+    const autoPillH = Math.max(24, spinSize * 0.35);
+    const autoGap = isStacked ? Math.max(14, spinSize * 0.22) : Math.max(24, spinSize * 0.35);
+
     // ── Spin position ──
     let spinX: number, spinY: number;
     if (isStacked) {
       spinX = w / 2;
-      // Generous bottom padding to avoid cramping
-      spinY = safeH - spinSize / 2 - Math.max(40, safeH * 0.045);
+      const gridBottom = gridY + gridTotalSize;
+      const availBottomSpace = safeH - gridBottom;
+      
+      // Center of the space between grid bottom and bottom bar top
+      const centerY = gridBottom + availBottomSpace / 2;
+      
+      // Offset slightly up to account for autoplay button height below it
+      spinY = centerY - 10;
+      
+      // Clamp to ensure it never overlaps the grid bottom or goes below safeH
+      const minSpinY = gridBottom + spinSize / 2 + 15;
+      const maxSpinY = safeH - spinSize / 2 - autoGap - autoPillH - 10;
+      
+      if (maxSpinY > minSpinY) {
+        spinY = Phaser.Math.Clamp(spinY, minSpinY, maxSpinY);
+      } else {
+        spinY = minSpinY;
+      }
     } else {
       spinX = rightColCenter;
       spinY = safeH * 0.72; // Moved lower down the screen
@@ -170,8 +189,6 @@ export class SpinControls {
     // ── AutoPlay pill — directly beneath spin, scaled proportionally ──
     const autoFS = Math.max(9, Math.min(14, spinSize * 0.15));
     const autoPillW = Math.max(70, spinSize * 1.3);
-    const autoPillH = Math.max(24, spinSize * 0.35);
-    const autoGap = isStacked ? Math.max(14, spinSize * 0.22) : Math.max(24, spinSize * 0.35);
     const autoY = spinY + spinSize / 2 + autoGap;
     
     // Always show autoplay since we've now mathematically made room for it above safeH
