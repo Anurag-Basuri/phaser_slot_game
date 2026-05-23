@@ -146,61 +146,64 @@ export class BottomBarHUD {
     this.txtLastWin.setScale(1);
 
     // ── Pre-calculate text sizing to prevent overlap ──
+    // Uses setFontSize() instead of setScale() for crisp text at any size.
+    // setScale() downsamples 2× pre-rendered textures causing blurriness.
     const zoneLimit = (w - sidePad * 2) / 3 - (isSmall ? 2 : 10);
     
-    const applyFit = (lbl: Phaser.GameObjects.Text, val: Phaser.GameObjects.Text, gap: number, extraW: number = 0) => {
+    const applyFit = (lbl: Phaser.GameObjects.Text, val: Phaser.GameObjects.Text, lblFS: number, vFS: number, gap: number, extraW: number = 0) => {
+      // First set the intended font sizes
+      lbl.setFontSize(lblFS);
+      val.setFontSize(vFS);
       const total = lbl.width + gap + val.width + extraW;
       if (total > zoneLimit) {
-        const s = zoneLimit / total;
-        lbl.setScale(s);
-        val.setScale(s);
+        const shrink = zoneLimit / total;
+        lbl.setFontSize(Math.max(7, Math.round(lblFS * shrink)));
+        val.setFontSize(Math.max(9, Math.round(vFS * shrink)));
       }
     };
 
     const balGap = isSmall ? 6 : 12;
-    applyFit(this.txtMoneyLabel, this.txtMoney, balGap);
+    applyFit(this.txtMoneyLabel, this.txtMoney, labelFS, valFS, balGap);
 
     const betGap = isSmall ? 6 : 10;
-    applyFit(this.txtBetLabel, this.txtBet, betGap);
+    applyFit(this.txtBetLabel, this.txtBet, labelFS, valFS, betGap);
 
     const targetIconHeight = Math.max(14, barH * 0.45);
     const baseHeight = this.winSymbolIcon.height > 0 ? this.winSymbolIcon.height : 256;
     this._iconTargetScale = targetIconHeight / baseHeight;
     const iconOffset = this.winSymbolIcon.visible ? targetIconHeight + 8 : 0;
     const winGap = isSmall ? 8 : 16;
-    applyFit(this.txtLastWinLabel, this.txtLastWin, winGap, iconOffset);
+    applyFit(this.txtLastWinLabel, this.txtLastWin, labelFS, valFS, winGap, iconOffset);
 
     // ── Zone 1: BALANCE (Far Left) ──
-    this.txtMoneyLabel.setPosition(sidePad, txtY).setFontSize(labelFS).setOrigin(0, 0.5);
-    const balLblVisualW = this.txtMoneyLabel.width * this.txtMoneyLabel.scaleX;
-    this.txtMoney.setPosition(sidePad + balLblVisualW + balGap * this.txtMoneyLabel.scaleX, txtY).setFontSize(valFS).setOrigin(0, 0.5);
+    // Scale is always 1 now (font size adjusted directly), so width == visual width
+    this.txtMoneyLabel.setPosition(sidePad, txtY).setOrigin(0, 0.5);
+    const balLblVisualW = this.txtMoneyLabel.width;
+    this.txtMoney.setPosition(sidePad + balLblVisualW + balGap, txtY).setOrigin(0, 0.5);
 
     // ── Zone 3: WIN (Far Right) ──
-    this.txtLastWin.setVisible(true).setPosition(w - sidePad, txtY).setFontSize(valFS).setOrigin(1, 0.5);
-    const winValVisualW = this.txtLastWin.width * this.txtLastWin.scaleX;
-    const scaledIconOffset = iconOffset * this.txtLastWin.scaleX;
+    this.txtLastWin.setVisible(true).setPosition(w - sidePad, txtY).setOrigin(1, 0.5);
+    const winValVisualW = this.txtLastWin.width;
     
     if (this.winSymbolIcon.visible) {
-      this.winSymbolIcon.setPosition(w - sidePad - winValVisualW - 12 * this.txtLastWin.scaleX, txtY).setScale(this._iconTargetScale);
+      this.winSymbolIcon.setPosition(w - sidePad - winValVisualW - 12, txtY).setScale(this._iconTargetScale);
     }
     
     this.txtLastWinLabel.setVisible(true)
-      .setPosition(w - sidePad - winValVisualW - scaledIconOffset - winGap * this.txtLastWin.scaleX, txtY)
-      .setFontSize(labelFS)
+      .setPosition(w - sidePad - winValVisualW - iconOffset - winGap, txtY)
       .setOrigin(1, 0.5);
 
     // ── Zone 2: BET (Center) ──
     const centerX = w / 2;
-    this.txtBetLabel.setFontSize(labelFS).setOrigin(1, 0.5);
-    this.txtBet.setFontSize(valFS).setOrigin(0, 0.5);
+    this.txtBetLabel.setOrigin(1, 0.5);
+    this.txtBet.setOrigin(0, 0.5);
     
-    const scaledBetGap = betGap * this.txtBetLabel.scaleX;
-    const scaledBetLblW = this.txtBetLabel.width * this.txtBetLabel.scaleX;
-    const scaledBetValW = this.txtBet.width * this.txtBet.scaleX;
-    const betTotalW = scaledBetLblW + scaledBetGap + scaledBetValW;
+    const betLblW = this.txtBetLabel.width;
+    const betValW = this.txtBet.width;
+    const betTotalW = betLblW + betGap + betValW;
     
-    this.txtBetLabel.setPosition(centerX - betTotalW / 2 + scaledBetLblW, txtY);
-    this.txtBet.setPosition(centerX - betTotalW / 2 + scaledBetLblW + scaledBetGap, txtY);
+    this.txtBetLabel.setPosition(centerX - betTotalW / 2 + betLblW, txtY);
+    this.txtBet.setPosition(centerX - betTotalW / 2 + betLblW + betGap, txtY);
     this.betPillHit.setPosition(centerX, txtY).setSize(Math.max(120, betTotalW + 40), barH);
 
     // Define win bounds for particle effect targeting
