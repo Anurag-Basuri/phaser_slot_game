@@ -718,14 +718,14 @@ export class Game extends Phaser.Scene {
     const isLandscapeMobile = !isPortrait && h < 500;
 
     // Height of the bottom bar
-    const barH = isStacked ? Math.max(55, h * 0.08) : Math.max(45, h * 0.07);
+    const barH = isStacked ? Math.max(50, h * 0.065) : Math.max(45, h * 0.07);
     const safeH = h - barH;
 
-    // Toolbar dimensions (used by multiple elements for alignment)
-    // Settings & Top toolbar spacing (Added breathing room per user request)
-    const toolPad = isMobile ? 22 : 35;
-    const toolGap = isLandscapeMobile ? 38 : isMobile ? 45 : 50;
-    const toolY = Math.max(20, safeH * 0.03);
+    // Toolbar dimensions — compact on mobile for breathing room
+    const toolPad = isMobile ? 16 : 35;
+    const toolGap = isLandscapeMobile ? 34 : isMobile ? 36 : 50;
+    const toolY = Math.max(16, safeH * 0.025);
+    const toolbarH = isMobile ? 32 : 40; // toolbar total visual height
 
     // ==========================================
     // 1. GRID SCALING & POSITIONING
@@ -736,33 +736,35 @@ export class Game extends Phaser.Scene {
     let gridY: number;
 
     if (isStacked) {
-      // Guarantee enough space for the toolbar + logo + explicit generous padding
-      const maxLogoHeight = 150 * 0.65; // LOGO_BASE_H * MAX_LOGO_SCALE (0.65 for mobile)
-      const topSpace = toolY + (isMobile ? 25 : 35) + maxLogoHeight + 20;
+      // ── Mobile portrait: maximize grid while keeping clean spacing ──
+      // Top: toolbar + logo + explicit gap for FS counter/turbo indicator
+      const logoH = isMobile ? 55 : 80;
+      const fsCounterGap = 22; // reserved strip above grid for FS counter + turbo
+      const topSpace = toolY + toolbarH + logoH + fsCounterGap;
 
-      // Ensure enough bottom space for Spin Controls + Buy Buttons + Ante Bet
-      // Generous bottom space to strictly prevent grid collision on tiny mobile screens
-      const bottomSpace = isPortrait ? Math.max(250, h * 0.35) : 160;
+      // Bottom: compact controls area — reduced to give grid more room
+      const bottomSpace = isPortrait ? Math.max(180, h * 0.24) : 140;
       const availableH = safeH - topSpace - bottomSpace;
       
-      // Allow the grid to be slightly rectangular to fill the screen better
-      gridW = Math.min(w * 0.96, availableH * 1.2); 
-      gridH = Math.min(availableH, w * 1.2); // Not strictly square
-      gridW = Math.max(gridW, 150);
-      gridH = Math.max(gridH, 150);
+      // Grid uses 92% width — bigger cells, slight side margins
+      const maxGridW = w * 0.92;
+      gridW = Math.min(maxGridW, availableH);
+      gridH = Math.min(availableH, maxGridW);
+      gridW = Math.max(gridW, 140);
+      gridH = Math.max(gridH, 140);
 
       gridX = (w - gridW) / 2;
       gridY = topSpace + (availableH - gridH) / 2;
     } else if (isLandscapeMobile) {
       // Short landscape: grid takes center, maximize height
-      gridH = Math.min(safeH * 0.92, w * 0.45);
-      gridW = gridH; // Keep square for landscape
+      gridH = Math.min(safeH * 0.88, w * 0.42);
+      gridW = gridH;
       gridX = (w - gridW) / 2;
-      gridY = (safeH - gridH) / 2;
+      gridY = (safeH - gridH) / 2 + 5;
     } else {
-      // Desktop column mode: scale down the grid slightly per user request
+      // Desktop column mode
       gridH = Math.min(w * 0.42, safeH * 0.78);
-      gridW = gridH; // Keep square for desktop
+      gridW = gridH;
       gridX = (w - gridW) / 2;
       gridY = (safeH - gridH) / 2 + 10;
     }
@@ -781,7 +783,7 @@ export class Game extends Phaser.Scene {
     this.gridFrame.clear();
     const f = this.gridFrame;
 
-    const borderThickness = Math.max(10, Math.min(gridW, gridH) * 0.022);
+    const borderThickness = Math.max(6, Math.min(gridW, gridH) * 0.022);
     const framePadding = borderThickness + 4;
     const frameW = gridW + framePadding * 2;
     const frameH = gridH + framePadding * 2;
@@ -874,27 +876,30 @@ export class Game extends Phaser.Scene {
     f.fillStyle(0xffffff, 0.08);
     f.fillPath();
 
-    // --- Layer 6: Decorative candy-bolt corner accents ---
-    const boltR = Math.max(5, Math.min(gridW, gridH) * 0.012);
-    const boltInset = borderThickness * 0.55;
-    const boltPositions = [
-      { x: frameX + boltInset, y: frameY + boltInset },
-      { x: frameX + frameW - boltInset, y: frameY + boltInset },
-      { x: frameX + boltInset, y: frameY + frameH - boltInset },
-      { x: frameX + frameW - boltInset, y: frameY + frameH - boltInset },
-    ];
-    for (const bp of boltPositions) {
-      // Bolt shadow
-      f.fillStyle(0x000000, 0.4);
-      f.fillCircle(bp.x + 1, bp.y + 2, boltR);
-      // Bolt body — silver gradient
-      f.fillGradientStyle(0xdddddd, 0xeeeeee, 0x999999, 0xaaaaaa, 1);
-      f.fillCircle(bp.x, bp.y, boltR);
-      // Bolt highlight
-      f.fillStyle(0xffffff, 0.6);
-      f.fillCircle(bp.x - boltR * 0.25, bp.y - boltR * 0.25, boltR * 0.4);
-      // Bolt rim
-      f.strokeCircle(bp.x, bp.y, boltR);
+    // --- Layer 6: Decorative candy-bolt corner accents (hidden on very small grids) ---
+    const minGridDim = Math.min(gridW, gridH);
+    if (minGridDim > 300) {
+      const boltR = Math.max(4, minGridDim * 0.012);
+      const boltInset = borderThickness * 0.55;
+      const boltPositions = [
+        { x: frameX + boltInset, y: frameY + boltInset },
+        { x: frameX + frameW - boltInset, y: frameY + boltInset },
+        { x: frameX + boltInset, y: frameY + frameH - boltInset },
+        { x: frameX + frameW - boltInset, y: frameY + frameH - boltInset },
+      ];
+      for (const bp of boltPositions) {
+        // Bolt shadow
+        f.fillStyle(0x000000, 0.4);
+        f.fillCircle(bp.x + 1, bp.y + 2, boltR);
+        // Bolt body — silver gradient
+        f.fillGradientStyle(0xdddddd, 0xeeeeee, 0x999999, 0xaaaaaa, 1);
+        f.fillCircle(bp.x, bp.y, boltR);
+        // Bolt highlight
+        f.fillStyle(0xffffff, 0.6);
+        f.fillCircle(bp.x - boltR * 0.25, bp.y - boltR * 0.25, boltR * 0.4);
+        // Bolt rim
+        f.strokeCircle(bp.x, bp.y, boltR);
+      }
     }
 
     // ==========================================
@@ -922,16 +927,16 @@ export class Game extends Phaser.Scene {
     const useFeaturesMenu =
       isLandscapeMobile || (!isStacked && availableWidthForFeatures < 160);
 
-    // Further reduced sizes for mobile playing buttons per user request
+    // Compact buy buttons on mobile — smaller to save vertical space
     let buyW = isStacked
-      ? Math.min(140, w * 0.34)
+      ? Math.min(120, w * 0.30)
       : Math.min(200, gridX * 0.75);
     let buyH = isStacked
-      ? Math.min(42, safeH * 0.055)
+      ? Math.min(36, safeH * 0.045)
       : Math.min(100, safeH * 0.14);
-    let buyGap = isStacked ? Math.max(6, w * 0.02) : 12;
+    let buyGap = isStacked ? Math.max(5, w * 0.015) : 12;
     let anteW = isStacked ? buyW * 2 + buyGap : buyW;
-    let anteH = isStacked ? buyH * 0.75 : 45;
+    let anteH = isStacked ? Math.min(30, buyH * 0.7) : 45;
 
     let buyX1: number = 0;
     let buyX2: number = 0;
@@ -995,10 +1000,10 @@ export class Game extends Phaser.Scene {
 
     // Determine base layout before popup
     if (isStacked) {
-      // Stacked mobile: unified "BUY FEATURES" alongside "ANTE BET"
-      const blockBottom = spinY - spinSize / 2 - 12 - Math.max(18, safeH * 0.03);
+      // Stacked mobile: compact "BUY" + "ANTE" side by side above spin
+      const blockBottom = spinY - spinSize / 2 - 8 - Math.max(10, safeH * 0.015);
 
-      anteW = Math.min(160, w * 0.42);
+      anteW = Math.min(130, w * 0.34);
       buyW = anteW;
 
       anteY = blockBottom - anteH / 2;
@@ -1031,20 +1036,20 @@ export class Game extends Phaser.Scene {
       this.featuresMenuTitleTxt.setVisible(true);
       this.featuresMenuCloseBtn.setVisible(true);
 
-      buyW = Math.min(240, w * 0.85);
-      buyH = 65;
-      buyGap = 18;
+      buyW = Math.min(220, w * 0.78);
+      buyH = 58;
+      buyGap = 14;
       
       if (!isStacked) {
         anteW = buyW;
-        anteH = 45;
+        anteH = 42;
       }
 
-      // Calculate heights to include the new title header
-      const headerH = 40;
+      // Calculate heights with cleaner header
+      const headerH = 44;
       const contentH = isStacked ? (buyH * 2 + buyGap) : (buyH * 2 + anteH + buyGap * 2);
-      const popupW = buyW + 40;
-      const popupH = contentH + headerH + 50;
+      const popupW = buyW + 50;
+      const popupH = contentH + headerH + 55;
       const popupX = w / 2;
       const popupY = h / 2;
 
@@ -1127,20 +1132,22 @@ export class Game extends Phaser.Scene {
         18,
       );
 
-      // Position Header Text
+      // Position Header — title left-aligned, X right-aligned for clarity
       this.featuresMenuTitleTxt
-        .setPosition(popupX, popupY - popupH / 2 + headerH / 2 + 10)
-        .setFontSize(22)
+        .setPosition(popupX - popupW / 2 + 24, popupY - popupH / 2 + headerH / 2 + 10)
+        .setOrigin(0, 0.5)
+        .setFontSize(18)
         .setShadow(0, 2, '#000000', 3, true, true);
         
       this.featuresMenuCloseBtn
-        .setPosition(popupX + popupW / 2 - 20, popupY - popupH / 2 + headerH / 2 + 10)
-        .setFontSize(24)
+        .setPosition(popupX + popupW / 2 - 24, popupY - popupH / 2 + headerH / 2 + 10)
+        .setOrigin(1, 0.5)
+        .setFontSize(20)
         .setShadow(0, 2, '#000000', 2, true, true);
 
       buyX1 = popupX;
       buyX2 = popupX;
-      buyY1 = popupY - popupH / 2 + headerH + 30 + buyH / 2;
+      buyY1 = popupY - popupH / 2 + headerH + 28 + buyH / 2;
       buyY2 = buyY1 + buyH + buyGap;
       
       if (!isStacked) {
@@ -1190,6 +1197,7 @@ export class Game extends Phaser.Scene {
         this.buyRegularTxt2,
         buyX1,
         buyY1,
+        buyW,
         buyH,
         'REGULAR',
       );
@@ -1203,6 +1211,7 @@ export class Game extends Phaser.Scene {
         this.buySuperTxt2,
         buyX2,
         buyY2,
+        buyW,
         buyH,
         'SUPER',
       );
@@ -1212,16 +1221,16 @@ export class Game extends Phaser.Scene {
       this.drawAnteBetButton(anteW, anteH);
       
       // Icon + Text centered as a pair inside the pill
-      const anteFontSize = Math.max(10, Math.min(14, anteH * 0.3));
-      const iconSize = Math.max(14, Math.min(20, anteH * 0.45));
+      const anteFontSize = Math.max(8, Math.min(14, anteH * 0.35, anteW * 0.085));
+      const iconSize = Math.max(12, Math.min(20, anteH * 0.45, anteW * 0.12));
       
       this.anteBetIcon
-        .setPosition(anteX - anteW * 0.30, anteY)
+        .setPosition(anteX - anteW * 0.28, anteY)
         .setFontSize(iconSize)
         .setOrigin(0.5, 0.5);
         
       this.anteBetTxt
-        .setPosition(anteX + iconSize * 0.15, anteY)
+        .setPosition(anteX + iconSize * 0.2, anteY)
         .setOrigin(0.5, 0.5)
         .setAlign('center')
         .setFontSize(anteFontSize);
@@ -1241,7 +1250,7 @@ export class Game extends Phaser.Scene {
     this.btnFullscreen.setPosition(toolPad + toolGap * 3, toolY);
 
     // Reposition icon images on top of their parent toolbar buttons
-    const targetSize = isMobile ? 16 : 24;
+    const targetSize = isMobile ? 14 : 24;
     [
       this.iconSettings,
       this.iconPaytable,
@@ -1265,8 +1274,8 @@ export class Game extends Phaser.Scene {
     // Increased base width to 460 to account for thick fonts and stroke, preventing overlap
     const LOGO_BASE_W = 460;
     const LOGO_BASE_H = 150;
-    const MAX_LOGO_SCALE = isStacked ? 0.65 : 0.85; // Significantly scaled down for stacked mobile
-    const MIN_LOGO_SCALE = 0.25; // Hide if space requires scaling smaller than this
+    const MAX_LOGO_SCALE = isStacked ? 0.45 : 0.85; // Much smaller on mobile
+    const MIN_LOGO_SCALE = 0.22;
 
     let logoScale = 1;
     let logoX = 0;
@@ -1274,11 +1283,13 @@ export class Game extends Phaser.Scene {
     let showLogo = false;
 
     if (isStacked) {
-      // Portrait: above the grid
-      const availW = w * 0.9;
-      const availH = gridY - 10;
+      // Portrait: compact logo between toolbar and FS counter zone
+      const availW = w * 0.65;
+      const logoZoneTop = toolY + toolbarH + 4;
+      const logoZoneBot = gridY - 24; // leave room for FS counter strip
+      const availH = logoZoneBot - logoZoneTop;
 
-      if (availH > 40) {
+      if (availH > 25) {
         const scaleW = availW / LOGO_BASE_W;
         const scaleH = availH / LOGO_BASE_H;
         logoScale = Math.min(scaleW, scaleH, MAX_LOGO_SCALE);
@@ -1286,8 +1297,7 @@ export class Game extends Phaser.Scene {
         if (logoScale >= MIN_LOGO_SCALE) {
           showLogo = true;
           logoX = w / 2;
-          // Place logo safely below the toolbar icons
-          logoY = toolY + (isMobile ? 25 : 35) + (LOGO_BASE_H * logoScale) / 2;
+          logoY = logoZoneTop + availH / 2;
         }
       }
     } else if (isLandscapeMobile || rightMargin < 140) {
@@ -1337,11 +1347,13 @@ export class Game extends Phaser.Scene {
       this.logoWrapper.setVisible(false);
     }
 
-    // FS Counter — proportional offset from grid top
-    const fsCounterOffset = Math.max(20, gridY * 0.25);
+    // FS Counter — cleanly above the grid frame in the reserved gap strip
+    const fsFS = isStacked ? Math.min(20, w * 0.045) : Math.min(32, w * 0.055);
+    const fsCounterY = gridY - Math.max(12, gridW * 0.025);
     this.txtFSRemaining
-      .setPosition(w / 2, gridY - fsCounterOffset)
-      .setFontSize(Math.min(42, w * 0.08));
+      .setPosition(w / 2, fsCounterY)
+      .setOrigin(0.5, 1) // anchor to bottom so text sits above gridY
+      .setFontSize(fsFS);
 
     if (this.stakeEngine.isReplayMode()) {
       this.replayBtnHit.setPosition(w / 2, h / 2).setSize(240, 70);
@@ -1351,7 +1363,7 @@ export class Game extends Phaser.Scene {
 
   private drawToolbarIcons() {
     const isMobile = this.scale.width < 768;
-    const iconR = isMobile ? 16 : 20;
+    const iconR = isMobile ? 13 : 20;
     const positions = [
       { obj: this.btnSettings, icon: this.iconSettings, type: 'settings' },
       { obj: this.btnPaytable, icon: this.iconPaytable, type: 'info' },
@@ -1437,6 +1449,7 @@ export class Game extends Phaser.Scene {
     txt2: Phaser.GameObjects.Text,
     x: number,
     y: number,
+    w: number,
     h: number,
     type: string,
   ) {
@@ -1444,9 +1457,9 @@ export class Game extends Phaser.Scene {
     const isCombinedButton = isStacked && type === 'REGULAR' && !this.isFeaturesMenuOpen;
     const isSmall = h < 50;
 
-    // Adaptive font sizes: generous for large buttons, crisp floor for small
-    const fsTitle = Math.max(9, Math.min(16, h * 0.22));
-    const fsSub = Math.max(12, Math.min(22, h * 0.34));
+    // Adaptive font sizes: factor in both width and height to prevent text overlap
+    const fsTitle = Math.max(8, Math.min(16, h * 0.22, w * 0.1));
+    const fsSub = Math.max(9, Math.min(22, h * 0.32, w * (isCombinedButton ? 0.08 : 0.12)));
 
     const title = isCombinedButton ? 'BUY FEATURE' : (type === 'SUPER' ? 'SUPER FREE SPINS' : 'ULTRA FREE SPINS');
     const subText = isCombinedButton ? '1000X / 500X' : (type === 'SUPER' ? '500X' : '1000X');
@@ -1455,13 +1468,16 @@ export class Game extends Phaser.Scene {
     const alpha = disabled ? 0.4 : 1;
 
     // At small sizes: NO stroke, only a tight 1px shadow for contrast.
-    // At larger sizes: thin stroke is fine.
     const strokeThick = isSmall ? 0 : Math.max(1, fsTitle * 0.08);
     const strokeCol = type === 'SUPER' ? '#550022' : '#553300';
 
+    // Move text closer to center if height is small
+    const yOffset1 = isSmall ? h * 0.12 : h * 0.16;
+    const yOffset2 = isSmall ? h * 0.20 : h * 0.18;
+
     txt1
       .setText(title)
-      .setPosition(x, y - h * 0.16)
+      .setPosition(x, y - yOffset1)
       .setFontSize(fsTitle)
       .setFontFamily('"Inter", "Outfit", sans-serif')
       .setFontStyle('800')
@@ -1470,11 +1486,12 @@ export class Game extends Phaser.Scene {
       .setStroke(strokeCol, strokeThick)
       .setShadow(0, 1, '#000000', isSmall ? 1 : 3, true, true)
       .setAlpha(alpha)
-      .setAlign('center');
+      .setAlign('center')
+      .setOrigin(0.5); // Ensure origin is 0.5 explicitly
 
     txt2
       .setText(subText)
-      .setPosition(x, y + h * 0.18)
+      .setPosition(x, y + yOffset2)
       .setFontSize(fsSub)
       .setFontFamily('"Inter", "Outfit", sans-serif')
       .setFontStyle('900')
@@ -1482,7 +1499,8 @@ export class Game extends Phaser.Scene {
       .setStroke(strokeCol, isSmall ? 0 : Math.max(1, fsSub * 0.08))
       .setShadow(0, 1, '#000000', isSmall ? 1 : 2, true, true)
       .setAlpha(alpha)
-      .setAlign('center');
+      .setAlign('center')
+      .setOrigin(0.5);
   }
 
   private drawBuyPanel(
@@ -1492,7 +1510,8 @@ export class Game extends Phaser.Scene {
     isSuper: boolean,
   ) {
     gfx.clear();
-    const r = Math.min(h / 2, 22);
+    // Reduce max border radius so it doesn't become a full pill on mobile, saving horizontal space
+    const r = Math.min(h * 0.35, 18);
     const accentTop = isSuper ? 0xff4499 : 0xffdd44;
     const accentBot = isSuper ? 0xcc0055 : 0xcc8800;
     const accentMid = isSuper ? 0xff0066 : 0xffaa00;
@@ -2032,7 +2051,12 @@ export class Game extends Phaser.Scene {
       this.sfxEnabled = !anyOn;
       this.audio.setMusicMuted(anyOn);
       this.audio.setSfxMuted(anyOn);
-      this.settings.syncState(!anyOn, !anyOn);
+      this.settings.syncState(
+        !anyOn, 
+        !anyOn,
+        this.grid.turboMode,
+        (this as any).graphicsQuality || 'HIGH'
+      );
       this.drawToolbarIcons();
       // Only play the button sound if we just turned sounds ON
       if (!anyOn) this.audio.playSound('button');
