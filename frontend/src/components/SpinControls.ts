@@ -407,7 +407,8 @@ export class SpinControls {
 
     const bw = this.autoHit.width || 88;
     const bh = this.autoHit.height || 28;
-    const rad = bh / 2;
+    // Clean, sharp premium edges to match the buy panels
+    const rad = Math.min(bh * 0.2, 8);
     const x = -bw / 2;
     const y = -bh / 2;
 

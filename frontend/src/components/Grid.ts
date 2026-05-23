@@ -183,8 +183,8 @@ export class Grid {
 
     // ═══ Layer 1: Deep dark base panel ═══
     this.cellBackgrounds.fillGradientStyle(
-      0x1a0818, 0x140610, 0x0e030a, 0x080206,
-      0.92, 0.92, 0.96, 0.96
+      0x10040f, 0x0a0208, 0x060105, 0x020002,
+      0.95, 0.95, 0.98, 0.98
     );
     this.cellBackgrounds.fillRect(gx, gy, totalW, totalH);
 
@@ -204,7 +204,7 @@ export class Grid {
       // Center highlight (glass refraction glow)
       const glowW = cs * 0.5;
       for (let g = 0; g < 4; g++) {
-        const gAlpha = 0.08 - g * 0.018;
+        const gAlpha = 0.035 - g * 0.008;
         if (gAlpha <= 0) break;
         this.cellBackgrounds.fillStyle(0xffccee, gAlpha);
         this.cellBackgrounds.fillRect(
@@ -214,7 +214,7 @@ export class Grid {
       }
 
       // Thin bright specular line down the tube (left-of-center)
-      this.cellBackgrounds.fillStyle(0xffffff, 0.06);
+      this.cellBackgrounds.fillStyle(0xffffff, 0.03);
       this.cellBackgrounds.fillRect(tubeCenter - cs * 0.12, gy, 2, totalH);
     }
 
@@ -222,18 +222,18 @@ export class Grid {
     const sepThick = Math.max(1, cs * 0.02);
     for (let r = 1; r < size; r++) {
       const y = gy + r * cs;
-      this.cellBackgrounds.fillStyle(0x000000, 0.25);
+      this.cellBackgrounds.fillStyle(0x000000, 0.35);
       this.cellBackgrounds.fillRect(gx, y - sepThick / 2, totalW, sepThick);
-      this.cellBackgrounds.fillStyle(0xffaadd, 0.08);
+      this.cellBackgrounds.fillStyle(0xffaadd, 0.04);
       this.cellBackgrounds.fillRect(gx, y + sepThick / 2, totalW, Math.max(1, sepThick * 0.5));
     }
 
     // ═══ Layer 4: Column dividers (proportional tube wall seams) ═══
     for (let c = 1; c < size; c++) {
       const x = gx + c * cs;
-      this.cellBackgrounds.fillStyle(0x000000, 0.5);
+      this.cellBackgrounds.fillStyle(0x000000, 0.6);
       this.cellBackgrounds.fillRect(x - sepThick / 2, gy, sepThick, totalH);
-      this.cellBackgrounds.fillStyle(0xffddee, 0.10);
+      this.cellBackgrounds.fillStyle(0xffddee, 0.05);
       this.cellBackgrounds.fillRect(x + sepThick / 2, gy, Math.max(1, sepThick * 0.5), totalH);
     }
 
@@ -264,7 +264,7 @@ export class Grid {
     const cx = gx + totalW / 2;
     const cy = gy + totalH / 2;
     for (let i = 0; i < 6; i++) {
-      const glowAlpha = 0.03 - i * 0.004;
+      const glowAlpha = 0.015 - i * 0.0025;
       if (glowAlpha <= 0) break;
       this.cellBackgrounds.fillStyle(0xffbbdd, glowAlpha);
       this.cellBackgrounds.fillCircle(cx, cy, Math.max(totalW, totalH) * 0.15 + i * 25);

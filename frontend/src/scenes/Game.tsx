@@ -887,7 +887,7 @@ export class Game extends Phaser.Scene {
     let buyH = isStacked
       ? Math.min(50, safeH * 0.07)
       : Math.min(110, safeH * 0.16);
-    let buyGap = isStacked ? Math.max(8, w * 0.02) : 16;
+    let buyGap = 12; // Standard fixed balanced gap
     let anteW = isStacked ? buyW * 2 + buyGap : buyW;
     let anteH = isStacked ? Math.min(42, buyH * 0.85) : 55;
 
@@ -957,8 +957,12 @@ export class Game extends Phaser.Scene {
     if (isStacked) {
       // Stacked mobile: compact "BUY" + "ANTE" side by side
       // Position them between gridBottom and spinY with proper spacing
-      const gridBottom = gridY + gridH;
-      const spinTop = spinY - spinSize / 2;
+      const borderThickness = Math.max(6, Math.min(gridW, gridH) * 0.022);
+      const framePadding = borderThickness + 4;
+      const gridBottom = gridY + gridH + framePadding;
+      
+      const spinGlowSize = 12; // Extra visual padding for the ambient pink glow
+      const spinTop = spinY - spinSize / 2 - spinGlowSize;
       const gapBetweenGridAndSpin = spinTop - gridBottom;
 
       // Buy panel row sits in the upper portion of the gap
@@ -1413,8 +1417,8 @@ export class Game extends Phaser.Scene {
     isSuper: boolean,
   ) {
     gfx.clear();
-    // Reduce max border radius so it doesn't become a full pill on mobile, saving horizontal space
-    const r = Math.min(h * 0.35, 18);
+    // Clean, sharp premium edges (no more overly rounded pills)
+    const r = Math.min(h * 0.15, 8);
     const accentTop = isSuper ? 0xff4499 : 0xffdd44;
     const accentBot = isSuper ? 0xcc0055 : 0xcc8800;
     const accentMid = isSuper ? 0xff0066 : 0xffaa00;
@@ -1472,7 +1476,8 @@ export class Game extends Phaser.Scene {
     this.anteBetBtn.clear();
     const x = -bw / 2;
     const y = -bh / 2;
-    const rad = bh / 2;
+    // Clean, sharp premium edges
+    const rad = Math.min(bh * 0.15, 8);
     const isSmall = bh < 40;
     const g = this.anteBetBtn;
 
