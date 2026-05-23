@@ -966,23 +966,26 @@ export class Game extends Phaser.Scene {
       const gapBetweenGridAndSpin = spinTop - gridBottom;
 
       // Buy panel row sits in the upper portion of the gap
-      const buyRowH = Math.max(buyH, 36);
-      const verticalPad = Math.max(8, gapBetweenGridAndSpin * 0.08);
+      let buyRowH = Math.max(buyH, 45);
+      const verticalPad = Math.max(12, gapBetweenGridAndSpin * 0.10);
 
       // Place buy row just below grid with padding
       buyY1 = gridBottom + verticalPad + buyRowH / 2;
 
       // Clamp to never overlap spin button
-      const maxBuyY = spinTop - buyRowH / 2 - 8;
+      const maxBuyY = spinTop - buyRowH / 2 - 12;
       if (buyY1 > maxBuyY) {
         buyY1 = maxBuyY;
         // If still too tight, shrink buy buttons slightly
-        buyH = Math.max(30, Math.min(buyH, (gapBetweenGridAndSpin - 20) * 0.5));
+        buyH = Math.max(36, Math.min(buyH, (gapBetweenGridAndSpin - 24) * 0.45));
+        buyRowH = buyH;
         buyY1 = gridBottom + verticalPad + buyH / 2;
       }
 
-      anteW = Math.min(130, w * 0.34);
+      // Allow tablets to have much wider buttons (up to 240px instead of the old 130px hard cap)
+      anteW = Math.min(240, w * 0.44);
       buyW = anteW;
+      anteH = Math.min(50, buyH * 0.95);
 
       anteY = buyY1;
       
@@ -1197,17 +1200,17 @@ export class Game extends Phaser.Scene {
       this.anteBetBtn.setPosition(anteX, anteY);
       this.drawAnteBetButton(anteW, anteH);
       
-      // Icon + Text centered as a pair inside the pill
+      // Icon + Text layout: LED on the far left, text centered in remaining space
       const anteFontSize = Math.max(8, Math.min(14, anteH * 0.35, anteW * 0.085));
-      const iconSize = Math.max(12, Math.min(20, anteH * 0.45, anteW * 0.12));
+      const iconSize = Math.max(12, Math.min(24, anteH * 0.45, anteW * 0.15));
       
       this.anteBetIcon
-        .setPosition(anteX - anteW * 0.28, anteY)
+        .setPosition(anteX - anteW * 0.36, anteY)
         .setFontSize(iconSize)
         .setOrigin(0.5, 0.5);
         
       this.anteBetTxt
-        .setPosition(anteX + iconSize * 0.2, anteY)
+        .setPosition(anteX + anteW * 0.08, anteY)
         .setOrigin(0.5, 0.5)
         .setAlign('center')
         .setFontSize(anteFontSize);
@@ -1476,7 +1479,7 @@ export class Game extends Phaser.Scene {
     this.anteBetBtn.clear();
     const x = -bw / 2;
     const y = -bh / 2;
-    // Clean, sharp premium edges
+    // Sharp modern edges for the outer panel
     const rad = Math.min(bh * 0.15, 8);
     const isSmall = bh < 40;
     const g = this.anteBetBtn;
@@ -1484,73 +1487,89 @@ export class Game extends Phaser.Scene {
     this.anteBetIcon.setVisible(true);
 
     if (options.anteBetEnabled) {
-      // Active — amber pill with glow
-      g.fillStyle(0xffaa00, 0.15);
+      // ── ACTIVE STATE: Neon Green / Gold glowing track ──
+      
+      // Outer ambient glow (emerald/gold)
+      g.fillStyle(0x00ff88, 0.15);
       g.fillRoundedRect(x - 8, y - 8, bw + 16, bh + 16, rad + 4);
-      g.fillStyle(0xffaa00, 0.25);
+      g.fillStyle(0xffcc00, 0.2);
       g.fillRoundedRect(x - 4, y - 4, bw + 8, bh + 8, rad + 2);
 
-      g.fillStyle(0x000000, 0.5);
-      g.fillRoundedRect(x, y + 4, bw, bh, rad);
-
-      g.fillGradientStyle(0xffdd55, 0xffbb22, 0xaa5500, 0x883300, 1);
+      // Deep dark base plate
+      g.fillStyle(0x0a1a0f, 1);
       g.fillRoundedRect(x, y, bw, bh, rad);
 
-      if (!isSmall) {
-        g.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.45, 0.45, 0, 0);
-        g.fillRoundedRect(x + 2, y + 1, bw - 4, bh * 0.35, {
-          tl: rad - 1, tr: rad - 1, bl: 0, br: 0,
-        } as any);
-      }
+      // Inner glowing panel (recessed)
+      g.fillGradientStyle(0x006633, 0x003311, 0x002200, 0x001100, 1);
+      g.fillRoundedRect(x + 2, y + 2, bw - 4, bh - 4, rad - 1);
 
-      g.lineStyle(isSmall ? 2 : 2.5, 0xffeedd, 1);
+      // Top inner shadow for depth
+      g.fillStyle(0x000000, 0.6);
+      g.fillRoundedRect(x + 2, y + 2, bw - 4, 6, { tl: rad - 1, tr: rad - 1, bl: 0, br: 0 } as any);
+
+      // Bright neon border rim
+      g.lineStyle(isSmall ? 2 : 2.5, 0x00ff88, 1);
       g.strokeRoundedRect(x, y, bw, bh, rad);
+      
+      // Secondary specular rim highlight
+      g.lineStyle(1, 0xffffff, 0.4);
+      g.strokeRoundedRect(x + 1, y + 1, bw - 2, bh - 2, rad - 1);
 
       this.anteBetTxt
         .setText('ANTE BET ON\nDouble Chance')
         .setFontFamily('"Inter", "Outfit", sans-serif')
-        .setFontStyle('700')
+        .setFontStyle('900')
         .setColor('#ffffff')
         .setLineSpacing(isSmall ? -4 : -2)
-        .setStroke('#000000', 0)
-        .setShadow(0, 1, '#000000', 1, true, true);
+        .setStroke('#004422', isSmall ? 0 : 3)
+        .setShadow(0, 0, '#00ff88', 8, true, true);
+        
       this.anteBetIcon
-        .setColor('#ffffff')
-        .setShadow(0, 0, '#ffcc00', isSmall ? 2 : 4, true, true);
+        .setText('●')
+        .setColor('#00ff88')
+        .setShadow(0, 0, '#00ff88', 8, true, true);
+        
     } else {
-      // Inactive — soft purple pill
-      g.fillStyle(0x000000, 0.35);
-      g.fillRoundedRect(x + 2, y + 3, bw, bh, rad);
-      // Inactive — dark violet pill with subtle glow
-      g.fillStyle(0x8844ff, 0.08);
-      g.fillRoundedRect(x - 6, y - 6, bw + 12, bh + 12, rad + 3);
+      // ── INACTIVE STATE: Deep sleek violet / black glass ──
+      
+      // Outer ambient drop shadow
+      g.fillStyle(0x000000, 0.4);
+      g.fillRoundedRect(x - 4, y - 2, bw + 8, bh + 8, rad + 2);
 
-      g.fillStyle(0x000000, 0.5);
-      g.fillRoundedRect(x, y + 4, bw, bh, rad);
-
-      g.fillGradientStyle(0x3d2b63, 0x3d2b63, 0x1a0a24, 0x1a0a24, 1);
+      // Outer bezel (chrome/dark metal)
+      g.fillGradientStyle(0x443355, 0x221133, 0x11051a, 0x0a0211, 1);
       g.fillRoundedRect(x, y, bw, bh, rad);
 
+      // Inner recessed track (very dark violet)
+      g.fillStyle(0x05010a, 1);
+      g.fillRoundedRect(x + 2, y + 2, bw - 4, bh - 4, rad - 1);
+
+      // Top inner shadow
+      g.fillStyle(0x000000, 0.8);
+      g.fillRoundedRect(x + 2, y + 2, bw - 4, 8, { tl: rad - 1, tr: rad - 1, bl: 0, br: 0 } as any);
+
+      // Glass reflection across the top half
       if (!isSmall) {
-        g.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.15, 0.15, 0, 0);
-        g.fillRoundedRect(x + 2, y + 1, bw - 4, bh * 0.35, {
-          tl: rad - 1, tr: rad - 1, bl: 0, br: 0,
-        } as any);
+        g.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.08, 0.08, 0, 0);
+        g.fillRoundedRect(x + 2, y + 2, bw - 4, bh * 0.4, { tl: rad - 1, tr: rad - 1, bl: 0, br: 0 } as any);
       }
 
-      g.lineStyle(isSmall ? 1.5 : 2, 0x9966ff, 0.6);
+      // Sleek metallic border
+      g.lineStyle(isSmall ? 1 : 1.5, 0x554477, 0.8);
       g.strokeRoundedRect(x, y, bw, bh, rad);
 
       this.anteBetTxt
         .setText('ANTE BET OFF\nDouble Chance')
         .setFontFamily('"Inter", "Outfit", sans-serif')
         .setFontStyle('700')
-        .setColor('#ddccff')
+        .setColor('#8877aa')
         .setLineSpacing(isSmall ? -4 : -2)
         .setStroke('#000000', 0)
-        .setShadow(0, 1, '#000000', 1, true, true);
+        .setShadow(0, 2, '#000000', 2, true, true);
+        
       this.anteBetIcon
-        .setColor('#ff8844')
+        .setText('●')
+        .setColor('#665588')
         .setShadow(0, 0, '#000', 0, false, false);
     }
   }
@@ -2550,6 +2569,9 @@ export class Game extends Phaser.Scene {
     totalCost: number,
   ) {
     this._spinLock = true;
+    this.isFeaturesMenuOpen = false; // Close the buy menu popup immediately upon confirmation
+    this.layoutAll();
+    
     this.updateSpinButtonState();
     this.valueMoney -= totalCost;
     this.lastWin = 0;

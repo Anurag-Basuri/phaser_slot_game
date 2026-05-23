@@ -26,7 +26,7 @@ export class ConfirmDialog {
     const w = this.scene.scale.width;
     const h = this.scene.scale.height;
 
-    this.container = this.scene.add.container(0, 0).setDepth(55).setAlpha(0);
+    this.container = this.scene.add.container(0, 0).setDepth(5000).setAlpha(0);
 
     // Overlay
     const overlay = this.scene.add.graphics();
