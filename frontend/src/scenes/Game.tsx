@@ -624,7 +624,8 @@ export class Game extends Phaser.Scene {
     });
 
     this.autoPlayOverlay.setCallbacks((spins, turbo, quick, skip) => {
-      this.grid.turboMode = turbo || quick;
+      this.grid.turboMode = turbo;
+      this.grid.quickMode = quick && !turbo;
       this.skipScreensActive = skip;
       this.autoSpinActive = true;
       this.autoSpinRemaining = spins;
@@ -1843,7 +1844,7 @@ export class Game extends Phaser.Scene {
           this.errorManager.showToast('INSUFFICIENT FUNDS', '#ff4466');
           return;
         }
-        this.autoPlayOverlay.show();
+        this.autoPlayOverlay.show(this.stakeEngine.isTurboDisabled());
       } else {
         this.skipScreensActive = false;
         this.stopAutoSpin();
@@ -2375,154 +2376,12 @@ export class Game extends Phaser.Scene {
   }
 
   updateLastWinDisplay(symbolKey?: string) {
-    const target = this.lastWin;
-
-    // Update symbol icon in HUD
-    this.bottomBarHUD.setWinSymbol(symbolKey);
-    if (this._winCountTween) {
-      this._winCountTween.stop();
-    }
-
-    // Kill any lingering pulse tweens
-    this.tweens.killTweensOf([
-      this.bottomBarHUD.txtLastWin,
-      this.bottomBarHUD.txtLastWinLabel,
-    ]);
-    this.bottomBarHUD.txtLastWin.setScale(1);
-    this.bottomBarHUD.txtLastWinLabel.setScale(1);
-
-    // Hide win glow
-    this.tweens.killTweensOf(this.bottomBarHUD.winPillGlow);
-    this.bottomBarHUD.winPillGlow.setAlpha(0);
-
-    if (target <= 0) {
-      this._displayedWin = 0;
-      this.bottomBarHUD.winSymbolIcon.setVisible(false);
-      this.bottomBarHUD.txtLastWin.setText(
-        DisplayBalance({ amount: 0, currency: this.currency }),
-      );
-      this.bottomBarHUD.txtLastWin
-        .setColor('#44ff88')
-        .setShadow(0, 0, '#000', 0, false, false);
-      return;
-    }
-
-    const effectiveBet = this.getEffectiveBet();
-    const isBigWin = target >= effectiveBet * 10;
-    const start = this._displayedWin;
-    const delta = target - start;
-    const duration = Math.min(1500, Math.max(500, Math.abs(delta) * 15));
-
-    // Golden glow text
-    this.bottomBarHUD.txtLastWin
-      .setColor('#ffea00')
-      .setShadow(0, 2, '#ffaa00', 6, true, true);
-
-    // Pulse text while counting
-    this.tweens.add({
-      targets: [
-        this.bottomBarHUD.txtLastWin,
-        this.bottomBarHUD.txtLastWinLabel,
-      ],
-      scaleX: 1.12,
-      scaleY: 1.12,
-      yoyo: true,
-      repeat: -1,
-      duration: 200,
-      ease: 'Sine.easeInOut',
-    });
-
-    // Big win: glow the pill itself
-    if (isBigWin) {
-      const b = this.bottomBarHUD.getWinPillBounds();
-      if (b) {
-        this.bottomBarHUD.winPillGlow.clear();
-        this.bottomBarHUD.winPillGlow.fillStyle(0xffaa00, 0.25);
-        this.bottomBarHUD.winPillGlow.fillRoundedRect(
-          b.x - 4,
-          b.y - 4,
-          b.w + 8,
-          b.h + 8,
-          (b.h + 8) / 2,
-        );
-        this.bottomBarHUD.winPillGlow.setAlpha(0);
-        this.tweens.add({
-          targets: this.bottomBarHUD.winPillGlow,
-          alpha: { from: 0, to: 1 },
-          yoyo: true,
-          repeat: -1,
-          duration: 400,
-          ease: 'Sine.easeInOut',
-        });
-      }
-    }
-
-    this._winCountTween = this.tweens.addCounter({
-      from: 0,
-      to: 100,
-      duration,
-      ease: 'Cubic.easeOut',
-      onUpdate: (tween: Phaser.Tweens.Tween) => {
-        const progress = (tween.getValue?.() ?? 0) / 100;
-        this._displayedWin = start + delta * progress;
-        this.bottomBarHUD.txtLastWin.setText(
-          DisplayBalance({
-            amount: this._displayedWin,
-            currency: this.currency,
-          }),
-        );
-        // Keep icon position synced as text width changes
-        if (this.bottomBarHUD.winSymbolIcon.visible) {
-          this.bottomBarHUD.winSymbolIcon.x =
-            this.bottomBarHUD.txtLastWin.x -
-            this.bottomBarHUD.txtLastWin.width *
-              this.bottomBarHUD.txtLastWin.scaleX -
-            18;
-        }
-      },
-      onComplete: () => {
-        this._displayedWin = target;
-        this.bottomBarHUD.txtLastWin.setText(
-          DisplayBalance({ amount: target, currency: this.currency }),
-        );
-
-        // Stop pulsing
-        this.tweens.killTweensOf([
-          this.bottomBarHUD.txtLastWin,
-          this.bottomBarHUD.txtLastWinLabel,
-        ]);
-        this.bottomBarHUD.txtLastWin.setScale(1);
-        this.bottomBarHUD.txtLastWinLabel.setScale(1);
-
-        // Final celebratory pop
-        this.tweens.add({
-          targets: this.bottomBarHUD.txtLastWin,
-          scaleX: 1.3,
-          scaleY: 1.3,
-          duration: 250,
-          yoyo: true,
-          ease: 'Back.easeOut',
-        });
-
-        // Settle win glow
-        if (isBigWin) {
-          this.tweens.killTweensOf(this.bottomBarHUD.winPillGlow);
-          this.tweens.add({
-            targets: this.bottomBarHUD.winPillGlow,
-            alpha: 0.5,
-            duration: 600,
-            ease: 'Sine.easeOut',
-          });
-        }
-
-        // Settle text to green
-        this.time.delayedCall(400, () => {
-          this.bottomBarHUD.txtLastWin
-            .setColor('#44ff88')
-            .setShadow(0, 0, '#000', 0, false, false);
-        });
-      },
-    });
+    this.bottomBarHUD.updateLastWinDisplay(
+      this.lastWin,
+      this.currency,
+      this.getEffectiveBet(),
+      symbolKey
+    );
   }
 
   private requestPurchase(triggerType: number, betMultCost: number) {

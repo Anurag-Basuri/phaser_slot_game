@@ -27,6 +27,7 @@ export class Grid {
   public totalFreeSpinsWin = 0;
   public isSuperFreeSpins = false;
   public turboMode = false;
+  public quickMode = false;
 
   // Max win tracking
   private cumulativeRoundWin = 0;
@@ -72,11 +73,11 @@ export class Grid {
   public cellH = 100;
 
   // Dynamic timing — fast and snappy for Sugar Rush 1000 feel
-  private get cascadeDelay() { return this.turboMode ? 30 : 80; }
-  private get explodeDuration() { return this.turboMode ? 80 : 180; }
-  private get dropDuration() { return this.turboMode ? 100 : 200; }
-  private get postDropDelay() { return this.turboMode ? 100 : 250; }
-  private get sweepDuration() { return this.turboMode ? 80 : 140; }
+  private get cascadeDelay() { return this.turboMode ? 30 : this.quickMode ? 50 : 80; }
+  private get explodeDuration() { return this.turboMode ? 80 : this.quickMode ? 120 : 180; }
+  private get dropDuration() { return this.turboMode ? 100 : this.quickMode ? 140 : 200; }
+  private get postDropDelay() { return this.turboMode ? 100 : this.quickMode ? 160 : 250; }
+  private get sweepDuration() { return this.turboMode ? 80 : this.quickMode ? 100 : 140; }
   private cellBackgrounds!: Phaser.GameObjects.Graphics;
 
 

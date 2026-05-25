@@ -10,6 +10,7 @@ export class AutoPlayOverlay {
   private turboSpin = false;
   private quickSpin = false;
   private skipScreens = false;
+  private _isTurboDisabled = false;
   private spins = 50;
   private allowedSpins = [10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 150, 300, 500, 1000];
 
@@ -60,8 +61,23 @@ export class AutoPlayOverlay {
     this.onStartCallback = onStart;
   }
 
-  public show() {
+  public show(isTurboDisabled: boolean = false) {
     if (this.visible) return;
+    this._isTurboDisabled = isTurboDisabled;
+    
+    // If turbo is disabled by jurisdiction, force toggles off
+    if (isTurboDisabled) {
+      this.turboSpin = false;
+      this.quickSpin = false;
+    }
+
+    // Always rebuild on show to ensure compliance flags and layout are fresh
+    if (this.container?.scene) {
+      this.container.removeAll(true);
+      this.container.destroy();
+    }
+    this.build();
+
     this.visible = true;
     this.container.setVisible(true);
     this.container.setAlpha(0);
@@ -157,25 +173,42 @@ export class AutoPlayOverlay {
     sep.lineBetween(pX + 40, pY + 90, pX + pW - 40, pY + 90);
     this.container.add(sep);
 
-    // Checkboxes row
-    const cbY = pY + 120;
-    const cbWidth = pW / 3;
-    
-    const cb1 = this.createCheckbox(pX + cbWidth * 0.1, cbY, 'TURBO\nSPIN', this.turboSpin, (val) => {
-      this.turboSpin = val;
-      if (val) {
-        this.quickSpin = false;
-        cb2.setState(false);
+    // Checkboxes
+    let currentX = pX + 20;
+    let currentY = pY + 110;
+    const boxW = isMobile ? (pW / 2 - 20) : (pW / 3);
+
+    let cb1: any = null;
+    let cb2: any = null;
+
+    if (!this._isTurboDisabled) {
+      cb1 = this.createCheckbox(currentX, currentY, 'TURBO\nSPIN', this.turboSpin, (val) => {
+        this.turboSpin = val;
+        if (val) {
+          this.quickSpin = false;
+          if (cb2) cb2.setState(false);
+        }
+      });
+      
+      currentX += boxW;
+      
+      cb2 = this.createCheckbox(currentX, currentY, 'QUICK\nSPIN', this.quickSpin, (val) => {
+        this.quickSpin = val;
+        if (val) {
+          this.turboSpin = false;
+          if (cb1) cb1.setState(false);
+        }
+      });
+      
+      currentX += boxW;
+      // If mobile, wrap the 3rd box to the next line
+      if (isMobile) {
+        currentX = pX + 20;
+        currentY += 60;
       }
-    });
-    const cb2 = this.createCheckbox(pX + cbWidth * 1.1, cbY, 'QUICK\nSPIN', this.quickSpin, (val) => {
-      this.quickSpin = val;
-      if (val) {
-        this.turboSpin = false;
-        cb1.setState(false);
-      }
-    });
-    const cb3 = this.createCheckbox(pX + cbWidth * 2.1, cbY, 'SKIP\nSCREENS', this.skipScreens, (val) => this.skipScreens = val);
+    }
+
+    const cb3 = this.createCheckbox(currentX, currentY, 'SKIP\nSCREENS', this.skipScreens, (val) => this.skipScreens = val);
 
     // Slider section
     const slideY = pY + 280;
@@ -262,7 +295,7 @@ export class AutoPlayOverlay {
   }
 
   private createCheckbox(x: number, y: number, label: string, initial: boolean, onChange: (val: boolean) => void) {
-    const size = 40;
+    const size = 36;
     const gfx = this.scene.add.graphics();
     let state = initial;
     
@@ -294,12 +327,12 @@ export class AutoPlayOverlay {
     draw();
     this.container.add(gfx);
 
-    const txt = this.scene.add.text(x + size + 15, y + size/2, label, {
+    const txt = this.scene.add.text(x + size + 10, y + size/2, label, {
       resolution: 2, fontFamily: '"Poppins", sans-serif',
-      fontSize: '14px',
+      fontSize: '13px',
       color: '#ffffff',
       fontStyle: 'bold'
-    }).setOrigin(0, 0.5).setLineSpacing(5);
+    }).setOrigin(0, 0.5).setLineSpacing(2);
     this.container.add(txt);
 
     const hit = this.scene.add.rectangle(x + size, y + size/2, size*3, size+10, 0xffffff, 0)
