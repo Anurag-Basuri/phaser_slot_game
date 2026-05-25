@@ -12,8 +12,17 @@ export default defineConfig({
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash][extname]',
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('phaser')) {
+              return 'phaser'; // Split out the massive Phaser library
+            }
+            return 'vendor'; // Split other dependencies
+          }
+        },
       },
     },
+    chunkSizeWarningLimit: 1500,
   },
   esbuild: {
     jsxImportSource: 'phaser-jsx',

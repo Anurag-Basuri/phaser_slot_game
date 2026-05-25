@@ -37,8 +37,8 @@ export class Preload extends Phaser.Scene {
     this.load.image('scatter', 'images/candies/scatter.png');
 
     // Scene background assets
-    this.load.image('game_bg', 'images/user_bg_1.jpeg');
-    this.load.image('grid_panel', 'images/user_bg_2.jpeg');
+    this.load.image('game_bg', 'images/bg_environment_base.jpeg');
+    this.load.image('grid_panel', 'images/bg_environment_panel.jpeg');
 
     // Premium UI Assets
     this.load.image('btn_spin', 'images/ui/btn_spin.png');
@@ -59,6 +59,7 @@ export class Preload extends Phaser.Scene {
     this.load.audio('lose', 'audio/lose.mp3');
     this.load.audio('button', 'audio/button.mp3');
     this.load.audio('musicDefault', 'audio/music_default.mp3');
+    this.load.audio('musicFreeSpins', 'audio/music_freespins.mp3');
   }
 
   create() {
