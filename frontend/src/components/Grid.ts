@@ -1079,14 +1079,21 @@ export class Grid {
         pillBg.fillRoundedRect(popX - pillW / 2, popY - pillH / 2, pillW, pillH, pillH / 2);
 
         if (this.turboMode) {
-          winPop.setScale(0.8);
-          pillBg.setScale(0.8);
+          winPop.setScale(0.8).setAlpha(1);
+          pillBg.setScale(0.8).setAlpha(1);
+          
           this.scene.tweens.add({
             targets: [winPop, pillBg],
-            y: `-=${this.cellW * 0.5}`,
-            alpha: { from: 1, to: 0 },
+            y: `-=${this.cellW * 0.4}`,
             duration: 300,
-            ease: 'Linear',
+            ease: 'Cubic.easeOut'
+          });
+          
+          this.scene.tweens.add({
+            targets: [winPop, pillBg],
+            alpha: 0,
+            duration: 150,
+            delay: 150,
             onComplete: () => {
               if (winPop && winPop.scene) winPop.destroy();
               if (pillBg && pillBg.scene) pillBg.destroy();

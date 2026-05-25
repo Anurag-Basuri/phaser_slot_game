@@ -1288,8 +1288,10 @@ export class Game extends Phaser.Scene {
 
     if (this.stakeEngine.isReplayMode()) {
       const replayScale = Math.min(1.5, Math.max(0.4, w / 800));
-      this.replayBtnHit.setPosition(w / 2, h / 2).setSize(240 * replayScale, 70 * replayScale);
-      this.replayBtnTxt.setPosition(w / 2, h / 2).setFontSize(24 * replayScale);
+      // Position at spinY so it replaces the spin button rather than overlapping the grid
+      const replayY = m.spinY;
+      this.replayBtnHit.setPosition(w / 2, replayY).setSize(240 * replayScale, 70 * replayScale);
+      this.replayBtnTxt.setPosition(w / 2, replayY).setFontSize(24 * replayScale);
     }
   }
 
