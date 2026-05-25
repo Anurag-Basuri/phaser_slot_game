@@ -594,6 +594,7 @@ export class PaytableOverlay {
     }).setOrigin(0.5));
     const notes = [
       '\u2022  The cost is deducted from your balance immediately upon confirmation.',
+      '\u2022  Ante Bet increases the base bet cost by 25% (1.25× total bet).',
       '\u2022  Ante Bet does not affect the Buy Feature cost.',
       '\u2022  Max win cap of 25,000× applies to all bonus rounds.',
     ];

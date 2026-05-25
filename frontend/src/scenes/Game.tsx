@@ -1380,7 +1380,9 @@ export class Game extends Phaser.Scene {
     const fsSub = Math.max(9, Math.min(22, h * 0.32, w * (isCombinedButton ? 0.08 : 0.12)));
 
     const title = isCombinedButton ? 'BUY FEATURE' : (type === 'SUPER' ? 'SUPER FREE SPINS' : 'ULTRA FREE SPINS');
-    const subText = isCombinedButton ? '1000X / 500X' : (type === 'SUPER' ? '500X' : '1000X');
+    const costMult = type === 'SUPER' ? 500 : 1000;
+    const realCostStr = DisplayBalance({ amount: options.betAmount * costMult, currency: this.currency });
+    const subText = isCombinedButton ? '1000X / 500X' : `${costMult}X BET (${realCostStr} COST)`;
 
     const disabled = options.anteBetEnabled;
     const alpha = disabled ? 0.4 : 1;
