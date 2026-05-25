@@ -2115,6 +2115,12 @@ export class Game extends Phaser.Scene {
   }
 
   private wireGridCallbacks() {
+    // Disconnect recovery: save animation progress after each RGS event completes
+    // SDK spec: POST /bet/event { sessionID, event } — allows player to resume from correct point on reconnect
+    this.grid.onEventProcessed = (eventIndex: number) => {
+      this.stakeEngine.saveEvent(eventIndex.toString());
+    };
+
     this.grid.onWinCallback = (winAmount, symbolId) => {
       const actualWin = winAmount;
       if (!this.fsActive) {

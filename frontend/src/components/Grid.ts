@@ -62,6 +62,7 @@ export class Grid {
   public onCompleteCallback: (() => void) | null = null;
   public onMaxWinCallback: ((totalWin: number) => void) | null = null;
   public onNextFreeSpinNeeded: (() => void) | null = null;
+  public onEventProcessed: ((eventIndex: number) => void) | null = null;
 
   private symbolKeys = [
     'candy_0', 'candy_1', 'candy_2', 'candy_3',
@@ -898,6 +899,11 @@ export class Grid {
     }
     
     const event = this.eventQueue.shift();
+
+    // Notify Game.tsx that this event is being processed — enables saveEvent() for disconnect recovery
+    if (event.index !== undefined && this.onEventProcessed) {
+      this.onEventProcessed(event.index);
+    }
     
     switch (event.type) {
       case 'reveal':
