@@ -234,7 +234,7 @@ Generates the three files required by Stake's ACP:
 |------|------|-------------|---------------|
 | `base` | 1.0× | Normal play | 0.01% wincap, 4.9% FS, 45% zero-win, 50.09% basegame |
 | `ante` | 1.25× | 2× scatter chance | 100% basegame with scatter override |
-| `bonus` | 100× | Buy Free Spins | 0.1% wincap, 99.9% FS |
+| `bonus` | 1000× | Buy Free Spins | 0.1% wincap, 99.9% FS |
 | `super` | 500× | Buy Super FS (×2 start) | 100% FS with SF0 reel |
 
 ### GameExecutables (`game_executables.py`)
@@ -341,7 +341,7 @@ After running `run.py`, the `library/` directory contains everything needed for 
   "modes": [
     {"name": "base", "cost": 1.0, "events": "books_base.jsonl.zst", "weights": "lookUpTable_base_0.csv"},
     {"name": "ante", "cost": 1.25, "events": "books_ante.jsonl.zst", "weights": "lookUpTable_ante_0.csv"},
-    {"name": "bonus", "cost": 100.0, "events": "books_bonus.jsonl.zst", "weights": "lookUpTable_bonus_0.csv"},
+    {"name": "bonus", "cost": 1000.0, "events": "books_bonus.jsonl.zst", "weights": "lookUpTable_bonus_0.csv"},
     {"name": "super", "cost": 500.0, "events": "books_super.jsonl.zst", "weights": "lookUpTable_super_0.csv"}
   ]
 }

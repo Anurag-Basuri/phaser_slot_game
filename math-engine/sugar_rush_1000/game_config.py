@@ -96,7 +96,7 @@ class GameConfig(Config):
             self.basegame_type: {3: 10, 4: 12, 5: 15, 6: 20, 7: 30},
             self.freegame_type: {3: 10, 4: 12, 5: 15, 6: 20, 7: 30},
         }
-        # Bonus (100x): 10 FS + 32x cap to control persistent multiplier value
+        # Bonus (1000x): 10 FS + 32x cap to control persistent multiplier value
         self.freespin_triggers_bonus = {
             self.basegame_type: {3: 10, 4: 12, 5: 15, 6: 20, 7: 30},
             self.freegame_type: {3: 10, 4: 12, 5: 15, 6: 20, 7: 30},
@@ -235,10 +235,10 @@ class GameConfig(Config):
                 ],
             ),
 
-            # 3. Buy Free Spins (100x cost)
+            # 3. Buy Free Spins (1000x cost)
             BetMode(
                 name="bonus",
-                cost=100.0,
+                cost=1000.0,
                 rtp=self.rtp,
                 max_win=self.wincap,
                 auto_close_disabled=False,
