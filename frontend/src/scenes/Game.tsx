@@ -2466,10 +2466,12 @@ export class Game extends Phaser.Scene {
     this.layoutAll();
     
     this.updateSpinButtonState();
-    this.valueMoney -= totalCost;
+    if (this.stakeEngine.isDemoMode()) {
+      this.valueMoney -= totalCost;
+      this.updateMoneyDisplay();
+    }
     this.lastWin = 0;
     options.betAmount = BET_PRESETS[this.betPresetIndex];
-    this.updateMoneyDisplay();
     this.updateLastWinDisplay();
 
     this.audio.playSound('button');
@@ -2572,11 +2574,13 @@ export class Game extends Phaser.Scene {
     const cost = this.getEffectiveBet();
     if (this.valueMoney >= cost) {
       this._spinLock = true;
-      this.valueMoney -= cost;
+      if (this.stakeEngine.isDemoMode()) {
+        this.valueMoney -= cost;
+        this.updateMoneyDisplay();
+      }
       this.lastWin = 0;
       // Bug 8: Store the BASE bet, not the ante-adjusted cost, for payout calculation
       options.betAmount = BET_PRESETS[this.betPresetIndex];
-      this.updateMoneyDisplay();
       this.updateLastWinDisplay();
 
       this.audio.playReels();
@@ -2709,9 +2713,25 @@ export class Game extends Phaser.Scene {
     console.log(
       `[Game] Pending round detected — restored bet amount to ${options.betAmount} (total cost: ${totalAmount})`,
     );
-    this.stakeEngine
-      .endRound()
-      .catch((e) => console.warn('[Game] endRound error:', e));
+    
+    const stateEvents = round.state || [];
+    if (stateEvents.length > 0) {
+      this._spinLock = true;
+      this.updateSpinButtonState();
+      
+      const fsEvent = stateEvents.find((e: any) => e.type === 'fsTrigger');
+      if (fsEvent) {
+        this.grid.isSuperFreeSpins = fsEvent.triggerType === 'super';
+        this.grid.freeSpinsRemaining = fsEvent.totalSpins || 0;
+      }
+      
+      // Let grid play out the events. When finished, its standard callbacks will call endRound().
+      this.grid.processServerEvents(stateEvents);
+    } else {
+      this.stakeEngine
+        .endRound()
+        .catch((e) => console.warn('[Game] endRound error:', e));
+    }
   }
 
   private saveSpinRecord(_winAmount: number, _feature: string) {
