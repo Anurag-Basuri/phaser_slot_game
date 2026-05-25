@@ -12,6 +12,8 @@
  * Monetary values use 6-decimal integer precision: $1.00 = 1_000_000
  */
 
+import { generateDemoOutcome } from './DemoLogic';
+
 // ── Auth Response ──
 // Matches the SDK's /wallet/authenticate response exactly
 export interface StakeAuthResponse {
@@ -604,82 +606,13 @@ export class StakeEngineClient {
     betAmount: number,
     featureType: number,
   ): StakePlayResponse {
-    const gridSize = 7;
-    // Scatter is index 7. Increase its weight drastically if Ante Bet (featureType === 3) is active
-    const symbolWeights = [18, 16, 15, 14, 13, 12, 9, featureType === 3 ? 12 : 3];
-    const totalWeight = symbolWeights.reduce((a, b) => a + b, 0);
-    const symbolNames = ['L3', 'L2', 'L1', 'H4', 'H3', 'H2', 'H1', 'S'];
-
-    const pickSymbol = (): number => {
-      let roll = Math.random() * totalWeight;
-      for (let i = 0; i < symbolWeights.length; i++) {
-        roll -= symbolWeights[i];
-        if (roll <= 0) return i;
-      }
-      return symbolWeights.length - 1;
-    };
-
-    // Generate random board
-    const board: any[][] = [];
-    for (let r = 0; r < gridSize; r++) {
-      board[r] = [];
-      for (let c = 0; c < gridSize; c++) {
-        const id = pickSymbol();
-        board[r][c] = { symbol: symbolNames[id], id: id, reel: c, row: r };
-      }
-    }
-
-    // Force a cluster of 5 randomly to guarantee some action
-    if (Math.random() < 0.8) {
-      const startR = Math.floor(Math.random() * 5) + 1;
-      const startC = Math.floor(Math.random() * 5) + 1;
-      const clusterSymId = Math.floor(Math.random() * 6);
-      board[startR][startC] = { symbol: symbolNames[clusterSymId], id: clusterSymId, reel: startC, row: startR };
-      board[startR+1][startC] = { symbol: symbolNames[clusterSymId], id: clusterSymId, reel: startC, row: startR+1 };
-      board[startR-1][startC] = { symbol: symbolNames[clusterSymId], id: clusterSymId, reel: startC, row: startR-1 };
-      board[startR][startC+1] = { symbol: symbolNames[clusterSymId], id: clusterSymId, reel: startC+1, row: startR };
-      board[startR][startC-1] = { symbol: symbolNames[clusterSymId], id: clusterSymId, reel: startC-1, row: startR };
-    }
-
-    // If a feature was bought, inject 3 to 4 scatters to trigger Free Spins
-    if (featureType > 0) {
-      const numScatters = Math.floor(Math.random() * 2) + 3; // 3 or 4 scatters
-      let placed = 0;
-      while (placed < numScatters) {
-        const r = Math.floor(Math.random() * gridSize);
-        const c = Math.floor(Math.random() * gridSize);
-        if (board[r][c].id !== 7) {
-          board[r][c] = { symbol: 'S', id: 7, reel: c, row: r };
-          placed++;
-        }
-      }
-    }
-
-    // Calculate a simple demo balance
     const currentBalance = this._demoBalance !== undefined
-      ? this._demoBalance - betAmount
-      : 100_000 - betAmount;
-    this._demoBalance = Math.max(0, currentBalance);
-
-    return {
-      balance: {
-        amount: StakeEngineClient.toStakeAmount(this._demoBalance),
-        currency: 'USD'
-      },
-      round: {
-        betID: Date.now(),
-        amount: StakeEngineClient.toStakeAmount(betAmount),
-        active: false,
-        state: [{
-          index: 0,
-          type: 'reveal',
-          board: board,
-          paddingPositions: [],
-          gameType: featureType > 0 ? 'freespins' : 'basegame',
-          anticipation: [0, 0, 0, 0, 0, 0, 0],
-        } as any]
-      }
-    };
+      ? this._demoBalance
+      : 100_000;
+    
+    const response = generateDemoOutcome(betAmount, featureType, currentBalance);
+    this._demoBalance = StakeEngineClient.toDisplayAmount(response.balance.amount);
+    return response;
   }
 }
 

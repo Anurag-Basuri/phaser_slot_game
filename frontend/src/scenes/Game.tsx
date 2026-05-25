@@ -148,21 +148,34 @@ export class Game extends Phaser.Scene {
         this.currency = auth.balance.currency;
 
         if (auth.config) {
-          BET_PRESETS.length = 0;
+          const minBet = auth.config.minBet || 100000;
+          const maxBet = auth.config.maxBet || 240000000;
+          const stepBet = auth.config.stepBet || 100000; // Enforce stepBet
+
+          let rawLevels: number[] = [];
           if (auth.config.betLevels && auth.config.betLevels.length > 0) {
-            for (let i = 0; i < auth.config.betLevels.length; i++) {
-              BET_PRESETS.push(StakeEngineClient.toDisplayAmount(auth.config.betLevels[i]));
+            rawLevels = auth.config.betLevels;
+          } else {
+            let current = minBet;
+            while (current <= maxBet) {
+              rawLevels.push(current);
+              current += stepBet;
             }
-          } else if (auth.config.stepBet && auth.config.maxBet && auth.config.minBet) {
-            let current = auth.config.minBet;
-            while (current <= auth.config.maxBet) {
-              BET_PRESETS.push(StakeEngineClient.toDisplayAmount(current));
-              current += auth.config.stepBet;
+          }
+
+          BET_PRESETS.length = 0;
+          for (const val of rawLevels) {
+            // Strict modulo validation to prevent rejecting play requests
+            if (val >= minBet && val <= maxBet && (val - minBet) % stepBet === 0) {
+              const displayVal = StakeEngineClient.toDisplayAmount(val);
+              if (!BET_PRESETS.includes(displayVal)) {
+                BET_PRESETS.push(displayVal);
+              }
             }
           }
 
           if (BET_PRESETS.length === 0) {
-            BET_PRESETS.push(1.0); // Fallback
+            BET_PRESETS.push(StakeEngineClient.toDisplayAmount(minBet)); // Fallback
           }
 
           const defaultDisplay = StakeEngineClient.toDisplayAmount(
@@ -2160,7 +2173,7 @@ export class Game extends Phaser.Scene {
       this.backgroundManager.setFreeSpinsMode(true);
 
       // Switch to FS music
-      this.audio.playMusic('musicDefault', 800);
+      this.audio.playMusic('musicFreeSpins', 800);
 
       this.tweens.add({
         targets: this.txtFSRemaining,
@@ -2291,9 +2304,14 @@ export class Game extends Phaser.Scene {
     this.grid.onNextFreeSpinNeeded = () => {
       // Update FS counter display
       this.txtFSRemaining.setText(`${this.grid.freeSpinsRemaining} FREE SPINS`);
-      // In demo mode, just do a local spin
-      this.grid.prepareSpin();
-      this.grid.injectServerResult();
+      
+      // In production, the RGS gives the entire FS block at once,
+      // but if we are simulating FS spin by spin (demo mode), we fetch it here.
+      // Since Stake play() returns the entire sequence, onNextFreeSpinNeeded is only for demo fallback.
+      this.stakeEngine.play(options.betAmount, 0).then(result => {
+        const stateEvents = result.round?.state || [];
+        this.grid.processServerEvents(stateEvents);
+      });
     };
 
     this.grid.onCompleteCallback = () => {
@@ -2455,15 +2473,6 @@ export class Game extends Phaser.Scene {
       // Send BASE bet to RGS — the mode ('bonus'/'super') tells server the multiplier
       const result = await this.stakeEngine.play(baseBet, triggerType);
       const stateEvents = result.round?.state || [];
-      const revealEvent = stateEvents.find((e: any) => e.type === 'reveal');
-
-      let serverGrid: number[][] | undefined;
-      if (revealEvent && revealEvent.board) {
-        serverGrid = this.parseRevealBoard(revealEvent.board);
-      } else {
-        const spinEvent = stateEvents.find((e: any) => e.type === 'spin');
-        serverGrid = spinEvent?.grid || spinEvent?.data?.grid;
-      }
 
       // Update balance from server response (authoritative)
       if (result.balance && !this.stakeEngine.isDemoMode()) {
@@ -2505,8 +2514,8 @@ export class Game extends Phaser.Scene {
         this.txtFSRemaining
           .setText(`${this.grid.freeSpinsRemaining} FREE SPINS`)
           .setVisible(true);
-        this.audio.playMusic('musicDefault', 800);
-        this.grid.injectServerResult(serverGrid);
+        this.audio.playMusic('musicFreeSpins', 800);
+        this.grid.processServerEvents(stateEvents);
       });
     } catch (err) {
       console.error('[Game] Buy feature error:', err);
@@ -2577,20 +2586,7 @@ export class Game extends Phaser.Scene {
           finalTrigger,
         );
 
-        // RGS returns round.state as the events array from our math engine.
-        // The first 'reveal' event contains the board state.
         const stateEvents = result.round?.state || [];
-        const revealEvent = stateEvents.find((e: any) => e.type === 'reveal');
-
-        let serverGrid: number[][] | undefined;
-        if (revealEvent && revealEvent.board) {
-          // Production RGS: board is {symbol, id, reel, row}[][]
-          serverGrid = this.parseRevealBoard(revealEvent.board);
-        } else {
-          // Demo mode fallback: look for legacy 'spin' event with flat grid
-          const spinEvent = stateEvents.find((e: any) => e.type === 'spin');
-          serverGrid = spinEvent?.grid || spinEvent?.data?.grid;
-        }
 
         // Update balance from server response (authoritative)
         if (result.balance && !this.stakeEngine.isDemoMode()) {
@@ -2600,7 +2596,7 @@ export class Game extends Phaser.Scene {
           this.updateMoneyDisplay();
         }
 
-        this.grid.injectServerResult(serverGrid);
+        this.grid.processServerEvents(stateEvents);
       } catch (err) {
         console.error('[Game] Play error:', err);
         this.grid.abortSpin();
@@ -2656,16 +2652,6 @@ export class Game extends Phaser.Scene {
 
     const stateEvents = replayData.state || [];
 
-    // Parse reveal event (production format: {symbol, id, reel, row}[][])
-    const revealEvent = stateEvents.find((e: any) => e.type === 'reveal');
-    let serverGrid: number[][] | undefined;
-    if (revealEvent && revealEvent.board) {
-      serverGrid = this.parseRevealBoard(revealEvent.board);
-    } else {
-      const spinEvent = stateEvents.find((e: any) => e.type === 'spin');
-      serverGrid = spinEvent?.grid || spinEvent?.data?.grid;
-    }
-
     // Reset Grid context
     this._spinLock = true;
     this.updateSpinButtonState();
@@ -2683,7 +2669,7 @@ export class Game extends Phaser.Scene {
       this.grid.freeSpinsRemaining = fsEvent.totalSpins || 0;
     }
 
-    this.grid.injectServerResult(serverGrid);
+    this.grid.processServerEvents(stateEvents);
   }
 
   private handlePendingRound(round: any) {
