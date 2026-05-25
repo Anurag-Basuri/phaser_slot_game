@@ -1287,8 +1287,9 @@ export class Game extends Phaser.Scene {
       .setFontSize(fsFS);
 
     if (this.stakeEngine.isReplayMode()) {
-      this.replayBtnHit.setPosition(w / 2, h / 2).setSize(240, 70);
-      this.replayBtnTxt.setPosition(w / 2, h / 2).setFontSize(24);
+      const replayScale = Math.min(1.5, Math.max(0.4, w / 800));
+      this.replayBtnHit.setPosition(w / 2, h / 2).setSize(240 * replayScale, 70 * replayScale);
+      this.replayBtnTxt.setPosition(w / 2, h / 2).setFontSize(24 * replayScale);
     }
   }
 
@@ -2639,9 +2640,10 @@ export class Game extends Phaser.Scene {
     this.replayBtnHit.setVisible(false);
     this.replayBtnTxt.setVisible(false);
 
+    const replayScale = Math.min(1.5, Math.max(0.4, this.scale.width / 800));
     const loadTxt = this.add.text(this.scale.width / 2, this.scale.height / 2, 'LOADING REPLAY...', {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      fontSize: '32px',
+      fontSize: `${32 * replayScale}px`,
       color: '#ffffff'
     }).setOrigin(0.5).setDepth(60);
     this.tweens.add({ targets: loadTxt, alpha: 0.5, duration: 400, yoyo: true, repeat: -1 });
