@@ -17,6 +17,7 @@ export default defineConfig({
   },
   esbuild: {
     jsxImportSource: 'phaser-jsx',
+    drop: ['console', 'debugger'],
   },
   server: {
     host: true, // Allow external access for mobile testing

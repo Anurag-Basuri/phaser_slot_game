@@ -147,19 +147,26 @@ export class Game extends Phaser.Scene {
         );
         this.currency = auth.balance.currency;
 
-        if (
-          auth.config &&
-          auth.config.betLevels &&
-          auth.config.betLevels.length > 0
-        ) {
+        if (auth.config) {
           BET_PRESETS.length = 0;
-          for (let i = 0; i < auth.config.betLevels.length; i++) {
-            BET_PRESETS.push(
-              StakeEngineClient.toDisplayAmount(auth.config.betLevels[i]),
-            );
+          if (auth.config.betLevels && auth.config.betLevels.length > 0) {
+            for (let i = 0; i < auth.config.betLevels.length; i++) {
+              BET_PRESETS.push(StakeEngineClient.toDisplayAmount(auth.config.betLevels[i]));
+            }
+          } else if (auth.config.stepBet && auth.config.maxBet && auth.config.minBet) {
+            let current = auth.config.minBet;
+            while (current <= auth.config.maxBet) {
+              BET_PRESETS.push(StakeEngineClient.toDisplayAmount(current));
+              current += auth.config.stepBet;
+            }
           }
+
+          if (BET_PRESETS.length === 0) {
+            BET_PRESETS.push(1.0); // Fallback
+          }
+
           const defaultDisplay = StakeEngineClient.toDisplayAmount(
-            auth.config.defaultBetLevel,
+            auth.config.defaultBetLevel || auth.config.minBet || 1000000,
           );
           this.betPresetIndex = BET_PRESETS.indexOf(defaultDisplay);
           if (this.betPresetIndex === -1) this.betPresetIndex = 0;

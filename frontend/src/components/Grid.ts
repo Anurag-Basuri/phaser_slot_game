@@ -1228,7 +1228,7 @@ export class Grid {
       }
 
       // Floating win popup per cluster (shows win amount rising from cluster center)
-      if (totalWin > 0 && !this.turboMode) {
+      if (totalWin > 0) {
         clusters.forEach(cluster => {
           // Find cluster center position
           let avgR = 0, avgC = 0;
@@ -1259,25 +1259,42 @@ export class Grid {
           pillBg.fillStyle(0x000000, 0.55);
           pillBg.fillRoundedRect(popX - pillW / 2, popY - pillH / 2, pillW, pillH, pillH / 2);
 
-          this.scene.tweens.add({
-            targets: [winPop, pillBg],
-            y: `-=${this.cellW * 1.0}`,
-            scaleX: 1.1, scaleY: 1.1,
-            alpha: { from: 0, to: 1 },
-            duration: 400,
-            ease: 'Cubic.easeOut',
-            onComplete: () => {
-              this.scene.tweens.add({
-                targets: [winPop, pillBg],
-                y: `-=${this.cellW * 0.5}`,
-                alpha: 0,
-                duration: 350,
-                delay: 200,
-                ease: 'Quad.easeIn',
-                onComplete: () => { winPop.destroy(); pillBg.destroy(); },
-              });
-            }
-          });
+          if (this.turboMode) {
+            // Abbreviated win display in turbo mode
+            winPop.setScale(0.8);
+            pillBg.setScale(0.8);
+            this.scene.tweens.add({
+              targets: [winPop, pillBg],
+              y: `-=${this.cellW * 0.5}`,
+              alpha: { from: 1, to: 0 },
+              duration: 300,
+              ease: 'Linear',
+              onComplete: () => {
+                if (winPop && winPop.scene) winPop.destroy();
+                if (pillBg && pillBg.scene) pillBg.destroy();
+              }
+            });
+          } else {
+            this.scene.tweens.add({
+              targets: [winPop, pillBg],
+              y: `-=${this.cellW * 1.0}`,
+              scaleX: 1.1, scaleY: 1.1,
+              alpha: { from: 0, to: 1 },
+              duration: 400,
+              ease: 'Cubic.easeOut',
+              onComplete: () => {
+                this.scene.tweens.add({
+                  targets: [winPop, pillBg],
+                  y: `-=${this.cellW * 0.5}`,
+                  alpha: 0,
+                  duration: 350,
+                  delay: 200,
+                  ease: 'Quad.easeIn',
+                  onComplete: () => { if (winPop && winPop.scene) winPop.destroy(); if (pillBg && pillBg.scene) pillBg.destroy(); },
+                });
+              }
+            });
+          }
         });
       }
 
