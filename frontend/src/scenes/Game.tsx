@@ -679,7 +679,7 @@ export class Game extends Phaser.Scene {
       this.anteBetTxt.setVisible(false);
 
       this.spinControls.hideAll();
-      this.bottomBarHUD.hideAll();
+      this.bottomBarHUD.hideForReplay();
 
       this.logoWrapper.setVisible(false);
 
@@ -2634,8 +2634,17 @@ export class Game extends Phaser.Scene {
     this.replayBtnHit.setVisible(false);
     this.replayBtnTxt.setVisible(false);
 
+    const loadTxt = this.add.text(this.scale.width / 2, this.scale.height / 2, 'LOADING REPLAY...', {
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontSize: '32px',
+      color: '#ffffff'
+    }).setOrigin(0.5).setDepth(60);
+    this.tweens.add({ targets: loadTxt, alpha: 0.5, duration: 400, yoyo: true, repeat: -1 });
+
     // We fetch replayData state bypassing normal play triggers
     const replayData = await this.stakeEngine.fetchReplay();
+    loadTxt.destroy();
+
     const stateEvents = replayData.state || [];
 
     // Parse reveal event (production format: {symbol, id, reel, row}[][])

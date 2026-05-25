@@ -306,6 +306,13 @@ export class BottomBarHUD {
     this.betPillHit.setVisible(false);
   }
 
+  hideForReplay() {
+    this.txtMoneyLabel.setVisible(false);
+    this.txtMoney.setVisible(false);
+    this.betPillHit.setVisible(false);
+    if (this.demoLabel) this.demoLabel.setVisible(false);
+  }
+
   private realignText() {
     if (this._lastW === 0) return; // Not laid out yet
 

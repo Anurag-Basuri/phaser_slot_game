@@ -162,6 +162,7 @@ export class StakeEngineClient {
   private currentRoundActive: boolean = false;
   private isDemo: boolean = false;
   private _isReplay: boolean = false;
+  private _replayAmount: number = 1.0;
   private _isSocial: boolean = false;
   private _demoBalance: number = 100_000;
 
@@ -186,6 +187,9 @@ export class StakeEngineClient {
     // 1. Detect environment flags
     const params = new URLSearchParams(window.location.search);
     this._isReplay = params.get('replay') === 'true';
+    if (this._isReplay) {
+      this._replayAmount = parseFloat(params.get('amount') || '1');
+    }
     this._isSocial = params.get('social') === 'true';
 
     // 2. Setup internal RGS pointer / Authentication routing
@@ -216,6 +220,10 @@ export class StakeEngineClient {
 
   public isReplayMode(): boolean {
     return this._isReplay;
+  }
+
+  public getReplayAmount(): number {
+    return this._replayAmount;
   }
 
   public isSocialMode(): boolean {
