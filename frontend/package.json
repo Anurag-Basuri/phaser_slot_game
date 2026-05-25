@@ -1,6 +1,6 @@
 {
-  "name": "sweet-cluster-1000",
-  "description": "Sweet Cluster 1000 — 7x7 Cascading Cluster Pays Slot Game for Stake Engine",
+  "name": "sugar-blast-1000",
+  "description": "Sugar Blast 1000 — 7x7 Cascading Cluster Pays Slot Game for Stake Engine",
   "version": "1.0.0",
   "scripts": {
     "dev": "vite --open",

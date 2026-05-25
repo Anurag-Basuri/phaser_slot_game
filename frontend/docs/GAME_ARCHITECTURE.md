@@ -1,11 +1,11 @@
-# 🎰 Sweet Cluster 1000 — Game Architecture & Technical Specifications
+# 🎰 Sugar Blast 1000 — Game Architecture & Technical Specifications
 
-This document outlines the entire technical structure, mathematical constraints, software architecture, and production configuration for **Sweet Cluster 1000**. It is intended for developers, game mathematicians, and Stake RGS integration engineers as the ultimate source of truth for the codebase.
+This document outlines the entire technical structure, mathematical constraints, software architecture, and production configuration for **Sugar Blast 1000**. It is intended for developers, game mathematicians, and Stake RGS integration engineers as the ultimate source of truth for the codebase.
 
 ---
 
 ## 1. High-Level Architecture
-**Sweet Cluster 1000** is built using a strict Client-Server decoupled architecture, enforcing standard Remote Game Server (RGS) compliance.
+**Sugar Blast 1000** is built using a strict Client-Server decoupled architecture, enforcing standard Remote Game Server (RGS) compliance.
 
 1. **Frontend Renderer (Client):** `React` (UI / Layout) + `Phaser 3` (Canvas/WebGL Rendering Engine)
 2. **Game Logic (Server):** Python 3 Monte Carlo Simulator & Matrix outcomes (Stake RGS compatible payload)

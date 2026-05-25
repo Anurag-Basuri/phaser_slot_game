@@ -1,5 +1,5 @@
 /**
- * Sweet Cluster 1000 — Game Configuration
+ * Sugar Blast 1000 — Game Configuration
  * 
  * Bet system mirrors Pragmatic Play's Sugar Rush 1000:
  * - Coin values: 0.01 → 0.50
