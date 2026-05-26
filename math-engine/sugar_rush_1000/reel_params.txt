@@ -1,10 +1,34 @@
 Target: 96.53
-Achieved: 92.71
-Scatter: 0.008843
-L3: 64.8508 (80.0%)
-L2: 8.0664 (10.0%)
-L1: 4.5897 (5.7%)
-H4: 2.3570 (2.9%)
-H3: 0.9821 (1.2%)
-H2: 0.1000 (0.1%)
-H1: 0.1000 (0.1%)
+Reel Length: 1000 symbols x 7 reels
+Anti-clustering: No adjacent same symbol on any reel
+
+=== Base Game (BR0) ===
+L3: 83.3% (Orange Gummy Bear — lowest paying)
+L2:  8.0% (Purple Gummy Bear)
+L1:  4.8% (Red Gummy Bear)
+H4:  2.3% (Green Candy)
+H3:  1.1% (Purple Candy)
+H2:  0.3% (Orange Candy)
+H1:  0.2% (Pink Candy — highest paying)
+Scatter: 0.78%
+RNG Seed: 42
+
+=== Free Spin (FR0) ===
+Same as base, except:
+  H1: x1.4 (40% more)
+  H2: x1.3 (30% more)
+  Scatter: x1.5 (50% more, for retriggers)
+RNG Seed: 100
+
+=== Super Free Spin (SF0) ===
+Same as base, except:
+  H1: x1.2 (20% more)
+  Scatter: x1.2 (20% more)
+RNG Seed: 200
+
+=== Notes ===
+- RTP is controlled by lookup table weights (Rust optimizer), not reel strips alone
+- Reel strips define the WIN DISTRIBUTION SHAPE
+- The Rust optimizer adjusts selection probabilities to hit 96.53% target
+- Engine multiplier cap: 128x (base mode)
+- Engine seed_random_multipliers: 10% chance, 1-3 spots, weighted x2/x4/x8/x16

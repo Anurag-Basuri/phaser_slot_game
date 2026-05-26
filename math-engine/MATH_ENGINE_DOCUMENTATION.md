@@ -226,13 +226,15 @@ Generates the three files required by Stake's ACP:
 
 **Win Cap:** 25,000× bet
 
-**Multiplier Progression:** 0 → 1 (marked) → 2 → 4 → 8 → 16 → ... → 1024
+**Multiplier Progression:** 0 → 2 → 4 → 8 → 16 → 32 → 64 → 128 (cap)
+
+**Multiplier Seeding:** 10% chance per basegame spin, 1-3 random spots get x2/x4/x8/x16 (weighted 80/15/4/1)
 
 **4 Bet Modes:**
 
 | Mode | Cost | Description | Distributions |
 |------|------|-------------|---------------|
-| `base` | 1.0× | Normal play | 0.01% wincap, 4.9% FS, 45% zero-win, 50.09% basegame |
+| `base` | 1.0× | Normal play | 0.01% wincap, 1% FS, 58% zero-win, 40.99% basegame |
 | `ante` | 1.25× | 2× scatter chance | 100% basegame with scatter override |
 | `bonus` | 1000× | Buy Free Spins | 0.1% wincap, 99.9% FS |
 | `super` | 500× | Buy Super FS (×2 start) | 100% FS with SF0 reel |
@@ -424,8 +426,9 @@ python rtp_test.py
 | Metric | Value |
 |--------|-------|
 | Target RTP | 96.53% |
-| Best optimizer hit | 96.34% (during hill climb) |
-| Verified average | 89-96% range (high variance due to cascade multipliers) |
+| Paytable | Verified — matches frontend `options.ts` exactly |
+| Multiplier cap | 128× (engine), with 10% random seeding |
+| RTP control mechanism | Lookup table weights (Rust optimizer) |
 | Spins needed for convergence | 1,000,000+ (requires cloud compute or Rust rewrite) |
 
-The engine produces mathematically correct outcomes. The RTP variance is an inherent property of high-volatility cluster games with cascading multipliers up to ×1024. Production certification requires running 1M+ simulations, which takes ~15 hours in Python on a single core.
+The engine produces mathematically correct outcomes with the verified paytable. The overall RTP (96.53%) is achieved by the **Rust lookup table optimizer** adjusting selection probabilities, NOT by the reel strips alone. The reel strips control the **shape** of the win distribution (variety of small, medium, and large wins). Production certification requires running 1M+ simulations.

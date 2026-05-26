@@ -116,7 +116,7 @@ def test_cluster_detection():
 
 
 def test_multiplier_progression():
-    """Test 3: Multiplier advances correctly: 0→1→2→4→...→1024"""
+    """Test 3: Multiplier advances correctly: 0→2→4→8→...→128 (capped)"""
     print("=" * 60)
     print("TEST 3: Multiplier Progression")
     print("=" * 60)
@@ -124,16 +124,18 @@ def test_multiplier_progression():
     config = GameConfig()
     gs = GameState(config)
     gs.reset_book()
+    gs.current_betmode_name = "base"
 
-    expected = [0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 1024]
+    # advance_multiplier: 0→2→4→8→16→32→64→128→128 (capped at config.max_multiplier=128)
+    expected = [0, 2, 4, 8, 16, 32, 64, 128, 128, 128]
     actual = [gs.grid_multipliers[0][0]]
 
-    for _ in range(12):
+    for _ in range(9):
         gs.advance_multiplier(0, 0)
         actual.append(gs.grid_multipliers[0][0])
 
     assert actual == expected, f"Progression mismatch:\n  Expected: {expected}\n  Actual:   {actual}"
-    print(f"  Progression: {' → '.join(str(v) for v in actual)}")
+    print(f"  Progression: {' -> '.join(str(v) for v in actual)}")
     print("   PASS\n")
 
 
