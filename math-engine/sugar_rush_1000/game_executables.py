@@ -41,12 +41,11 @@ class GameExecutables(Executables):
         on the grid. This creates the medium-to-large win potential that
         drives the game's volatility profile.
 
-        - 40% chance of multiplier seeding per spin
-        - When active, 2-5 random spots get x2 multipliers
-        - During free spins, this is called once per spin to add NEW spots
-          (existing multipliers are preserved)
+        - 10% chance of multiplier seeding per spin (config.multiplier_seed_chance)
+        - When active, 1-3 random spots get multipliers (weighted: x2=80%, x4=15%, x8=4%, x16=1%)
+        - During free spins, this is NOT called (multipliers build from cascades only)
         """
-        chance = getattr(self.config, 'multiplier_seed_chance', 0.40)
+        chance = getattr(self.config, 'multiplier_seed_chance', 0.10)
         if self._rng.random() < chance:
             size = self.config.grid_size
             num_spots = self._rng.randint(1, 3)
