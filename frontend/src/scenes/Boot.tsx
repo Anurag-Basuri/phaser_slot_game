@@ -226,8 +226,8 @@ export class Boot extends Phaser.Scene {
     
     // 2. Particle Bounds
     if (this.dustEmitter) {
-      this.dustEmitter.particleX = { min: 0, max: w } as any;
-      this.dustEmitter.particleY = { min: h, max: h + 100 } as any;
+      this.dustEmitter.particleX = { min: 0, max: w } as Phaser.Types.GameObjects.Particles.EmitterOpOnEmitType;
+      this.dustEmitter.particleY = { min: h, max: h + 100 } as Phaser.Types.GameObjects.Particles.EmitterOpOnEmitType;
     }
     
     // 3. Dark Vignettes (Top and bottom readability gradients)

@@ -1,11 +1,12 @@
 import Phaser from 'phaser';
+import type { GameScene } from '../scenes/GameScene';
 
 /**
  * Settings / Menu overlay with separate Music & SFX toggles, turbo mode, and quality options.
  * Overhauled to look premium, standardized, and perfectly responsive at all viewport sizes.
  */
 export class SettingsOverlay {
-  private scene: Phaser.Scene;
+  private scene: GameScene;
   private container!: Phaser.GameObjects.Container;
   private visible = false;
   private onMusicToggle: ((enabled: boolean) => void) | null = null;
@@ -21,7 +22,7 @@ export class SettingsOverlay {
   // Legacy compat — old code calls setSoundCallback
   private onSoundToggle: ((enabled: boolean) => void) | null = null;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: GameScene) {
     this.scene = scene;
     this.build();
 
@@ -79,7 +80,7 @@ export class SettingsOverlay {
     // Header gradient (matches Paytable)
     const headerH = 60;
     panel.fillGradientStyle(0xff006a, 0xff3388, 0x130f24, 0x130f24, 0.2, 0.2, 0, 0);
-    panel.fillRoundedRect(panelX, panelY, panelW, headerH, { tl: 20, tr: 20, bl: 0, br: 0 } as any);
+    panel.fillRoundedRect(panelX, panelY, panelW, headerH, { tl: 20, tr: 20, bl: 0, br: 0 } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
 
     // Border
     panel.lineStyle(2, 0xff006a, 0.6);
@@ -119,7 +120,7 @@ export class SettingsOverlay {
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
     closeBtn.on('pointerdown', () => {
-      (this.scene as any).audio.playSound('button');
+      this.scene.audio.playSound('button');
       this.hide();
     });
     closeBtn.on('pointerover', () => closeBtn.setColor('#ff4488'));
@@ -321,7 +322,7 @@ export class SettingsOverlay {
       .setInteractive({ useHandCursor: true }).setAlpha(0.001);
     
     hitArea.on('pointerdown', () => {
-      (this.scene as any).audio.playSound('button');
+      this.scene.audio.playSound('button');
       isOn = !isOn;
       callbackFn(isOn);
 
@@ -414,7 +415,7 @@ export class SettingsOverlay {
 
       txt.on('pointerdown', () => {
         if (selectedIdx === i) return;
-        (this.scene as any).audio.playSound('button');
+        (this.scene as GameScene).audio.playSound('button');
         
         const oldIdx = selectedIdx;
         selectedIdx = i;
