@@ -15,6 +15,8 @@ export class SpinControls {
   private scene: Phaser.Scene;
 
   // Spin button
+  spinOuterRing!: Phaser.GameObjects.Graphics;
+  spinInnerPulse!: Phaser.GameObjects.Graphics;
   spinGfx!: Phaser.GameObjects.Graphics;
   spinHit!: Phaser.GameObjects.Rectangle;
   spinLabel!: Phaser.GameObjects.Text;
@@ -41,11 +43,29 @@ export class SpinControls {
   }
 
   private create() {
+    this.spinOuterRing = this.scene.add.graphics().setDepth(19);
+    this.spinInnerPulse = this.scene.add.graphics().setDepth(20);
     this.spinGfx = this.scene.add.graphics().setDepth(20);
+
+    // Continuous premium idle animations
+    this.scene.tweens.add({
+      targets: this.spinOuterRing,
+      angle: 360,
+      duration: 15000,
+      repeat: -1
+    });
+    this.scene.tweens.add({
+      targets: this.spinInnerPulse,
+      alpha: { from: 0.1, to: 0.6 },
+      yoyo: true,
+      duration: 1200,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
     this.spinHit = this.scene.add.rectangle(0, 0, 150, 150, 0xffffff, 0)
       .setInteractive({ useHandCursor: true }).setDepth(21);
     this.spinLabel = this.scene.add.text(0, 0, '', {
-      resolution: 2,
+      
       fontFamily: Theme.fonts.label.family,
       fontStyle: '700',
     }).setOrigin(0.5).setDepth(21);
@@ -66,7 +86,7 @@ export class SpinControls {
     this.autoHit = this.scene.add.rectangle(0, 0, 100, 30, 0xffffff, 0)
       .setInteractive({ useHandCursor: true }).setDepth(22);
     this.autoTxt = this.scene.add.text(0, 0, 'AUTO', {
-      resolution: 2,
+      
       fontFamily: Theme.fonts.body.family,
       fontStyle: '800',
       color: '#ffffff',
@@ -141,6 +161,8 @@ export class SpinControls {
     // ── Spin button ──
     this.spinHit.setPosition(spinX, spinY).setSize(spinSize * 1.3, spinSize * 1.3);
     this.spinGfx.setPosition(spinX, spinY);
+    this.spinOuterRing.setPosition(spinX, spinY);
+    this.spinInnerPulse.setPosition(spinX, spinY);
     this.drawSpinButton(0, 0, spinSize);
 
     // Scale spin label proportionally to button size
@@ -185,74 +207,78 @@ export class SpinControls {
   drawSpinButton(x: number, y: number, size: number) {
     const g = this.spinGfx;
     g.clear();
+    this.spinOuterRing.clear();
+    this.spinInnerPulse.clear();
+
     const r = size / 2;
 
-    // ── Outer ambient glow for visibility ──
-    // Tighter glow for a cleaner look
-    g.fillStyle(0xff006a, 0.10);
-    g.fillCircle(x, y, r + 10);
-    g.fillStyle(0xff3388, 0.15);
-    g.fillCircle(x, y, r + 5);
+    // ── Rotating Dashed Outer Ring ──
+    this.spinOuterRing.lineStyle(2, 0xff006a, 0.4);
+    this.spinOuterRing.beginPath();
+    for (let i = 0; i < 360; i += 15) {
+      this.spinOuterRing.arc(x, y, r + 14, Phaser.Math.DegToRad(i), Phaser.Math.DegToRad(i + 8), false);
+    }
+    this.spinOuterRing.strokePath();
 
-    // Drop shadow (deeper for more lift)
-    g.fillStyle(0x000000, 0.6);
-    g.fillCircle(x, y + 5, r + 8);
+    // ── Pulsing Inner Glow ──
+    this.spinInnerPulse.fillGradientStyle(0xff006a, 0xff006a, 0xff006a, 0xff006a, 0.8, 0.8, 0, 0);
+    this.spinInnerPulse.fillCircle(x, y, r + 18);
 
-    // Thick multi-layered gold bezel
-    // Layer 1: Outer dark gold edge
-    g.fillGradientStyle(0x774400, 0x553300, 0x996611, 0x664400, 1);
+    // ── Core Button Shadow ──
+    g.fillStyle(0x000000, 0.7);
+    g.fillCircle(x, y + 8, r + 4);
+
+    // ── 3D Chrome/Gold Bezel ──
+    // 1. Dark outer edge
+    g.fillStyle(0x331100, 1);
     g.fillCircle(x, y, r + 6);
-    // Layer 2: Main bright gold ring — brighter for visibility
-    g.fillGradientStyle(0xffe866, 0xffcc33, 0xdd9900, 0xbb7700, 1);
-    g.fillCircle(x, y, r + 4);
-    // Layer 3: Bezel inner slope
-    g.fillGradientStyle(0xbb7700, 0x995500, 0xffdd44, 0xeeaa22, 1);
-    g.fillCircle(x, y, r - 2);
+    // 2. Main bright gold ring
+    g.fillGradientStyle(0xffe866, 0xffcc33, 0xbb7700, 0x884400, 1);
+    g.fillCircle(x, y, r + 5);
+    // 3. Inner shadow rim
+    g.fillGradientStyle(0x773300, 0x552200, 0xcc8800, 0xaa5500, 1);
+    g.fillCircle(x, y, r - 1);
 
-    // Jewel Center (Spherical Candy Look)
-    const candyR = r - 6;
-    // Base dark ruby
-    g.fillStyle(0x990033, 1);
+    // ── Jewel Center (Ruby Glass Look) ──
+    const candyR = r - 5;
+    g.fillStyle(0x880022, 1);
     g.fillCircle(x, y, candyR);
-    // Mid layer — vivid hot pink gradient
-    g.fillGradientStyle(0xdd0055, 0xbb0044, 0xff3377, 0xee1155, 1);
+    g.fillGradientStyle(0xee0055, 0xcc0044, 0xff2266, 0xdd1144, 1);
     g.fillCircle(x, y - 2, candyR * 0.95);
-    // Bright center — shifted up-left for 3D illusion
-    g.fillGradientStyle(0xff4488, 0xff2266, 0xff77aa, 0xff4477, 1);
-    g.fillCircle(x - 2, y - 4, candyR * 0.85);
+    // Brilliant core
+    g.fillGradientStyle(0xff5599, 0xff2277, 0xff88bb, 0xff5588, 1);
+    g.fillCircle(x - 2, y - 4, candyR * 0.82);
 
-    // High-gloss crescent highlight at the top-left
+    // ── Extreme High-Gloss Crescent Highlight ──
     g.beginPath();
-    g.arc(x - 4, y - 4, candyR * 0.7, Math.PI * 0.7, Math.PI * 1.8, false);
-    g.arc(x - 2, y - 2, candyR * 0.7, Math.PI * 1.8, Math.PI * 0.7, true);
+    g.arc(x - 5, y - 5, candyR * 0.75, Math.PI * 0.65, Math.PI * 1.85, false);
+    g.arc(x - 2, y - 2, candyR * 0.75, Math.PI * 1.85, Math.PI * 0.65, true);
     g.closePath();
-    g.fillStyle(0xffffff, 0.55);
+    g.fillStyle(0xffffff, 0.7);
     g.fillPath();
 
-    // Secondary subtle highlight on bottom right
+    // Secondary rim bounce light
     g.beginPath();
     g.arc(x + 4, y + 4, candyR * 0.7, 0, Math.PI * 0.5, false);
-    g.arc(x + 2, y + 2, candyR * 0.6, Math.PI * 0.5, 0, true);
+    g.arc(x + 2, y + 2, candyR * 0.65, Math.PI * 0.5, 0, true);
     g.closePath();
-    g.fillStyle(0xffffff, 0.20);
+    g.fillStyle(0xffffff, 0.3);
     g.fillPath();
 
-    // Specular dot highlight removed. The crescent is enough for the glass effect.
-
-    // Play triangle icon — slightly bigger for clarity
-    const triSize = candyR * 0.48;
-    const triX = x + triSize * 0.12;
+    // ── Play Triangle Icon ──
+    const triSize = candyR * 0.55; // Larger
+    const triX = x + triSize * 0.15;
     
-    // Triangle shadow for depth
-    g.fillStyle(0x550022, 0.8);
+    // Inset Shadow
+    g.fillStyle(0x440011, 0.9);
     g.beginPath();
-    g.moveTo(triX - triSize * 0.5, y - triSize * 0.6 + 3);
-    g.lineTo(triX + triSize * 0.65, y + 3);
-    g.lineTo(triX - triSize * 0.5, y + triSize * 0.6 + 3);
+    g.moveTo(triX - triSize * 0.5, y - triSize * 0.6 + 4);
+    g.lineTo(triX + triSize * 0.65, y + 4);
+    g.lineTo(triX - triSize * 0.5, y + triSize * 0.6 + 4);
     g.closePath();
     g.fillPath();
 
-    // Triangle body — pure white
+    // Crisp White Face
     g.fillStyle(0xffffff, 1.0);
     g.beginPath();
     g.moveTo(triX - triSize * 0.5, y - triSize * 0.6);
@@ -261,14 +287,25 @@ export class SpinControls {
     g.closePath();
     g.fillPath();
 
-    // Sparkle dots on the gold ring — brighter
-    const sparkleR = Math.max(1.5, r * 0.04);
-    g.fillStyle(0xffffff, 0.85);
-    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 3) {
-      const sx = x + Math.cos(angle) * (r + 1);
-      const sy = y + Math.sin(angle) * (r + 1);
-      g.fillCircle(sx, sy, sparkleR);
-    }
+    // Starburst glints on the gold bezel
+    const drawGlint = (gx: number, gy: number, size: number) => {
+      g.fillStyle(0xffffff, 0.9);
+      g.beginPath();
+      const inner = size * 0.25;
+      g.moveTo(gx, gy - size); // Top
+      g.lineTo(gx + inner, gy - inner);
+      g.lineTo(gx + size, gy); // Right
+      g.lineTo(gx + inner, gy + inner);
+      g.lineTo(gx, gy + size); // Bottom
+      g.lineTo(gx - inner, gy + inner);
+      g.lineTo(gx - size, gy); // Left
+      g.lineTo(gx - inner, gy - inner);
+      g.closePath();
+      g.fillPath();
+    };
+
+    drawGlint(x - (r+2)*0.7, y - (r+2)*0.7, 6);
+    drawGlint(x + (r+2)*0.8, y + (r+2)*0.2, 4);
   }
 
   /** Draw the STOP button (visually replaces spin during active spin) */
@@ -459,6 +496,8 @@ export class SpinControls {
   }
 
   hideAll() {
+    this.spinOuterRing.setVisible(false);
+    this.spinInnerPulse.setVisible(false);
     this.spinGfx.setVisible(false);
     this.spinHit.setVisible(false);
     this.spinLabel.setVisible(false);

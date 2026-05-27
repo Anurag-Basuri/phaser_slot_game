@@ -93,7 +93,7 @@ export class SettingsOverlay {
     this.container.add(panel);
 
     // Title text
-    const titleText = this.scene.add.text(w / 2, panelY + headerH / 2 - 2, 'SETTINGS', { resolution: 2,
+    const titleText = this.scene.add.text(w / 2, panelY + headerH / 2 - 2, 'SETTINGS', { 
       fontSize: isShort ? '22px' : '26px',
       color: '#ffffff',
       fontFamily: '"Outfit", "Inter", sans-serif',
@@ -112,7 +112,7 @@ export class SettingsOverlay {
     closeGfx.strokeCircle(closeBtnX, closeBtnY, 16);
     this.container.add(closeGfx);
 
-    const closeBtn = this.scene.add.text(closeBtnX, closeBtnY, '✕', { resolution: 2,
+    const closeBtn = this.scene.add.text(closeBtnX, closeBtnY, '✕', { 
       fontSize: '22px',
       color: '#ffffff',
       fontFamily: '"Inter", "Arial", sans-serif',
@@ -128,7 +128,7 @@ export class SettingsOverlay {
     this.container.add(closeBtn);
 
     const labelStyle: Phaser.Types.GameObjects.Text.TextStyle = {
-      resolution: 2,
+      
       fontSize: isShort ? '14px' : '16px',
       color: '#ffffff',
       fontFamily: '"Poppins", "Outfit", sans-serif',
@@ -178,7 +178,7 @@ export class SettingsOverlay {
       infoBox.strokeRoundedRect(panelX + 20, infoY, panelW - 40, 28, 8);
       this.container.add(infoBox);
 
-      const infoText = this.scene.add.text(w / 2, infoY + 14, 'Sugar Blast 1000  •  RTP: 96.53%  •  v1.0.0  •  High Volatility', { resolution: 2,
+      const infoText = this.scene.add.text(w / 2, infoY + 14, 'Sugar Blast 1000  •  RTP: 96.53%  •  v1.0.0  •  High Volatility', { 
         fontSize: '11px',
         color: '#99aabb',
         fontFamily: '"Outfit", "Inter", sans-serif',
@@ -227,21 +227,21 @@ export class SettingsOverlay {
       infoBox.strokeRoundedRect(panelX + 20, rowY, panelW - 40, 85, 12);
       this.container.add(infoBox);
 
-      this.container.add(this.scene.add.text(w / 2, rowY + 18, 'Sugar Blast 1000', { resolution: 2,
+      this.container.add(this.scene.add.text(w / 2, rowY + 18, 'Sugar Blast 1000', { 
         fontSize: '18px',
         color: '#ff006a',
         fontFamily: '"Outfit", "Inter", sans-serif',
         fontStyle: '900'
       }).setOrigin(0.5).setShadow(0, 1.5, '#000000', 2, true, true));
 
-      this.container.add(this.scene.add.text(w / 2, rowY + 44, 'RTP: 96.53%   •   Max Win: 25,000×', { resolution: 2,
+      this.container.add(this.scene.add.text(w / 2, rowY + 44, 'RTP: 96.53%   •   Max Win: 25,000×', { 
         fontSize: '13px',
         color: '#99aabb',
         fontFamily: '"Outfit", "Inter", sans-serif',
         fontStyle: '800'
       }).setOrigin(0.5));
 
-      this.container.add(this.scene.add.text(w / 2, rowY + 65, 'v1.0.0   •   High Volatility', { resolution: 2,
+      this.container.add(this.scene.add.text(w / 2, rowY + 65, 'v1.0.0   •   High Volatility', { 
         fontSize: '11px',
         color: '#778899',
         fontFamily: '"Outfit", "Inter", sans-serif',
@@ -406,7 +406,7 @@ export class SettingsOverlay {
       const optX = trackX + i * segW + segW / 2;
       const optY = trackY + trackH / 2;
 
-      const txt = this.scene.add.text(optX, optY, displayOpt, { resolution: 2,
+      const txt = this.scene.add.text(optX, optY, displayOpt, { 
         fontFamily: '"Outfit", "Inter", sans-serif',
         fontSize: isShort ? '10px' : '11px',
         fontStyle: '900',
@@ -487,12 +487,23 @@ export class SettingsOverlay {
     this.visible = true;
     this.container.setVisible(true);
     this.container.setAlpha(0);
-    this.scene.tweens.add({ targets: this.container, alpha: 1, duration: 220 });
+    this.container.setY(40);
+    this.scene.tweens.add({ 
+      targets: this.container, 
+      alpha: 1, 
+      y: 0,
+      duration: 300,
+      ease: 'Back.easeOut'
+    });
   }
 
   public hide() {
     this.scene.tweens.add({
-      targets: this.container, alpha: 0, duration: 180,
+      targets: this.container, 
+      alpha: 0, 
+      y: 30,
+      duration: 200,
+      ease: 'Cubic.easeIn',
       onComplete: () => { this.container.setVisible(false); this.visible = false; },
     });
   }

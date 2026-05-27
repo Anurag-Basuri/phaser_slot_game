@@ -257,8 +257,8 @@ export function computeLayout(w: number, h: number): LayoutMetrics {
     const actualLogoWidth = R.logoBaseW * logoScale;
     const actualLogoHeight = R.logoBaseH * logoScale;
     logoX = w - toolbarPad - (actualLogoWidth / 2);
-    // Align logo top edge with the toolbar's top edge so it is never cut off
-    logoY = (toolbarY - toolbarIconSize / 2) + (actualLogoHeight / 2); 
+    // Center logo exactly on the toolbar line
+    logoY = toolbarY; 
   } else if (mode === 'landscape-compact') {
     const availW = w * 0.5;
     const availH = gridY - 5;
