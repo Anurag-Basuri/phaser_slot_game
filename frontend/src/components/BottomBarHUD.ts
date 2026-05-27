@@ -188,7 +188,7 @@ export class BottomBarHUD {
       const amount = parseFloat(params.get('amount') || '1');
       const mode = params.get('mode') || 'BASE';
       const formattedBase = DisplayBalance({ amount, currency });
-      const rData = (getStakeEngine() as any).replayData;
+      const rData = getStakeEngine().getReplayData();
       if (rData && rData.costMultiplier > 1) {
         const effective = amount * rData.costMultiplier;
         const formattedEffective = DisplayBalance({ amount: effective, currency });

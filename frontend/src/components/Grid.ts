@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import options from '../options';
 import { ClusterEvaluator } from '../helpers';
+import type { GameScene } from '../scenes/GameScene';
 
 /**
  * Grid — 7×7 cascading cluster pays grid engine.
@@ -15,7 +16,7 @@ import { ClusterEvaluator } from '../helpers';
  * - Premium animations: anticipation pop, weighted drop, color-tiered multiplier badges
  */
 export class Grid {
-  private scene: Phaser.Scene;
+  private scene: GameScene;
   private sprites: (Phaser.GameObjects.Sprite | null)[][];
   private multipliers: number[][];
   private multiplierGraphics: (Phaser.GameObjects.Graphics | null)[][];
@@ -85,7 +86,7 @@ export class Grid {
 
 
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: GameScene) {
     this.scene = scene;
     const size = options.gridSize;
     this.sprites = Array.from({ length: size }, () => Array(size).fill(null));
@@ -535,7 +536,7 @@ export class Grid {
     // Play reel stop sound after drop
     this.scene.time.delayedCall(this.dropDuration + 100, () => {
       try { 
-        const audio = (this.scene as any).audio;
+        const audio = this.scene.audio;
         if (audio && audio.playCascadeDrop) {
           audio.playCascadeDrop(this.cascadeDepth);
         }
@@ -627,7 +628,7 @@ export class Grid {
       this.cellBackgrounds.setAlpha(1);
     }
     try {
-      const audio = (this.scene as any).audio;
+      const audio = this.scene.audio;
       if (audio && audio.stopReels) audio.stopReels();
     } catch { /* ignore */ }
     this.pendingServerGrid = null;
@@ -641,7 +642,7 @@ export class Grid {
       this.cellBackgrounds.setAlpha(1);
     }
     try {
-      const audio = (this.scene as any).audio;
+      const audio = this.scene.audio;
       if (audio && audio.stopReels) audio.stopReels();
     } catch { /* ignore */ }
     
@@ -693,6 +694,16 @@ export class Grid {
     if (this.multiplierTexts[r][c]) {
       this.multiplierTexts[r][c]!.destroy();
       this.multiplierTexts[r][c] = null;
+    }
+  }
+
+  /** Seed multiplier values for buy features (Super/Ultra Free Spins). */
+  public seedMultipliers(value: number): void {
+    for (let r = 0; r < options.gridSize; r++) {
+      for (let c = 0; c < options.gridSize; c++) {
+        this.multipliers[r][c] = value;
+        this.drawMultiplierUI(r, c);
+      }
     }
   }
 
@@ -1298,7 +1309,7 @@ export class Grid {
 
     this.scene.time.delayedCall(this.dropDuration + 100, () => {
       try { 
-        const audio = (this.scene as any).audio;
+        const audio = this.scene.audio;
         if (audio && audio.playCascadeDrop) {
           audio.playCascadeDrop(this.cascadeDepth);
         }
