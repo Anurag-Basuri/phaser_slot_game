@@ -47,6 +47,21 @@ def high_retry_check_repeat(self):
 
 GeneralGameState.check_repeat = high_retry_check_repeat
 
+# Monkey-patch evaluate_tumble_spin to inject massive multipliers
+ORIGINAL_EVALUATE = GameState.evaluate_tumble_spin
+
+def boosted_evaluate_tumble_spin(self):
+    """Force high multipliers to hit wincap easily."""
+    # Seed multipliers before evaluation
+    size = self.config.grid_size
+    for r in range(size):
+        for c in range(size):
+            if self.grid_multipliers[r][c] == 0:
+                self.grid_multipliers[r][c] = 64
+    return ORIGINAL_EVALUATE(self)
+
+GameState.evaluate_tumble_spin = boosted_evaluate_tumble_spin
+
 # Number of wincap books to generate per mode
 WINCAP_COUNT = 5
 MATH_DIR = "math"

@@ -173,7 +173,7 @@ class GameConfig(Config):
                 is_buybonus=False,
                 distributions=[
                     Distribution(
-                        criteria="wincap", quota=0.0001,
+                        criteria="wincap", quota=0.0,
                         win_criteria=self.wincap,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
@@ -194,7 +194,7 @@ class GameConfig(Config):
                         conditions={"reel_weights": {self.basegame_type: {"BR0": 1}}},
                     ),
                     Distribution(
-                        criteria="basegame", quota=0.4099,
+                        criteria="basegame", quota=0.41,
                         conditions={"reel_weights": {self.basegame_type: {"BR0": 1}}},
                     ),
                 ],
@@ -212,7 +212,7 @@ class GameConfig(Config):
                 ante_scatter_multiplier=2.0,
                 distributions=[
                     Distribution(
-                        criteria="wincap", quota=0.0001,
+                        criteria="wincap", quota=0.0,
                         win_criteria=self.wincap,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
@@ -257,7 +257,7 @@ class GameConfig(Config):
                 is_buybonus=True,
                 distributions=[
                     Distribution(
-                        criteria="wincap", quota=0.003,
+                        criteria="wincap", quota=0.0,
                         win_criteria=self.wincap,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
@@ -267,7 +267,7 @@ class GameConfig(Config):
                         },
                     ),
                     Distribution(
-                        criteria="freegame", quota=0.997,
+                        criteria="freegame", quota=1.0,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
                             "force_freegame": True,
@@ -289,7 +289,7 @@ class GameConfig(Config):
                 is_buybonus=True,
                 distributions=[
                     Distribution(
-                        criteria="wincap", quota=0.008,
+                        criteria="wincap", quota=0.0,
                         win_criteria=self.wincap,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"SF0": 1}},
@@ -299,7 +299,7 @@ class GameConfig(Config):
                         },
                     ),
                     Distribution(
-                        criteria="freegame", quota=0.992,
+                        criteria="freegame", quota=1.0,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"SF0": 1}},
                             "force_freegame": True,
