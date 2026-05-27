@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { Theme } from '../constants/theme';
+import type { GameScene } from '../scenes/GameScene';
 
 /**
  * PREMIUM Win celebration system with tiered presentations.
@@ -20,7 +21,7 @@ import { Theme } from '../constants/theme';
  *   - Safe cleanup with tween/timer tracking
  */
 export class WinCelebration {
-  private scene: Phaser.Scene;
+  private scene: GameScene;
   private container!: Phaser.GameObjects.Container;
   private _isVisible = false;
   private _finishFn: (() => void) | null = null;
@@ -82,7 +83,7 @@ export class WinCelebration {
     },
   ];
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: GameScene) {
     this.scene = scene;
   }
 
@@ -288,7 +289,7 @@ export class WinCelebration {
 
         // Play tick sound with frequency and pitch based on progress
         try {
-          const audio = (this.scene as any).audio;
+          const audio = this.scene.audio;
           if (
             audio &&
             typeof audio.playWinTick === 'function' &&
@@ -314,7 +315,7 @@ export class WinCelebration {
           );
 
           try {
-            const audio = (this.scene as any).audio;
+            const audio = this.scene.audio;
             if (audio && typeof audio.playBigWinAvalanche === 'function') {
               audio.playBigWinAvalanche(multiplier);
             }
@@ -351,7 +352,7 @@ export class WinCelebration {
             emitZone: {
               type: 'random' as const,
               source: new Phaser.Geom.Circle(0, 0, 50),
-            } as any,
+            } as Phaser.Types.GameObjects.Particles.ParticleEmitterRandomZoneConfig,
           },
         );
         this.container.addAt(emitter, 1);

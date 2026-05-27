@@ -179,6 +179,7 @@ export class StakeEngineClient {
   } = {};
 
   private replayData: any = null;
+  public getReplayData(): any { return this.replayData; }
 
   constructor() {
     this.parseURLParams();
