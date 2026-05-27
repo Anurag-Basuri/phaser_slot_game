@@ -207,18 +207,22 @@ import options from '../options';
       // Fix: Must prepare the grid (sweep old symbols, reset state) before dropping new spin events
       this.grid.prepareSpin();
 
-      // In production, the RGS gives the entire FS block at once,
-      // but if we are simulating FS spin by spin (demo mode), we fetch it here.
-      // Since Stake play() returns the entire sequence, onNextFreeSpinNeeded is only for demo fallback.
-      this.stakeEngine.play(options.betAmount, 0).then(result => {
-        const stateEvents = result.round?.state || [];
-        this.grid.processServerEvents(stateEvents);
-      }).catch(err => {
-        console.error('[Game] onNextFreeSpinNeeded play error:', err);
-        this.grid.abortSpin();
-        this._spinLock = false;
-        handleSpinFailure.call(this, err);
-      });
+      // In production, the Stake RGS returns ALL free spin events in a single play() response.
+      // The grid processes them sequentially via its event queue. When finishRound() decrements
+      // freeSpinsRemaining and calls onNextFreeSpinNeeded, the remaining FS events are already
+      // queued — we must NOT call play() again or the server will reject it.
+      // Only call play() in demo mode where each free spin needs a separate outcome.
+      if (this.stakeEngine.isDemoMode()) {
+        this.stakeEngine.play(options.betAmount, 0).then(result => {
+          const stateEvents = result.round?.state || [];
+          this.grid.processServerEvents(stateEvents);
+        }).catch(err => {
+          console.error('[Game] onNextFreeSpinNeeded play error:', err);
+          this.grid.abortSpin();
+          this._spinLock = false;
+          handleSpinFailure.call(this, err);
+        });
+      }
     };
 
     this.grid.onCompleteCallback = () => {
@@ -300,7 +304,7 @@ import options from '../options';
     this.grid.prepareSpin();
 
     try {
-      // Send BASE bet to RGS ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the mode ('bonus'/'super') tells server the multiplier
+      // Send BASE bet to RGS ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â  the mode ('bonus'/'super') tells server the multiplier
       const result = await this.stakeEngine.play(baseBet, triggerType);
       const stateEvents = result.round?.state || [];
 
@@ -319,14 +323,14 @@ import options from '../options';
 
       this.freeSpinsIntro.play(fsAwarded, () => {
         // Set up free spins state AFTER the intro finishes
-        this.grid.freeSpinsRemaining = fsAwarded;
+        // NOTE: Do NOT pre-set grid.freeSpinsRemaining here!
         if (triggerType === 1) {
           this.grid.isSuperFreeSpins = true;
-          // ULTRA Free Spins (1000x): x4 starting multipliers on ALL grid spots
+          this.grid.superMultiplier = 4;
           this.grid.seedMultipliers(4);
         } else if (triggerType === 2) {
           this.grid.isSuperFreeSpins = true;
-          // Super Free Spins (500x): x2 starting multipliers on ALL grid spots
+          this.grid.superMultiplier = 2;
           this.grid.seedMultipliers(2);
         }
         this.fsActive = true;

@@ -27,6 +27,10 @@ export class Grid {
   public freeSpinsRemaining = 0;
   public totalFreeSpinsWin = 0;
   public isSuperFreeSpins = false;
+  public superMultiplier = 1;
+  public isDemoMode = false;
+  public isSweeping = false;
+  private _fsSequenceFinished = false;
   public turboMode = false;
   public quickMode = false;
 
@@ -559,6 +563,7 @@ export class Grid {
   public prepareSpin() {
     this.isProcessing = true;
     this.sweepComplete = false;
+    this.isSweeping = true;
     this.pendingServerGrid = null;
     this._dropWhenReady = false;
     this.cascadeDepth = 0;
@@ -602,6 +607,7 @@ export class Grid {
 
     this.scene.time.delayedCall(this.sweepDuration + 160, () => {
       this.sweepComplete = true;
+      this.isSweeping = false;
       if (this.pendingServerGrid || this._dropWhenReady) {
         this._dropWhenReady = false;
         this.executeDrop();
@@ -969,8 +975,19 @@ export class Grid {
     this.pendingServerGrid = serverGrid || null;
     if (this.sweepComplete) {
       this.executeDrop();
-    } else {
+    } else if (this.isSweeping) {
       this._dropWhenReady = true;
+    } else {
+      // In production mode, RGS returns multiple reveals back-to-back without a pause.
+      // We must sweep the board manually for subsequent reveals.
+      this.prepareSpin();
+      this._dropWhenReady = true;
+
+      // Decrement the free spins counter on the UI for each new free spin drop
+      if (!this.isDemoMode && this.freeSpinsRemaining > 0) {
+        this.freeSpinsRemaining--;
+        if (this.onFreeSpinsStart) this.onFreeSpinsStart(this.freeSpinsRemaining);
+      }
     }
   }
 
@@ -1073,6 +1090,12 @@ export class Grid {
         const popX = this.getX(Math.round(avgC));
         const popY = this.getY(Math.round(avgR));
         const clusterWin = cluster.win;
+
+        // Accumulate win for real-time UI updates
+        this.totalFreeSpinsWin += clusterWin;
+        if (this.onWinCallback) {
+          this.onWinCallback(clusterWin, cluster.kind !== undefined ? cluster.kind : this.sprites[Math.round(avgR)]?.[Math.round(avgC)]?.getData('symId'));
+        }
 
         const winPopFS = Math.max(14, Math.min(28, this.cellW * 0.38));
         const winPop = this.scene.add.text(popX, popY, `+${clusterWin.toFixed(2)}`, {
@@ -1430,11 +1453,17 @@ export class Grid {
 
       this.scene.time.delayedCall(1200, () => {
         this.freeSpinsRemaining += event.totalSpins;
+        if (this.isSuperFreeSpins && this.superMultiplier > 1) {
+          this.seedMultipliers(this.superMultiplier);
+        }
         if (this.onFreeSpinsStart) this.onFreeSpinsStart(this.freeSpinsRemaining);
         this.processNextEvent();
       });
     } else {
       this.freeSpinsRemaining += event.totalSpins;
+      if (this.isSuperFreeSpins && this.superMultiplier > 1) {
+        this.seedMultipliers(this.superMultiplier);
+      }
       if (this.onFreeSpinsStart) this.onFreeSpinsStart(this.freeSpinsRemaining);
       this.processNextEvent();
     }
@@ -1442,6 +1471,14 @@ export class Grid {
 
   private processFinalWin(event: any) {
     this.cumulativeRoundWin = event.amount;
+
+    // In production, ALL free spins are processed in one batch.
+    // The finalWin event marks the true end of the entire sequence.
+    if (!this.isDemoMode && this.freeSpinsRemaining > 0) {
+      this.freeSpinsRemaining = 0;
+      this._fsSequenceFinished = true;
+    }
+
     if (this.cumulativeRoundWin >= options.maxWinMultiplier * options.betAmount) {
       this.maxWinReached = true;
       if (this.onMaxWinCallback) this.onMaxWinCallback(this.cumulativeRoundWin);
@@ -1470,6 +1507,12 @@ export class Grid {
       } else {
         this.finishFreeSpins();
       }
+      return;
+    }
+
+    if (this._fsSequenceFinished) {
+      this._fsSequenceFinished = false;
+      this.finishFreeSpins();
       return;
     }
 

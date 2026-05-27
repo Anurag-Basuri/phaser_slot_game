@@ -163,10 +163,8 @@ export class BottomBarHUD {
     const increased = oldBal >= 0 && newBal > oldBal;
     this._prevMoney = newBal;
 
-    this.txtMoney.setText(DisplayBalance({ amount: newBal, currency }));
-    this.scene.tweens.killTweensOf(this.txtMoney);
-
     if (decreased) {
+      this.txtMoney.setText(DisplayBalance({ amount: newBal, currency }));
       this.txtMoney.setColor('#ff4466').setScale(0.9);
       this.scene.tweens.add({
         targets: this.txtMoney, scaleX: 1, scaleY: 1,
@@ -175,11 +173,24 @@ export class BottomBarHUD {
       });
     } else if (increased) {
       this.txtMoney.setColor('#44ff88').setScale(1.2);
+      const counter = { val: oldBal };
       this.scene.tweens.add({
-        targets: this.txtMoney, scaleX: 1, scaleY: 1,
-        duration: 450, ease: 'Back.easeOut',
-        onComplete: () => { this.txtMoney.setColor('#ffffff'); }
+        targets: counter, val: newBal,
+        duration: Math.min(1500, 300 + (newBal - oldBal) * 10),
+        ease: 'Cubic.easeOut',
+        onUpdate: () => {
+          this.txtMoney.setText(DisplayBalance({ amount: counter.val, currency }));
+          this.realignText();
+        },
+        onComplete: () => {
+          this.txtMoney.setText(DisplayBalance({ amount: newBal, currency }));
+          this.realignText();
+          this.txtMoney.setColor('#ffffff');
+          this.scene.tweens.add({ targets: this.txtMoney, scaleX: 1, scaleY: 1, duration: 300, ease: 'Back.easeOut' });
+        }
       });
+    } else {
+      this.txtMoney.setText(DisplayBalance({ amount: newBal, currency }));
     }
 
     this.realignText();
@@ -248,7 +259,10 @@ export class BottomBarHUD {
 
     const isBigWin = target >= betAmount * 10;
     const b = this._winPillBounds;
-    const counter = { val: 0 };
+    // Extract current value from text to avoid resetting to 0 on subsequent cascades
+    const currentText = this.txtLastWin.text.replace(/[^0-9.-]+/g, '');
+    const currentVal = parseFloat(currentText) || 0;
+    const counter = { val: currentVal };
 
     this._winCountTween = this.scene.tweens.add({
       targets: counter, val: target,

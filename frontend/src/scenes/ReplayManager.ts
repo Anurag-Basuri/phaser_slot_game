@@ -35,7 +35,6 @@ import { StakeEngineClient } from '../engine/StakeEngineClient';
     const fsEvent = stateEvents.find((e: any) => e.type === 'fsTrigger');
     if (fsEvent) {
       this.grid.isSuperFreeSpins = fsEvent.triggerType === 'super';
-      this.grid.freeSpinsRemaining = fsEvent.totalSpins || 0;
     }
 
     this.grid.processServerEvents(stateEvents);
@@ -78,7 +77,6 @@ import { StakeEngineClient } from '../engine/StakeEngineClient';
       const fsEvent = stateEvents.find((e: any) => e.type === 'fsTrigger');
       if (fsEvent) {
         this.grid.isSuperFreeSpins = fsEvent.triggerType === 'super';
-        this.grid.freeSpinsRemaining = fsEvent.totalSpins || 0;
       }
       
       // Let grid play out the events. When finished, its standard callbacks will call endRound().

@@ -33,6 +33,7 @@ import { T } from '../helpers/I18n';
 
     // === GRID ===
     this.grid = new Grid(this);
+    this.grid.isDemoMode = this.stakeEngine.isDemoMode();
     wireGridCallbacks.call(this);
 
     // === GRID FRAME (subtle overlay for cell delineation) ===
