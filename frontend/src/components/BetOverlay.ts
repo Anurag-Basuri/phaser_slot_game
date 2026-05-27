@@ -141,7 +141,7 @@ export class BetOverlay {
 
     // ── Close (✕) ──
     const closeBtn = this.scene.add.text(pX + pW - 28, pY + 25, '✕', {
-      resolution: 2, fontSize: '20px', color: '#666', fontFamily: '"Poppins", sans-serif', fontStyle: 'bold',
+       fontSize: '20px', color: '#666', fontFamily: '"Poppins", sans-serif', fontStyle: 'bold',
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     closeBtn.on('pointerdown', () => {
       this.scene.audio.playSound('button');
@@ -154,7 +154,7 @@ export class BetOverlay {
     // ── Title: BET MULTIPLIER Nx ──
     const level = this.betIndex + 1;
     this.txtMultiplier = this.scene.add.text(pX + pW / 2 - 8, pY + 25, `BET MULTIPLIER ${level}x`, {
-      resolution: 2,
+      
       fontFamily: '"Poppins", sans-serif',
       fontSize: '16px', color: '#ffffff', fontStyle: '800',
       letterSpacing: 1.5,
@@ -218,7 +218,7 @@ export class BetOverlay {
     this.container.add(maxHit);
 
     this.container.add(this.scene.add.text(maxX + maxW / 2, maxY + maxH / 2, 'BET MAX', {
-      resolution: 2, fontFamily: '"Poppins", sans-serif',
+       fontFamily: '"Poppins", sans-serif',
       fontSize: '18px', color: '#ffffff', fontStyle: '800',
     }).setOrigin(0.5));
 
@@ -229,7 +229,7 @@ export class BetOverlay {
   // ── Build a section label ──
   private buildLabel(cx: number, cy: number, text: string) {
     this.container.add(this.scene.add.text(cx, cy, text, {
-      resolution: 2, fontFamily: '"Poppins", sans-serif',
+       fontFamily: '"Poppins", sans-serif',
       fontSize: '13px', color: '#889', fontStyle: '700',
       letterSpacing: 2.5,
     }).setOrigin(0.5));
@@ -252,7 +252,7 @@ export class BetOverlay {
     this.container.add(field);
 
     const txt = this.scene.add.text(fieldX + fieldW / 2, rowY + rowH / 2, '', {
-      resolution: 2, fontFamily: '"Poppins", sans-serif',
+       fontFamily: '"Poppins", sans-serif',
       fontSize: '22px', color: '#ffffff', fontStyle: '700',
     }).setOrigin(0.5);
     this.container.add(txt);
