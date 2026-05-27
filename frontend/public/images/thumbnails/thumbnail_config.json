@@ -1,0 +1,14 @@
+{
+  "themeColor": "#d1a4c7",
+  "backgroundGradientHex": "#d1a4c7",
+  "assets": {
+    "background": "SugarBlast-BG.png",
+    "foreground": "SugarBlast-FG.png",
+    "providerLogo": "ProviderLogo.png"
+  },
+  "compliance": {
+    "dimensions": "1024x1024",
+    "combinedSizeMB": 1.93,
+    "foregroundTransparency": true
+  }
+}
