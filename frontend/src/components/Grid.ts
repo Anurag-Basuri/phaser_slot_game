@@ -114,7 +114,7 @@ export class Grid {
 
     // Phase 6: Cascade depth counter text — font scales with grid
     this.cascadeCounterTxt = this.scene.add.text(0, 0, '', {
-      resolution: 2,
+      
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
       fontSize: '22px', // Will be overridden dynamically on each display
       color: '#ffffff',
@@ -463,8 +463,8 @@ export class Grid {
           const sprite = this.scene.add.sprite(this.getX(c), startY, this.symbolKeys[symId]);
           sprite.setData('symId', symId);
 
-          const scale = (this.cellW * 0.85) / Math.max(sprite.width, sprite.height);
-          sprite.setScale(Math.min(scale, 1));
+          const scale = (this.cellW * 0.95) / Math.max(sprite.width, sprite.height);
+          sprite.setScale(Math.min(scale, 1.2));
           sprite.setDepth(10);
           sprite.setAlpha(0);
 
@@ -758,15 +758,15 @@ export class Grid {
       const radius = cs * 0.42;
       
       // 1. Soft outer glow
-      gfx.fillStyle(bgColor, 0.08);
+      gfx.fillStyle(bgColor, 0.05);
       gfx.fillCircle(badgeCX, badgeCY, radius * 1.15);
       
       // 2. Main colorful body
-      gfx.fillGradientStyle(bgColor, bgColor, 0x000000, 0x000000, 0.22, 0.22, 0.12, 0.12);
+      gfx.fillGradientStyle(bgColor, bgColor, 0x000000, 0x000000, 0.15, 0.15, 0.08, 0.08);
       gfx.fillCircle(badgeCX, badgeCY, radius);
       
       // 3. Bright core
-      gfx.fillStyle(0xffffff, 0.05);
+      gfx.fillStyle(0xffffff, 0.03);
       gfx.fillCircle(badgeCX, badgeCY, radius * 0.6);
       
       // 4. Glossy curved highlight (glass sphere effect)
@@ -775,17 +775,17 @@ export class Grid {
       gfx.lineTo(badgeCX + radius * 0.6, badgeCY);
       gfx.arc(badgeCX, badgeCY, radius * 0.6, Math.PI * 2 - 0.3, Math.PI + 0.3, true);
       gfx.closePath();
-      gfx.fillStyle(0xffffff, 0.10);
+      gfx.fillStyle(0xffffff, 0.05);
       gfx.fillPath();
       
       // 5. Border
-      gfx.lineStyle(Math.max(2, cs * 0.03), bgColor, 0.35);
+      gfx.lineStyle(Math.max(2, cs * 0.03), bgColor, 0.15);
       gfx.strokeCircle(badgeCX, badgeCY, radius);
 
       // If high multiplier, add an extra glowing ring
       if (mult >= 16) {
         const pad = cs * 0.08;
-        gfx.lineStyle(Math.max(3, cs * 0.04), 0xffffff, 0.18);
+        gfx.lineStyle(Math.max(3, cs * 0.04), 0xffffff, 0.10);
         gfx.strokeCircle(badgeCX, badgeCY, radius + pad);
       }
     };
@@ -808,13 +808,13 @@ export class Grid {
 
       // Golden ring burst VFX on first appearance
       if (!this.turboMode) {
-        const ring = this.scene.add.graphics().setDepth(7).setAlpha(0.8);
+        const ring = this.scene.add.graphics().setDepth(7).setAlpha(0.4);
         ring.lineStyle(Math.max(2, cs * 0.03), bgColor, 1);
         ring.strokeCircle(badgeCX, badgeCY, cs * 0.42);
         this.scene.tweens.add({
           targets: ring,
           scaleX: 1.5, scaleY: 1.5, alpha: 0,
-          duration: 350,
+          duration: 400,
           ease: 'Quad.easeOut',
           onComplete: () => ring.destroy(),
         });
@@ -835,13 +835,13 @@ export class Grid {
 
       // Golden upgrade ring burst
       if (!this.turboMode) {
-        const ring = this.scene.add.graphics().setDepth(7).setAlpha(0.9);
+        const ring = this.scene.add.graphics().setDepth(7).setAlpha(0.5);
         ring.lineStyle(Math.max(2, cs * 0.04), bgColor, 1);
         ring.strokeCircle(badgeCX, badgeCY, cs * 0.42);
         this.scene.tweens.add({
           targets: ring,
           scaleX: 1.6, scaleY: 1.6, alpha: 0,
-          duration: 300,
+          duration: 400,
           ease: 'Quad.easeOut',
           onComplete: () => ring.destroy(),
         });
@@ -858,7 +858,7 @@ export class Grid {
       const strokeW = isSmallCell ? Math.max(2, cs * 0.04) : Math.max(3, cs * 0.06);
       if (!this.multiplierTexts[r][c]) {
         const txt = this.scene.add.text(badgeCX, badgeCY, `×${mult}`, {
-          resolution: 2,
+          
           fontFamily: '"Luckiest Guy", cursive, sans-serif',
           fontSize: `${Math.round(fontSize)}px`,
           color: '#ffffff',
@@ -1076,7 +1076,7 @@ export class Grid {
 
         const winPopFS = Math.max(14, Math.min(28, this.cellW * 0.38));
         const winPop = this.scene.add.text(popX, popY, `+${clusterWin.toFixed(2)}`, {
-          resolution: 2,
+          
           fontFamily: '"Luckiest Guy", cursive, sans-serif',
           fontSize: `${Math.round(winPopFS)}px`,
           color: '#ffee00',
@@ -1142,6 +1142,7 @@ export class Grid {
           const c = pos.reel !== undefined ? pos.reel : pos.col;
           if (this.sprites[r][c]) {
             const sprite = this.sprites[r][c]!;
+            this.sprites[r][c] = null; // Fix: Set null synchronously
             const symId = sprite.getData('symId') ?? 0;
             const symColors = [0xff8822, 0x2288ff, 0x44cc44, 0xffcc00, 0xff2222, 0x9944ff, 0x00cccc];
             const burstColor = symColors[symId % symColors.length];
@@ -1174,7 +1175,6 @@ export class Grid {
                 { scaleX: origSX * 1.7, scaleY: origSY * 1.7, angle: 25, alpha: 0, duration: this.explodeDuration * 0.65, ease: 'Quad.easeOut',
                   onComplete: () => {
                     sprite.destroy();
-                    this.sprites[r][c] = null;
                   }
                 },
               ]
@@ -1267,8 +1267,8 @@ export class Grid {
           const startY = this.getY(r) - (dropCounts[c] + 1) * this.cellW;
           const sprite = this.scene.add.sprite(this.getX(c), startY, this.symbolKeys[symId]);
           sprite.setData('symId', symId);
-          const scale = (this.cellW * 0.85) / Math.max(sprite.width, sprite.height);
-          sprite.setScale(Math.min(scale, 1));
+          const scale = (this.cellW * 0.95) / Math.max(sprite.width, sprite.height);
+          sprite.setScale(Math.min(scale, 1.2));
           sprite.setDepth(10);
           sprite.setAlpha(0);
 
@@ -1351,7 +1351,7 @@ export class Grid {
       const totalSize = this.cellW * options.gridSize;
       const counterFS = Math.max(14, Math.min(24, this.cellW * 0.35));
       const counterX = this.offsetX + totalSize / 2;
-      const counterY = this.offsetY - 42; // Pin safely above Free Spins counter
+      const counterY = this.offsetY - 65; // Pin safely above Free Spins counter
 
       this.cascadeCounterTxt
         .setText(`TUMBLE ×${this.cascadeDepth + 1}`)
@@ -1402,6 +1402,7 @@ export class Grid {
       scatterPositions.forEach((pos, i) => {
         const s = this.sprites[pos.r][pos.c];
         if (s) {
+          this.sprites[pos.r][pos.c] = null; // Fix: Set null synchronously
           this.scene.tweens.add({
             targets: s,
             scale: s.scaleX * 1.8,
@@ -1409,7 +1410,7 @@ export class Grid {
             repeat: 1,
             duration: 300,
             delay: i * 80,
-            onComplete: () => { s.destroy(); this.sprites[pos.r][pos.c] = null; }
+            onComplete: () => { s.destroy(); }
           });
           if (this._activeEmitterCount < Grid.MAX_EMITTERS) {
             const burst = this.scene.add.particles(this.getX(pos.c), this.getY(pos.r), 'scatter', {

@@ -32,7 +32,7 @@ export class WinCelebration {
 
   private tierConfig = [
     {
-      name: 'NICE WIN!',
+      name: 'GOOD WIN!',
       threshold: 2,
       bgColor: '#00cc88',
       glowColor: '#00ff99',
@@ -42,7 +42,7 @@ export class WinCelebration {
       particleLife: 2000,
     },
     {
-      name: 'BIG WIN!',
+      name: 'GREAT WIN!',
       threshold: 10,
       bgColor: '#ffaa00',
       glowColor: '#ffcc44',
@@ -52,7 +52,7 @@ export class WinCelebration {
       particleLife: 3000,
     },
     {
-      name: 'MEGA WIN!',
+      name: 'SUPER WIN!',
       threshold: 25,
       bgColor: '#ff006a',
       glowColor: '#ff4d94',
@@ -72,7 +72,7 @@ export class WinCelebration {
       particleLife: 4000,
     },
     {
-      name: 'ULTRA WIN!',
+      name: 'LEGENDARY WIN!',
       threshold: 100,
       bgColor: '#ffe600',
       glowColor: '#ffff77',
@@ -185,6 +185,41 @@ export class WinCelebration {
     );
     this.container.add(overlay);
 
+    // ═══════════════════════════════════════════════════
+    // EPIC LIGHT RAYS (BACKGROUND SPINNING)
+    // ═══════════════════════════════════════════════════
+    if (multiplier >= 10) {
+      const rayGfx = this.scene.add.graphics();
+      const numRays = multiplier >= 50 ? 24 : 16;
+      const rayColor = parseInt(tier.glowColor.replace('#', '0x'));
+      rayGfx.fillStyle(rayColor, multiplier >= 50 ? 0.25 : 0.15);
+      
+      for (let i = 0; i < numRays; i++) {
+        const angle = (i * Math.PI * 2) / numRays;
+        const width = 0.15; // beam width
+        
+        rayGfx.beginPath();
+        rayGfx.moveTo(0, 0);
+        rayGfx.lineTo(Math.cos(angle - width) * w, Math.sin(angle - width) * w);
+        rayGfx.lineTo(Math.cos(angle + width) * w, Math.sin(angle + width) * w);
+        rayGfx.closePath();
+        rayGfx.fillPath();
+      }
+      
+      rayGfx.setPosition(w / 2, h * 0.45);
+      this.container.add(rayGfx);
+
+      // Rotate light rays infinitely
+      activeTweens.push(
+        this.scene.tweens.add({
+          targets: rayGfx,
+          angle: 360,
+          duration: 12000,
+          repeat: -1,
+        })
+      );
+    }
+
     // Glow effect behind win text
     const glowCircle = this.scene.add.graphics();
     const tierColorInt = parseInt(tier.glowColor.replace('#', '0x'));
@@ -199,7 +234,7 @@ export class WinCelebration {
     // ═══════════════════════════════════════════════════
     const tierText = this.scene.add
       .text(w / 2, h * 0.32, tier.name, {
-        resolution: 2,
+        
         fontSize: `${tier.fontSize}px`,
         fontFamily: Theme.fonts.display,
         fontStyle: 'bold',
@@ -230,6 +265,12 @@ export class WinCelebration {
         duration: 700,
         ease: Theme.animation.easeBounce,
         delay: 0,
+        onStart: () => {
+          // Camera shake on big hits
+          if (multiplier >= 50) {
+            this.scene.cameras.main.shake(800, 0.02);
+          }
+        }
       }),
     );
 
@@ -238,7 +279,7 @@ export class WinCelebration {
     // ═══════════════════════════════════════════════════
     const amountText = this.scene.add
       .text(w / 2, h * 0.54, '$0.00', {
-        resolution: 2,
+        
         fontSize: `${Math.floor(tier.fontSize * 0.65)}px`,
         fontFamily: Theme.fonts.mono,
         fontStyle: 'bold',
@@ -445,7 +486,7 @@ export class WinCelebration {
     // ═══════════════════════════════════════════════════
     const skipText = this.scene.add
       .text(w / 2, h * 0.85, 'TAP TO CONTINUE', {
-        resolution: 2,
+        
         fontSize: '14px',
         fontFamily: Theme.fonts.sans,
         fontStyle: 'bold',
