@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { Theme } from '../constants/theme';
+import type { GameScene } from '../scenes/GameScene';
 
 /**
  * PREMIUM Free Spins Intro Cinematic Animation
@@ -14,11 +15,11 @@ import { Theme } from '../constants/theme';
  *   - Tap-to-skip and external skip support
  */
 export class FreeSpinsIntro {
-  private scene: Phaser.Scene;
+  private scene: GameScene;
   private _isVisible = false;
   private _finishFn: (() => void) | null = null;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: GameScene) {
     this.scene = scene;
   }
 
@@ -249,9 +250,9 @@ export class FreeSpinsIntro {
 
           // Play tick sound
           try {
-            const audio = (this.scene as any).audio;
+            const audio = this.scene.audio;
             if (audio && typeof audio.playSound === 'function') {
-              audio.playSound('spin', 0.1);
+              audio.playSound('spin', { volume: 0.1 });
             }
           } catch {
             /* ignore */
@@ -331,7 +332,7 @@ export class FreeSpinsIntro {
         emitZone: {
           type: 'random' as const,
           source: new Phaser.Geom.Rectangle(-30, 0, 60, 0),
-        } as any,
+        } as Phaser.Types.GameObjects.Particles.ParticleEmitterRandomZoneConfig,
       });
       container.add(emitter);
       emitters.push(emitter);

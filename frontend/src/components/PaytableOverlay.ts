@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import options, { BET_PRESETS } from '../options';
 import { getStakeEngine } from '../engine/StakeEngineClient';
 import { T } from '../helpers/I18n';
+import type { GameScene } from '../scenes/GameScene';
 
 /**
  * Multi-page Game Rules / Info overlay — 8 pages matching Sugar Blast 1000.
@@ -16,7 +17,7 @@ import { T } from '../helpers/I18n';
  * Page 8: Settings Menu / Info Screen / Bet Menu / Max Win
  */
 export class PaytableOverlay {
-  private scene: Phaser.Scene;
+  private scene: GameScene;
   private container!: Phaser.GameObjects.Container;
   private pages: Phaser.GameObjects.Container[] = [];
   private currentPage = 0;
@@ -104,7 +105,7 @@ export class PaytableOverlay {
     return y + 40;
   }
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: GameScene) {
     this.scene = scene;
     this.container = this.scene.add.container(0, 0).setDepth(100).setVisible(false);
     this.build();
@@ -137,7 +138,7 @@ export class PaytableOverlay {
     bg.fillStyle(0x000000, 0.7);
     bg.fillRect(-w, -h, w * 3, h * 3);
     bg.setInteractive(new Phaser.Geom.Rectangle(-w, -h, w * 3, h * 3), Phaser.Geom.Rectangle.Contains);
-    bg.on('pointerdown', () => { (this.scene as any).audio?.playSound('button'); this.hide(); });
+    bg.on('pointerdown', () => { this.scene.audio?.playSound('button'); this.hide(); });
     this.container.add(bg);
 
     const pageWrapper = this.scene.add.container(0, 0);
@@ -153,7 +154,7 @@ export class PaytableOverlay {
     panel.fillRoundedRect(0, 0, logicalW, logicalH, 20);
     // Header gradient
     panel.fillGradientStyle(0xff006a, 0xff3388, 0x130f24, 0x130f24, 0.2, 0.2, 0, 0);
-    panel.fillRoundedRect(0, 0, logicalW, 60, {tl:20,tr:20,bl:0,br:0} as any);
+    panel.fillRoundedRect(0, 0, logicalW, 60, {tl:20,tr:20,bl:0,br:0} as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
     // Border
     panel.lineStyle(2, 0xff006a, 0.6);
     panel.strokeRoundedRect(0, 0, logicalW, logicalH, 20);
@@ -187,7 +188,7 @@ export class PaytableOverlay {
       fontSize: '22px', color: '#ffffff', fontFamily: this.FONT_BODY, fontStyle: 'bold'
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     closeBtn.on('pointerdown', () => {
-      (this.scene as any).audio.playSound('button');
+      this.scene.audio.playSound('button');
       this.hide();
     });
     closeBtn.on('pointerover', () => closeBtn.setColor('#ff4488'));
@@ -212,7 +213,7 @@ export class PaytableOverlay {
       fontSize: '20px', color: '#ff006a', fontStyle: 'bold', fontFamily: this.FONT_BODY,
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     prevBtn.on('pointerdown', () => {
-      (this.scene as any).audio.playSound('button');
+      this.scene.audio.playSound('button');
       this.changePage(-1);
     });
     prevBtn.on('pointerover', () => prevBtn.setColor('#ff4488'));
@@ -223,7 +224,7 @@ export class PaytableOverlay {
       fontSize: '20px', color: '#ff006a', fontStyle: 'bold', fontFamily: this.FONT_BODY,
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     nextBtn.on('pointerdown', () => {
-      (this.scene as any).audio.playSound('button');
+      this.scene.audio.playSound('button');
       this.changePage(1);
     });
     nextBtn.on('pointerover', () => nextBtn.setColor('#ff4488'));
