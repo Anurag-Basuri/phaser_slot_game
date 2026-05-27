@@ -134,10 +134,11 @@ export function computeLayout(w: number, h: number): LayoutMetrics {
   const safeH = h - barH;
 
   // ── 2. Toolbar ──
-  const toolbarY = clamp(Math.round(safeH * 0.025), 12, 30);
+  // Base Y is the center of the icons. Provide enough padding so the top edge of the icons never clips.
+  const toolbarY = clamp(Math.round(safeH * 0.04), 30, 48);
   const toolbarH = isMobile ? 32 : 40;
-  const toolbarPad = isMobile ? 16 : 35;
-  const toolbarGap = mode === 'landscape-compact' ? 34 : isMobile ? 36 : 50;
+  const toolbarPad = isMobile ? 20 : 35; // slightly increased horizontal padding too
+  const toolbarGap = mode === 'landscape-compact' ? 38 : isMobile ? 38 : 50;
 
   // ── 3. Grid sizing ──
   let gridSize: number;
@@ -145,13 +146,11 @@ export function computeLayout(w: number, h: number): LayoutMetrics {
   let gridY: number;
 
   if (mode === 'portrait') {
-    // Top reserved: toolbar + logo zone + FS counter gap
-    const logoZoneH = clamp(Math.round(h * 0.07), 35, 75);
-    const fsGap = clamp(Math.round(h * 0.02), 10, 20);
-    const topReserved = toolbarY + toolbarH + logoZoneH + fsGap;
+    // Top reserved: toolbar + gap for FS/Tumble text
+    const fsGap = clamp(Math.round(h * 0.08), 50, 75); // Larger gap to ensure both fit
+    const topReserved = toolbarY + toolbarH + fsGap;
 
     // Bottom reserved: spin + autoplay + larger buy panels + padding
-    // Increased significantly to give the buy/ante panels breathing room
     const bottomEstimate = clamp(Math.round(h * 0.30), 200, 300);
 
     const availableH = safeH - topReserved - bottomEstimate;
@@ -247,22 +246,19 @@ export function computeLayout(w: number, h: number): LayoutMetrics {
   let logoVisible = false;
 
   if (mode === 'portrait') {
-    const availW = w * 0.75;
-    const logoZoneTop = toolbarY + toolbarH + 4;
-    const logoZoneBot = gridY - 14;
-    const availH = logoZoneBot - logoZoneTop;
+    const maxLogoW = clamp(w * 0.38, 100, 180); // 38% of screen width max
+    const maxLogoH = toolbarH * 1.6; // allow slightly taller
 
-    if (availH > 15) {
-      const scaleW = availW / R.logoBaseW;
-      const scaleH = availH / R.logoBaseH;
-      logoScale = clamp(Math.min(scaleW, scaleH), CLAMP.logoScaleMin, CLAMP.logoScaleMax);
-      // Dynamic max for tablets — larger screens can show a bigger logo
-      const dynamicMax = clamp(w / 900, 0.42, 0.80);
-      logoScale = Math.min(logoScale, dynamicMax);
-      logoVisible = true;
-      logoX = w / 2;
-      logoY = logoZoneTop + availH / 2;
-    }
+    const scaleW = maxLogoW / R.logoBaseW;
+    const scaleH = maxLogoH / R.logoBaseH;
+    logoScale = clamp(Math.min(scaleW, scaleH), CLAMP.logoScaleMin, CLAMP.logoScaleMax);
+    
+    logoVisible = true;
+    const actualLogoWidth = R.logoBaseW * logoScale;
+    const actualLogoHeight = R.logoBaseH * logoScale;
+    logoX = w - toolbarPad - (actualLogoWidth / 2);
+    // Align logo top edge with the toolbar's top edge so it is never cut off
+    logoY = (toolbarY - toolbarIconSize / 2) + (actualLogoHeight / 2); 
   } else if (mode === 'landscape-compact') {
     const availW = w * 0.5;
     const availH = gridY - 5;

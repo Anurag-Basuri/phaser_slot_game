@@ -192,8 +192,10 @@ export class IntroSplash {
 
     // Inner top highlight (glassmorphic pill)
     btnGfx.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.35, 0.35, 0, 0);
-    btnGfx.fillRoundedRect(cx - btnW / 2 + 2, btnY - btnH / 2 + 2, btnW - 4, btnH * 0.4, {
-      tl: btnR - 2, tr: btnR - 2, bl: 0, br: 0
+    const highlightH = btnH * 0.5; // Must be >= corner radius or Phaser renderer breaks
+    const highlightR = Math.min(btnR - 2, highlightH);
+    btnGfx.fillRoundedRect(cx - btnW / 2 + 2, btnY - btnH / 2 + 2, btnW - 4, highlightH, {
+      tl: highlightR, tr: highlightR, bl: 0, br: 0
     } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
 
     // Crisp white border
