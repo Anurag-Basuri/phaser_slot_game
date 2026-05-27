@@ -194,7 +194,7 @@ export class IntroSplash {
     btnGfx.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.35, 0.35, 0, 0);
     btnGfx.fillRoundedRect(cx - btnW / 2 + 2, btnY - btnH / 2 + 2, btnW - 4, btnH * 0.4, {
       tl: btnR - 2, tr: btnR - 2, bl: 0, br: 0
-    } as any);
+    } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
 
     // Crisp white border
     btnGfx.lineStyle(2, 0xffffff, 0.9);

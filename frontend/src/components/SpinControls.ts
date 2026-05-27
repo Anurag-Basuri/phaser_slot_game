@@ -430,7 +430,7 @@ export class SpinControls {
 
       // Glass highlight
       this.autoGfx.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.6, 0.6, 0.1, 0.1);
-      this.autoGfx.fillRoundedRect(x + 1, y + 1, bw - 2, bh * 0.45, { tl: rad - 1, tr: rad - 1, bl: 0, br: 0 } as any);
+      this.autoGfx.fillRoundedRect(x + 1, y + 1, bw - 2, bh * 0.45, { tl: rad - 1, tr: rad - 1, bl: 0, br: 0 } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
 
       const label = remaining > 0 ? `STOP (${remaining})` : 'STOP';
       this.autoTxt.setText(label)
@@ -450,7 +450,7 @@ export class SpinControls {
 
       // Glass highlight
       this.autoGfx.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.18, 0.18, 0, 0);
-      this.autoGfx.fillRoundedRect(x + 1, y + 1, bw - 2, bh * 0.45, { tl: rad - 1, tr: rad - 1, bl: 0, br: 0 } as any);
+      this.autoGfx.fillRoundedRect(x + 1, y + 1, bw - 2, bh * 0.45, { tl: rad - 1, tr: rad - 1, bl: 0, br: 0 } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
 
       this.autoTxt.setText('AUTOPLAY')
                   .setColor('#e0e0e0')
