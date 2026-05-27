@@ -1,5 +1,5 @@
 """
-Sugar Rush 1000 — Reel Optimizer v6
+Sugar Blast 1000 — Reel Optimizer v6
 ====================================
 Synced with actual engine behavior:
   - seed_random_multipliers() (10% chance, 1-3 spots, weighted x2/x4/x8/x16)
@@ -206,7 +206,7 @@ def main():
     REEL_LEN = 1000
     
     print("="*65)
-    print("  Sugar Rush 1000 -- Reel Optimizer v6 (engine-synced)")
+    print("  Sugar Blast 1000 -- Reel Optimizer v6 (engine-synced)")
     print(f"  Target: {TARGET}%")
     print(f"  Mult cap: {MAX_MULT}x | Seed chance: {MULT_SEED_CHANCE*100}%")
     print("="*65)
@@ -281,7 +281,7 @@ def main():
     print(f"\n  FINAL: {avg:.2f}% +/- {std:.2f}%")
     
     # Save
-    d = "sugar_rush_1000/reels"
+    d = "sugar_blast_1000/reels"
     save_reels_csv(best_reels, f"{d}/BR0.csv")
     
     # Free spin reels: slightly more generous high symbols

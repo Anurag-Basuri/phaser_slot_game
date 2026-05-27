@@ -1,18 +1,18 @@
 """
-Sugar Rush 1000 — GameState
+Sugar Blast 1000 — GameState
 
 Combines GameStateOverride + GameExecutables via multiple inheritance.
 Implements the run_spin() and run_freespin() entry points.
 """
 
-from sugar_rush_1000.game_override import GameStateOverride
-from sugar_rush_1000.game_executables import GameExecutables
+from sugar_blast_1000.game_override import GameStateOverride
+from sugar_blast_1000.game_executables import GameExecutables
 from src.events.events import set_total_event
 
 
 class GameState(GameStateOverride, GameExecutables):
     """
-    Main game state for Sugar Rush 1000.
+    Main game state for Sugar Blast 1000.
     MRO: GameStateOverride → GameExecutables → Executables → Tumble → Board → GeneralGameState
     """
 

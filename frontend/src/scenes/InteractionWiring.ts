@@ -9,7 +9,7 @@ export function updateSpinButtonState(this: Game) {
     this.updateUIInteractivity();
     if (!this.spinControls?.spinGfx) return;
 
-    // Visual transformation: Play ▶ ↔ Stop ■ (Sugar Rush 1000 standard)
+    // Visual transformation: Play ▶ ↔ Stop ■ (Sugar Blast 1000 standard)
     if (this._spinLock || this.autoSpinActive) {
       // During a spin or autoplay: show the STOP button (crimson + square icon)
       this.spinControls.drawStopButton(
@@ -123,7 +123,7 @@ export function wireInteractions(this: Game) {
       }
     });
 
-    // Bet controls — directly cycle through bet presets (Sugar Rush 1000 behavior)
+    // Bet controls — directly cycle through bet presets (Sugar Blast 1000 behavior)
     this.spinControls.betMinusHit.on('pointerdown', () => {
       if (
         this._spinLock ||

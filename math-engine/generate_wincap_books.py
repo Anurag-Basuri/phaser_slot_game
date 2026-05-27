@@ -7,8 +7,8 @@ Uses much higher MAX_REPEATS (5000) for wincap criteria to actually hit 25,000x.
 import sys, os, json, csv
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from sugar_rush_1000.game_config import GameConfig
-from sugar_rush_1000.gamestate import GameState
+from sugar_blast_1000.game_config import GameConfig
+from sugar_blast_1000.gamestate import GameState
 from src.state.state import GeneralGameState
 
 # Monkey-patch MAX_REPEATS for wincap generation

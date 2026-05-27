@@ -76,7 +76,7 @@ class ClusterWins:
 
                     # If exact size not in paytable, try clamped sizes
                     if win_val == 0.0 and lookup_size > 15:
-                        # Sugar Rush 1000 defines 15+ as max tier
+                        # Sugar Blast 1000 defines 15+ as max tier
                         for check_size in range(lookup_size, min_size - 1, -1):
                             win_val = self.config.paytable.get((check_size, sym_name), 0.0)
                             if win_val > 0:

@@ -417,7 +417,7 @@ export class SpinControls {
     this.autoGfx.fillRoundedRect(x, y + 3, bw, bh, rad);
 
     if (isActive) {
-      // Active STOP state: White pill with pink border (Sugar Rush 1000 standard)
+      // Active STOP state: White pill with pink border (Sugar Blast 1000 standard)
       this.autoGfx.fillGradientStyle(0xeebb44, 0xddaa33, 0xaa7722, 0x886611, 1);
       this.autoGfx.fillRoundedRect(x - 2, y - 2, bw + 4, bh + 4, rad + 2);
 

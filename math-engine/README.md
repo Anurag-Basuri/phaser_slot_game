@@ -1,6 +1,6 @@
-# Sugar Rush 1000 — Math Engine
+# Sugar Blast 1000 — Math Engine
 
-Stake Engine SDK-compliant math engine for the Sugar Rush 1000 slot game.
+Stake Engine SDK-compliant math engine for the Sugar Blast 1000 slot game.
 
 ## Quick Start
 
@@ -11,7 +11,7 @@ pip install zstandard
 python generate_reels.py
 
 # Generate RGS output files
-python games/sugar_rush_1000/run.py
+python games/sugar_blast_1000/run.py
 
 # Verify RTP
 python rtp_test.py
@@ -24,7 +24,7 @@ python optimize.py
 
 After `run.py` completes, the uploadable files are in:
 ```
-games/sugar_rush_1000/library/
+games/sugar_blast_1000/library/
 ```
 
 Upload this directory to the Stake Admin Control Panel (ACP).

@@ -1,10 +1,10 @@
 """
-Sugar Rush 1000 — Game Executables
+Sugar Blast 1000 — Game Executables
 
-Sugar Rush-specific logic that extends the base Executables.
+Sugar Blast-specific logic that extends the base Executables.
 Handles the multiplier grid, cascade loop, and super free spins.
 
-Key mechanic: In Sugar Rush 1000, when winning symbols explode during a
+Key mechanic: In Sugar Blast 1000, when winning symbols explode during a
 cascade, random multiplier spots (x2, x4, x8, ...) appear on the vacated
 positions. These multipliers apply to ALL future wins landing on those
 spots and double each time they're triggered again. During free spins,
@@ -22,7 +22,7 @@ from src.events.events import (
 
 
 class GameExecutables(Executables):
-    """Game-specific executables for Sugar Rush 1000."""
+    """Game-specific executables for Sugar Blast 1000."""
 
     def seed_super_free_spins(self) -> None:
         """
@@ -36,7 +36,7 @@ class GameExecutables(Executables):
 
     def seed_random_multipliers(self) -> None:
         """
-        Sugar Rush 1000 mechanic: At the start of each base game spin,
+        Sugar Blast 1000 mechanic: At the start of each base game spin,
         there is a chance that random multiplier candy spots are placed
         on the grid. This creates the medium-to-large win potential that
         drives the game's volatility profile.
@@ -75,7 +75,7 @@ class GameExecutables(Executables):
         Advances the multiplier at position (r, c).
         Progression: 0 → 2 → 4 → 8 → ... → cap
 
-        In Sugar Rush 1000, the first cascade hit on a spot immediately
+        In Sugar Blast 1000, the first cascade hit on a spot immediately
         activates a ×2 multiplier. Each subsequent hit doubles it.
         Uses per-mode multiplier cap (bonus=32x, others=128x).
         """
@@ -123,8 +123,8 @@ class GameExecutables(Executables):
 
     def evaluate_tumble_spin(self) -> None:
         """
-        Full cascade loop for Sugar Rush 1000:
-        1. Seed random multiplier spots (Sugar Rush candy mechanic)
+        Full cascade loop for Sugar Blast 1000:
+        1. Seed random multiplier spots (Sugar Blast candy mechanic)
         2. Detect clusters (BFS)
         3. Apply multipliers to each cluster's win
         4. If no wins → break

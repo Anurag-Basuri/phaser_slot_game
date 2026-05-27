@@ -1,5 +1,5 @@
 """
-Sugar Rush 1000 — Math Engine Verification Script
+Sugar Blast 1000 — Math Engine Verification Script
 
 Runs a batch of spins and validates:
   1. Cluster detection (4-directional, min 5 connected)
@@ -22,8 +22,8 @@ import os
 # Add parent dir to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from sugar_rush_1000.game_config import GameConfig
-from sugar_rush_1000.gamestate import GameState
+from sugar_blast_1000.game_config import GameConfig
+from sugar_blast_1000.gamestate import GameState
 from src.state.symbol import Symbol
 
 
@@ -301,7 +301,7 @@ def test_batch_simulation():
 
 
 if __name__ == "__main__":
-    print("\n--- Sugar Rush 1000 - Math Engine Verification ---\n")
+    print("\n--- Sugar Blast 1000 - Math Engine Verification ---\n")
 
     test_basic_spin()
     test_cluster_detection()

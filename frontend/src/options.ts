@@ -1,14 +1,14 @@
 /**
  * Sugar Blast 1000 — Game Configuration
  * 
- * Bet system mirrors Pragmatic Play's Sugar Rush 1000:
+ * Bet system mirrors Pragmatic Play's Sugar Blast 1000:
  * - Coin values: 0.01 → 0.50
  * - Bet levels:  1 → 10
  * - Total bet = coinValue × betLevel × 20 (fixed lines multiplier)
  * - Min bet: 0.20, Max bet: 240.00
  */
 
-// Sugar Rush 1000–style bet presets (total bet amounts)
+// Sugar Blast 1000–style bet presets (total bet amounts)
 // Official range: $0.20 min → $240.00 max
 export const BET_PRESETS = [
   0.20, 0.40, 0.60, 0.80, 1.00,
@@ -32,7 +32,7 @@ export default {
   anteBetCostMultiplier: 1.25,       // 25% extra cost
   anteBetScatterMultiplier: 2.0,     // 2x scatter chance when ante is on
 
-  // Official Sugar Rush 1000 paytable: 7 symbols × 11 cluster tiers (5 through 15+)
+  // Official Sugar Blast 1000 paytable: 7 symbols × 11 cluster tiers (5 through 15+)
   // Values are multipliers of the bet amount (verified against Pragmatic Play reference)
   payvalues: [
     [0.40, 0.60, 0.80, 1.00, 1.00, 2.00, 3.00,  5.00, 10.00,  20.00,  40.00],  // ID 0: Orange Sherbet Ball

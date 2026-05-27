@@ -12,7 +12,7 @@
     "lint:fix": "npm run lint -- --fix",
     "lint:tsc": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "math:run": "cd math-engine && make run GAME=sugar_rush_1000",
+    "math:run": "cd math-engine && make run GAME=sugar_blast_1000",
     "prepare": "husky"
   },
   "dependencies": {

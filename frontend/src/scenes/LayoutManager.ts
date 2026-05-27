@@ -111,7 +111,7 @@ import { DisplayBalance } from '../helpers/Currency';
 
     // We intentionally do NOT draw a solid background here (like the old dark purple plate).
     // This allows the Grid.ts Phase 1 frosted glass background to shine through organically,
-    // matching the original Sugar Rush 1000 aesthetic.
+    // matching the original Sugar Blast 1000 aesthetic.
 
     // Inner border for definition
     f.lineStyle(1.5, 0xff006a, 0.5);

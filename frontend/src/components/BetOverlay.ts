@@ -3,7 +3,7 @@ import { BET_PRESETS } from '../options';
 import type { GameScene } from '../scenes/GameScene';
 
 /**
- * Premium Bet Panel overlay — Sugar Rush–style bet selector.
+ * Premium Bet Panel overlay — Sugar Blast–style bet selector.
  * Anchored above the spin button area, shows BET (level) and TOTAL BET.
  */
 export class BetOverlay {

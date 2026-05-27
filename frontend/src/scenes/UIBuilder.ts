@@ -25,10 +25,10 @@ import { T } from '../helpers/I18n';
     const w = this.scale.width;
     const h = this.scale.height;
 
-    // === BACKGROUND (Dynamic Sugar Rush 1000 animations) ===
+    // === BACKGROUND (Dynamic Sugar Blast 1000 animations) ===
     this.backgroundManager = new BackgroundManager(this);
 
-    // === GRID PANEL (authentic Sugar Rush 1000 frame image) ===
+    // === GRID PANEL (authentic Sugar Blast 1000 frame image) ===
     this.gridPanel = this.add.image(0, 0, 'grid_panel').setDepth(1);
 
     // === GRID ===
@@ -220,7 +220,7 @@ import { T } from '../helpers/I18n';
       .setInteractive({ useHandCursor: true })
       .setDepth(21);
     this.anteBetIcon = this.add
-      .text(0, 0, 'ΓÜí', { resolution: 2, fontFamily: '"Poppins", sans-serif' })
+      .text(0, 0, '\u25CF', { resolution: 2, fontFamily: '"Poppins", sans-serif' })
       .setOrigin(0.5)
       .setDepth(21);
     this.anteBetTxt = this.add

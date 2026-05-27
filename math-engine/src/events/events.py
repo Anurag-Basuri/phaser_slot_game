@@ -212,12 +212,12 @@ def tumble_board_event(gamestate) -> None:
     gamestate.add_event(event)
 
 
-# ── Sugar Rush 1000 Specific Events ──
+# ── Sugar Blast 1000 Specific Events ──
 
 def multiplier_update_event(gamestate) -> None:
     """
     Emits the current state of the 7x7 multiplier grid.
-    Sugar Rush 1000 specific — shows all multiplier spot values.
+    Sugar Blast 1000 specific — shows all multiplier spot values.
     """
     grid = []
     mults = getattr(gamestate, 'grid_multipliers', None)

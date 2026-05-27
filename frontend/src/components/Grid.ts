@@ -76,7 +76,7 @@ export class Grid {
   public cellW = 100;
   public cellH = 100;
 
-  // Dynamic timing — fast and snappy for Sugar Rush 1000 feel
+  // Dynamic timing — fast and snappy for Sugar Blast 1000 feel
   private get cascadeDelay() { return this.turboMode ? 30 : this.quickMode ? 50 : 80; }
   private get explodeDuration() { return this.turboMode ? 80 : this.quickMode ? 120 : 180; }
   private get dropDuration() { return this.turboMode ? 100 : this.quickMode ? 140 : 200; }
@@ -166,7 +166,7 @@ export class Grid {
   }
 
   /**
-   * Draw premium Sugar Rush 1000 grid interior.
+   * Draw premium Sugar Blast 1000 grid interior.
    * Vertical "glass tube" columns create a candy-dispenser illusion.
    * Each column has a center light highlight that fades to dark edges,
    * giving depth as if candies drop through translucent pipes.

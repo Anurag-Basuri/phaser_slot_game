@@ -82,7 +82,7 @@ class BetMode:
     """
     Defines a betting mode with its cost, RTP, and outcome distributions.
     
-    Modes for Sugar Rush 1000:
+    Modes for Sugar Blast 1000:
     - "base": standard play (cost=1x)
     - "ante": ante bet (cost=1.25x, 2x scatter chance)
     - "bonus": buy free spins (cost=100x)

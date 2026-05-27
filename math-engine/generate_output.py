@@ -9,9 +9,9 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from sugar_rush_1000.game_config import GameConfig
-from sugar_rush_1000.gamestate import GameState
-from sugar_rush_1000.run import create_books
+from sugar_blast_1000.game_config import GameConfig
+from sugar_blast_1000.gamestate import GameState
+from sugar_blast_1000.run import create_books
 
 config = GameConfig()
 gamestate = GameState(config)

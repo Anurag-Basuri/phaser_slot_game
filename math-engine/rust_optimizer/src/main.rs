@@ -329,7 +329,7 @@ fn main() {
     let reel_len = 1000;
     
     println!("=================================================================");
-    println!("  Sugar Rush 1000 — Final Optimizer v6 (Rust Edition)");
+    println!("  Sugar Blast 1000 — Final Optimizer v6 (Rust Edition)");
     println!("  Target: {}%", target);
     println!("=================================================================");
     

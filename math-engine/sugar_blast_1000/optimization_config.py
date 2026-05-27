@@ -1,5 +1,5 @@
 """
-Optimization Config for Sugar Rush 1000
+Optimization Config for Sugar Blast 1000
 
 Provides the Python wrapper to execute the Rust optimization program.
 """
@@ -31,7 +31,7 @@ class OptimizationExecution:
 
         # 2. Execute Rust program
         print("\nExecuting Parallel Optimization (1M+ Spins)...")
-        bin_path = os.path.join(self.rust_dir, "target", "release", "sugar_rush_optimizer")
+        bin_path = os.path.join(self.rust_dir, "target", "release", "sugar_blast_optimizer")
         if os.name == 'nt':
             bin_path += ".exe"
             
@@ -44,7 +44,7 @@ class OptimizationExecution:
 if __name__ == "__main__":
     import sys
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from sugar_rush_1000.game_config import GameConfig
+    from sugar_blast_1000.game_config import GameConfig
     config = GameConfig()
     opt = OptimizationExecution(config)
     opt.run_optimization()

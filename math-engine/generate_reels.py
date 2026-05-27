@@ -1,5 +1,5 @@
 """
-Sugar Rush 1000 — Generate Final Production Reel Strips
+Sugar Blast 1000 — Generate Final Production Reel Strips
 ========================================================
 Uses the optimized parameters from v5 optimizer:
   L3=83.3%, L2=8.0%, L1=4.8%, H4=2.3%, H3=1.1%, H2=0.3%, H1=0.2%
@@ -52,7 +52,7 @@ def main():
     print("\n  Base Game (BR0):")
     rng = random.Random(42)
     br0 = [make_reel(REEL_LEN, base_weights, base_scatter, rng) for _ in range(7)]
-    save_reels(br0, "sugar_rush_1000/reels/BR0.csv")
+    save_reels(br0, "sugar_blast_1000/reels/BR0.csv")
     
     # 2. Free Spin Reels (FR0) — slightly more generous 
     print("  Free Spins (FR0):")
@@ -62,7 +62,7 @@ def main():
     fs_scatter = base_scatter * 1.5  # higher scatter for retriggers
     rng2 = random.Random(100)
     fr0 = [make_reel(REEL_LEN, fs_weights, fs_scatter, rng2) for _ in range(7)]
-    save_reels(fr0, "sugar_rush_1000/reels/FR0.csv")
+    save_reels(fr0, "sugar_blast_1000/reels/FR0.csv")
     
     # 3. Super Free Spin Reels (SF0) — same as free but slightly more H1
     print("  Super Free Spins (SF0):")
@@ -71,7 +71,7 @@ def main():
     sf_scatter = base_scatter * 1.2
     rng3 = random.Random(200)
     sf0 = [make_reel(REEL_LEN, sf_weights, sf_scatter, rng3) for _ in range(7)]
-    save_reels(sf0, "sugar_rush_1000/reels/SF0.csv")
+    save_reels(sf0, "sugar_blast_1000/reels/SF0.csv")
     
     # Print symbol distribution summary
     print("\n  Symbol Distribution (Base Game):")
@@ -83,7 +83,7 @@ def main():
     # Verify the saved files
     print("\n  Verifying saved files...")
     for fname in ["BR0.csv", "FR0.csv", "SF0.csv"]:
-        path = f"sugar_rush_1000/reels/{fname}"
+        path = f"sugar_blast_1000/reels/{fname}"
         with open(path) as f:
             rows = list(csv.reader(f))
         print(f"    {fname}: {len(rows)} rows x {len(rows[0])} cols")
@@ -97,7 +97,7 @@ def main():
     
     print("\n" + "=" * 60)
     print("  Production reel strips generated successfully!")
-    print("  Next: run 'python games/sugar_rush_1000/run.py' to generate RGS files")
+    print("  Next: run 'python games/sugar_blast_1000/run.py' to generate RGS files")
     print("=" * 60)
 
 if __name__ == "__main__":

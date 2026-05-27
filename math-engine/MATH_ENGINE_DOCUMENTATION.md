@@ -1,8 +1,8 @@
-# Sugar Rush 1000 — Math Engine Documentation
+# Sugar Blast 1000 — Math Engine Documentation
 
 ## Overview
 
-Python-based math engine for the Sugar Rush 1000 slot game, built to match the **Stake Engine SDK** architecture. Simulates full game rounds — cluster evaluation, tumble cascades, multiplier progression, free spins — and outputs RGS-compliant files (`.jsonl.zst`, lookup table CSVs, `index.json`) for upload to the Stake Admin Control Panel (ACP).
+Python-based math engine for the Sugar Blast 1000 slot game, built to match the **Stake Engine SDK** architecture. Simulates full game rounds — cluster evaluation, tumble cascades, multiplier progression, free spins — and outputs RGS-compliant files (`.jsonl.zst`, lookup table CSVs, `index.json`) for upload to the Stake Admin Control Panel (ACP).
 
 **Tech Stack:** Python 3.11+ · zstandard (zstd compression)
 
@@ -10,7 +10,7 @@ Python-based math engine for the Sugar Rush 1000 slot game, built to match the *
 
 ## Architecture
 
-The engine follows the Stake SDK's inheritance-based design. The `src/` directory provides generic, reusable base classes. The `games/sugar_rush_1000/` directory overrides them with Sugar Rush-specific rules.
+The engine follows the Stake SDK's inheritance-based design. The `src/` directory provides generic, reusable base classes. The `games/sugar_blast_1000/` directory overrides them with Sugar Blast-specific rules.
 
 ```
                     ┌─────────────────┐
@@ -64,7 +64,7 @@ math-engine/
 │   └── write_data/
 │       └── write.py                  # .jsonl.zst + CSV + index.json writer
 │
-├── games/sugar_rush_1000/            # Game-specific implementation
+├── games/sugar_blast_1000/            # Game-specific implementation
 │   ├── game_config.py                # Full config (paytable, bet modes, reels)
 │   ├── game_executables.py           # Multiplier grid logic
 │   ├── game_override.py              # State initialization overrides
@@ -193,7 +193,7 @@ Generates the three files required by Stake's ACP:
 
 ---
 
-## Game Implementation (`games/sugar_rush_1000/`)
+## Game Implementation (`games/sugar_blast_1000/`)
 
 ### GameConfig (`game_config.py`)
 
@@ -241,7 +241,7 @@ Generates the three files required by Stake's ACP:
 
 ### GameExecutables (`game_executables.py`)
 
-Sugar Rush-specific logic that extends the base `Executables`:
+Sugar Blast-specific logic that extends the base `Executables`:
 
 | Method | Purpose |
 |--------|---------|
@@ -411,12 +411,12 @@ python generate_reels.py
 python optimize.py
 
 # 4. Generate RGS output files
-python games/sugar_rush_1000/run.py
+python games/sugar_blast_1000/run.py
 
 # 5. Verify RTP
 python rtp_test.py
 
-# Output is in: games/sugar_rush_1000/library/
+# Output is in: games/sugar_blast_1000/library/
 ```
 
 ---

@@ -4,9 +4,9 @@ from src.config.config import Config, BetMode, Distribution
 class GameConfig(Config):
     def __init__(self):
         super().__init__()
-        self.game_id = "sugar_rush_1000"
+        self.game_id = "sugar_blast_1000"
         self.provider_number = 1
-        self.working_name = "Sugar Rush 1000"
+        self.working_name = "Sugar Blast 1000"
         self.wincap = 25000.0
         self.win_type = "cluster"
         self.rtp = 0.9653
@@ -19,7 +19,7 @@ class GameConfig(Config):
         self.freegame_type = "freegame"
 
         # Symbols: H1-H4 = high pay, L1-L3 = low pay, S = scatter
-        # No wild symbol in Sugar Rush 1000
+        # No wild symbol in Sugar Blast 1000
         self.special_symbols = {
             "scatter": ["S"],
         }
@@ -40,7 +40,7 @@ class GameConfig(Config):
         self.id_to_symbol = {v: k for k, v in self.symbol_ids.items()}
 
         # ──────────────────────────────────────────────────────
-        # PAYTABLE — Official Sugar Rush 1000 (Pragmatic Play reference)
+        # PAYTABLE — Official Sugar Blast 1000 (Pragmatic Play reference)
         # Values are multipliers of bet amount per cluster size
         # Verified against official game info screen
         # ──────────────────────────────────────────────────────
@@ -140,10 +140,10 @@ class GameConfig(Config):
         self.super_max_multiplier = 116
 
         # Probability of random multiplier candy spots appearing each spin
-        # (Sugar Rush 1000 signature mechanic)
+        # (Sugar Blast 1000 signature mechanic)
         self.multiplier_seed_chance = 0.10
 
-        self.reels_path = "sugar_rush_1000/reels"
+        self.reels_path = "sugar_blast_1000/reels"
         reels = {"BR0": "BR0.csv", "FR0": "FR0.csv", "SF0": "SF0.csv"}
         self.reels = {}
         for r, f in reels.items():
