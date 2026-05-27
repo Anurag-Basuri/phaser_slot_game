@@ -53,9 +53,9 @@ export class Audio {
     try {
       if (this.currentMusic) {
         if (muted) {
-          (this.currentMusic as any).setVolume?.(0);
+          (this.currentMusic as Phaser.Sound.WebAudioSound).setVolume?.(0);
         } else {
-          (this.currentMusic as any).setVolume?.(this.musicVolume);
+          (this.currentMusic as Phaser.Sound.WebAudioSound).setVolume?.(this.musicVolume);
         }
       }
     } catch { /* ignore */ }
@@ -158,7 +158,7 @@ export class Audio {
           onComplete: () => {
             try {
               this.audioReels?.stop();
-              (this.audioReels as any)?.setVolume?.(0.5);
+              (this.audioReels as Phaser.Sound.WebAudioSound)?.setVolume?.(0.5);
             } catch { /* ignore */ }
           }
         });

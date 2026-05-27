@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
+import type { GameScene } from '../scenes/GameScene';
 
 export class AutoPlayOverlay {
-  private scene: Phaser.Scene;
+  private scene: GameScene;
   private container!: Phaser.GameObjects.Container;
   private visible = false;
 
@@ -25,7 +26,7 @@ export class AutoPlayOverlay {
   private sliderX = 0;
   private draggingSlider = false;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: GameScene) {
     this.scene = scene;
     this.build();
 
@@ -151,7 +152,7 @@ export class AutoPlayOverlay {
       fontStyle: '100'
     }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
     closeBtn.on('pointerdown', () => {
-      (this.scene as any).audio.playSound('button');
+      this.scene.audio.playSound('button');
       this.hide();
     });
     this.container.add(closeBtn);
@@ -273,7 +274,7 @@ export class AutoPlayOverlay {
     startHit.on('pointerout', () => startBtnGfx.setAlpha(1));
     
     startHit.on('pointerdown', () => {
-      (this.scene as any).audio.playSound('button');
+      this.scene.audio.playSound('button');
       this.hide();
       if (this.onStartCallback) {
         this.onStartCallback(this.spins, this.turboSpin, this.quickSpin, this.skipScreens);
@@ -338,7 +339,7 @@ export class AutoPlayOverlay {
     const hit = this.scene.add.rectangle(x + size, y + size/2, size*3, size+10, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
     hit.on('pointerdown', () => {
-      (this.scene as any).audio.playSound('button');
+      this.scene.audio.playSound('button');
       state = !state;
       draw();
       onChange(state);

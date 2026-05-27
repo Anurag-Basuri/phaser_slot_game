@@ -1,12 +1,13 @@
 import Phaser from 'phaser';
 import { BET_PRESETS } from '../options';
+import type { GameScene } from '../scenes/GameScene';
 
 /**
  * Premium Bet Panel overlay — Sugar Rush–style bet selector.
  * Anchored above the spin button area, shows BET (level) and TOTAL BET.
  */
 export class BetOverlay {
-  private scene: Phaser.Scene;
+  private scene: GameScene;
   private container!: Phaser.GameObjects.Container;
   private visible = false;
   private _resizeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -27,7 +28,7 @@ export class BetOverlay {
   private btnTotalMinus!: Phaser.GameObjects.Graphics;
   private btnTotalPlus!: Phaser.GameObjects.Graphics;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: GameScene) {
     this.scene = scene;
     this.build();
 
@@ -143,7 +144,7 @@ export class BetOverlay {
       resolution: 2, fontSize: '20px', color: '#666', fontFamily: '"Poppins", sans-serif', fontStyle: 'bold',
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     closeBtn.on('pointerdown', () => {
-      (this.scene as any).audio.playSound('button');
+      this.scene.audio.playSound('button');
       this.hide();
     });
     closeBtn.on('pointerover', () => closeBtn.setColor('#ff006a'));
@@ -202,13 +203,13 @@ export class BetOverlay {
     maxGfx.fillRoundedRect(maxX, maxY, maxW, maxH, 10);
     // Glass
     maxGfx.fillStyle(0xffffff, 0.18);
-    maxGfx.fillRoundedRect(maxX + 3, maxY + 2, maxW - 6, maxH * 0.38, { tl: 8, tr: 8, bl: 0, br: 0 } as any);
+    maxGfx.fillRoundedRect(maxX + 3, maxY + 2, maxW - 6, maxH * 0.38, { tl: 8, tr: 8, bl: 0, br: 0 } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
     this.container.add(maxGfx);
 
     const maxHit = this.scene.add.rectangle(maxX + maxW / 2, maxY + maxH / 2, maxW, maxH, 0x000000, 0)
       .setInteractive({ useHandCursor: true });
     maxHit.on('pointerdown', () => { 
-      (this.scene as any).audio.playSound('button');
+      this.scene.audio.playSound('button');
       this.betIndex = BET_PRESETS.length - 1; 
       this.emitChange(); 
     });
@@ -264,7 +265,7 @@ export class BetOverlay {
       .setInteractive({ useHandCursor: true });
     minusHit.on('pointerdown', () => { 
       if (this.betIndex > 0) { 
-        (this.scene as any).audio.playSound('button');
+        this.scene.audio.playSound('button');
         this.betIndex--; 
         this.emitChange(); 
       } 
@@ -279,7 +280,7 @@ export class BetOverlay {
       .setInteractive({ useHandCursor: true });
     plusHit.on('pointerdown', () => { 
       if (this.betIndex < BET_PRESETS.length - 1) { 
-        (this.scene as any).audio.playSound('button');
+        this.scene.audio.playSound('button');
         this.betIndex++; 
         this.emitChange(); 
       } 
