@@ -59,7 +59,7 @@ export class Preload extends Phaser.Scene {
     this.load.audio('lose', 'audio/lose.mp3');
     this.load.audio('button', 'audio/button.mp3');
     this.load.audio('musicDefault', 'audio/music_default.mp3');
-    this.load.audio('musicFreeSpins', 'audio/music_freespins.mp3');
+    this.load.audio('musicFreeSpins', 'audio/music_freespins.wav');
   }
 
   create() {
