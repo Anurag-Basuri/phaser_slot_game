@@ -1,4 +1,4 @@
-﻿import Phaser from 'phaser';
+import Phaser from 'phaser';
 import type { Game } from './Game';
 import { StakeError, StakeEngineClient } from '../engine/StakeEngineClient';
 import { DisplayBalance } from '../helpers/Currency';
@@ -43,7 +43,7 @@ import options from '../options';
           cy,
           `+${DisplayBalance({ amount: actualWin, currency: this.currency })}`,
           {
-            resolution: 2,
+            
             fontSize: `${winFS}px`,
             color: '#ffe600',
             fontStyle: 'bold',
@@ -106,7 +106,7 @@ import options from '../options';
             this.scale.height / 2,
             `FREE SPINS TOTAL\n${DisplayBalance({ amount: totalWin, currency: this.currency })}`,
             {
-              resolution: 2,
+              
               fontSize: '64px',
               color: '#ffe600',
               align: 'center',
@@ -177,7 +177,7 @@ import options from '../options';
       // MAX WIN reached ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â show special celebration
       const maxText = this.add
         .text(this.scale.width / 2, this.scale.height * 0.35, 'MAX WIN!', {
-          resolution: 2,
+          
           fontSize: '96px',
           color: '#ffe600',
           fontStyle: 'bold',
@@ -204,12 +204,20 @@ import options from '../options';
       // Update FS counter display
       this.txtFSRemaining.setText(`${this.grid.freeSpinsRemaining} FREE SPINS`);
       
+      // Fix: Must prepare the grid (sweep old symbols, reset state) before dropping new spin events
+      this.grid.prepareSpin();
+
       // In production, the RGS gives the entire FS block at once,
       // but if we are simulating FS spin by spin (demo mode), we fetch it here.
       // Since Stake play() returns the entire sequence, onNextFreeSpinNeeded is only for demo fallback.
       this.stakeEngine.play(options.betAmount, 0).then(result => {
         const stateEvents = result.round?.state || [];
         this.grid.processServerEvents(stateEvents);
+      }).catch(err => {
+        console.error('[Game] onNextFreeSpinNeeded play error:', err);
+        this.grid.abortSpin();
+        this._spinLock = false;
+        handleSpinFailure.call(this, err);
       });
     };
 
@@ -364,8 +372,17 @@ import options from '../options';
       this._recovering ||
       this.fsActive ||
       this.anyOverlayOpen()
-    )
+    ) {
+      // If auto-spin is active but we're temporarily blocked (e.g. settings open),
+      // patiently wait and retry instead of silently breaking the loop forever.
+      if (this.autoSpinActive && !this.fsActive && !this._recovering) {
+        if (this.autoSpinTimer) this.autoSpinTimer.destroy();
+        this.autoSpinTimer = this.time.delayedCall(500, () => {
+          if (this.autoSpinActive) attemptSpin.call(this, triggerType);
+        });
+      }
       return;
+    }
 
     const cost = this.getEffectiveBet();
     if (this.valueMoney >= cost) {

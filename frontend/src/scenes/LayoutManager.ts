@@ -709,12 +709,7 @@ import { DisplayBalance } from '../helpers/Currency';
       .setPosition(x, y + yOffset2)
       .setFontSize(fsSub)
       .setFontFamily('"Inter", "Outfit", sans-serif')
-      .setFontStyle('900')
-      .setColor('#ffe600')
-      .setStroke(strokeCol, isSmall ? 0 : Math.max(1, fsSub * 0.08))
-      .setShadow(0, 1, '#000000', isSmall ? 1 : 2, true, true)
-      .setAlpha(alpha)
-      .setAlign('center')
+.setAlign('center')
       .setOrigin(0.5);
   }
 
@@ -725,59 +720,64 @@ import { DisplayBalance } from '../helpers/Currency';
     isSuper: boolean,
   ) {
     gfx.clear();
-    // Clean, sharp premium edges (no more overly rounded pills)
     const r = Math.min(h * 0.15, 8);
-    const accentTop = isSuper ? 0xff4499 : 0xffdd44;
-    const accentBot = isSuper ? 0xcc0055 : 0xcc8800;
-    const accentMid = isSuper ? 0xff0066 : 0xffaa00;
+    const disabled = options.anteBetEnabled;
     const isSmall = h < 50;
 
-    const disabled = options.anteBetEnabled;
-
-    // 0. Outer ambient glow for premium visibility
-    if (!disabled) {
-      gfx.fillStyle(accentMid, 0.15);
-      gfx.fillRoundedRect(-w / 2 - 8, -h / 2 - 8, w + 16, h + 16, r + 4);
-      gfx.fillStyle(accentMid, 0.25);
-      gfx.fillRoundedRect(-w / 2 - 4, -h / 2 - 4, w + 8, h + 8, r + 2);
-    }
-
-    // 1. Drop shadow
-    gfx.fillStyle(0x000000, disabled ? 0.3 : 0.6);
-    gfx.fillRoundedRect(-w / 2, -h / 2 + 4, w, h, r);
-
-    // 2. Main body â€” bolder gradient
     if (disabled) {
+      // Disabled state
+      gfx.fillStyle(0x000000, 0.4);
+      gfx.fillRoundedRect(-w / 2 - 2, -h / 2 + 2, w + 4, h, r);
       gfx.fillGradientStyle(0x555555, 0x555555, 0x333333, 0x333333, 1);
-    } else {
-      gfx.fillGradientStyle(accentTop, accentTop, accentBot, accentBot, 1);
+      gfx.fillRoundedRect(-w / 2, -h / 2, w, h, r);
+      gfx.lineStyle(2, 0x777777, 0.6);
+      gfx.strokeRoundedRect(-w / 2, -h / 2, w, h, r);
+      return;
     }
+
+    // PREMIUM ACTIVE STATE
+    // 0. Ambient outer pulse glow (we assume this is drawn every frame or statically bright)
+    const glowC = isSuper ? 0xff0055 : 0xffaa00;
+    gfx.fillStyle(glowC, 0.15);
+    gfx.fillRoundedRect(-w / 2 - 10, -h / 2 - 10, w + 20, h + 20, r + 6);
+    gfx.fillStyle(glowC, 0.25);
+    gfx.fillRoundedRect(-w / 2 - 5, -h / 2 - 5, w + 10, h + 10, r + 3);
+
+    // 1. Heavy Drop Shadow
+    gfx.fillStyle(0x000000, 0.6);
+    gfx.fillRoundedRect(-w / 2, -h / 2 + 6, w, h, r);
+
+    // 2. Bevel outer rim (Dark rich color)
+    const rimTop = isSuper ? 0xcc0033 : 0xaa5500;
+    const rimBot = isSuper ? 0x660011 : 0x552200;
+    gfx.fillGradientStyle(rimTop, rimTop, rimBot, rimBot, 1);
     gfx.fillRoundedRect(-w / 2, -h / 2, w, h, r);
 
-    // 3. Top highlight â€” crisp, not blurred
+    // 3. Inner bright panel
+    const faceTop = isSuper ? 0xff3388 : 0xffdd44;
+    const faceBot = isSuper ? 0xaa0033 : 0xcc7700;
+    gfx.fillGradientStyle(faceTop, faceTop, faceBot, faceBot, 1);
+    gfx.fillRoundedRect(-w / 2 + 2, -h / 2 + 2, w - 4, h - 4, r - 1);
+
+    // 4. Glossy upper hemisphere
     if (!isSmall) {
-      gfx.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.4, 0.4, 0, 0);
-      gfx.fillRoundedRect(-w / 2 + 2, -h / 2 + 1, w - 4, h * 0.35, {
-        tl: r - 1, tr: r - 1, bl: 0, br: 0,
-      } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
+      gfx.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.5, 0.5, 0, 0);
+      gfx.fillRoundedRect(-w / 2 + 2, -h / 2 + 2, w - 4, h * 0.35, { tl: r - 1, tr: r - 1, bl: 0, br: 0 } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
     }
 
-    // ULTRA-specific visual flair: Gold stars / sparkles inside the button
-    if (!isSuper && !disabled) {
-      gfx.fillStyle(0xffffff, 0.6);
-      gfx.fillCircle(-w/3, -h/4, 2);
-      gfx.fillCircle(w/4, h/3, 2.5);
-      gfx.fillCircle(w/2.5, -h/3, 1.5);
-      gfx.fillCircle(-w/4, h/4, 2);
-      
-      // Distinct inner gold glow
-      gfx.lineStyle(2, 0xffffee, 0.5);
-      gfx.strokeRoundedRect(-w / 2 + 3, -h / 2 + 3, w - 6, h - 6, r - 2);
-    }
+    // 5. Highlight rim (crisp white specular on top edge)
+    gfx.lineStyle(2, 0xffffff, 0.7);
+    gfx.beginPath();
+    gfx.moveTo(-w / 2 + r, -h / 2 + 2);
+    gfx.lineTo(w / 2 - r, -h / 2 + 2);
+    gfx.strokePath();
 
-    // 4. Single clean border â€” thicker and brighter
-    gfx.lineStyle(isSmall ? 2 : 3, disabled ? 0x777777 : accentMid, disabled ? 0.6 : 1);
-    gfx.strokeRoundedRect(-w / 2, -h / 2, w, h, r);
+    // 6. Stars / Sparkles for texture
+    gfx.fillStyle(0xffffff, 0.7);
+    gfx.fillCircle(-w/3, -h/4, 2);
+    gfx.fillCircle(w/4, h/3, 2.5);
+    gfx.fillCircle(w/2.5, -h/3, 1.5);
+    gfx.fillCircle(-w/4, h/4, 2);
   }
 
   export function drawAnteBetButton(this: Game, bw: number, bh: number) {
@@ -811,6 +811,12 @@ import { DisplayBalance } from '../helpers/Currency';
       // Top inner shadow for depth
       g.fillStyle(0x000000, 0.6);
       g.fillRoundedRect(x + 2, y + 2, bw - 4, 6, { tl: rad - 1, tr: rad - 1, bl: 0, br: 0 } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
+
+      // Glossy upper hemisphere
+      if (!isSmall) {
+        g.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.4, 0.4, 0, 0);
+        g.fillRoundedRect(x + 2, y + 2, bw - 4, bh * 0.4, { tl: rad - 1, tr: rad - 1, bl: 0, br: 0 } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
+      }
 
       // Bright neon border rim
       g.lineStyle(isSmall ? 2 : 2.5, 0x00ff88, 1);

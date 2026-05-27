@@ -79,7 +79,7 @@ import { T } from '../helpers/I18n';
     // Shadow layer for 'SUGAR BLAST'
     const titleShadow = this.add
       .text(0, -22, 'SUGAR BLAST', {
-        resolution: 2,
+        
         fontFamily: '"Luckiest Guy", cursive, sans-serif',
         fontSize: '46px',
         fontStyle: 'bold',
@@ -100,7 +100,7 @@ import { T } from '../helpers/I18n';
     // Main layer for 'SUGAR BLAST'
     this.logoText1 = this.add
       .text(0, -24, 'SUGAR BLAST', {
-        resolution: 2,
+        
         fontFamily: '"Luckiest Guy", cursive, sans-serif',
         fontSize: '46px',
         fontStyle: 'bold',
@@ -121,7 +121,7 @@ import { T } from '../helpers/I18n';
     // Shadow layer for '1000'
     const num1000Shadow = this.add
       .text(0, 24, '1000', {
-        resolution: 2,
+        
         fontFamily:
           '"Montserrat", "Poppins", sans-serif',
         fontSize: '62px',
@@ -133,7 +133,7 @@ import { T } from '../helpers/I18n';
     // Main layer for '1000'
     this.logoText2 = this.add
       .text(0, 20, '1000', {
-        resolution: 2,
+        
         fontFamily:
           '"Montserrat", "Poppins", sans-serif',
         fontSize: '62px',
@@ -162,7 +162,7 @@ import { T } from '../helpers/I18n';
 
     // Buy buttons setup
     const btnStyle = {
-      resolution: 2,
+      
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
       fontStyle: 'normal',
       align: 'center',
@@ -220,12 +220,12 @@ import { T } from '../helpers/I18n';
       .setInteractive({ useHandCursor: true })
       .setDepth(21);
     this.anteBetIcon = this.add
-      .text(0, 0, '\u25CF', { resolution: 2, fontFamily: '"Poppins", sans-serif' })
+      .text(0, 0, '\u25CF', {  fontFamily: '"Poppins", sans-serif' })
       .setOrigin(0.5)
       .setDepth(21);
     this.anteBetTxt = this.add
       .text(0, 0, T('ANTE BET', this.stakeEngine.isSocialMode()), {
-        resolution: 2,
+        
         fontFamily: '"Poppins", sans-serif',
         fontStyle: 'bold',
         color: '#ffffff',
@@ -251,7 +251,7 @@ import { T } from '../helpers/I18n';
 
     this.featuresMenuTitleTxt = this.add
       .text(0, 0, 'BUY FEATURES', {
-        resolution: 2,
+        
         fontFamily: '"Poppins", sans-serif',
         fontStyle: '900',
         color: '#ffffff',
@@ -262,7 +262,7 @@ import { T } from '../helpers/I18n';
 
     this.featuresMenuCloseBtn = this.add
       .text(0, 0, 'X', {
-        resolution: 2,
+        
         fontFamily: '"Poppins", sans-serif',
         fontStyle: '900',
         color: '#ffffff',
@@ -288,7 +288,7 @@ import { T } from '../helpers/I18n';
       });
     this.btnFeaturesMenuIcon = this.add
       .text(0, 0, 'BUY', {
-        resolution: 2,
+        
         fontSize: '20px',
         color: '#ffe600',
         fontStyle: 'bold',
@@ -306,7 +306,7 @@ import { T } from '../helpers/I18n';
     // === FREE SPINS COUNTER ===
     this.txtFSRemaining = this.add
       .text(0, 0, '', {
-        resolution: 2,
+        
         fontSize: '28px',
         color: '#ffffff',
         align: 'center',
@@ -460,7 +460,7 @@ import { T } from '../helpers/I18n';
         .on('pointerdown', () => executeReplay.call(this));
       this.replayBtnTxt = this.add
         .text(0, 0, 'Γû╢ START REPLAY', {
-          resolution: 2,
+          
           fontSize: '24px',
           fontFamily: '"Luckiest Guy", cursive, sans-serif',
           color: '#fff',
