@@ -140,12 +140,13 @@ export class BottomBarHUD {
 
     this.realignText();
 
-    // Demo label — top right of the screen, unobtrusive
+    // Demo label — bottom right of the screen, just above the bottom bar
     if (this.demoLabel.text) {
       this.demoLabel
-        .setPosition(w - 20, 20)
-        .setOrigin(1, 0)
+        .setPosition(w - 10, h - barH - 8)
+        .setOrigin(1, 1)
         .setFontSize(14)
+        .setAlpha(0.8)
         .setDepth(100);
     }
   }

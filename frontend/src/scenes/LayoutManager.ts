@@ -558,9 +558,9 @@ import { DisplayBalance } from '../helpers/Currency';
       this.logoWrapper.setVisible(false);
     }
 
-    // FS Counter â€” cleanly above the grid frame in the reserved gap strip
-    const fsFS = isStacked ? Math.min(20, w * 0.045) : Math.min(32, w * 0.055);
-    const fsCounterY = gridY - Math.max(12, gridW * 0.025);
+    // FS Counter — cleanly above the grid frame in the reserved gap strip
+    const fsFS = isStacked ? Math.min(22, w * 0.05) : Math.min(32, w * 0.055);
+    const fsCounterY = gridY - 6;
     this.txtFSRemaining
       .setPosition(w / 2, fsCounterY)
       .setOrigin(0.5, 1) // anchor to bottom so text sits above gridY

@@ -55,6 +55,7 @@ export class Grid {
 
   // Phase 6: Cascade depth counter
   private cascadeCounterTxt!: Phaser.GameObjects.Text;
+  private cascadePillGfx!: Phaser.GameObjects.Graphics;
 
   // Callbacks
   public onWinCallback: ((winAmount: number, symbolId?: number) => void) | null = null;
@@ -121,6 +122,8 @@ export class Grid {
       strokeThickness: 5,
       shadow: { offsetX: 0, offsetY: 3, color: '#000000', blur: 6, stroke: true, fill: true }
     }).setOrigin(0.5).setDepth(25).setVisible(false);
+
+    this.cascadePillGfx = this.scene.add.graphics().setDepth(24).setAlpha(0);
 
     // NOTE: fillEmpty() is NOT called here — it must be called after
     // layoutAll() sets the correct offsetX/offsetY/cellW so that
@@ -573,6 +576,7 @@ export class Grid {
       }
     }
     this.cascadeCounterTxt.setVisible(false);
+    this.cascadePillGfx.setAlpha(0);
 
     // Sweep old symbols — smooth slide-down exit
     for (let r = 0; r < options.gridSize; r++) {
@@ -1345,40 +1349,39 @@ export class Grid {
     
     if (this.cascadeDepth > 0) {
       const totalSize = this.cellW * options.gridSize;
-      const counterFS = Math.max(14, Math.min(36, this.cellW * 0.45));
-      const counterOffset = Math.max(18, this.cellW * 0.55);
-      const counterStroke = Math.max(3, counterFS * 0.25);
+      const counterFS = Math.max(14, Math.min(24, this.cellW * 0.35));
       const counterX = this.offsetX + totalSize / 2;
-      const counterY = Math.max(counterFS + 8, this.offsetY - counterOffset);
+      const counterY = this.offsetY - 42; // Pin safely above Free Spins counter
 
       this.cascadeCounterTxt
         .setText(`TUMBLE ×${this.cascadeDepth + 1}`)
         .setPosition(counterX, counterY)
         .setFontSize(counterFS)
-        .setFontFamily('"Luckiest Guy", cursive, sans-serif')
+        .setFontFamily('"Inter", "Outfit", sans-serif')
+        .setFontStyle('900')
         .setColor('#ffffff')
-        .setStroke('#ff0066', counterStroke)
-        .setShadow(0, 3, '#000000', 8, true, true)
+        .setStroke('#000000', 4)
+        .setShadow(0, 2, '#000000', 4, true, true)
         .setVisible(true)
         .setScale(0.3)
-        .setAlpha(0);
+        .setAlpha(0)
+        .setOrigin(0.5, 0.5);
 
-      const pillW = this.cascadeCounterTxt.width + 30;
-      const pillH = counterFS + 14;
-      const pillGfx = this.scene.add.graphics().setDepth(24);
-      pillGfx.fillStyle(0x000000, 0.55);
-      pillGfx.fillRoundedRect(counterX - pillW / 2, counterY - pillH / 2, pillW, pillH, pillH / 2);
-      pillGfx.lineStyle(1.5, 0xff0066, 0.5);
-      pillGfx.strokeRoundedRect(counterX - pillW / 2, counterY - pillH / 2, pillW, pillH, pillH / 2);
-      pillGfx.setScale(0.3).setAlpha(0);
+      const pillW = this.cascadeCounterTxt.width + 24;
+      const pillH = counterFS + 12;
+      this.cascadePillGfx.clear();
+      this.cascadePillGfx.fillStyle(0x000000, 0.65);
+      this.cascadePillGfx.fillRoundedRect(counterX - pillW / 2, counterY - pillH / 2, pillW, pillH, pillH / 2);
+      this.cascadePillGfx.lineStyle(2, 0xff0066, 0.8);
+      this.cascadePillGfx.strokeRoundedRect(counterX - pillW / 2, counterY - pillH / 2, pillW, pillH, pillH / 2);
+      this.cascadePillGfx.setScale(0.3).setAlpha(0);
 
       this.scene.tweens.add({
-        targets: [this.cascadeCounterTxt, pillGfx],
+        targets: [this.cascadeCounterTxt, this.cascadePillGfx],
         scaleX: 1, scaleY: 1, alpha: 1,
         duration: 300,
         ease: 'Back.easeOut'
       });
-      this.scene.time.delayedCall(2000, () => { if (pillGfx && pillGfx.scene) pillGfx.destroy(); });
     }
     
     this.processNextEvent();
