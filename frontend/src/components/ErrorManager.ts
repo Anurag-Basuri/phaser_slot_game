@@ -55,7 +55,7 @@ export class ErrorManager {
     container.add(bg);
 
     const text = this.scene.add.text(w / 2, h / 2, message, {
-      resolution: 2,
+      
       fontSize: '22px',
       color,
       fontStyle: 'bold',
@@ -137,14 +137,14 @@ export class ErrorManager {
 
     // Error icon
     const icon = this.scene.add.text(w / 2 - 20, py + 32, '⚠', {
-      resolution: 2, fontFamily: '"Poppins", sans-serif',
+       fontFamily: '"Poppins", sans-serif',
       fontSize: '28px', color: '#ff4466',
     }).setOrigin(0.5);
     this.blockingContainer.add(icon);
 
     // Title
     const titleText = this.scene.add.text(w / 2 + 10, py + 32, message, {
-      resolution: 2, fontFamily: '"Montserrat", "Poppins", sans-serif',
+       fontFamily: '"Montserrat", "Poppins", sans-serif',
       fontSize: '28px', color: '#ff4466', fontStyle: 'bold',
       shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 0, fill: true }
     }).setOrigin(0, 0.5);
@@ -154,7 +154,7 @@ export class ErrorManager {
     const subtitle = this.scene.add.text(w / 2, py + 100, 
       'The connection to the server was interrupted.\nYour balance will be synced automatically.',
       {
-        resolution: 2, fontFamily: '"Poppins", sans-serif',
+         fontFamily: '"Poppins", sans-serif',
         fontSize: '15px', color: '#8899bb', align: 'center',
         lineSpacing: 6,
       },
@@ -163,7 +163,7 @@ export class ErrorManager {
 
     // Status text (updates during retry)
     const statusText = this.scene.add.text(w / 2, py + 155, '', {
-      resolution: 2, fontFamily: '"Poppins", sans-serif',
+       fontFamily: '"Poppins", sans-serif',
       fontSize: '14px', color: '#44ff88', fontStyle: 'bold',
     }).setOrigin(0.5);
     this.blockingContainer.add(statusText);
@@ -185,7 +185,7 @@ export class ErrorManager {
 
     const retryLabel = this.scene.add.text(
       retryX + retryBtnW / 2, retryY + retryBtnH / 2, 'RETRY CONNECTION',
-      { resolution: 2, fontFamily: '"Montserrat", "Poppins", sans-serif', fontSize: '18px', color: '#ffffff', fontStyle: 'bold', shadow: { offsetX: 0, offsetY: 2, color: '#000000', fill: true } },
+      {  fontFamily: '"Montserrat", "Poppins", sans-serif', fontSize: '18px', color: '#ffffff', fontStyle: 'bold', shadow: { offsetX: 0, offsetY: 2, color: '#000000', fill: true } },
     ).setOrigin(0.5);
     this.blockingContainer.add(retryLabel);
 
@@ -207,7 +207,7 @@ export class ErrorManager {
 
     const reloadLabel = this.scene.add.text(
       reloadX + reloadBtnW / 2, retryY + retryBtnH / 2, 'RELOAD',
-      { resolution: 2, fontFamily: '"Montserrat", "Poppins", sans-serif', fontSize: '18px', color: '#8888aa', fontStyle: 'bold', shadow: { offsetX: 0, offsetY: 2, color: '#000000', fill: true } },
+      {  fontFamily: '"Montserrat", "Poppins", sans-serif', fontSize: '18px', color: '#8888aa', fontStyle: 'bold', shadow: { offsetX: 0, offsetY: 2, color: '#000000', fill: true } },
     ).setOrigin(0.5);
     this.blockingContainer.add(reloadLabel);
 

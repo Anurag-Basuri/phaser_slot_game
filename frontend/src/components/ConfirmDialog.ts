@@ -51,19 +51,19 @@ export class ConfirmDialog {
 
     // Title
     this.container.add(this.scene.add.text(w / 2, py + 45, title, {
-      resolution: 2, fontSize: '32px', color: '#ffffff', fontStyle: 'normal',
+       fontSize: '32px', color: '#ffffff', fontStyle: 'normal',
       fontFamily: '"Montserrat", "Poppins", sans-serif',
     }).setOrigin(0.5));
 
     // Subtitle
     this.container.add(this.scene.add.text(w / 2, py + 110, subtitle, {
-      resolution: 2, fontSize: '20px', color: '#ffe600', fontStyle: 'bold',
+       fontSize: '20px', color: '#ffe600', fontStyle: 'bold',
       fontFamily: '"Poppins", sans-serif',
     }).setOrigin(0.5));
 
     // Warning text
     this.container.add(this.scene.add.text(w / 2, py + 150, 'This amount will be deducted from your balance.', {
-      resolution: 2, fontSize: '12px', color: '#8888aa', fontFamily: '"Poppins", sans-serif',
+       fontSize: '12px', color: '#8888aa', fontFamily: '"Poppins", sans-serif',
     }).setOrigin(0.5));
 
     // Buttons
@@ -85,7 +85,7 @@ export class ConfirmDialog {
 
     this.container.add(this.scene.add.text(
       w / 2 - btnW / 2 - btnGap / 2, btnY + btnH / 2, 'CONFIRM', {
-        resolution: 2, fontSize: '20px', color: '#ffffff', fontStyle: 'bold', fontFamily: '"Poppins", sans-serif',
+         fontSize: '20px', color: '#ffffff', fontStyle: 'bold', fontFamily: '"Poppins", sans-serif',
       }).setOrigin(0.5));
 
     // Cancel button
@@ -101,7 +101,7 @@ export class ConfirmDialog {
 
     this.container.add(this.scene.add.text(
       w / 2 + btnW / 2 + btnGap / 2, btnY + btnH / 2, 'CANCEL', {
-        resolution: 2, fontSize: '20px', color: '#aaaacc', fontStyle: 'bold', fontFamily: '"Poppins", sans-serif',
+         fontSize: '20px', color: '#aaaacc', fontStyle: 'bold', fontFamily: '"Poppins", sans-serif',
       }).setOrigin(0.5));
 
     // Wire events
