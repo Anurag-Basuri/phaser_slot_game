@@ -2,7 +2,9 @@ import Phaser from 'phaser';
 
 import { Boot, Game, Preload } from './scenes';
 
-type Config = Phaser.Types.Core.GameConfig;
+type Config = Phaser.Types.Core.GameConfig & {
+  resolution?: number;
+};
 
 const config: Config = {
   type: Phaser.AUTO,
@@ -12,6 +14,9 @@ const config: Config = {
     width: '100%',
     height: '100%',
   },
+
+  resolution: Math.max(window.devicePixelRatio, 2),
+  autoRound: true,
   fps: {
     min: 30,
     target: 60,

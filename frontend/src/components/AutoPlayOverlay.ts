@@ -146,7 +146,7 @@ export class AutoPlayOverlay {
 
     // Close Button
     const closeBtn = this.scene.add.text(pX + pW - 20, pY + 20, 'X', {
-      resolution: 2, fontFamily: '"Poppins", sans-serif',
+       fontFamily: '"Poppins", sans-serif',
       fontSize: '28px',
       color: '#ffffff',
       fontStyle: '100'
@@ -159,7 +159,7 @@ export class AutoPlayOverlay {
 
     // Title
     const title = this.scene.add.text(pX + pW / 2, pY + 35, 'AUTOPLAY', {
-      resolution: 2, fontFamily: '"Montserrat", "Poppins", sans-serif',
+       fontFamily: '"Montserrat", "Poppins", sans-serif',
       fontSize: '32px',
       color: '#ffcc00',
       stroke: '#441166',
@@ -214,7 +214,7 @@ export class AutoPlayOverlay {
     // Slider section
     const slideY = pY + 280;
     const slideTitle = this.scene.add.text(pX + pW / 2, slideY - 50, 'NUMBER OF SPINS', {
-      resolution: 2, fontFamily: '"Poppins", sans-serif',
+       fontFamily: '"Poppins", sans-serif',
       fontSize: '18px',
       color: '#aaaaee',
       fontStyle: '800',
@@ -228,7 +228,7 @@ export class AutoPlayOverlay {
     this.container.add(this.sliderTrackGfx);
 
     this.txtSpinsCount = this.scene.add.text(pX + pW - 30, slideY, `${this.spins}`, {
-      resolution: 2, fontFamily: '"Montserrat", "Poppins", sans-serif',
+       fontFamily: '"Montserrat", "Poppins", sans-serif',
       fontSize: '42px',
       color: '#00ff88',
       stroke: '#004422',
@@ -283,7 +283,7 @@ export class AutoPlayOverlay {
     this.container.add(startHit);
 
     this.btnStartTxt = this.scene.add.text(pX + pW / 2, startY - 50, `START AUTOPLAY (${this.spins})`, {
-      resolution: 2, fontFamily: '"Montserrat", "Poppins", sans-serif',
+       fontFamily: '"Montserrat", "Poppins", sans-serif',
       fontSize: '26px',
       color: '#ffffff',
       stroke: '#004422',
@@ -329,7 +329,7 @@ export class AutoPlayOverlay {
     this.container.add(gfx);
 
     const txt = this.scene.add.text(x + size + 10, y + size/2, label, {
-      resolution: 2, fontFamily: '"Poppins", sans-serif',
+       fontFamily: '"Poppins", sans-serif',
       fontSize: '13px',
       color: '#ffffff',
       fontStyle: 'bold'

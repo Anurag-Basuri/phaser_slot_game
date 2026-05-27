@@ -20,6 +20,7 @@ export class BottomBarHUD {
   // Graphics
   bar!: Phaser.GameObjects.Graphics;
   winPillGlow!: Phaser.GameObjects.Graphics;
+  pillsGfx!: Phaser.GameObjects.Graphics;
 
   // Text elements
   txtMoneyLabel!: Phaser.GameObjects.Text;
@@ -61,16 +62,17 @@ export class BottomBarHUD {
     const isSocial = getStakeEngine().isSocialMode();
 
     const tLabel: Phaser.Types.GameObjects.Text.TextStyle = {
-      resolution: 2, fontFamily: this.FONT_LABEL, fontStyle: '600',
+       fontFamily: this.FONT_LABEL, fontStyle: '600',
       color: this.COL_LABEL, letterSpacing: 1.5,
     };
     const tVal: Phaser.Types.GameObjects.Text.TextStyle = {
-      resolution: 2, fontFamily: this.FONT_VALUE, fontStyle: '700',
+       fontFamily: this.FONT_VALUE, fontStyle: '700',
       color: this.COL_VALUE,
     };
 
     this.bar = this.scene.add.graphics().setDepth(45);
-    this.winPillGlow = this.scene.add.graphics().setDepth(46).setAlpha(0);
+    this.pillsGfx = this.scene.add.graphics().setDepth(46);
+    this.winPillGlow = this.scene.add.graphics().setDepth(47).setAlpha(0);
 
     this.txtMoneyLabel = this.scene.add.text(0, 0, T('BALANCE', isSocial), tLabel).setOrigin(0, 0.5).setDepth(50);
     this.txtMoney = this.scene.add.text(0, 0, '', tVal).setOrigin(1, 0.5).setDepth(50);
@@ -85,7 +87,7 @@ export class BottomBarHUD {
     this.winSymbolIcon = this.scene.add.sprite(0, 0, 'candy_0').setDepth(50).setVisible(false);
 
     this.demoLabel = this.scene.add.text(0, 0, '', {
-      resolution: 2, fontFamily: this.FONT_LABEL, fontStyle: '700', color: '#ff4466'
+       fontFamily: this.FONT_LABEL, fontStyle: '700', color: '#ff4466'
     }).setOrigin(0.5, 0.5).setDepth(50).setAlpha(0.7);
 
     if (getStakeEngine().isDemoMode()) {
@@ -257,11 +259,7 @@ export class BottomBarHUD {
         this.realignText();
       },
       onStart: () => {
-        this.scene.tweens.add({
-          targets: [this.txtLastWin, this.txtLastWinLabel],
-          scaleX: 1.06, scaleY: 1.06,
-          duration: 200, yoyo: true, repeat: 3, ease: 'Sine.easeInOut',
-        });
+        this.txtLastWin.setColor('#ffffff');
       },
       onComplete: () => {
         this.txtLastWin.setText(DisplayBalance({ amount: target, currency }));
@@ -370,17 +368,19 @@ export class BottomBarHUD {
 
     // ── Zone 1: BALANCE (Far Left) ──
     this.txtMoneyLabel.setPosition(sidePad, txtY).setOrigin(0, 0.5);
-    const balLblVisualW = this.txtMoneyLabel.width;
+    const balLblVisualW = this.txtMoneyLabel.width * this.txtMoneyLabel.scaleX;
+    const balValVisualW = this.txtMoney.width * this.txtMoney.scaleX;
     this.txtMoney.setPosition(sidePad + balLblVisualW + balGap, txtY).setOrigin(0, 0.5);
 
     // ── Zone 3: WIN (Far Right) ──
     this.txtLastWin.setVisible(true).setPosition(w - sidePad, txtY).setOrigin(1, 0.5);
-    const winValVisualW = this.txtLastWin.width;
+    const winValVisualW = this.txtLastWin.width * this.txtLastWin.scaleX;
     
     if (this.winSymbolIcon.visible) {
       this.winSymbolIcon.setPosition(w - sidePad - winValVisualW - 12, txtY).setScale(this._iconTargetScale);
     }
     
+    const winLblVisualW = this.txtLastWinLabel.width * this.txtLastWinLabel.scaleX;
     this.txtLastWinLabel.setVisible(true)
       .setPosition(w - sidePad - winValVisualW - iconOffset - winGap, txtY)
       .setOrigin(1, 0.5);
@@ -390,13 +390,27 @@ export class BottomBarHUD {
     this.txtBetLabel.setOrigin(1, 0.5);
     this.txtBet.setOrigin(0, 0.5);
     
-    const betLblW = this.txtBetLabel.width;
-    const betValW = this.txtBet.width;
+    const betLblW = this.txtBetLabel.width * this.txtBetLabel.scaleX;
+    const betValW = this.txtBet.width * this.txtBet.scaleX;
     const betTotalW = betLblW + betGap + betValW;
     
     this.txtBetLabel.setPosition(centerX - betTotalW / 2 + betLblW, txtY);
     this.txtBet.setPosition(centerX - betTotalW / 2 + betLblW + betGap, txtY);
     this.betPillHit.setPosition(centerX, txtY).setSize(Math.max(120, betTotalW + 40), barH);
+
+    // ── Draw Dark Premium Pills Behind Text ──
+    this.pillsGfx.clear();
+    const pillH = barH * 0.65;
+    const pillY = txtY - pillH / 2;
+    const pillR = pillH / 2;
+    
+    this.pillsGfx.fillStyle(0x000000, 0.4);
+    // Bal Pill
+    this.pillsGfx.fillRoundedRect(sidePad - 8, pillY, balLblVisualW + balGap + balValVisualW + 16, pillH, pillR);
+    // Bet Pill
+    this.pillsGfx.fillRoundedRect(centerX - betTotalW / 2 - 12, pillY, betTotalW + 24, pillH, pillR);
+    // Win Pill
+    this.pillsGfx.fillRoundedRect(w - sidePad - winValVisualW - iconOffset - winGap - winLblVisualW - 8, pillY, winLblVisualW + winGap + iconOffset + winValVisualW + 16, pillH, pillR);
 
     // Define win bounds for particle effect targeting
     this._winPillBounds = { x: w - sidePad - winValVisualW - 50, w: 100, y: h - barH, h: barH };
