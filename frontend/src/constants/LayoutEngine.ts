@@ -147,14 +147,16 @@ export function computeLayout(w: number, h: number): LayoutMetrics {
 
   if (mode === 'portrait') {
     // Top reserved: toolbar + gap for FS/Tumble text
-    const fsGap = clamp(Math.round(h * 0.08), 50, 75); // Larger gap to ensure both fit
+    const fsGap = clamp(Math.round(h * 0.06), 40, 65);
     const topReserved = toolbarY + toolbarH + fsGap;
 
-    // Bottom reserved: spin + autoplay + larger buy panels + padding
-    const bottomEstimate = clamp(Math.round(h * 0.30), 200, 300);
+    // Bottom reserved: buy panels row + spin button + autoplay pill + padding
+    // On phones this must be generous so the spin button is always reachable
+    const bottomEstimate = clamp(Math.round(h * 0.32), 220, 340);
 
     const availableH = safeH - topReserved - bottomEstimate;
-    const maxGridW = w * 0.82;
+    // Cap grid width to 78% of screen so it doesn't stretch edge-to-edge on narrow phones
+    const maxGridW = w * 0.78;
 
     gridSize = Math.min(maxGridW, availableH);
     gridSize = Math.max(gridSize, CLAMP.gridMin);
@@ -212,14 +214,18 @@ export function computeLayout(w: number, h: number): LayoutMetrics {
     // Total vertical space needed: spinSize + autoGap + autoPillH
     const totalControlsH = spinSize + autoGap + autoPillH;
     
-    // Push the control group towards the bottom bar to leave a large open space above it
-    // for the Buy Feature and Ante Bet panels.
-    const pushDownFactor = 0.85; // 0.5 = center, 1.0 = flush to bottom
-    const controlsTopY = gridBottom + Math.max(10, (availBottom - totalControlsH) * pushDownFactor);
+    // Buy panels sit above the spin button and need ~50-60px.
+    // We split the gap: upper 40% for buy panels, lower 60% for spin+auto.
+    const buyPanelReserve = Math.max(55, availBottom * 0.30);
+    const controlZoneTop = gridBottom + buyPanelReserve;
+    const controlZoneH = safeH - controlZoneTop;
+    
+    // Center the spin+auto group within the remaining control zone
+    const controlsTopY = controlZoneTop + Math.max(4, (controlZoneH - totalControlsH) * 0.45);
     spinY = controlsTopY + spinSize / 2;
 
     // Safety clamps — ensure controls never overlap grid or bottom bar
-    const minSpinY = gridBottom + spinSize / 2 + 12;
+    const minSpinY = gridBottom + spinSize / 2 + 60; // min 60px for buy panels
     const maxSpinY = safeH - spinSize / 2 - autoGap - autoPillH - 5;
     if (maxSpinY > minSpinY) {
       spinY = clamp(spinY, minSpinY, maxSpinY);
