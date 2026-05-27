@@ -1,14 +1,15 @@
 import Phaser from 'phaser';
+import type { GameScene } from '../scenes/GameScene';
 
 /**
  * Reusable confirmation dialog for buy features and other confirmations.
  */
 export class ConfirmDialog {
-  private scene: Phaser.Scene;
+  private scene: GameScene;
   private container!: Phaser.GameObjects.Container;
   private visible = false;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: GameScene) {
     this.scene = scene;
   }
 
@@ -105,7 +106,7 @@ export class ConfirmDialog {
 
     // Wire events
     confirmHit.on('pointerdown', () => {
-      (this.scene as any).audio.playSound('button');
+      this.scene.audio.playSound('button');
       this.dismiss();
       onConfirm();
     });
@@ -121,7 +122,7 @@ export class ConfirmDialog {
     });
 
     cancelHit.on('pointerdown', () => {
-      (this.scene as any).audio.playSound('button');
+      this.scene.audio.playSound('button');
       this.dismiss();
       onCancel();
     });

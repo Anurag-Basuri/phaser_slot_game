@@ -140,8 +140,8 @@ export class BackgroundManager {
     
     // Sugar dust emitter bounds
     if (this.dustEmitter) {
-      this.dustEmitter.particleX = { min: 0, max: w } as any;
-      this.dustEmitter.particleY = { min: -100, max: h + 100 } as any;
+      this.dustEmitter.particleX = { min: 0, max: w } as Phaser.Types.GameObjects.Particles.EmitterOpOnEmitType;
+      this.dustEmitter.particleY = { min: -100, max: h + 100 } as Phaser.Types.GameObjects.Particles.EmitterOpOnEmitType;
     }
   }
 
