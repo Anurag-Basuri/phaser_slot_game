@@ -1,4 +1,4 @@
-﻿import Phaser from 'phaser';
+import Phaser from 'phaser';
 import type { Game } from './Game';
 import options from '../options';
 import { T } from '../helpers/I18n';
@@ -677,8 +677,7 @@ import { DisplayBalance } from '../helpers/Currency';
 
     const title = isCombinedButton ? 'BUY FEATURE' : (type === 'SUPER' ? 'SUPER FREE SPINS' : 'ULTRA FREE SPINS');
     const costMult = type === 'SUPER' ? 500 : 1000;
-    const realCostStr = DisplayBalance({ amount: options.betAmount * costMult, currency: this.currency });
-    const subText = isCombinedButton ? '1000X / 500X' : `${costMult}X BET (${realCostStr} COST)`;
+    const subText = isCombinedButton ? '1000X / 500X' : `${costMult}X BET`;
 
     const disabled = options.anteBetEnabled;
     const alpha = disabled ? 0.4 : 1;
@@ -831,7 +830,7 @@ import { DisplayBalance } from '../helpers/Currency';
         .setShadow(0, 0, '#00ff88', 8, true, true);
         
       this.anteBetIcon
-        .setText('â—')
+        .setText('\u25CF')
         .setColor('#00ff88')
         .setShadow(0, 0, '#00ff88', 8, true, true);
         
@@ -874,9 +873,8 @@ import { DisplayBalance } from '../helpers/Currency';
         .setShadow(0, 2, '#000000', 2, true, true);
         
       this.anteBetIcon
-        .setText('â—')
+        .setText('\u25CF')
         .setColor('#665588')
         .setShadow(0, 0, '#000', 0, false, false);
     }
   }
-
