@@ -151,10 +151,10 @@ export function computeLayout(w: number, h: number): LayoutMetrics {
     const topReserved = toolbarY + toolbarH + fsGap;
 
     // Bottom reserved: buy panels row + spin button + autoplay pill + padding
-    // On phones this must be generous so the spin button is always reachable
-    const bottomEstimate = clamp(Math.round(h * 0.32), 220, 340);
+    // Dynamically calculate from height instead of rigid clamp to prevent squashing
+    const bottomEstimate = Math.max(160, Math.min(h * 0.32, 340));
 
-    const availableH = safeH - topReserved - bottomEstimate;
+    const availableH = Math.max(CLAMP.gridMin, safeH - topReserved - bottomEstimate);
     // Cap grid width to 78% of screen so it doesn't stretch edge-to-edge on narrow phones
     const maxGridW = w * 0.78;
 

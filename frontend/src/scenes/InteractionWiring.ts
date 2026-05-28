@@ -165,6 +165,7 @@ export function wireInteractions(this: Game) {
             baseScale = { x: t.scaleX, y: t.scaleY };
             this.baseScaleMap.set(t, baseScale);
           }
+          this.tweens.killTweensOf(t);
           this.tweens.add({
             targets: t,
             scaleX: baseScale.x * 1.1,
@@ -179,6 +180,7 @@ export function wireInteractions(this: Game) {
         targets.forEach((t) => {
           const baseScale = this.baseScaleMap.get(t);
           if (baseScale) {
+            this.tweens.killTweensOf(t);
             this.tweens.add({
               targets: t,
               scaleX: baseScale.x,
