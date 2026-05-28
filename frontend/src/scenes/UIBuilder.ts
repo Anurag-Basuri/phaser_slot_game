@@ -420,7 +420,7 @@ import { T } from '../helpers/I18n';
     });
     this.settings.setQualityCallback?.((quality: string) => {
       this.graphicsQuality = quality;
-      // Hook up actual engine quality logic here if needed (e.g. particle density)
+      this.backgroundManager.setQuality(quality);
       console.log('[Game] Graphics Quality set to:', quality);
     });
 

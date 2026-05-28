@@ -43,38 +43,28 @@ import { DisplayBalance } from '../helpers/Currency';
     // === GRID PANEL IMAGE ===
     this.gridPanel.setVisible(false); // Hide the old background image
 
-    // === PREMIUM CANDY MACHINE GRID FRAME ===
+    // === RIGID CARTOON CANDY MACHINE GRID FRAME ===
     this.gridFrame.clear();
     const f = this.gridFrame;
 
-    const borderThickness = Math.max(6, Math.min(gridW, gridH) * 0.022);
+    const borderThickness = Math.max(8, Math.min(gridW, gridH) * 0.028);
     const framePadding = borderThickness + 4;
     const frameW = gridW + framePadding * 2;
     const frameH = gridH + framePadding * 2;
     const frameX = gridX - framePadding;
     const frameY = gridY - framePadding;
-    const frameR = Math.max(16, Math.min(gridW, gridH) * 0.03);
+    const frameR = Math.max(12, Math.min(gridW, gridH) * 0.025);
 
-    // --- Layer 1: Deep outer shadow ---
-    f.fillStyle(0x000000, 0.45);
-    f.fillRoundedRect(frameX + 4, frameY + 6, frameW, frameH, frameR + 2);
+    // --- Layer 1: Hard drop shadow (no blur, comic-book) ---
+    f.fillStyle(0x000000, 0.6);
+    f.fillRoundedRect(frameX + 5, frameY + 7, frameW, frameH, frameR + 2);
 
-    // --- Layer 2: Thick glossy plastic rim (outer ring) ---
-    // Bottom half (darker) for 3D depth - Premium glossy candy pink
-    f.fillGradientStyle(0xffaadd, 0xffaadd, 0xff3388, 0xff3388, 1);
+    // --- Layer 2: Thick solid candy rim (hyper-saturated pink) ---
+    f.fillStyle(0xff3399, 1);
     f.fillRoundedRect(frameX, frameY, frameW, frameH, frameR);
 
-    // Top half highlight overlay (lighter plastic shine)
-    f.fillGradientStyle(
-      0xffffff,
-      0xffffff,
-      0xffaadd,
-      0xffaadd,
-      0.9,
-      0.9,
-      0.1,
-      0.1,
-    );
+    // Top half brighter highlight
+    f.fillGradientStyle(0xff66bb, 0xff66bb, 0xff3399, 0xff3399, 1);
     f.fillRoundedRect(frameX, frameY, frameW, frameH * 0.4, {
       tl: frameR,
       tr: frameR,
@@ -82,13 +72,13 @@ import { DisplayBalance } from '../helpers/Currency';
       br: 0,
     } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
 
-    // Glass sheen on top edge of rim
-    f.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.8, 0.8, 0, 0);
+    // Hard glossy white stripe on top edge
+    f.fillStyle(0xffffff, 0.5);
     f.fillRoundedRect(
-      frameX + 4,
-      frameY + 2,
-      frameW - 8,
-      borderThickness * 0.5,
+      frameX + 6,
+      frameY + 3,
+      frameW - 12,
+      borderThickness * 0.4,
       { tl: frameR - 2, tr: frameR - 2, bl: 0, br: 0 } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius,
     );
 
@@ -97,10 +87,10 @@ import { DisplayBalance } from '../helpers/Currency';
     const innerY = frameY + borderThickness;
     const innerW = frameW - borderThickness * 2;
     const innerH = frameH - borderThickness * 2;
-    const innerR = Math.max(8, frameR - 4);
+    const innerR = Math.max(6, frameR - 4);
 
-    // Dark inset shadow to create depth (just a border rim shadow now)
-    f.fillStyle(0x000000, 0.35);
+    // Dark inset shadow
+    f.fillStyle(0x000000, 0.5);
     f.fillRoundedRect(
       innerX - 2,
       innerY - 2,
@@ -109,42 +99,19 @@ import { DisplayBalance } from '../helpers/Currency';
       innerR + 2,
     );
 
-    // We intentionally do NOT draw a solid background here (like the old dark purple plate).
-    // This allows the Grid.ts Phase 1 frosted glass background to shine through organically,
-    // matching the original Sugar Blast 1000 aesthetic.
-
-    // Inner border for definition
-    f.lineStyle(1.5, 0xff006a, 0.5);
+    // Inner border (bright saturated)
+    f.lineStyle(2.5, 0xffdd00, 0.8);
     f.strokeRoundedRect(innerX, innerY, innerW, innerH, innerR);
 
-    // --- Layer 4: Outer rim border & highlight ---
-    f.lineStyle(2, 0xffccdd, 0.7);
+    // --- Layer 4: Thick outer rim border (gold/yellow) ---
+    f.lineStyle(3, 0xffee44, 0.9);
     f.strokeRoundedRect(frameX, frameY, frameW, frameH, frameR);
-    f.lineStyle(1, 0xffffff, 0.2);
-    f.strokeRoundedRect(
-      frameX + 1,
-      frameY + 1,
-      frameW - 2,
-      frameH - 2,
-      frameR - 1,
-    );
 
-    // --- Layer 5: Glass glare diagonal across the grid ---
-    f.beginPath();
-    const glareW = gridW * 0.15;
-    f.moveTo(gridX + gridW * 0.05, gridY);
-    f.lineTo(gridX + gridW * 0.05 + glareW, gridY);
-    f.lineTo(gridX, gridY + gridH * 0.3);
-    f.lineTo(gridX, gridY + gridH * 0.15);
-    f.closePath();
-    f.fillStyle(0xffffff, 0.08);
-    f.fillPath();
-
-    // --- Layer 6: Decorative candy-bolt corner accents (hidden on very small grids) ---
+    // --- Layer 5: Decorative candy-bolt corner accents ---
     const minGridDim = Math.min(gridW, gridH);
-    if (minGridDim > 300) {
-      const boltR = Math.max(4, minGridDim * 0.012);
-      const boltInset = borderThickness * 0.55;
+    if (minGridDim > 250) {
+      const boltR = Math.max(5, minGridDim * 0.014);
+      const boltInset = borderThickness * 0.5;
       const boltPositions = [
         { x: frameX + boltInset, y: frameY + boltInset },
         { x: frameX + frameW - boltInset, y: frameY + boltInset },
@@ -152,16 +119,17 @@ import { DisplayBalance } from '../helpers/Currency';
         { x: frameX + frameW - boltInset, y: frameY + frameH - boltInset },
       ];
       for (const bp of boltPositions) {
-        // Bolt shadow
-        f.fillStyle(0x000000, 0.4);
-        f.fillCircle(bp.x + 1, bp.y + 2, boltR);
-        // Bolt body â€” silver gradient
-        f.fillGradientStyle(0xdddddd, 0xeeeeee, 0x999999, 0xaaaaaa, 1);
+        // Hard shadow bolt
+        f.fillStyle(0x000000, 0.5);
+        f.fillCircle(bp.x + 2, bp.y + 2, boltR);
+        // Bolt body — bright yellow/gold
+        f.fillStyle(0xffdd44, 1);
         f.fillCircle(bp.x, bp.y, boltR);
         // Bolt highlight
-        f.fillStyle(0xffffff, 0.6);
+        f.fillStyle(0xffffff, 0.7);
         f.fillCircle(bp.x - boltR * 0.25, bp.y - boltR * 0.25, boltR * 0.4);
-        // Bolt rim
+        // Thick bolt rim
+        f.lineStyle(2, 0xcc8800, 1);
         f.strokeCircle(bp.x, bp.y, boltR);
       }
     }
@@ -277,11 +245,11 @@ import { DisplayBalance } from '../helpers/Currency';
       // Clamp to never overlap spin button
       const maxBuyY = spinTop - buyRowH / 2 - 12;
       if (buyY1 > maxBuyY) {
-        buyY1 = maxBuyY;
-        // If still too tight, shrink buy buttons slightly
-        buyH = Math.max(36, Math.min(buyH, (gapBetweenGridAndSpin - 24) * 0.45));
+        // Space is extremely tight on this screen.
+        // Shrink the buttons aggressively and center them in the exact gap.
+        buyH = Math.max(30, Math.min(buyH, (gapBetweenGridAndSpin - 16) * 0.6));
         buyRowH = buyH;
-        buyY1 = gridBottom + verticalPad + buyH / 2;
+        buyY1 = gridBottom + gapBetweenGridAndSpin / 2;
       }
 
       // Allow tablets to have much wider buttons (up to 240px instead of the old 130px hard cap)
@@ -335,83 +303,54 @@ import { DisplayBalance } from '../helpers/Currency';
       const popupX = w / 2;
       const popupY = h / 2;
 
-      // Premium popup backdrop
-      this.featuresMenuPopupBg.fillStyle(0x000000, 0.6);
+      // Cartoon arcade popup backdrop
+      this.featuresMenuPopupBg.fillStyle(0x000000, 0.7);
       this.featuresMenuPopupBg.fillRoundedRect(
         popupX - popupW / 2 + 6,
         popupY - popupH / 2 + 8,
         popupW,
         popupH,
-        24,
+        16,
       );
       
-      // Main Glass Panel
-      this.featuresMenuPopupBg.fillGradientStyle(
-        0x2d1b4e,
-        0x2d1b4e,
-        0x150b29,
-        0x150b29,
-        0.98,
-      );
+      // Main Solid Panel (vivid purple)
+      this.featuresMenuPopupBg.fillStyle(0x330066, 1);
       this.featuresMenuPopupBg.fillRoundedRect(
         popupX - popupW / 2,
         popupY - popupH / 2,
         popupW,
         popupH,
-        20,
+        14,
       );
       
-      // Header Background (Candy Pink)
-      this.featuresMenuPopupBg.fillGradientStyle(
-        0xff006a,
-        0xff006a,
-        0xcc0055,
-        0xcc0055,
-        1,
-      );
+      // Header Background (Solid candy pink)
+      this.featuresMenuPopupBg.fillStyle(0xff0070, 1);
       this.featuresMenuPopupBg.fillRoundedRect(
         popupX - popupW / 2,
         popupY - popupH / 2,
         popupW,
         headerH + 20,
-        { tl: 20, tr: 20, bl: 0, br: 0 } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius
+        { tl: 14, tr: 14, bl: 0, br: 0 } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius
       );
 
-      // Inner Header Highlight
-      this.featuresMenuPopupBg.fillGradientStyle(
-        0xffffff,
-        0xffffff,
-        0xffffff,
-        0xffffff,
-        0.2,
-        0.2,
-        0,
-        0,
-      );
+      // Hard glossy highlight on header
+      this.featuresMenuPopupBg.fillStyle(0xffffff, 0.25);
       this.featuresMenuPopupBg.fillRoundedRect(
-        popupX - popupW / 2 + 2,
-        popupY - popupH / 2 + 2,
-        popupW - 4,
-        (headerH + 20) * 0.4,
-        { tl: 18, tr: 18, bl: 0, br: 0 } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius
+        popupX - popupW / 2 + 4,
+        popupY - popupH / 2 + 3,
+        popupW - 8,
+        (headerH + 20) * 0.3,
+        { tl: 12, tr: 12, bl: 0, br: 0 } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius
       );
 
-      // Border Outline
-      this.featuresMenuPopupBg.lineStyle(2, 0xff88bb, 0.9);
+      // Thick cartoon border
+      this.featuresMenuPopupBg.lineStyle(3, 0xffdd44, 1);
       this.featuresMenuPopupBg.strokeRoundedRect(
         popupX - popupW / 2,
         popupY - popupH / 2,
         popupW,
         popupH,
-        20,
-      );
-      this.featuresMenuPopupBg.lineStyle(1, 0xffffff, 0.3);
-      this.featuresMenuPopupBg.strokeRoundedRect(
-        popupX - popupW / 2 + 2,
-        popupY - popupH / 2 + 2,
-        popupW - 4,
-        popupH - 4,
-        18,
+        14,
       );
 
       // Position Header â€” title left-aligned, X right-aligned for clarity
@@ -720,64 +659,50 @@ import { DisplayBalance } from '../helpers/Currency';
     isSuper: boolean,
   ) {
     gfx.clear();
-    const r = Math.min(h * 0.15, 8);
+    const r = Math.min(h * 0.2, 10);
     const disabled = options.anteBetEnabled;
-    const isSmall = h < 50;
 
     if (disabled) {
-      // Disabled state
-      gfx.fillStyle(0x000000, 0.4);
-      gfx.fillRoundedRect(-w / 2 - 2, -h / 2 + 2, w + 4, h, r);
-      gfx.fillGradientStyle(0x555555, 0x555555, 0x333333, 0x333333, 1);
+      // Disabled state — muted and rigid
+      gfx.fillStyle(0x000000, 0.5);
+      gfx.fillRoundedRect(-w / 2 + 3, -h / 2 + 4, w, h, r);
+      gfx.fillStyle(0x444444, 1);
       gfx.fillRoundedRect(-w / 2, -h / 2, w, h, r);
-      gfx.lineStyle(2, 0x777777, 0.6);
+      gfx.lineStyle(2.5, 0x666666, 0.8);
       gfx.strokeRoundedRect(-w / 2, -h / 2, w, h, r);
       return;
     }
 
-    // PREMIUM ACTIVE STATE
-    // 0. Ambient outer pulse glow (we assume this is drawn every frame or statically bright)
-    const glowC = isSuper ? 0xff0055 : 0xffaa00;
-    gfx.fillStyle(glowC, 0.15);
-    gfx.fillRoundedRect(-w / 2 - 10, -h / 2 - 10, w + 20, h + 20, r + 6);
-    gfx.fillStyle(glowC, 0.25);
-    gfx.fillRoundedRect(-w / 2 - 5, -h / 2 - 5, w + 10, h + 10, r + 3);
+    // CARTOON ARCADE ACTIVE STATE
+    // 0. Hard drop shadow (comic-book offset)
+    gfx.fillStyle(0x000000, 0.65);
+    gfx.fillRoundedRect(-w / 2 + 4, -h / 2 + 5, w, h, r);
 
-    // 1. Heavy Drop Shadow
-    gfx.fillStyle(0x000000, 0.6);
-    gfx.fillRoundedRect(-w / 2, -h / 2 + 6, w, h, r);
-
-    // 2. Bevel outer rim (Dark rich color)
-    const rimTop = isSuper ? 0xcc0033 : 0xaa5500;
-    const rimBot = isSuper ? 0x660011 : 0x552200;
-    gfx.fillGradientStyle(rimTop, rimTop, rimBot, rimBot, 1);
+    // 1. Solid vivid base color
+    const baseColor = isSuper ? 0xff0055 : 0xffaa00;
+    const topColor = isSuper ? 0xff4488 : 0xffcc44;
+    gfx.fillStyle(baseColor, 1);
     gfx.fillRoundedRect(-w / 2, -h / 2, w, h, r);
 
-    // 3. Inner bright panel
-    const faceTop = isSuper ? 0xff3388 : 0xffdd44;
-    const faceBot = isSuper ? 0xaa0033 : 0xcc7700;
-    gfx.fillGradientStyle(faceTop, faceTop, faceBot, faceBot, 1);
-    gfx.fillRoundedRect(-w / 2 + 2, -h / 2 + 2, w - 4, h - 4, r - 1);
+    // 2. Brighter top half for 3D pop
+    gfx.fillGradientStyle(topColor, topColor, baseColor, baseColor, 1);
+    gfx.fillRoundedRect(-w / 2, -h / 2, w, h * 0.5, { tl: r, tr: r, bl: 0, br: 0 } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
 
-    // 4. Glossy upper hemisphere
-    if (!isSmall) {
-      gfx.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.5, 0.5, 0, 0);
-      gfx.fillRoundedRect(-w / 2 + 2, -h / 2 + 2, w - 4, h * 0.35, { tl: r - 1, tr: r - 1, bl: 0, br: 0 } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
-    }
+    // 3. Hard glossy highlight on top
+    gfx.fillStyle(0xffffff, 0.4);
+    gfx.fillRoundedRect(-w / 2 + 4, -h / 2 + 2, w - 8, h * 0.25, { tl: r - 2, tr: r - 2, bl: 0, br: 0 } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
 
-    // 5. Highlight rim (crisp white specular on top edge)
-    gfx.lineStyle(2, 0xffffff, 0.7);
-    gfx.beginPath();
-    gfx.moveTo(-w / 2 + r, -h / 2 + 2);
-    gfx.lineTo(w / 2 - r, -h / 2 + 2);
-    gfx.strokePath();
+    // 4. Thick border (rigid cartoon outline)
+    const borderColor = isSuper ? 0xffddee : 0xffee88;
+    gfx.lineStyle(3, borderColor, 1);
+    gfx.strokeRoundedRect(-w / 2, -h / 2, w, h, r);
 
-    // 6. Stars / Sparkles for texture
-    gfx.fillStyle(0xffffff, 0.7);
-    gfx.fillCircle(-w/3, -h/4, 2);
-    gfx.fillCircle(w/4, h/3, 2.5);
-    gfx.fillCircle(w/2.5, -h/3, 1.5);
-    gfx.fillCircle(-w/4, h/4, 2);
+    // 5. Sparkle dots
+    gfx.fillStyle(0xffffff, 0.8);
+    gfx.fillCircle(-w/3, -h/4, 2.5);
+    gfx.fillCircle(w/4, h/3, 3);
+    gfx.fillCircle(w/2.5, -h/3, 2);
+    gfx.fillCircle(-w/4, h/4, 2.5);
   }
 
   export function drawAnteBetButton(this: Game, bw: number, bh: number) {
@@ -792,25 +717,19 @@ import { DisplayBalance } from '../helpers/Currency';
     this.anteBetIcon.setVisible(true);
 
     if (options.anteBetEnabled) {
-      // â”€â”€ ACTIVE STATE: Neon Green / Gold glowing track â”€â”€
+      // ── ACTIVE STATE: Neon Green Gummy ──
       
-      // Outer ambient glow (emerald/gold)
-      g.fillStyle(0x00ff88, 0.15);
-      g.fillRoundedRect(x - 8, y - 8, bw + 16, bh + 16, rad + 4);
-      g.fillStyle(0xffcc00, 0.2);
-      g.fillRoundedRect(x - 4, y - 4, bw + 8, bh + 8, rad + 2);
+      // Drop shadow (comic style)
+      g.fillStyle(0x3a0055, 0.6);
+      g.fillRoundedRect(x + 2, y + 4, bw, bh, rad);
 
-      // Deep dark base plate
-      g.fillStyle(0x0a1a0f, 1);
+      // Deep green base plate
+      g.fillStyle(0x00b359, 1);
       g.fillRoundedRect(x, y, bw, bh, rad);
 
-      // Inner glowing panel (recessed)
-      g.fillGradientStyle(0x006633, 0x003311, 0x002200, 0x001100, 1);
+      // Inner glowing panel
+      g.fillGradientStyle(0x00e676, 0x00e676, 0x00cc66, 0x00cc66, 1);
       g.fillRoundedRect(x + 2, y + 2, bw - 4, bh - 4, rad - 1);
-
-      // Top inner shadow for depth
-      g.fillStyle(0x000000, 0.6);
-      g.fillRoundedRect(x + 2, y + 2, bw - 4, 6, { tl: rad - 1, tr: rad - 1, bl: 0, br: 0 } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
 
       // Glossy upper hemisphere
       if (!isSmall) {
@@ -819,7 +738,7 @@ import { DisplayBalance } from '../helpers/Currency';
       }
 
       // Bright neon border rim
-      g.lineStyle(isSmall ? 2 : 2.5, 0x00ff88, 1);
+      g.lineStyle(isSmall ? 2 : 3, 0xffffff, 1);
       g.strokeRoundedRect(x, y, bw, bh, rad);
       
       // Secondary specular rim highlight
