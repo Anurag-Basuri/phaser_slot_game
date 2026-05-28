@@ -1,10 +1,10 @@
 /**
- * PREMIUM DESIGN SYSTEM — Unified theme for all UI components
+ * ARCADE CANDY DESIGN SYSTEM — Hyper-saturated cartoonish UI
  *
  * Provides consistent:
- * - Color palette (primary, secondary, accents, backgrounds)
- * - Typography (fonts, sizes, weights)
- * - Shadows and depth
+ * - Color palette (vivid, glossy, candy-store saturation)
+ * - Typography (thick strokes, hard shadows, cartoon fonts)
+ * - Hard drop shadows (comic-book style, zero blur)
  * - Border radius and spacing
  * - Gradients and visual effects
  */
@@ -12,42 +12,42 @@
 export const Theme = {
   // ═════════════════════ COLORS ═════════════════════
   colors: {
-    // Primary Palette
-    primary: '#ff006a',
-    primaryDark: '#cc0055',
-    primaryLight: '#ff4d94',
-    primaryLighter: '#ffb3d9',
+    // Primary Palette — Hyper vivid candy pink
+    primary: '#ff0070',
+    primaryDark: '#dd0060',
+    primaryLight: '#ff55a0',
+    primaryLighter: '#ffaadd',
 
-    // Secondary & Accents
-    secondary: '#ffe600',
-    accent: '#00d9ff',
-    accentDark: '#00a3cc',
-    gold: '#ffe600',
-    gold_light: '#ffcc00',
-    gold_dark: '#ccaa00',
+    // Secondary & Accents — Saturated candy tones
+    secondary: '#ffe800',
+    accent: '#00e5ff',
+    accentDark: '#00bbdd',
+    gold: '#ffdd00',
+    gold_light: '#ffee44',
+    gold_dark: '#ddaa00',
 
-    // Status Colors
-    success: '#00cc88',
-    warning: '#ffaa00',
-    error: '#ff4444',
+    // Status Colors — Vivid neon
+    success: '#00ee88',
+    warning: '#ffbb00',
+    error: '#ff3333',
 
-    // Backgrounds
-    bgDarkest: '#0a0f1a',
-    bgDark: '#12131f',
-    bgCard: '#15131f',
-    bgPanel: '#1a1530',
-    bgOverlay: '#0a0515',
+    // Backgrounds — Rich saturated darks (not flat gray)
+    bgDarkest: '#1a0030',
+    bgDark: '#220044',
+    bgCard: '#2a0055',
+    bgPanel: '#330066',
+    bgOverlay: '#180030',
 
-    // Text
+    // Text — Crisp white with vivid accents
     textPrimary: '#ffffff',
-    textSecondary: '#d0d0e0',
-    textMuted: '#888899',
-    textDark: '#444455',
+    textSecondary: '#eeddff',
+    textMuted: '#aa88cc',
+    textDark: '#6644aa',
 
-    // Borders & Dividers
-    border: '#2a2a3a',
-    borderLight: '#3a3a4a',
-    borderDim: '#1a1a2a',
+    // Borders & Dividers — Visible, saturated
+    border: '#5533aa',
+    borderLight: '#7744cc',
+    borderDim: '#3322aa',
 
     // Special
     transparent: 'rgba(0,0,0,0)',
@@ -55,10 +55,10 @@ export const Theme = {
 
   // ═════════════════════ TYPOGRAPHY ═════════════════════
   fonts: {
-    // Font families
-    sans: '"Poppins", "Outfit", sans-serif',
-    display: '"Montserrat", "Poppins", sans-serif',
-    mono: '"Montserrat", "Inter", sans-serif',
+    // Font families - full cartoon override
+    sans: '"Luckiest Guy", cursive, sans-serif',
+    display: '"Luckiest Guy", cursive, sans-serif',
+    mono: '"Luckiest Guy", cursive, sans-serif',
     brand: '"Luckiest Guy", cursive, sans-serif', // Legacy brand font
 
     // Text styles
@@ -79,15 +79,15 @@ export const Theme = {
     numeric: { size: 24, weight: 700, family: '"Montserrat"' },
   },
 
-  // ═════════════════════ SHADOWS ═════════════════════
+  // ═════════════════════ SHADOWS (Hard, Comic-Book Style) ═════════════════════
   shadows: {
     none: 'none',
-    sm: '0 2px 8px rgba(0, 0, 0, 0.3)',
-    md: '0 4px 16px rgba(0, 0, 0, 0.4)',
-    lg: '0 8px 32px rgba(0, 0, 0, 0.5)',
-    xl: '0 12px 48px rgba(0, 0, 0, 0.6)',
-    glow: '0 0 20px rgba(255, 0, 106, 0.3)',
-    glowAlt: '0 0 24px rgba(0, 217, 255, 0.2)',
+    sm: '2px 2px 0px rgba(0, 0, 0, 0.5)',
+    md: '3px 3px 0px rgba(0, 0, 0, 0.6)',
+    lg: '4px 4px 0px rgba(0, 0, 0, 0.7)',
+    xl: '6px 6px 0px rgba(0, 0, 0, 0.8)',
+    glow: '0 0 12px rgba(255, 0, 112, 0.6)',
+    glowAlt: '0 0 12px rgba(0, 229, 255, 0.5)',
   },
 
   // ═════════════════════ SPACING ═════════════════════
