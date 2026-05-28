@@ -49,18 +49,8 @@ export class BackgroundManager {
     this.raysGraphics = this.scene.add.graphics();
     this.raysContainer.add(this.raysGraphics);
     
-    this.drawRays(w, h, this.baseRayAlpha);
-    
-    this.raysContainer.setBlendMode(Phaser.BlendModes.ADD);
-    
-    // Slow continuous rotation
-    this.scene.tweens.add({
-      targets: this.raysContainer,
-      angle: 360,
-      duration: 120000,
-      repeat: -1,
-      ease: 'Linear'
-    });
+    // Rays are disabled to give a more static, clean cartoonish look.
+    this.raysContainer.setVisible(false);
   }
 
   /** Draw the god ray triangles at the specified alpha */
@@ -142,6 +132,28 @@ export class BackgroundManager {
     if (this.dustEmitter) {
       this.dustEmitter.particleX = { min: 0, max: w } as Phaser.Types.GameObjects.Particles.EmitterOpOnEmitType;
       this.dustEmitter.particleY = { min: -100, max: h + 100 } as Phaser.Types.GameObjects.Particles.EmitterOpOnEmitType;
+    }
+  }
+
+  public setQuality(quality: string) {
+    if (quality === 'LOW') {
+      if (this.raysContainer) this.raysContainer.setVisible(false);
+      if (this.dustEmitter) {
+        this.dustEmitter.setVisible(false);
+        this.dustEmitter.stop();
+      }
+    } else if (quality === 'MED') {
+      if (this.raysContainer) this.raysContainer.setVisible(true);
+      if (this.dustEmitter) {
+        this.dustEmitter.setVisible(false);
+        this.dustEmitter.stop();
+      }
+    } else {
+      if (this.raysContainer) this.raysContainer.setVisible(true);
+      if (this.dustEmitter) {
+        this.dustEmitter.setVisible(true);
+        this.dustEmitter.start();
+      }
     }
   }
 
