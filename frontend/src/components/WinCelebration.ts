@@ -186,39 +186,8 @@ export class WinCelebration {
     this.container.add(overlay);
 
     // ═══════════════════════════════════════════════════
-    // EPIC LIGHT RAYS (BACKGROUND SPINNING)
+    // NO EPIC LIGHT RAYS (BACKGROUND SPINNING DISABLED)
     // ═══════════════════════════════════════════════════
-    if (multiplier >= 10) {
-      const rayGfx = this.scene.add.graphics();
-      const numRays = multiplier >= 50 ? 24 : 16;
-      const rayColor = parseInt(tier.glowColor.replace('#', '0x'));
-      rayGfx.fillStyle(rayColor, multiplier >= 50 ? 0.25 : 0.15);
-      
-      for (let i = 0; i < numRays; i++) {
-        const angle = (i * Math.PI * 2) / numRays;
-        const width = 0.15; // beam width
-        
-        rayGfx.beginPath();
-        rayGfx.moveTo(0, 0);
-        rayGfx.lineTo(Math.cos(angle - width) * w, Math.sin(angle - width) * w);
-        rayGfx.lineTo(Math.cos(angle + width) * w, Math.sin(angle + width) * w);
-        rayGfx.closePath();
-        rayGfx.fillPath();
-      }
-      
-      rayGfx.setPosition(w / 2, h * 0.45);
-      this.container.add(rayGfx);
-
-      // Rotate light rays infinitely
-      activeTweens.push(
-        this.scene.tweens.add({
-          targets: rayGfx,
-          angle: 360,
-          duration: 12000,
-          repeat: -1,
-        })
-      );
-    }
 
     // Glow effect behind win text
     const glowCircle = this.scene.add.graphics();
