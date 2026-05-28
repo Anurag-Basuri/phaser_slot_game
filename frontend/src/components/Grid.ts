@@ -193,94 +193,51 @@ export class Grid {
       this.gridMask.fillRect(gx - 5, gy - 5, totalW + 10, totalH + 10);
     }
 
-    // ═══ Layer 1: Deep dark base panel ═══
-    this.cellBackgrounds.fillGradientStyle(
-      0x10040f, 0x0a0208, 0x060105, 0x020002,
-      0.95, 0.95, 0.98, 0.98
-    );
+    // ═══ Layer 1: Solid vivid dark-purple base ═══
+    this.cellBackgrounds.fillStyle(0x1a0033, 1);
     this.cellBackgrounds.fillRect(gx, gy, totalW, totalH);
 
-    // ═══ Layer 2: Vertical Glass Tube columns ═══
-    // Each column gets a translucent highlight down the center,
-    // creating the illusion of cylindrical glass pipes
-    for (let c = 0; c < size; c++) {
-      const colX = gx + c * cs;
-      const tubeCenter = colX + cs / 2;
-
-      // Dark column edges (tube shadow)
-      const edgeW = cs * 0.18;
-      this.cellBackgrounds.fillStyle(0x000000, 0.35);
-      this.cellBackgrounds.fillRect(colX, gy, edgeW, totalH);
-      this.cellBackgrounds.fillRect(colX + cs - edgeW, gy, edgeW, totalH);
-
-      // Center highlight (glass refraction glow)
-      const glowW = cs * 0.5;
-      for (let g = 0; g < 4; g++) {
-        const gAlpha = 0.035 - g * 0.008;
-        if (gAlpha <= 0) break;
-        this.cellBackgrounds.fillStyle(0xffccee, gAlpha);
-        this.cellBackgrounds.fillRect(
-          tubeCenter - glowW / 2 - g * 3, gy,
-          glowW + g * 6, totalH
-        );
+    // ═══ Layer 2: Checkerboard candy cells (alternating saturated tones) ═══
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const isAlt = (r + c) % 2 === 0;
+        const cellColor = isAlt ? 0x220044 : 0x2a0055;
+        this.cellBackgrounds.fillStyle(cellColor, 1);
+        this.cellBackgrounds.fillRect(gx + c * cs, gy + r * cs, cs, cs);
       }
-
-      // Thin bright specular line down the tube (left-of-center)
-      this.cellBackgrounds.fillStyle(0xffffff, 0.03);
-      this.cellBackgrounds.fillRect(tubeCenter - cs * 0.12, gy, 2, totalH);
     }
 
-    // ═══ Layer 3: Subtle horizontal row separators (proportional) ═══
-    const sepThick = Math.max(1, cs * 0.02);
-    for (let r = 1; r < size; r++) {
+    // ═══ Layer 3: Thick rigid grid lines (cartoon style) ═══
+    const lineThick = Math.max(2, cs * 0.035);
+
+    // Horizontal lines
+    for (let r = 0; r <= size; r++) {
       const y = gy + r * cs;
-      this.cellBackgrounds.fillStyle(0x000000, 0.35);
-      this.cellBackgrounds.fillRect(gx, y - sepThick / 2, totalW, sepThick);
-      this.cellBackgrounds.fillStyle(0xffaadd, 0.04);
-      this.cellBackgrounds.fillRect(gx, y + sepThick / 2, totalW, Math.max(1, sepThick * 0.5));
+      this.cellBackgrounds.fillStyle(0x5522aa, 0.8);
+      this.cellBackgrounds.fillRect(gx, y - lineThick / 2, totalW, lineThick);
     }
 
-    // ═══ Layer 4: Column dividers (proportional tube wall seams) ═══
-    for (let c = 1; c < size; c++) {
+    // Vertical lines
+    for (let c = 0; c <= size; c++) {
       const x = gx + c * cs;
-      this.cellBackgrounds.fillStyle(0x000000, 0.6);
-      this.cellBackgrounds.fillRect(x - sepThick / 2, gy, sepThick, totalH);
-      this.cellBackgrounds.fillStyle(0xffddee, 0.05);
-      this.cellBackgrounds.fillRect(x + sepThick / 2, gy, Math.max(1, sepThick * 0.5), totalH);
+      this.cellBackgrounds.fillStyle(0x5522aa, 0.8);
+      this.cellBackgrounds.fillRect(x - lineThick / 2, gy, lineThick, totalH);
     }
 
-    // ═══ Layer 6: Deep inset bevel (recessed candy display, proportional) ═══
-    const bevelLayers = 6;
-    const bevelStep = Math.max(1.5, cs * 0.025);
-    const bevelThick = Math.max(1, cs * 0.02);
-    for (let i = 0; i < bevelLayers; i++) {
-      const a = 0.15 - i * 0.025;
-      if (a <= 0) break;
-      const d = i * bevelStep;
-      this.cellBackgrounds.fillStyle(0x000000, a);
-      // Top edge
-      this.cellBackgrounds.fillRect(gx, gy + d, totalW, bevelThick);
-      // Bottom edge
-      this.cellBackgrounds.fillRect(gx, gy + totalH - d - bevelThick, totalW, bevelThick);
-      // Left edge
-      this.cellBackgrounds.fillRect(gx + d, gy, bevelThick, totalH);
-      // Right edge
-      this.cellBackgrounds.fillRect(gx + totalW - d - bevelThick, gy, bevelThick, totalH);
+    // ═══ Layer 4: Glossy top highlight per cell ═══
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const cx = gx + c * cs;
+        const cy = gy + r * cs;
+        this.cellBackgrounds.fillStyle(0xffffff, 0.04);
+        this.cellBackgrounds.fillRect(cx + 2, cy + 1, cs - 4, cs * 0.3);
+      }
     }
 
-    // Inner light rim (candy glass edge catching light)
-    this.cellBackgrounds.lineStyle(Math.max(1, cs * 0.01), 0xffaacc, 0.15);
-    this.cellBackgrounds.strokeRect(gx + 1, gy + 1, totalW - 2, totalH - 2);
-
-    // ═══ Layer 7: Warm radial center glow ═══
-    const cx = gx + totalW / 2;
-    const cy = gy + totalH / 2;
-    for (let i = 0; i < 6; i++) {
-      const glowAlpha = 0.015 - i * 0.0025;
-      if (glowAlpha <= 0) break;
-      this.cellBackgrounds.fillStyle(0xffbbdd, glowAlpha);
-      this.cellBackgrounds.fillCircle(cx, cy, Math.max(totalW, totalH) * 0.15 + i * 25);
-    }
+    // ═══ Layer 5: Outer thick border (rigid frame) ═══
+    const borderW = Math.max(3, cs * 0.05);
+    this.cellBackgrounds.lineStyle(borderW, 0x8844ee, 0.6);
+    this.cellBackgrounds.strokeRect(gx, gy, totalW, totalH);
   }
 
   /**
@@ -751,49 +708,27 @@ export class Grid {
     const drawBadge = (gfx: Phaser.GameObjects.Graphics) => {
       gfx.clear();
       
-      // For mult=1, just draw a subtle footprint
+      // For mult=1, draw a subtle footprint
       if (mult <= 1) {
         gfx.fillStyle(0xffffff, 0.05);
         gfx.fillCircle(badgeCX, badgeCY, cs * 0.35);
-        gfx.lineStyle(Math.max(1, cs * 0.02), bgColor, 0.15);
-        gfx.strokeCircle(badgeCX, badgeCY, cs * 0.35);
         return;
       }
       
-      // For mult > 1, draw a premium glowing orb/badge
-      const radius = cs * 0.42;
+      // For mult > 1, draw a massive soft ambient glow instead of a solid badge
+      const radius = cs * 0.45;
       
-      // 1. Soft outer glow
-      gfx.fillStyle(bgColor, 0.05);
-      gfx.fillCircle(badgeCX, badgeCY, radius * 1.15);
+      // Outer ambient glow
+      gfx.fillStyle(bgColor, 0.3);
+      gfx.fillCircle(badgeCX, badgeCY, radius * 1.2);
       
-      // 2. Main colorful body
-      gfx.fillGradientStyle(bgColor, bgColor, 0x000000, 0x000000, 0.15, 0.15, 0.08, 0.08);
-      gfx.fillCircle(badgeCX, badgeCY, radius);
+      // Inner bright glow
+      gfx.fillStyle(bgColor, 0.5);
+      gfx.fillCircle(badgeCX, badgeCY, radius * 0.8);
       
-      // 3. Bright core
-      gfx.fillStyle(0xffffff, 0.03);
-      gfx.fillCircle(badgeCX, badgeCY, radius * 0.6);
-      
-      // 4. Glossy curved highlight (glass sphere effect)
-      gfx.beginPath();
-      gfx.arc(badgeCX, badgeCY - radius * 0.1, radius * 0.8, Math.PI + 0.3, Math.PI * 2 - 0.3, false);
-      gfx.lineTo(badgeCX + radius * 0.6, badgeCY);
-      gfx.arc(badgeCX, badgeCY, radius * 0.6, Math.PI * 2 - 0.3, Math.PI + 0.3, true);
-      gfx.closePath();
-      gfx.fillStyle(0xffffff, 0.05);
-      gfx.fillPath();
-      
-      // 5. Border
-      gfx.lineStyle(Math.max(2, cs * 0.03), bgColor, 0.15);
-      gfx.strokeCircle(badgeCX, badgeCY, radius);
-
-      // If high multiplier, add an extra glowing ring
-      if (mult >= 16) {
-        const pad = cs * 0.08;
-        gfx.lineStyle(Math.max(3, cs * 0.04), 0xffffff, 0.10);
-        gfx.strokeCircle(badgeCX, badgeCY, radius + pad);
-      }
+      // Bright core highlight
+      gfx.fillStyle(0xffffff, 0.15);
+      gfx.fillCircle(badgeCX, badgeCY, radius * 0.4);
     };
 
     if (!this.multiplierGraphics[r][c]) {
@@ -856,22 +791,25 @@ export class Grid {
 
     // ── Multiplier text ──
     if (mult > 1) {
-      // Tighter font sizing on small cells to prevent overflow
-      const maxFS = isSmallCell ? 18 : 32;
-      const fontSize = mult >= 128
-        ? Math.max(12, Math.min(maxFS * 0.75, cs * 0.28))
-        : Math.max(14, Math.min(maxFS, cs * 0.38));
-      const strokeW = isSmallCell ? Math.max(2, cs * 0.04) : Math.max(3, cs * 0.06);
+      // MASSIVE text painted directly onto the cell
+      const maxFS = isSmallCell ? 48 : 72;
+      
+      // Base font size is huge, scaled down slightly if 3+ digits
+      const fontSize = mult >= 100
+        ? Math.max(24, Math.min(maxFS * 0.8, cs * 0.6))
+        : Math.max(30, Math.min(maxFS, cs * 0.75));
+        
+      const strokeW = isSmallCell ? 4 : 6;
+      
       if (!this.multiplierTexts[r][c]) {
         const txt = this.scene.add.text(badgeCX, badgeCY, `×${mult}`, {
-          
           fontFamily: '"Luckiest Guy", cursive, sans-serif',
           fontSize: `${Math.round(fontSize)}px`,
           color: '#ffffff',
           stroke: '#000000',
-          strokeThickness: strokeW + 2,
-          shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 4, stroke: true, fill: true }
-        }).setOrigin(0.5).setDepth(11);
+          strokeThickness: strokeW + 4,
+          shadow: { offsetX: 0, offsetY: 4, color: '#000000', blur: 6, stroke: true, fill: true }
+        }).setOrigin(0.5).setDepth(9).setAlpha(0.9);
 
         this.multiplierTexts[r][c] = txt;
 
@@ -889,8 +827,8 @@ export class Grid {
         txt.setText(`×${mult}`);
         txt.setFontSize(`${Math.round(fontSize)}px`);
         txt.setColor('#ffffff');
-        txt.setStroke('#000000', strokeW + 2);
-        txt.setDepth(11);
+        txt.setStroke('#000000', strokeW + 4);
+        txt.setDepth(9);
         
         this.scene.tweens.add({
           targets: txt,

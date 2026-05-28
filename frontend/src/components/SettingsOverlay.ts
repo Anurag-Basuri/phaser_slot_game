@@ -62,77 +62,55 @@ export class SettingsOverlay {
     this.container.add(bg);
 
     // Responsive Panel sizing
-    const panelW = isShort ? Math.min(560, w * 0.95) : Math.min(420, w * 0.9);
-    const panelH = isShort ? Math.min(310, h * 0.95) : Math.min(490, h * 0.9);
+    const panelW = isShort ? Math.min(600, w * 0.95) : Math.min(460, w * 0.9);
+    const panelH = isShort ? Math.min(320, h * 0.95) : Math.min(520, h * 0.9);
     const panelX = (w - panelW) / 2;
     const panelY = (h - panelH) / 2;
 
     const panel = this.scene.add.graphics();
     
-    // Outer drop shadow
-    panel.fillStyle(0x000000, 0.4);
-    panel.fillRoundedRect(panelX + 6, panelY + 8, panelW, panelH, 20);
+    // Main panel (Dark Navy)
+    panel.fillStyle(0x0d1b2a, 1);
+    panel.fillRoundedRect(panelX, panelY, panelW, panelH, 16);
 
-    // Main panel (dark premium background)
-    panel.fillGradientStyle(0x130f24, 0x130f24, 0x0a0812, 0x0a0812, 0.98);
-    panel.fillRoundedRect(panelX, panelY, panelW, panelH, 20);
+    // Thin Orange Border
+    panel.lineStyle(2, 0xff8c00, 0.8);
+    panel.strokeRoundedRect(panelX, panelY, panelW, panelH, 16);
 
-    // Header gradient (matches Paytable)
-    const headerH = 60;
-    panel.fillGradientStyle(0xff006a, 0xff3388, 0x130f24, 0x130f24, 0.2, 0.2, 0, 0);
-    panel.fillRoundedRect(panelX, panelY, panelW, headerH, { tl: 20, tr: 20, bl: 0, br: 0 } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
-
-    // Border
-    panel.lineStyle(2, 0xff006a, 0.6);
-    panel.strokeRoundedRect(panelX, panelY, panelW, panelH, 20);
-    
-    // Inner rim
-    panel.lineStyle(1, 0xffffff, 0.05);
-    panel.strokeRoundedRect(panelX + 2, panelY + 2, panelW - 4, panelH - 4, 18);
     panel.setInteractive(new Phaser.Geom.Rectangle(panelX, panelY, panelW, panelH), Phaser.Geom.Rectangle.Contains);
     this.container.add(panel);
 
-    // Title text
-    const titleText = this.scene.add.text(w / 2, panelY + headerH / 2 - 2, 'SETTINGS', { 
-      fontSize: isShort ? '22px' : '26px',
-      color: '#ffffff',
-      fontFamily: '"Outfit", "Inter", sans-serif',
-      fontStyle: '800'
-    }).setOrigin(0.5);
+    // Title text inside panel
+    const titleText = this.scene.add.text(panelX + 30, panelY + 20, 'SETTINGS', { 
+      fontSize: '28px', color: '#ffffff', fontFamily: '"Inter", "Roboto", "Arial", sans-serif', fontStyle: 'bold'
+    }).setOrigin(0, 0);
     this.container.add(titleText);
 
-    // Circular neon close button (matches Paytable)
-    const closeBtnX = panelX + panelW - 35;
-    const closeBtnY = panelY + headerH / 2;
-    const closeGfx = this.scene.add.graphics();
-    
-    closeGfx.fillStyle(0xff006a, 0.12);
-    closeGfx.fillCircle(closeBtnX, closeBtnY, 16);
-    closeGfx.lineStyle(1.5, 0xff006a, 0.5);
-    closeGfx.strokeCircle(closeBtnX, closeBtnY, 16);
-    this.container.add(closeGfx);
+    // Divider under title
+    const titleGfx = this.scene.add.graphics();
+    titleGfx.lineStyle(1, 0xff8c00, 0.6);
+    titleGfx.lineBetween(panelX + 30, panelY + 55, panelX + panelW - 30, panelY + 55);
+    this.container.add(titleGfx);
 
+    // Sleek Close button
+    const closeBtnX = panelX + panelW - 30;
+    const closeBtnY = panelY + 35;
     const closeBtn = this.scene.add.text(closeBtnX, closeBtnY, '✕', { 
-      fontSize: '22px',
-      color: '#ffffff',
-      fontFamily: '"Inter", "Arial", sans-serif',
-      fontStyle: 'bold'
+      fontSize: '24px', color: '#ffffff', fontFamily: '"Inter", "Roboto", "Arial", sans-serif'
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
     closeBtn.on('pointerdown', () => {
       this.scene.audio.playSound('button');
       this.hide();
     });
-    closeBtn.on('pointerover', () => closeBtn.setColor('#ff4488'));
-    closeBtn.on('pointerout', () => closeBtn.setColor('#ffffff'));
+    closeBtn.on('pointerover', () => closeBtn.setScale(1.1));
+    closeBtn.on('pointerout', () => closeBtn.setScale(1));
     this.container.add(closeBtn);
 
     const labelStyle: Phaser.Types.GameObjects.Text.TextStyle = {
-      
-      fontSize: isShort ? '14px' : '16px',
+      fontSize: isShort ? '16px' : '18px',
       color: '#ffffff',
-      fontFamily: '"Poppins", "Outfit", sans-serif',
-      fontStyle: '800'
+      fontFamily: '"Inter", "Roboto", "Arial", sans-serif'
     };
 
     if (isShort) {
@@ -141,139 +119,122 @@ export class SettingsOverlay {
       const col1X = panelX + 20;
       const col2X = panelX + 40 + colW;
       
-      let rowY = panelY + headerH + 18;
-      const rowH = 46;
-      const rowGap = 8;
+      let rowY = panelY + 65;
+      const availableH = panelH - (rowY - panelY) - 90;
+      const rowH = Math.min(55, availableH / 2.5);
+      const rowGap = rowH * 0.2;
 
-      // Col 1, Row 1: Music
-      this.addToggleRow(col1X, rowY, colW, '🎵 Music', labelStyle, this.musicEnabled, (isOn) => {
+      this.addToggleRow(col1X, rowY, colW, rowH, '🎵 MUSIC', labelStyle, this.musicEnabled, (isOn) => {
         this.musicEnabled = isOn;
         if (this.onMusicToggle) this.onMusicToggle(isOn);
       });
 
-      // Col 2, Row 1: Sounds
-      this.addToggleRow(col2X, rowY, colW, '🔊 Sounds', labelStyle, this.sfxEnabled, (isOn) => {
+      this.addToggleRow(col2X, rowY, colW, rowH, '🔊 SOUNDS', labelStyle, this.sfxEnabled, (isOn) => {
         this.sfxEnabled = isOn;
         if (this.onSfxToggle) this.onSfxToggle(isOn);
       });
 
       rowY += rowH + rowGap;
 
-      // Col 1, Row 2: Turbo Spins
-      this.addToggleRow(col1X, rowY, colW, '⚡ Turbo', labelStyle, this.turboMode, (isOn) => {
+      this.addToggleRow(col1X, rowY, colW, rowH, '⚡ TURBO', labelStyle, this.turboMode, (isOn) => {
         this.turboMode = isOn;
         if (this.onTurboToggle) this.onTurboToggle(isOn);
       });
 
-      // Col 2, Row 2: Quality (Segmented selector)
-      this.addQualitySelector(col2X, rowY, colW, '✨ Quality', labelStyle, true);
+      this.addQualitySelector(col2X, rowY, colW, rowH, '✨ QUALITY', labelStyle, true);
 
-      // Bottom Info (Compact Single-line)
-      const infoY = panelY + panelH - 42;
-      
+      // Bottom Info
+      const infoY = panelY + panelH - 45;
       const infoBox = this.scene.add.graphics();
-      infoBox.fillStyle(0x0d0a18, 0.5);
-      infoBox.fillRoundedRect(panelX + 20, infoY, panelW - 40, 28, 8);
-      infoBox.lineStyle(1, 0xffffff, 0.07);
-      infoBox.strokeRoundedRect(panelX + 20, infoY, panelW - 40, 28, 8);
+      infoBox.fillStyle(0xffe6f0, 1);
+      infoBox.fillRoundedRect(panelX + 20, infoY, panelW - 40, 30, 15);
+      infoBox.lineStyle(2, 0xff0070, 0.4);
+      infoBox.strokeRoundedRect(panelX + 20, infoY, panelW - 40, 30, 15);
       this.container.add(infoBox);
 
-      const infoText = this.scene.add.text(w / 2, infoY + 14, 'Sugar Blast 1000  •  RTP: 96.53%  •  v1.0.0  •  High Volatility', { 
-        fontSize: '11px',
-        color: '#99aabb',
-        fontFamily: '"Outfit", "Inter", sans-serif',
-        fontStyle: '800'
+      const infoText = this.scene.add.text(w / 2, infoY + 15, 'Sugar Blast 1000  •  RTP: 96.53%  •  High Volatility', { 
+        fontSize: '12px',
+        color: '#ff0070',
+        fontFamily: '"Luckiest Guy", cursive, sans-serif'
       }).setOrigin(0.5);
       this.container.add(infoText);
 
     } else {
       // ─── PORTRAIT / TALL SCREEN: 1-Column List Layout ───
-      let rowY = panelY + headerH + 20;
-      const rowW = panelW - 40;
-      const rowX = panelX + 20;
-      const rowH = 52;
-      const rowGap = 10;
+      let rowY = panelY + 65;
+      const rowW = panelW - 60;
+      const rowX = panelX + 30;
+      
+      const availableH = panelH - (rowY - panelY) - 95; // 95 for info box + padding
+      const rowH = Math.min(65, availableH / 4.5);
+      const rowGap = rowH * 0.2;
 
-      // Game Music Row
-      this.addToggleRow(rowX, rowY, rowW, '🎵 Game Music', labelStyle, this.musicEnabled, (isOn) => {
+      this.addToggleRow(rowX, rowY, rowW, rowH, '🎵 GAME MUSIC', labelStyle, this.musicEnabled, (isOn) => {
         this.musicEnabled = isOn;
         if (this.onMusicToggle) this.onMusicToggle(isOn);
       });
       rowY += rowH + rowGap;
 
-      // Game Sounds Row
-      this.addToggleRow(rowX, rowY, rowW, '🔊 Game Sounds', labelStyle, this.sfxEnabled, (isOn) => {
+      this.addToggleRow(rowX, rowY, rowW, rowH, '🔊 GAME SOUNDS', labelStyle, this.sfxEnabled, (isOn) => {
         this.sfxEnabled = isOn;
         if (this.onSfxToggle) this.onSfxToggle(isOn);
       });
       rowY += rowH + rowGap;
 
-      // Turbo Spins Row
-      this.addToggleRow(rowX, rowY, rowW, '⚡ Turbo Spins', labelStyle, this.turboMode, (isOn) => {
+      this.addToggleRow(rowX, rowY, rowW, rowH, '⚡ TURBO SPINS', labelStyle, this.turboMode, (isOn) => {
         this.turboMode = isOn;
         if (this.onTurboToggle) this.onTurboToggle(isOn);
       });
       rowY += rowH + rowGap;
 
-      // Quality Selector Row
-      this.addQualitySelector(rowX, rowY, rowW, '✨ Graphics Quality', labelStyle, false);
-      rowY += rowH + rowGap + 8;
+      this.addQualitySelector(rowX, rowY, rowW, rowH, '✨ GRAPHICS QUALITY', labelStyle, false);
+      rowY += rowH + rowGap + 10;
 
       // Bottom Info Box
       const infoBox = this.scene.add.graphics();
-      infoBox.fillStyle(0x0d0a18, 0.5);
-      infoBox.fillRoundedRect(panelX + 20, rowY, panelW - 40, 85, 12);
-      infoBox.lineStyle(1, 0xffffff, 0.07);
-      infoBox.strokeRoundedRect(panelX + 20, rowY, panelW - 40, 85, 12);
+      infoBox.fillStyle(0x000000, 0.4);
+      infoBox.fillRoundedRect(panelX + 30, rowY, panelW - 60, 80, 20);
+      infoBox.lineStyle(3, 0xff0070, 0.8);
+      infoBox.strokeRoundedRect(panelX + 30, rowY, panelW - 60, 80, 20);
       this.container.add(infoBox);
 
-      this.container.add(this.scene.add.text(w / 2, rowY + 18, 'Sugar Blast 1000', { 
-        fontSize: '18px',
-        color: '#ff006a',
-        fontFamily: '"Outfit", "Inter", sans-serif',
-        fontStyle: '900'
-      }).setOrigin(0.5).setShadow(0, 1.5, '#000000', 2, true, true));
-
-      this.container.add(this.scene.add.text(w / 2, rowY + 44, 'RTP: 96.53%   •   Max Win: 25,000×', { 
-        fontSize: '13px',
-        color: '#99aabb',
-        fontFamily: '"Outfit", "Inter", sans-serif',
-        fontStyle: '800'
+      this.container.add(this.scene.add.text(w / 2, rowY + 25, 'SUGAR BLAST 1000', { 
+        fontSize: '22px',
+        color: '#ff0070',
+        fontFamily: '"Luckiest Guy", cursive, sans-serif'
       }).setOrigin(0.5));
 
-      this.container.add(this.scene.add.text(w / 2, rowY + 65, 'v1.0.0   •   High Volatility', { 
-        fontSize: '11px',
-        color: '#778899',
-        fontFamily: '"Outfit", "Inter", sans-serif',
-        fontStyle: '700'
+      this.container.add(this.scene.add.text(w / 2, rowY + 55, 'RTP: 96.53%   •   Max Win: 25,000×', { 
+        fontSize: '14px',
+        color: '#ff66a3',
+        fontFamily: '"Luckiest Guy", cursive, sans-serif'
       }).setOrigin(0.5));
     }
   }
 
   private addToggleRow(
-    tileX: number, tileY: number, tileW: number,
+    tileX: number, tileY: number, tileW: number, tileH: number,
     label: string, labelStyle: Phaser.Types.GameObjects.Text.TextStyle,
     initialState: boolean,
     callbackFn: (state: boolean) => void
   ) {
-    const tileH = labelStyle.fontSize === '14px' ? 38 : 44;
 
     // Row backplate
     const backplate = this.scene.add.graphics();
-    backplate.fillStyle(0x0d0a18, 0.5);
-    backplate.fillRoundedRect(tileX, tileY, tileW, tileH, 10);
-    backplate.lineStyle(1, 0xffffff, 0.07);
-    backplate.strokeRoundedRect(tileX, tileY, tileW, tileH, 10);
+    backplate.fillStyle(0x1a2436, 0.8);
+    backplate.fillRoundedRect(tileX, tileY, tileW, tileH, 8);
+    backplate.lineStyle(1, 0xff8c00, 0.4);
+    backplate.strokeRoundedRect(tileX, tileY, tileW, tileH, 8);
     this.container.add(backplate);
 
     // Label text
-    const labelTxt = this.scene.add.text(tileX + 15, tileY + tileH / 2, label, labelStyle).setOrigin(0, 0.5);
+    const labelTxt = this.scene.add.text(tileX + 20, tileY + tileH / 2 + 2, label, labelStyle).setOrigin(0, 0.5);
     this.container.add(labelTxt);
 
-    // Toggle switch parameters
-    const toggleW = 44;
-    const toggleH = 22;
-    const toggleX = tileX + tileW - toggleW - 12;
+    // Toggle switch parameters (chunky jelly bean switch)
+    const toggleW = 70;
+    const toggleH = 36;
+    const toggleX = tileX + tileW - toggleW - 15;
     const toggleY = tileY + (tileH - toggleH) / 2;
 
     const toggleGfx = this.scene.add.graphics();
@@ -286,33 +247,33 @@ export class SettingsOverlay {
     const drawToggle = (p: number) => {
       toggleGfx.clear();
       
-      // Interpolate backgrounds
-      toggleGfx.fillStyle(0x000000, (1 - p) * 0.5);
+      // Shadow
+      toggleGfx.fillStyle(0x3a0055, 0.3);
+      toggleGfx.fillRoundedRect(toggleX + 3, toggleY + 3, toggleW, toggleH, toggleH / 2);
+
+      // Interpolate backgrounds (Red to Green)
+      toggleGfx.fillStyle(0xff3366, (1 - p));
       toggleGfx.fillRoundedRect(toggleX, toggleY, toggleW, toggleH, toggleH / 2);
       
-      toggleGfx.fillStyle(0xff006a, p);
+      toggleGfx.fillStyle(0x00e676, p);
       toggleGfx.fillRoundedRect(toggleX, toggleY, toggleW, toggleH, toggleH / 2);
 
-      if (p > 0) {
-        toggleGfx.lineStyle(1.5, 0xff88ff, p * 0.7);
-        toggleGfx.strokeRoundedRect(toggleX, toggleY, toggleW, toggleH, toggleH / 2);
-      } else {
-        toggleGfx.lineStyle(1, 0x4a3a60, 0.8);
-        toggleGfx.strokeRoundedRect(toggleX, toggleY, toggleW, toggleH, toggleH / 2);
-      }
+      // Thick border
+      toggleGfx.lineStyle(3, 0xffffff, 1);
+      toggleGfx.strokeRoundedRect(toggleX, toggleY, toggleW, toggleH, toggleH / 2);
 
       // Smooth slide knob calculation
       const knobMinX = toggleX + toggleH / 2;
       const knobMaxX = toggleX + toggleW - toggleH / 2;
       const knobX = knobMinX + p * (knobMaxX - knobMinX);
 
-      // Shadow
+      // Knob Shadow
       toggleGfx.fillStyle(0x000000, 0.3);
-      toggleGfx.fillCircle(knobX, toggleY + toggleH / 2 + 1.5, toggleH / 2 - 2);
+      toggleGfx.fillCircle(knobX, toggleY + toggleH / 2 + 3, toggleH / 2);
 
-      // Knob body
+      // Massive white knob body
       toggleGfx.fillStyle(0xffffff, 1);
-      toggleGfx.fillCircle(knobX, toggleY + toggleH / 2, toggleH / 2 - 2);
+      toggleGfx.fillCircle(knobX, toggleY + toggleH / 2, toggleH / 2 + 2);
     };
 
     drawToggle(progress);
@@ -326,13 +287,13 @@ export class SettingsOverlay {
       isOn = !isOn;
       callbackFn(isOn);
 
-      // Springy toggle knob tween
+      // Bouncy toggle knob tween
       const targetObj = { val: isOn ? 0 : 1 };
       this.scene.tweens.add({
         targets: targetObj,
         val: isOn ? 1 : 0,
-        duration: 160,
-        ease: 'Cubic.easeOut',
+        duration: 250,
+        ease: 'Back.easeOut',
         onUpdate: () => {
           drawToggle(targetObj.val);
         }
@@ -342,41 +303,40 @@ export class SettingsOverlay {
   }
 
   private addQualitySelector(
-    tileX: number, tileY: number, tileW: number,
+    tileX: number, tileY: number, tileW: number, tileH: number,
     label: string, labelStyle: Phaser.Types.GameObjects.Text.TextStyle,
     isShort: boolean
   ) {
-    const tileH = labelStyle.fontSize === '14px' ? 38 : 44;
 
     // Row backplate
     const backplate = this.scene.add.graphics();
-    backplate.fillStyle(0x0d0a18, 0.5);
-    backplate.fillRoundedRect(tileX, tileY, tileW, tileH, 10);
-    backplate.lineStyle(1, 0xffffff, 0.07);
-    backplate.strokeRoundedRect(tileX, tileY, tileW, tileH, 10);
+    backplate.fillStyle(0x1a2436, 0.8);
+    backplate.fillRoundedRect(tileX, tileY, tileW, tileH, 8);
+    backplate.lineStyle(1, 0xff8c00, 0.4);
+    backplate.strokeRoundedRect(tileX, tileY, tileW, tileH, 8);
     this.container.add(backplate);
 
     // Label text
-    const labelTxt = this.scene.add.text(tileX + 15, tileY + tileH / 2, label, labelStyle).setOrigin(0, 0.5);
+    const labelTxt = this.scene.add.text(tileX + 20, tileY + tileH / 2 + 2, label, labelStyle).setOrigin(0, 0.5);
     this.container.add(labelTxt);
 
     // Segmented pill controller sizing
-    const trackW = isShort ? 100 : 150;
-    const trackH = 26;
-    const trackX = tileX + tileW - trackW - 12;
+    const trackW = isShort ? 140 : 180;
+    const trackH = 40;
+    const trackX = tileX + tileW - trackW - 15;
     const trackY = tileY + (tileH - trackH) / 2;
 
     const trackBg = this.scene.add.graphics();
-    trackBg.fillStyle(0x000000, 0.5);
+    trackBg.fillStyle(0xffb3cc, 1);
     trackBg.fillRoundedRect(trackX, trackY, trackW, trackH, trackH / 2);
-    trackBg.lineStyle(1, 0xffffff, 0.05);
+    trackBg.lineStyle(3, 0xff0070, 1);
     trackBg.strokeRoundedRect(trackX, trackY, trackW, trackH, trackH / 2);
     this.container.add(trackBg);
 
     const capsuleGfx = this.scene.add.graphics();
     this.container.add(capsuleGfx);
 
-    const optionsList = ['LOW', 'MEDIUM', 'HIGH'];
+    const optionsList = ['LOW', 'MED', 'HIGH'];
     let selectedIdx = optionsList.indexOf(this.currentQuality);
     if (selectedIdx === -1) selectedIdx = 2; // Default to HIGH
 
@@ -391,9 +351,16 @@ export class SettingsOverlay {
       const capH = trackH - 4;
       const capR = capH / 2;
 
-      capsuleGfx.fillGradientStyle(0xff006a, 0xff006a, 0xcc0055, 0xcc0055, 1);
+      // Drop shadow
+      capsuleGfx.fillStyle(0x3a0055, 0.3);
+      capsuleGfx.fillRoundedRect(capX + 2, capY + 2, capW, capH, capR);
+
+      // Vibrant fill
+      capsuleGfx.fillGradientStyle(0x00e5ff, 0x00e5ff, 0x00aacc, 0x00aacc, 1);
       capsuleGfx.fillRoundedRect(capX, capY, capW, capH, capR);
-      capsuleGfx.lineStyle(1, 0xff88ff, 0.6);
+      
+      // White border
+      capsuleGfx.lineStyle(3, 0xffffff, 1);
       capsuleGfx.strokeRoundedRect(capX, capY, capW, capH, capR);
     };
 
@@ -401,17 +368,19 @@ export class SettingsOverlay {
 
     const labels: Phaser.GameObjects.Text[] = [];
     optionsList.forEach((opt, i) => {
-      // Use abbreviations for compact 2-column layout
-      const displayOpt = isShort ? (opt === 'MEDIUM' ? 'M' : opt === 'HIGH' ? 'H' : 'L') : (opt === 'MEDIUM' ? 'MED' : opt);
+      const displayOpt = opt;
       const optX = trackX + i * segW + segW / 2;
-      const optY = trackY + trackH / 2;
+      const optY = trackY + trackH / 2 + 2;
 
       const txt = this.scene.add.text(optX, optY, displayOpt, { 
-        fontFamily: '"Outfit", "Inter", sans-serif',
-        fontSize: isShort ? '10px' : '11px',
-        fontStyle: '900',
-        color: i === selectedIdx ? '#ffffff' : '#7f7fa0'
+        fontFamily: '"Luckiest Guy", cursive, sans-serif',
+        fontSize: isShort ? '14px' : '16px',
+        color: i === selectedIdx ? '#ffffff' : '#ff0070'
       }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+      if (i === selectedIdx) {
+        txt.setShadow(0, 2, '#000000', 0, false, true);
+      }
 
       txt.on('pointerdown', () => {
         if (selectedIdx === i) return;
@@ -427,14 +396,16 @@ export class SettingsOverlay {
         this.scene.tweens.add({
           targets: targetObj,
           val: i,
-          duration: 160,
-          ease: 'Cubic.easeOut',
+          duration: 200,
+          ease: 'Back.easeOut',
           onUpdate: () => {
             drawCapsule(targetObj.val);
           },
           onComplete: () => {
             labels.forEach((lbl, index) => {
-              lbl.setColor(index === selectedIdx ? '#ffffff' : '#7f7fa0');
+              lbl.setColor(index === selectedIdx ? '#ffffff' : '#ff0070');
+              if (index === selectedIdx) lbl.setShadow(0, 2, '#000000', 0, false, true);
+              else lbl.setShadow(0,0,'',0,false,false);
             });
           }
         });
