@@ -47,9 +47,9 @@ export class BottomBarHUD {
   private _lastBarH = 0;
   private _lastIsMobile = false;
 
-  private readonly COL_LABEL = '#bbbbcc';  // Premium subtle silver/gray for labels
+  private readonly COL_LABEL = '#ffddee';  // Bright candy pink for labels
   private readonly COL_VALUE = '#ffffff';
-  private readonly COL_WIN = '#66ffaa';    // Bright candy mint
+  private readonly COL_WIN = '#44ffaa';    // Vivid neon mint
   private readonly FONT_LABEL = Theme.fonts.label.family;
   private readonly FONT_VALUE = Theme.fonts.numeric.family;
 
@@ -105,35 +105,27 @@ export class BottomBarHUD {
     this.bar.clear();
     const bb = this.bar;
 
-    // ── Backdrop ── (Rich candy shelf gradient)
-    // Base: deep cherry-to-plum gradient for candy-store warmth
-    bb.fillGradientStyle(0x2a0833, 0x220828, 0x180420, 0x100318, 0.85, 0.85, 0.7, 0.7);
+    // ── Backdrop ── (Solid rigid arcade panel — hyper-saturated)
+    // Solid vivid purple base
+    bb.fillGradientStyle(0x440088, 0x330077, 0x220055, 0x110033, 1, 1, 1, 1);
     bb.fillRect(0, h - barH, w, barH);
 
-    // Smooth candy gradient top edge to prevent rendering artifacts
-    const stripeH = 3;
+    // Thick candy-striped top border (rigid, not gradient)
+    const stripeH = Math.max(4, barH * 0.06);
     const stripeY = h - barH;
-    bb.fillGradientStyle(0xff006a, 0x44ddff, 0xff006a, 0x44ddff, 1, 1, 1, 1);
+    bb.fillStyle(0xff0070, 1);
     bb.fillRect(0, stripeY, w, stripeH);
+    // Secondary highlight stripe
+    bb.fillStyle(0xffdd00, 1);
+    bb.fillRect(0, stripeY + stripeH, w, Math.max(2, stripeH * 0.5));
 
-    // Warm pink glow beneath the stripe
-    bb.fillGradientStyle(0xff3388, 0xff006a, 0x2a0833, 0x2a0833, 0.25, 0.25, 0, 0);
-    bb.fillRect(0, stripeY + stripeH, w, 10);
+    // Hard glossy upper highlight (rigid, no soft gradient)
+    bb.fillStyle(0xffffff, 0.12);
+    bb.fillRect(0, stripeY + stripeH + 2, w, Math.max(2, barH * 0.08));
 
-    // Glass rim highlight
-    bb.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.08, 0.08, 0, 0);
-    bb.fillRect(0, stripeY + stripeH, w, 1);
-
-    // Candy sprinkle dots on the backdrop (subtle but thematic)
-    const sprinkleCount = Math.max(6, Math.floor(w / 60));
-    const stripeColors = [0xff006a, 0xffcc00, 0x44ddff, 0xff66aa, 0x88ff44, 0xff8833];
-    for (let i = 0; i < sprinkleCount; i++) {
-      const sx = (w / (sprinkleCount + 1)) * (i + 1) + ((i * 17) % 11 - 5);
-      const sy = h - barH / 2 + ((i * 7) % 9 - 4);
-      const sCol = stripeColors[(i * 3) % stripeColors.length];
-      bb.fillStyle(sCol, 0.08);
-      bb.fillCircle(sx, sy, 3 + (i % 3));
-    }
+    // Bottom edge line for rigid framing
+    bb.fillStyle(0x000000, 0.5);
+    bb.fillRect(0, h - 2, w, 2);
 
     this._lastW = w;
     this._lastH = h;
@@ -412,19 +404,33 @@ export class BottomBarHUD {
     this.txtBet.setPosition(centerX - betTotalW / 2 + betLblW + betGap, txtY);
     this.betPillHit.setPosition(centerX, txtY).setSize(Math.max(120, betTotalW + 40), barH);
 
-    // ── Draw Dark Premium Pills Behind Text ──
+    // ── Draw Rigid Arcade Pill Panels Behind Text ──
     this.pillsGfx.clear();
-    const pillH = barH * 0.65;
+    const pillH = barH * 0.68;
     const pillY = txtY - pillH / 2;
-    const pillR = pillH / 2;
+    const pillR = Math.min(pillH / 2, 10);
     
-    this.pillsGfx.fillStyle(0x000000, 0.4);
+    const drawRigidPill = (px: number, py: number, pw: number, ph: number) => {
+      // Hard drop shadow
+      this.pillsGfx.fillStyle(0x000000, 0.6);
+      this.pillsGfx.fillRoundedRect(px + 3, py + 3, pw, ph, pillR);
+      // Solid dark purple body
+      this.pillsGfx.fillStyle(0x1a0033, 0.9);
+      this.pillsGfx.fillRoundedRect(px, py, pw, ph, pillR);
+      // Thick colored border
+      this.pillsGfx.lineStyle(2, 0x7744cc, 0.8);
+      this.pillsGfx.strokeRoundedRect(px, py, pw, ph, pillR);
+      // Top glossy highlight (rigid, not fading)
+      this.pillsGfx.fillStyle(0xffffff, 0.1);
+      this.pillsGfx.fillRoundedRect(px + 2, py + 1, pw - 4, ph * 0.35, { tl: pillR - 1, tr: pillR - 1, bl: 0, br: 0 } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
+    };
+
     // Bal Pill
-    this.pillsGfx.fillRoundedRect(sidePad - 8, pillY, balLblVisualW + balGap + balValVisualW + 16, pillH, pillR);
+    drawRigidPill(sidePad - 8, pillY, balLblVisualW + balGap + balValVisualW + 16, pillH);
     // Bet Pill
-    this.pillsGfx.fillRoundedRect(centerX - betTotalW / 2 - 12, pillY, betTotalW + 24, pillH, pillR);
+    drawRigidPill(centerX - betTotalW / 2 - 12, pillY, betTotalW + 24, pillH);
     // Win Pill
-    this.pillsGfx.fillRoundedRect(w - sidePad - winValVisualW - iconOffset - winGap - winLblVisualW - 8, pillY, winLblVisualW + winGap + iconOffset + winValVisualW + 16, pillH, pillR);
+    drawRigidPill(w - sidePad - winValVisualW - iconOffset - winGap - winLblVisualW - 8, pillY, winLblVisualW + winGap + iconOffset + winValVisualW + 16, pillH);
 
     // Define win bounds for particle effect targeting
     this._winPillBounds = { x: w - sidePad - winValVisualW - 50, w: 100, y: h - barH, h: barH };

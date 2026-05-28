@@ -131,46 +131,76 @@ export class AutoPlayOverlay {
     const pY = (h - pH) / 2;
 
     const panelBg = this.scene.add.graphics();
-    // Premium dark gradient panel with glowing border
-    panelBg.fillStyle(0x0a0a0f, 0.95);
-    panelBg.fillRoundedRect(pX, pY, pW, pH, 20);
-    panelBg.lineStyle(2, 0x442266, 1);
-    panelBg.strokeRoundedRect(pX, pY, pW, pH, 20);
+    // Hard comic-book drop shadow
+    panelBg.fillStyle(0x3a0055, 1);
+    panelBg.fillRoundedRect(pX + 12, pY + 12, pW, pH, 32);
+
+    // Main panel (Creamy off-white base)
+    panelBg.fillGradientStyle(0xfff5f8, 0xfff5f8, 0xffe6f0, 0xffe6f0, 1);
+    panelBg.fillRoundedRect(pX, pY, pW, pH, 32);
+
+    // Thick Hot-Pink Border
+    panelBg.lineStyle(8, 0xff0070, 1);
+    panelBg.strokeRoundedRect(pX, pY, pW, pH, 32);
     
-    // Inner highlight
-    panelBg.lineStyle(1, 0x6644aa, 0.5);
-    panelBg.strokeRoundedRect(pX + 2, pY + 2, pW - 4, pH - 4, 18);
+    // Inner rim (bright white)
+    panelBg.lineStyle(4, 0xffffff, 1);
+    panelBg.strokeRoundedRect(pX + 6, pY + 6, pW - 12, pH - 12, 26);
 
     panelBg.setInteractive(new Phaser.Geom.Rectangle(pX, pY, pW, pH), Phaser.Geom.Rectangle.Contains);
     this.container.add(panelBg);
 
+    // Header Pill
+    const headerW = 280;
+    const headerH = 65;
+    const headerX = w / 2 - headerW / 2;
+    const headerY = pY - 20;
+    const header = this.scene.add.graphics();
+    header.fillStyle(0x3a0055, 1);
+    header.fillRoundedRect(headerX + 6, headerY + 6, headerW, headerH, 32);
+    header.fillGradientStyle(0xff0070, 0xff0070, 0xcc0055, 0xcc0055, 1);
+    header.fillRoundedRect(headerX, headerY, headerW, headerH, 32);
+    header.lineStyle(3, 0xffffff, 0.8);
+    header.strokeRoundedRect(headerX + 3, headerY + 3, headerW - 6, headerH - 6, 29);
+    this.container.add(header);
+
     // Close Button
-    const closeBtn = this.scene.add.text(pX + pW - 20, pY + 20, 'X', {
-       fontFamily: '"Poppins", sans-serif',
+    const closeBtnX = pX + pW - 10;
+    const closeBtnY = pY + 10;
+    const closeBtnGfx = this.scene.add.graphics();
+    closeBtnGfx.fillStyle(0x3a0055, 1);
+    closeBtnGfx.fillCircle(closeBtnX + 4, closeBtnY + 4, 26);
+    closeBtnGfx.fillStyle(0xff3333, 1);
+    closeBtnGfx.fillCircle(closeBtnX, closeBtnY, 26);
+    closeBtnGfx.lineStyle(4, 0xffffff, 1);
+    closeBtnGfx.strokeCircle(closeBtnX, closeBtnY, 26);
+    this.container.add(closeBtnGfx);
+
+    const closeBtn = this.scene.add.text(closeBtnX, closeBtnY, '✕', {
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
       fontSize: '28px',
       color: '#ffffff',
-      fontStyle: '100'
-    }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
+    }).setOrigin(0.5).setShadow(0, 2, '#000000', 0, false, true).setInteractive({ useHandCursor: true });
+    
     closeBtn.on('pointerdown', () => {
       this.scene.audio.playSound('button');
       this.hide();
     });
+    closeBtn.on('pointerover', () => closeBtn.setScale(1.1));
+    closeBtn.on('pointerout', () => closeBtn.setScale(1));
     this.container.add(closeBtn);
 
     // Title
-    const title = this.scene.add.text(pX + pW / 2, pY + 35, 'AUTOPLAY', {
-       fontFamily: '"Montserrat", "Poppins", sans-serif',
+    const title = this.scene.add.text(w / 2, headerY + headerH / 2, 'AUTOPLAY', {
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
       fontSize: '32px',
-      color: '#ffcc00',
-      stroke: '#441166',
-      strokeThickness: 6,
-      shadow: { offsetX: 0, offsetY: 4, color: '#000000', blur: 0, fill: true }
-    }).setOrigin(0.5, 0);
+      color: '#ffffff',
+    }).setOrigin(0.5).setShadow(0, 3, '#000000', 0, false, true);
     this.container.add(title);
     
     // Separator line
     const sep = this.scene.add.graphics();
-    sep.lineStyle(2, 0x331155, 0.8);
+    sep.lineStyle(2, 0xffb3cc, 1);
     sep.lineBetween(pX + 40, pY + 90, pX + pW - 40, pY + 90);
     this.container.add(sep);
 
@@ -214,11 +244,9 @@ export class AutoPlayOverlay {
     // Slider section
     const slideY = pY + 280;
     const slideTitle = this.scene.add.text(pX + pW / 2, slideY - 50, 'NUMBER OF SPINS', {
-       fontFamily: '"Poppins", sans-serif',
-      fontSize: '18px',
-      color: '#aaaaee',
-      fontStyle: '800',
-      letterSpacing: 1.5
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontSize: '22px',
+      color: '#ff0070',
     }).setOrigin(0.5);
     this.container.add(slideTitle);
 
@@ -228,13 +256,10 @@ export class AutoPlayOverlay {
     this.container.add(this.sliderTrackGfx);
 
     this.txtSpinsCount = this.scene.add.text(pX + pW - 30, slideY, `${this.spins}`, {
-       fontFamily: '"Montserrat", "Poppins", sans-serif',
-      fontSize: '42px',
-      color: '#00ff88',
-      stroke: '#004422',
-      strokeThickness: 6,
-      shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 4, fill: true }
-    }).setOrigin(1, 0.5);
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontSize: '48px',
+      color: '#00e676',
+    }).setOrigin(1, 0.5).setShadow(0, 3, '#000000', 0, false, true);
     this.container.add(this.txtSpinsCount);
 
     this.sliderThumbGfx = this.scene.add.graphics();
@@ -254,24 +279,20 @@ export class AutoPlayOverlay {
     const startY = pY + pH - 30;
     const startBtnGfx = this.scene.add.graphics();
     
-    // Premium bright green button with 3D depth
-    startBtnGfx.fillStyle(0x006622, 1);
-    startBtnGfx.fillRoundedRect(pX + 30, startY - 76, pW - 60, 60, 12);
-    startBtnGfx.fillStyle(0x00cc55, 1);
-    startBtnGfx.fillRoundedRect(pX + 30, startY - 80, pW - 60, 60, 12);
+    // Massive Green Candy Button
+    startBtnGfx.fillStyle(0x3a0055, 0.4);
+    startBtnGfx.fillRoundedRect(pX + 34, startY - 76, pW - 60, 60, 20); // Shadow
     
-    // Highlight
-    startBtnGfx.fillStyle(0x44ff88, 0.4);
-    startBtnGfx.fillRoundedRect(pX + 34, startY - 78, pW - 68, 15, 8);
+    startBtnGfx.fillGradientStyle(0x00e676, 0x00e676, 0x00b359, 0x00b359, 1);
+    startBtnGfx.fillRoundedRect(pX + 30, startY - 80, pW - 60, 60, 20); // Body
+    
+    startBtnGfx.lineStyle(4, 0xffffff, 1);
+    startBtnGfx.strokeRoundedRect(pX + 30, startY - 80, pW - 60, 60, 20); // Border
 
     this.container.add(startBtnGfx);
 
     const startHit = this.scene.add.rectangle(pX + pW/2, startY - 50, pW - 60, 60, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
-    
-    // Start button hover effects
-    startHit.on('pointerover', () => startBtnGfx.setAlpha(0.8));
-    startHit.on('pointerout', () => startBtnGfx.setAlpha(1));
     
     startHit.on('pointerdown', () => {
       this.scene.audio.playSound('button');
@@ -280,16 +301,24 @@ export class AutoPlayOverlay {
         this.onStartCallback(this.spins, this.turboSpin, this.quickSpin, this.skipScreens);
       }
     });
+    
+    // Bouncy scale on hover
+    startHit.on('pointerover', () => {
+      this.scene.tweens.killTweensOf([startBtnGfx, this.btnStartTxt]);
+      this.scene.tweens.add({ targets: [startBtnGfx, this.btnStartTxt], scale: 1.03, duration: 150, ease: 'Back.easeOut' });
+    });
+    startHit.on('pointerout', () => {
+      this.scene.tweens.killTweensOf([startBtnGfx, this.btnStartTxt]);
+      this.scene.tweens.add({ targets: [startBtnGfx, this.btnStartTxt], scale: 1, duration: 150, ease: 'Back.easeIn' });
+    });
+    
     this.container.add(startHit);
 
     this.btnStartTxt = this.scene.add.text(pX + pW / 2, startY - 50, `START AUTOPLAY (${this.spins})`, {
-       fontFamily: '"Montserrat", "Poppins", sans-serif',
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
       fontSize: '26px',
       color: '#ffffff',
-      stroke: '#004422',
-      strokeThickness: 5,
-      shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 0, fill: true }
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setShadow(0, 3, '#004422', 0, false, true);
     this.container.add(this.btnStartTxt);
 
     this.drawSlider();
@@ -303,36 +332,39 @@ export class AutoPlayOverlay {
     const draw = () => {
       gfx.clear();
       
-      // Box background
-      gfx.fillStyle(0x1a1a24, 1);
-      gfx.fillRoundedRect(x, y, size, size, 8);
+      // Box shadow
+      gfx.fillStyle(0x3a0055, 0.3);
+      gfx.fillRoundedRect(x + 2, y + 2, size, size, 10);
+
+      // Box body
+      gfx.fillStyle(0xffffff, 1);
+      gfx.fillRoundedRect(x, y, size, size, 10);
       
       if (state) {
         // Active border
-        gfx.lineStyle(2, 0x00ff88, 1);
-        gfx.strokeRoundedRect(x, y, size, size, 8);
+        gfx.lineStyle(3, 0x00e676, 1);
+        gfx.strokeRoundedRect(x, y, size, size, 10);
         
-        // Neon Checkmark
-        gfx.lineStyle(4, 0x00ff88, 1);
+        // Massive Cartoon Checkmark
+        gfx.lineStyle(6, 0x00e676, 1);
         gfx.beginPath();
-        gfx.moveTo(x + 8, y + size/2);
-        gfx.lineTo(x + size/2 - 2, y + size - 10);
-        gfx.lineTo(x + size - 8, y + 10);
+        gfx.moveTo(x + 8, y + size/2 + 2);
+        gfx.lineTo(x + size/2 - 2, y + size - 8);
+        gfx.lineTo(x + size + 4, y - 4); // Pops out of the box!
         gfx.strokePath();
       } else {
         // Inactive border
-        gfx.lineStyle(2, 0x333344, 1);
-        gfx.strokeRoundedRect(x, y, size, size, 8);
+        gfx.lineStyle(3, 0xffaadd, 1);
+        gfx.strokeRoundedRect(x, y, size, size, 10);
       }
     };
     draw();
     this.container.add(gfx);
 
-    const txt = this.scene.add.text(x + size + 10, y + size/2, label, {
-       fontFamily: '"Poppins", sans-serif',
-      fontSize: '13px',
-      color: '#ffffff',
-      fontStyle: 'bold'
+    const txt = this.scene.add.text(x + size + 15, y + size/2, label, {
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontSize: '16px',
+      color: '#ff0070',
     }).setOrigin(0, 0.5).setLineSpacing(2);
     this.container.add(txt);
 
@@ -381,16 +413,16 @@ export class AutoPlayOverlay {
 
     this.sliderTrackGfx.clear();
     // Background track (dark pill)
-    this.sliderTrackGfx.fillStyle(0x1a1a24, 1);
-    this.sliderTrackGfx.fillRoundedRect(this.sliderX, y - 6, this.sliderWidth, 12, 6);
-    this.sliderTrackGfx.lineStyle(2, 0x333344, 1);
-    this.sliderTrackGfx.strokeRoundedRect(this.sliderX, y - 6, this.sliderWidth, 12, 6);
+    this.sliderTrackGfx.fillStyle(0xffb3cc, 1);
+    this.sliderTrackGfx.fillRoundedRect(this.sliderX, y - 8, this.sliderWidth, 16, 8);
+    this.sliderTrackGfx.lineStyle(3, 0xff0070, 1);
+    this.sliderTrackGfx.strokeRoundedRect(this.sliderX, y - 8, this.sliderWidth, 16, 8);
     
     // Filled track (neon gradient effect using multiple fills)
-    this.sliderTrackGfx.fillStyle(0x008844, 1);
-    this.sliderTrackGfx.fillRoundedRect(this.sliderX, y - 6, fillW, 12, { tl: 6, bl: 6, tr: 0, br: 0 });
-    this.sliderTrackGfx.fillStyle(0x00ff88, 1);
-    this.sliderTrackGfx.fillRoundedRect(this.sliderX, y - 4, fillW, 8, { tl: 4, bl: 4, tr: 0, br: 0 });
+    this.sliderTrackGfx.fillStyle(0x00b359, 1);
+    this.sliderTrackGfx.fillRoundedRect(this.sliderX, y - 8, fillW, 16, { tl: 8, bl: 8, tr: 0, br: 0 });
+    this.sliderTrackGfx.fillStyle(0x00e676, 1);
+    this.sliderTrackGfx.fillRoundedRect(this.sliderX, y - 5, fillW, 10, { tl: 5, bl: 5, tr: 0, br: 0 });
 
     const thumbX = this.sliderX + fillW;
     this.sliderThumbHit.setX(thumbX);
@@ -398,19 +430,19 @@ export class AutoPlayOverlay {
     this.sliderThumbGfx.clear();
     
     // Thumb shadow
-    this.sliderThumbGfx.fillStyle(0x000000, 0.5);
-    this.sliderThumbGfx.fillCircle(thumbX, y + 4, 18);
+    this.sliderThumbGfx.fillStyle(0x3a0055, 0.3);
+    this.sliderThumbGfx.fillCircle(thumbX + 2, y + 4, 22);
     
     // Thumb body
-    this.sliderThumbGfx.fillStyle(0x00ff88, 1);
-    this.sliderThumbGfx.fillCircle(thumbX, y, 18);
+    this.sliderThumbGfx.fillStyle(0x00e676, 1);
+    this.sliderThumbGfx.fillCircle(thumbX, y, 22);
     
     // Thumb inner
-    this.sliderThumbGfx.fillStyle(0x00cc55, 1);
+    this.sliderThumbGfx.fillStyle(0xffffff, 1);
     this.sliderThumbGfx.fillCircle(thumbX, y, 14);
     
     // Inner white highlight
-    this.sliderThumbGfx.fillStyle(0xffffff, 1);
-    this.sliderThumbGfx.fillCircle(thumbX, y, 8);
+    this.sliderThumbGfx.lineStyle(4, 0xffffff, 1);
+    this.sliderThumbGfx.strokeCircle(thumbX, y, 22);
   }
 }
