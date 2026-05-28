@@ -230,98 +230,122 @@ export class Boot extends Phaser.Scene {
       this.dustEmitter.particleY = { min: h, max: h + 100 } as Phaser.Types.GameObjects.Particles.EmitterOpOnEmitType;
     }
     
-    // 3. Dark Vignettes (Top and bottom readability gradients)
+    // 3. Dark Vignettes
     this.vignetteTop.clear();
     this.vignetteTop.fillGradientStyle(0x1a0525, 0x1a0525, 0x000000, 0x000000, 0.8, 0.8, 0, 0);
-    this.vignetteTop.fillRect(0, 0, w, h * 0.45); // Taller top gradient for logo
+    this.vignetteTop.fillRect(0, 0, w, h * 0.45);
     
     this.vignetteBottom.clear();
     this.vignetteBottom.fillGradientStyle(0x000000, 0x000000, 0x1a0525, 0x1a0525, 0, 0, 0.9, 0.9);
-    this.vignetteBottom.fillRect(0, h * 0.65, w, h * 0.35); // Taller bottom gradient for text/button
-    
-    // 4. Title "SUGAR BLAST"
-    const titleY = isPortrait ? h * 0.25 : h * 0.22;
-    // Base size on width, but cap it so it doesn't get huge on landscape
-    const actualTitleFS = Math.max(48, Math.min(110, w * 0.12, h * 0.18));
-    this.titleContainer.setPosition(w/2, titleY);
-    
-    this.titleMain.setFontSize(`${actualTitleFS}px`);
-    this.titleShadow.setFontSize(`${actualTitleFS}px`);
-    this.titleShadow.setPosition(0, actualTitleFS * 0.08);
+    this.vignetteBottom.fillRect(0, h * 0.65, w, h * 0.35);
 
-    // 5. Number "1000"
-    const num1000FS = Math.max(70, Math.min(160, w * 0.20, h * 0.25));
-    const num1000Y = titleY + actualTitleFS * 0.85;
+    // --- Dynamic Scale Calculation (Prevents Overlap) ---
+    let titleFS = Math.max(48, Math.min(110, w * 0.15, h * 0.18));
+    let numFS = Math.max(70, Math.min(180, w * 0.25, h * 0.25));
+    let subFS = Math.max(12, Math.min(20, w * 0.035));
+    let btnH = Math.max(65, Math.min(95, h * 0.15));
+    let btnW = Math.max(220, Math.min(360, w * 0.5));
+    const footerFS = Math.max(10, Math.min(14, w * 0.022));
+
+    // Calculate total required vertical space (based on center-to-center distances)
+    const gap1 = (titleFS / 2) + (numFS / 2) - 10; // Title center -> 1000 center (slight intentional overlap is okay here for style)
+    const gap2 = (numFS / 2) + (subFS * 1.5) + 15; // 1000 center -> Subtitle center
+    const gap3 = (subFS * 1.5) + (btnH / 2) + 20;  // Subtitle center -> Button center
+    const gap4 = (btnH / 2) + 30;                  // Button center -> Footer
     
-    this.num1000Container.setPosition(w/2, num1000Y);
-    this.num1000Main.setFontSize(`${num1000FS}px`);
-    this.num1000Shadow.setFontSize(`${num1000FS}px`);
+    // totalReqHeight starts from the top edge of the title to the bottom of the footers
+    const totalReqHeight = (titleFS / 2) + gap1 + gap2 + gap3 + gap4 + footerFS * 3;
+    const availableHeight = h * 0.9; // Leave some margin
     
-    // Dynamic thick stroke to emulate 3D
-    this.num1000Main.setStroke('#ff8800', Math.max(6, num1000FS * 0.07));
-    this.num1000Shadow.setPosition(0, num1000FS * 0.08);
+    // Scale everything down if it doesn't fit
+    const scale = totalReqHeight > availableHeight ? availableHeight / totalReqHeight : 1;
     
-    // 6. Subtitle (Frosted Pill)
-    const subFS = Math.max(10, Math.min(16, w * 0.025));
-    const subY = num1000Y + num1000FS * 0.65;
-    
+    titleFS *= scale;
+    numFS *= scale;
+    subFS *= scale;
+    btnH *= scale;
+    btnW *= scale;
+    const actualG1 = gap1 * scale;
+    const actualG2 = gap2 * scale;
+    const actualG3 = gap3 * scale;
+
+    // --- Sequential Positioning ---
+    // Center the whole block vertically if we have extra space
+    const totalBlockHeight = (titleFS / 2) + actualG1 + actualG2 + actualG3 + (btnH / 2);
+    const startY = (h - footerFS * 3 - totalBlockHeight) / 2 + (titleFS / 2);
+
+    // 4. Title
+    const titleY = startY;
+    this.titleContainer.setPosition(w/2, titleY);
+    this.titleMain.setFontSize(`${titleFS}px`);
+    this.titleShadow.setFontSize(`${titleFS}px`);
+    // Cartoon styling - thicker strokes
+    this.titleMain.setStroke('#ff0070', Math.max(8, titleFS * 0.15));
+    this.titleShadow.setStroke('#ff0070', Math.max(16, titleFS * 0.3));
+    this.titleShadow.setPosition(0, titleFS * 0.08);
+
+    // 5. "1000" Graphic
+    const numY = titleY + actualG1;
+    this.num1000Container.setPosition(w/2, numY);
+    this.num1000Main.setFontSize(`${numFS}px`);
+    this.num1000Shadow.setFontSize(`${numFS}px`);
+    // Cartoon styling - vibrant orange with thick outline
+    this.num1000Main.setColor('#ffea00');
+    this.num1000Main.setStroke('#ff4400', Math.max(6, numFS * 0.08));
+    this.num1000Shadow.setStroke('#ff4400', Math.max(6, numFS * 0.08));
+    this.num1000Shadow.setPosition(0, numFS * 0.08);
+
+    // 6. Subtitle Pill
+    const subY = numY + actualG2;
     this.subtitleContainer.setPosition(w/2, subY);
     this.subtitleTxt.setFontSize(`${subFS}px`);
     this.subtitleTxt.setWordWrapWidth(w * 0.85);
     
-    // Draw Frosted Pill background precisely wrapping the text
-    const subWidth = Math.min(w * 0.9, this.subtitleTxt.width + 40);
-    const subHeight = this.subtitleTxt.height + 16;
+    const subWidth = Math.min(w * 0.9, this.subtitleTxt.width + 40 * scale);
+    const subHeight = this.subtitleTxt.height + 16 * scale;
     this.subtitlePill.clear();
-    // Dark base
-    this.subtitlePill.fillStyle(0x000000, 0.65);
+    // Solid vivid purple for cartoon look instead of glass
+    this.subtitlePill.fillStyle(0x330066, 1);
     this.subtitlePill.fillRoundedRect(-subWidth/2, -subHeight/2, subWidth, subHeight, subHeight/2);
-    // Colored border glow
-    this.subtitlePill.lineStyle(2, 0xff006a, 0.7);
+    // Thick bright outline
+    this.subtitlePill.lineStyle(3, 0xff00aa, 1);
     this.subtitlePill.strokeRoundedRect(-subWidth/2, -subHeight/2, subWidth, subHeight, subHeight/2);
-    
+
     // 7. Play Button
-    const btnW = Math.max(220, Math.min(320, w * 0.45));
-    const btnH = Math.max(65, Math.min(85, h * 0.12));
-    const btnY = isPortrait ? h * 0.72 : h * 0.75;
-    const btnRadius = btnH * 0.4;
-    
+    const btnY = subY + actualG3;
+    const btnRadius = btnH * 0.35;
     this.btnContainer.setPosition(w/2, btnY);
     this.playBtnHit.setPosition(0, 0).setSize(btnW, btnH);
     
-    // Outer Additive Glow
     this.btnGlow.clear();
-    this.btnGlow.fillStyle(0xff006a, 0.6);
-    this.btnGlow.fillRoundedRect(-btnW/2 - 15, -btnH/2 - 15, btnW + 30, btnH + 30, btnRadius + 10);
-    this.btnGlow.setBlendMode(Phaser.BlendModes.ADD);
+    this.btnGlow.fillStyle(0xff006a, 0.4);
+    this.btnGlow.fillRoundedRect(-btnW/2 - 10, -btnH/2 - 10, btnW + 20, btnH + 20, btnRadius + 5);
     
     this.btnBg.clear();
-    // Dark Drop Shadow
-    this.btnBg.fillStyle(0x000000, 0.6);
-    this.btnBg.fillRoundedRect(-btnW/2, -btnH/2 + 6, btnW, btnH, btnRadius);
-    // Base Magenta
-    this.btnBg.fillStyle(0xff006a, 1);
+    // Hard drop shadow
+    this.btnBg.fillStyle(0x000000, 0.7);
+    this.btnBg.fillRoundedRect(-btnW/2 + 4, -btnH/2 + 5, btnW, btnH, btnRadius);
+    // Solid bright magenta
+    this.btnBg.fillStyle(0xff0070, 1);
     this.btnBg.fillRoundedRect(-btnW/2, -btnH/2, btnW, btnH, btnRadius);
-    // Glossy Top Highlight
-    this.btnBg.fillStyle(0xff4d94, 0.9);
-    this.btnBg.fillRoundedRect(-btnW/2, -btnH/2, btnW, btnH * 0.45, btnRadius);
-    // Inner glass rim
-    this.btnBg.fillStyle(0xffffff, 0.35);
-    this.btnBg.fillRoundedRect(-btnW/2 + 4, -btnH/2 + 3, btnW - 8, btnH * 0.25, btnRadius - 2);
-    // Bright White Stroke Border
-    this.btnBg.lineStyle(2, 0xffffff, 0.9);
+    // Upper bright gloss (hard line, cartoon style)
+    this.btnBg.fillStyle(0xff55a0, 1);
+    this.btnBg.fillRoundedRect(-btnW/2, -btnH/2, btnW, btnH * 0.45, { tl: btnRadius, tr: btnRadius, bl: 0, br: 0 } as any);
+    // Thick gold border
+    this.btnBg.lineStyle(4, 0xffdd00, 1);
     this.btnBg.strokeRoundedRect(-btnW/2, -btnH/2, btnW, btnH, btnRadius);
     
-    const playFS = Math.max(24, Math.min(38, btnH * 0.45));
+    const playFS = Math.max(20, Math.min(42, btnH * 0.45));
     this.playText.setFontSize(`${playFS}px`);
+    this.playText.setColor('#ffffff');
+    this.playText.setStroke('#aa0044', Math.max(3, playFS * 0.15));
     this.playText.setPosition(0, -2);
-    
+
     // 8. Footers
-    const footerFS = Math.max(10, Math.min(14, w * 0.022));
     this.footerRTP.setFontSize(`${footerFS}px`);
     this.footerCopy.setFontSize(`${Math.max(9, footerFS - 2)}px`);
     
-    const baseBotSpace = Math.max(20, h * 0.04);
+    const baseBotSpace = Math.max(15, h * 0.03);
     this.footerCopy.setPosition(w/2, h - baseBotSpace);
     this.footerRTP.setPosition(w/2, h - baseBotSpace - footerFS * 1.8);
   }

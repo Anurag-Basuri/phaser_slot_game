@@ -261,7 +261,8 @@ import options from '../options';
             this.errorManager.showToast('INSUFFICIENT FUNDS', '#ff4466');
             return;
           }
-          this.autoSpinTimer = this.time.delayedCall(600, () => {
+          const delay = this.grid.turboMode ? 50 : 600;
+          this.autoSpinTimer = this.time.delayedCall(delay, () => {
             if (this.autoSpinActive && !this.fsActive) attemptSpin.call(this, 0);
           });
         }
