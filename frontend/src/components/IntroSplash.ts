@@ -27,7 +27,7 @@ export class IntroSplash {
 
     // Title
     const title = this.scene.add.text(0, 0, 'SUGAR BLAST 1000', {
-       fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
       fontSize: '58px',
       color: '#ffffff',
       stroke: '#ff006a',
@@ -39,21 +39,19 @@ export class IntroSplash {
 
     // Features
     const feat1 = this.scene.add.text(0, 0, '⭐ MULTIPLIER SPOTS UP TO 1024X', {
-       fontFamily: '"Outfit", "Inter", sans-serif',
-      fontSize: '20px',
-      color: '#ffffff',
-      fontStyle: '800',
-      shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 3, stroke: false, fill: true }
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontSize: '22px',
+      color: '#ff0070',
     }).setOrigin(0.5);
     this.container.add(feat1);
     this.container.setData('feat1', feat1);
 
     const feat2 = this.scene.add.text(0, 0, '💰 25,000X MAX WIN', {
-       fontFamily: '"Outfit", "Inter", sans-serif',
-      fontSize: '22px',
-      color: '#ffe600',
-      fontStyle: '900',
-      shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 3, stroke: false, fill: true }
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontSize: '26px',
+      color: '#00e676',
+      stroke: '#004422',
+      strokeThickness: 4,
     }).setOrigin(0.5);
     this.container.add(feat2);
     this.container.setData('feat2', feat2);
@@ -64,11 +62,10 @@ export class IntroSplash {
     this.container.setData('btnGfx', btnGfx);
 
     const btnTxt = this.scene.add.text(0, 0, 'CONTINUE', {
-       fontFamily: '"Outfit", "Inter", sans-serif',
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
       fontSize: '26px',
       color: '#ffffff',
-      fontStyle: '900',
-      shadow: { offsetX: 0, offsetY: 2, color: '#000000', blur: 2, stroke: true, fill: true }
+      shadow: { offsetX: 0, offsetY: 2, color: '#004422', blur: 0, stroke: false, fill: true }
     }).setOrigin(0.5);
     this.container.add(btnTxt);
     this.container.setData('btnTxt', btnTxt);
@@ -84,9 +81,11 @@ export class IntroSplash {
     });
 
     btnHit.on('pointerover', () => {
+      this.scene.tweens.killTweensOf([btnGfx, btnTxt]);
       this.scene.tweens.add({ targets: [btnGfx, btnTxt], scaleX: 1.05, scaleY: 1.05, duration: 100 });
     });
     btnHit.on('pointerout', () => {
+      this.scene.tweens.killTweensOf([btnGfx, btnTxt]);
       this.scene.tweens.add({ targets: [btnGfx, btnTxt], scaleX: 1, scaleY: 1, duration: 100 });
     });
   }
@@ -132,75 +131,66 @@ export class IntroSplash {
 
     const cx = w / 2;
     const cy = h / 2;
-    const modalW = Math.min(520, w * 0.88);
-    const modalH = Math.min(340, h * 0.55);
+    const modalW = Math.min(600, w * 0.95);
+    const modalH = Math.min(380, h * 0.65);
 
     const bg = this.container.getData('bg') as Phaser.GameObjects.Graphics;
     bg.clear();
     
-    // Outer drop shadow
-    bg.fillStyle(0x000000, 0.5);
-    bg.fillRoundedRect(cx - modalW / 2 + 8, cy - modalH / 2 + 10, modalW, modalH, 24);
+    // Comic drop shadow
+    bg.fillStyle(0x3a0055, 1);
+    bg.fillRoundedRect(cx - modalW / 2 + 12, cy - modalH / 2 + 12, modalW, modalH, 32);
 
-    // Premium dark gradient body
-    bg.fillGradientStyle(0x130f24, 0x130f24, 0x0a0812, 0x0a0812, 0.98);
-    bg.fillRoundedRect(cx - modalW / 2, cy - modalH / 2, modalW, modalH, 20);
+    // Creamy candy base
+    bg.fillGradientStyle(0xfff5f8, 0xfff5f8, 0xffe6f0, 0xffe6f0, 1);
+    bg.fillRoundedRect(cx - modalW / 2, cy - modalH / 2, modalW, modalH, 32);
 
-    // Glowing border outline
-    bg.lineStyle(2, 0xff006a, 0.6);
-    bg.strokeRoundedRect(cx - modalW / 2, cy - modalH / 2, modalW, modalH, 20);
+    // Hot pink thick border
+    bg.lineStyle(8, 0xff0070, 1);
+    bg.strokeRoundedRect(cx - modalW / 2, cy - modalH / 2, modalW, modalH, 32);
 
     // Inner rim highlight
-    bg.lineStyle(1, 0xffffff, 0.08);
-    bg.strokeRoundedRect(cx - modalW / 2 + 2, cy - modalH / 2 + 2, modalW - 4, modalH - 4, 18);
+    bg.lineStyle(4, 0xffffff, 1);
+    bg.strokeRoundedRect(cx - modalW / 2 + 6, cy - modalH / 2 + 6, modalW - 12, modalH - 12, 26);
 
     // Responsive font sizes
-    const titleFS = isMobile ? Math.min(32, modalW * 0.08) : Math.min(48, modalW * 0.10);
-    const titleStroke = isMobile ? Math.max(3, titleFS * 0.12) : Math.max(5, titleFS * 0.14);
-    const feat1FS = isMobile ? Math.min(14, modalW * 0.035) : Math.min(18, modalW * 0.04);
-    const feat2FS = isMobile ? Math.min(16, modalW * 0.04) : Math.min(20, modalW * 0.045);
-    const btnTxtFS = isMobile ? Math.min(20, modalW * 0.05) : Math.min(24, modalW * 0.055);
+    const titleFS = isMobile ? Math.min(36, modalW * 0.1) : Math.min(54, modalW * 0.12);
+    const titleStroke = isMobile ? 6 : 8;
+    const feat1FS = isMobile ? Math.min(16, modalW * 0.045) : 22;
+    const feat2FS = isMobile ? Math.min(18, modalW * 0.05) : 26;
+    const btnTxtFS = isMobile ? 22 : 28;
 
     const title = this.container.getData('title') as Phaser.GameObjects.Text;
-    title.setPosition(cx, cy - modalH * 0.26);
+    title.setPosition(cx, cy - modalH * 0.3);
     title.setFontSize(titleFS);
     title.setStroke('#ff006a', titleStroke);
 
     const feat1 = this.container.getData('feat1') as Phaser.GameObjects.Text;
-    feat1.setPosition(cx, cy - modalH * 0.02);
+    feat1.setPosition(cx, cy - modalH * 0.05);
     feat1.setFontSize(feat1FS);
 
     const feat2 = this.container.getData('feat2') as Phaser.GameObjects.Text;
-    feat2.setPosition(cx, cy + modalH * 0.10);
+    feat2.setPosition(cx, cy + modalH * 0.08);
     feat2.setFontSize(feat2FS);
 
-    const btnY = cy + modalH * 0.33;
-    const btnW = Math.min(220, modalW * 0.55);
-    const btnH = Math.min(50, modalH * 0.16);
-    const btnR = btnH / 2;
+    const btnY = cy + modalH * 0.32;
+    const btnW = Math.min(260, modalW * 0.65);
+    const btnH = Math.min(65, modalH * 0.2);
+    const btnR = 20;
 
     const btnGfx = this.container.getData('btnGfx') as Phaser.GameObjects.Graphics;
     btnGfx.clear();
+    btnGfx.setPosition(cx, btnY);
     
-    // Outer drop shadow
-    btnGfx.fillStyle(0x000000, 0.4);
-    btnGfx.fillRoundedRect(cx - btnW / 2 + 4, btnY - btnH / 2 + 5, btnW, btnH, btnR);
-
-    // Candy-pink gradient body
-    btnGfx.fillGradientStyle(0xff006a, 0xff006a, 0xcc0055, 0xcc0055, 1);
-    btnGfx.fillRoundedRect(cx - btnW / 2, btnY - btnH / 2, btnW, btnH, btnR);
-
-    // Inner top highlight (glassmorphic pill)
-    btnGfx.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.35, 0.35, 0, 0);
-    const highlightH = btnH * 0.5; // Must be >= corner radius or Phaser renderer breaks
-    const highlightR = Math.min(btnR - 2, highlightH);
-    btnGfx.fillRoundedRect(cx - btnW / 2 + 2, btnY - btnH / 2 + 2, btnW - 4, highlightH, {
-      tl: highlightR, tr: highlightR, bl: 0, br: 0
-    } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
-
-    // Crisp white border
-    btnGfx.lineStyle(2, 0xffffff, 0.9);
-    btnGfx.strokeRoundedRect(cx - btnW / 2, btnY - btnH / 2, btnW, btnH, btnR);
+    // Massive Green Candy Button
+    btnGfx.fillStyle(0x3a0055, 0.4);
+    btnGfx.fillRoundedRect(-btnW / 2 + 4, -btnH / 2 + 6, btnW, btnH, btnR); // Shadow
+    
+    btnGfx.fillGradientStyle(0x00e676, 0x00e676, 0x00b359, 0x00b359, 1);
+    btnGfx.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, btnR); // Body
+    
+    btnGfx.lineStyle(4, 0xffffff, 1);
+    btnGfx.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, btnR); // Border
 
     const btnTxt = this.container.getData('btnTxt') as Phaser.GameObjects.Text;
     btnTxt.setPosition(cx, btnY);
