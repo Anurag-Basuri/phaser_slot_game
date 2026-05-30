@@ -69,35 +69,53 @@ export class SettingsOverlay {
 
     const panel = this.scene.add.graphics();
     
-    // Main panel (Dark Navy)
-    panel.fillStyle(0x0d1b2a, 1);
+    // Comic shadow
+    panel.fillStyle(0x0a0015, 0.7);
+    panel.fillRoundedRect(panelX + 8, panelY + 8, panelW, panelH, 16);
+
+    // Main panel (Deep Purple Candy)
+    panel.fillGradientStyle(0x3a1055, 0x1e0e40, 0x2a1455, 0x1a0533, 1);
     panel.fillRoundedRect(panelX, panelY, panelW, panelH, 16);
 
-    // Thin Orange Border
-    panel.lineStyle(2, 0xff8c00, 0.8);
+    // Thick Pink Border
+    panel.lineStyle(6, 0xff66aa, 1);
     panel.strokeRoundedRect(panelX, panelY, panelW, panelH, 16);
+    
+    // Inner rim
+    panel.lineStyle(2, 0xffffff, 0.35);
+    panel.strokeRoundedRect(panelX + 5, panelY + 5, panelW - 10, panelH - 10, 12);
 
     panel.setInteractive(new Phaser.Geom.Rectangle(panelX, panelY, panelW, panelH), Phaser.Geom.Rectangle.Contains);
     this.container.add(panel);
 
     // Title text inside panel
     const titleText = this.scene.add.text(panelX + 30, panelY + 20, 'SETTINGS', { 
-      fontSize: '28px', color: '#ffffff', fontFamily: '"Inter", "Roboto", "Arial", sans-serif', fontStyle: 'bold'
-    }).setOrigin(0, 0);
+      fontSize: '28px', color: '#ffc844', fontFamily: '"Luckiest Guy", cursive, sans-serif', resolution: 2
+    }).setOrigin(0, 0).setShadow(0, 2, '#3a0055', 0, false, true);
     this.container.add(titleText);
 
     // Divider under title
     const titleGfx = this.scene.add.graphics();
-    titleGfx.lineStyle(1, 0xff8c00, 0.6);
+    titleGfx.lineStyle(2, 0xff66aa, 0.6);
     titleGfx.lineBetween(panelX + 30, panelY + 55, panelX + panelW - 30, panelY + 55);
     this.container.add(titleGfx);
 
     // Sleek Close button
     const closeBtnX = panelX + panelW - 30;
     const closeBtnY = panelY + 35;
+    
+    const closeBtnGfx = this.scene.add.graphics();
+    closeBtnGfx.fillStyle(0x0a0015, 0.6);
+    closeBtnGfx.fillCircle(closeBtnX + 3, closeBtnY + 4, 22);
+    closeBtnGfx.fillGradientStyle(0xff3333, 0xee1111, 0xcc0000, 0xaa0000, 1);
+    closeBtnGfx.fillCircle(closeBtnX, closeBtnY, 22);
+    closeBtnGfx.lineStyle(4, 0xffffff, 1);
+    closeBtnGfx.strokeCircle(closeBtnX, closeBtnY, 22);
+    this.container.add(closeBtnGfx);
+
     const closeBtn = this.scene.add.text(closeBtnX, closeBtnY, '✕', { 
-      fontSize: '24px', color: '#ffffff', fontFamily: '"Inter", "Roboto", "Arial", sans-serif'
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      fontSize: '24px', color: '#ffffff', fontFamily: '"Luckiest Guy", cursive, sans-serif', resolution: 2
+    }).setOrigin(0.5).setShadow(0, 2, '#660000', 0, false, true).setInteractive({ useHandCursor: true });
 
     closeBtn.on('pointerdown', () => {
       this.scene.audio.playSound('button');
@@ -108,9 +126,10 @@ export class SettingsOverlay {
     this.container.add(closeBtn);
 
     const labelStyle: Phaser.Types.GameObjects.Text.TextStyle = {
-      fontSize: isShort ? '16px' : '18px',
+      fontSize: isShort ? '16px' : '20px',
       color: '#ffffff',
-      fontFamily: '"Inter", "Roboto", "Arial", sans-serif'
+      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      resolution: 2
     };
 
     if (isShort) {
@@ -146,17 +165,18 @@ export class SettingsOverlay {
       // Bottom Info
       const infoY = panelY + panelH - 45;
       const infoBox = this.scene.add.graphics();
-      infoBox.fillStyle(0xffe6f0, 1);
+      infoBox.fillStyle(0x1e0e40, 1);
       infoBox.fillRoundedRect(panelX + 20, infoY, panelW - 40, 30, 15);
-      infoBox.lineStyle(2, 0xff0070, 0.4);
+      infoBox.lineStyle(2, 0xff66aa, 0.4);
       infoBox.strokeRoundedRect(panelX + 20, infoY, panelW - 40, 30, 15);
       this.container.add(infoBox);
 
       const infoText = this.scene.add.text(w / 2, infoY + 15, 'Sugar Blast 1000  •  RTP: 96.53%  •  High Volatility', { 
         fontSize: '12px',
-        color: '#ff0070',
-        fontFamily: '"Luckiest Guy", cursive, sans-serif'
-      }).setOrigin(0.5);
+        color: '#ffc844',
+        fontFamily: '"Luckiest Guy", cursive, sans-serif',
+        resolution: 2
+      }).setOrigin(0.5).setShadow(0, 2, '#1a0033', 0, false, true);
       this.container.add(infoText);
 
     } else {
@@ -192,23 +212,25 @@ export class SettingsOverlay {
 
       // Bottom Info Box
       const infoBox = this.scene.add.graphics();
-      infoBox.fillStyle(0x000000, 0.4);
+      infoBox.fillStyle(0x1e0e40, 1);
       infoBox.fillRoundedRect(panelX + 30, rowY, panelW - 60, 80, 20);
-      infoBox.lineStyle(3, 0xff0070, 0.8);
+      infoBox.lineStyle(3, 0xff66aa, 0.8);
       infoBox.strokeRoundedRect(panelX + 30, rowY, panelW - 60, 80, 20);
       this.container.add(infoBox);
 
       this.container.add(this.scene.add.text(w / 2, rowY + 25, 'SUGAR BLAST 1000', { 
         fontSize: '22px',
-        color: '#ff0070',
-        fontFamily: '"Luckiest Guy", cursive, sans-serif'
-      }).setOrigin(0.5));
+        color: '#ffc844',
+        fontFamily: '"Luckiest Guy", cursive, sans-serif',
+        resolution: 2
+      }).setOrigin(0.5).setShadow(0, 2, '#3a0055', 0, false, true));
 
       this.container.add(this.scene.add.text(w / 2, rowY + 55, 'RTP: 96.53%   •   Max Win: 25,000×', { 
         fontSize: '14px',
-        color: '#ff66a3',
-        fontFamily: '"Luckiest Guy", cursive, sans-serif'
-      }).setOrigin(0.5));
+        color: '#ff66aa',
+        fontFamily: '"Luckiest Guy", cursive, sans-serif',
+        resolution: 2
+      }).setOrigin(0.5).setShadow(0, 2, '#3a0055', 0, false, true));
     }
   }
 
@@ -221,14 +243,14 @@ export class SettingsOverlay {
 
     // Row backplate
     const backplate = this.scene.add.graphics();
-    backplate.fillStyle(0x1a2436, 0.8);
-    backplate.fillRoundedRect(tileX, tileY, tileW, tileH, 8);
-    backplate.lineStyle(1, 0xff8c00, 0.4);
-    backplate.strokeRoundedRect(tileX, tileY, tileW, tileH, 8);
+    backplate.fillStyle(0x2a1455, 1);
+    backplate.fillRoundedRect(tileX, tileY, tileW, tileH, 12);
+    backplate.lineStyle(2, 0xff66aa, 0.4);
+    backplate.strokeRoundedRect(tileX, tileY, tileW, tileH, 12);
     this.container.add(backplate);
 
     // Label text
-    const labelTxt = this.scene.add.text(tileX + 20, tileY + tileH / 2 + 2, label, labelStyle).setOrigin(0, 0.5);
+    const labelTxt = this.scene.add.text(tileX + 20, tileY + tileH / 2 + 2, label, labelStyle).setOrigin(0, 0.5).setShadow(0, 2, '#1a0033', 0, false, true);
     this.container.add(labelTxt);
 
     // Toggle switch parameters (chunky jelly bean switch)
@@ -310,14 +332,14 @@ export class SettingsOverlay {
 
     // Row backplate
     const backplate = this.scene.add.graphics();
-    backplate.fillStyle(0x1a2436, 0.8);
-    backplate.fillRoundedRect(tileX, tileY, tileW, tileH, 8);
-    backplate.lineStyle(1, 0xff8c00, 0.4);
-    backplate.strokeRoundedRect(tileX, tileY, tileW, tileH, 8);
+    backplate.fillStyle(0x2a1455, 1);
+    backplate.fillRoundedRect(tileX, tileY, tileW, tileH, 12);
+    backplate.lineStyle(2, 0xff66aa, 0.4);
+    backplate.strokeRoundedRect(tileX, tileY, tileW, tileH, 12);
     this.container.add(backplate);
 
     // Label text
-    const labelTxt = this.scene.add.text(tileX + 20, tileY + tileH / 2 + 2, label, labelStyle).setOrigin(0, 0.5);
+    const labelTxt = this.scene.add.text(tileX + 20, tileY + tileH / 2 + 2, label, labelStyle).setOrigin(0, 0.5).setShadow(0, 2, '#1a0033', 0, false, true);
     this.container.add(labelTxt);
 
     // Segmented pill controller sizing
@@ -327,9 +349,9 @@ export class SettingsOverlay {
     const trackY = tileY + (tileH - trackH) / 2;
 
     const trackBg = this.scene.add.graphics();
-    trackBg.fillStyle(0xffb3cc, 1);
+    trackBg.fillStyle(0x1a0533, 1);
     trackBg.fillRoundedRect(trackX, trackY, trackW, trackH, trackH / 2);
-    trackBg.lineStyle(3, 0xff0070, 1);
+    trackBg.lineStyle(3, 0xff66aa, 1);
     trackBg.strokeRoundedRect(trackX, trackY, trackW, trackH, trackH / 2);
     this.container.add(trackBg);
 

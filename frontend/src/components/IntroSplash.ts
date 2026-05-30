@@ -15,7 +15,7 @@ export class IntroSplash {
   private create() {
     this.container = this.scene.add.container(0, 0).setDepth(2000).setVisible(false);
 
-    // Dark overlay
+    // Dark overlay — clicking outside the modal dismisses it
     const overlay = this.scene.add.graphics();
     this.container.add(overlay);
     this.container.setData('overlay', overlay);
@@ -30,28 +30,38 @@ export class IntroSplash {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
       fontSize: '58px',
       color: '#ffffff',
-      stroke: '#ff006a',
-      strokeThickness: 8,
-      shadow: { offsetX: 0, offsetY: 6, color: '#000000', blur: 6, stroke: true, fill: true }
+      stroke: '#7b2ff2',
+      strokeThickness: 10,
+      shadow: { offsetX: 0, offsetY: 6, color: '#1a0033', blur: 0, stroke: true, fill: true },
+      resolution: 2
     }).setOrigin(0.5);
     this.container.add(title);
     this.container.setData('title', title);
 
+    // Divider line
+    const divider = this.scene.add.graphics();
+    this.container.add(divider);
+    this.container.setData('divider', divider);
+
     // Features
-    const feat1 = this.scene.add.text(0, 0, '⭐ MULTIPLIER SPOTS UP TO 1024X', {
+    const feat1 = this.scene.add.text(0, 0, '⭐  MULTIPLIER SPOTS UP TO 1024X', {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
       fontSize: '22px',
-      color: '#ff0070',
+      color: '#ffe066',
+      shadow: { offsetX: 0, offsetY: 3, color: '#33004d', blur: 0, stroke: false, fill: true },
+      resolution: 2
     }).setOrigin(0.5);
     this.container.add(feat1);
     this.container.setData('feat1', feat1);
 
-    const feat2 = this.scene.add.text(0, 0, '💰 25,000X MAX WIN', {
+    const feat2 = this.scene.add.text(0, 0, '💰  25,000X MAX WIN', {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
       fontSize: '26px',
-      color: '#00e676',
-      stroke: '#004422',
+      color: '#00ff88',
+      stroke: '#003322',
       strokeThickness: 4,
+      shadow: { offsetX: 0, offsetY: 3, color: '#001a11', blur: 0, stroke: false, fill: true },
+      resolution: 2
     }).setOrigin(0.5);
     this.container.add(feat2);
     this.container.setData('feat2', feat2);
@@ -63,14 +73,17 @@ export class IntroSplash {
 
     const btnTxt = this.scene.add.text(0, 0, 'CONTINUE', {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      fontSize: '26px',
+      fontSize: '28px',
       color: '#ffffff',
-      shadow: { offsetX: 0, offsetY: 2, color: '#004422', blur: 0, stroke: false, fill: true }
+      stroke: '#005522',
+      strokeThickness: 4,
+      shadow: { offsetX: 0, offsetY: 4, color: '#003311', blur: 0, stroke: false, fill: true },
+      resolution: 2
     }).setOrigin(0.5);
     this.container.add(btnTxt);
     this.container.setData('btnTxt', btnTxt);
 
-    const btnHit = this.scene.add.rectangle(0, 0, 240, 60, 0xffffff, 0)
+    const btnHit = this.scene.add.rectangle(0, 0, 260, 65, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
     this.container.add(btnHit);
     this.container.setData('btnHit', btnHit);
@@ -82,11 +95,11 @@ export class IntroSplash {
 
     btnHit.on('pointerover', () => {
       this.scene.tweens.killTweensOf([btnGfx, btnTxt]);
-      this.scene.tweens.add({ targets: [btnGfx, btnTxt], scaleX: 1.05, scaleY: 1.05, duration: 100 });
+      this.scene.tweens.add({ targets: [btnGfx, btnTxt], scaleX: 1.06, scaleY: 1.06, duration: 120, ease: 'Back.easeOut' });
     });
     btnHit.on('pointerout', () => {
       this.scene.tweens.killTweensOf([btnGfx, btnTxt]);
-      this.scene.tweens.add({ targets: [btnGfx, btnTxt], scaleX: 1, scaleY: 1, duration: 100 });
+      this.scene.tweens.add({ targets: [btnGfx, btnTxt], scaleX: 1, scaleY: 1, duration: 120 });
     });
   }
 
@@ -99,7 +112,8 @@ export class IntroSplash {
     this.scene.tweens.add({
       targets: this.container,
       alpha: 1,
-      duration: 300
+      duration: 350,
+      ease: 'Cubic.easeOut'
     });
     this.resize();
   }
@@ -109,7 +123,8 @@ export class IntroSplash {
     this.scene.tweens.add({
       targets: this.container,
       alpha: 0,
-      duration: 300,
+      duration: 250,
+      ease: 'Cubic.easeIn',
       onComplete: () => {
         this.container.setVisible(false);
         if (this.onCompleteFn) this.onCompleteFn();
@@ -123,80 +138,113 @@ export class IntroSplash {
     const h = this.scene.scale.height;
     const isMobile = w < 600;
 
+    // ── Dark overlay (click outside to continue) ──
     const overlay = this.container.getData('overlay') as Phaser.GameObjects.Graphics;
     overlay.clear();
-    overlay.fillStyle(0x000000, 0.75);
+    overlay.fillStyle(0x0a0015, 0.82);
     overlay.fillRect(0, 0, w, h);
     overlay.setInteractive(new Phaser.Geom.Rectangle(0, 0, w, h), Phaser.Geom.Rectangle.Contains);
+    overlay.removeAllListeners();
+    overlay.on('pointerdown', () => {
+      if (this.isVisible) this.hide();
+    });
 
     const cx = w / 2;
     const cy = h / 2;
-    const modalW = Math.min(600, w * 0.95);
-    const modalH = Math.min(380, h * 0.65);
+    const modalW = Math.min(580, w * 0.92);
+    const modalH = Math.min(400, h * 0.68);
 
+    // ── Modal Background — Rich purple candy gradient ──
     const bg = this.container.getData('bg') as Phaser.GameObjects.Graphics;
     bg.clear();
-    
-    // Comic drop shadow
-    bg.fillStyle(0x3a0055, 1);
-    bg.fillRoundedRect(cx - modalW / 2 + 12, cy - modalH / 2 + 12, modalW, modalH, 32);
 
-    // Creamy candy base
-    bg.fillGradientStyle(0xfff5f8, 0xfff5f8, 0xffe6f0, 0xffe6f0, 1);
-    bg.fillRoundedRect(cx - modalW / 2, cy - modalH / 2, modalW, modalH, 32);
+    const mX = cx - modalW / 2;
+    const mY = cy - modalH / 2;
 
-    // Hot pink thick border
-    bg.lineStyle(8, 0xff0070, 1);
-    bg.strokeRoundedRect(cx - modalW / 2, cy - modalH / 2, modalW, modalH, 32);
+    // Deep shadow
+    bg.fillStyle(0x0a0015, 0.7);
+    bg.fillRoundedRect(mX + 8, mY + 10, modalW, modalH, 28);
 
-    // Inner rim highlight
-    bg.lineStyle(4, 0xffffff, 1);
-    bg.strokeRoundedRect(cx - modalW / 2 + 6, cy - modalH / 2 + 6, modalW - 12, modalH - 12, 26);
+    // Main gradient body — deep purple to violet
+    bg.fillGradientStyle(0x2d1052, 0x3a1866, 0x1a0a3a, 0x220e48, 1, 1, 1, 1);
+    bg.fillRoundedRect(mX, mY, modalW, modalH, 28);
 
-    // Responsive font sizes
-    const titleFS = isMobile ? Math.min(36, modalW * 0.1) : Math.min(54, modalW * 0.12);
-    const titleStroke = isMobile ? 6 : 8;
-    const feat1FS = isMobile ? Math.min(16, modalW * 0.045) : 22;
-    const feat2FS = isMobile ? Math.min(18, modalW * 0.05) : 26;
+    // Glossy top reflection
+    bg.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.12, 0.12, 0, 0);
+    bg.fillRoundedRect(mX + 4, mY + 4, modalW - 8, modalH * 0.35, { tl: 24, tr: 24, bl: 0, br: 0 });
+
+    // Thick golden candy border
+    bg.lineStyle(6, 0xffc844, 1);
+    bg.strokeRoundedRect(mX, mY, modalW, modalH, 28);
+
+    // Inner white highlight rim
+    bg.lineStyle(2, 0xffffff, 0.35);
+    bg.strokeRoundedRect(mX + 5, mY + 5, modalW - 10, modalH - 10, 22);
+
+    // ── Responsive font sizes ──
+    const titleFS = isMobile ? Math.min(34, modalW * 0.09) : Math.min(52, modalW * 0.11);
+    const titleStroke = isMobile ? 7 : 10;
+    const feat1FS = isMobile ? Math.min(16, modalW * 0.044) : 21;
+    const feat2FS = isMobile ? Math.min(18, modalW * 0.05) : 25;
     const btnTxtFS = isMobile ? 22 : 28;
 
+    // ── Title ──
     const title = this.container.getData('title') as Phaser.GameObjects.Text;
-    title.setPosition(cx, cy - modalH * 0.3);
+    title.setPosition(cx, cy - modalH * 0.30);
     title.setFontSize(titleFS);
-    title.setStroke('#ff006a', titleStroke);
+    title.setStroke('#7b2ff2', titleStroke);
 
+    // ── Divider ──
+    const divider = this.container.getData('divider') as Phaser.GameObjects.Graphics;
+    divider.clear();
+    const divY = cy - modalH * 0.14;
+    const divHalfW = modalW * 0.3;
+    divider.lineStyle(2, 0xffc844, 0.5);
+    divider.lineBetween(cx - divHalfW, divY, cx + divHalfW, divY);
+    // Diamond center ornament
+    divider.fillStyle(0xffc844, 0.7);
+    divider.fillRect(cx - 4, divY - 4, 8, 8);
+
+    // ── Features ──
     const feat1 = this.container.getData('feat1') as Phaser.GameObjects.Text;
-    feat1.setPosition(cx, cy - modalH * 0.05);
+    feat1.setPosition(cx, cy - modalH * 0.02);
     feat1.setFontSize(feat1FS);
 
     const feat2 = this.container.getData('feat2') as Phaser.GameObjects.Text;
-    feat2.setPosition(cx, cy + modalH * 0.08);
+    feat2.setPosition(cx, cy + modalH * 0.12);
     feat2.setFontSize(feat2FS);
 
-    const btnY = cy + modalH * 0.32;
-    const btnW = Math.min(260, modalW * 0.65);
-    const btnH = Math.min(65, modalH * 0.2);
-    const btnR = 20;
+    // ── Continue Button ──
+    const btnY = cy + modalH * 0.34;
+    const btnW = Math.min(260, modalW * 0.6);
+    const btnH = Math.min(62, modalH * 0.18);
+    const btnR = 18;
 
     const btnGfx = this.container.getData('btnGfx') as Phaser.GameObjects.Graphics;
     btnGfx.clear();
     btnGfx.setPosition(cx, btnY);
-    
-    // Massive Green Candy Button
-    btnGfx.fillStyle(0x3a0055, 0.4);
-    btnGfx.fillRoundedRect(-btnW / 2 + 4, -btnH / 2 + 6, btnW, btnH, btnR); // Shadow
-    
-    btnGfx.fillGradientStyle(0x00e676, 0x00e676, 0x00b359, 0x00b359, 1);
-    btnGfx.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, btnR); // Body
-    
-    btnGfx.lineStyle(4, 0xffffff, 1);
-    btnGfx.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, btnR); // Border
+
+    // Button shadow
+    btnGfx.fillStyle(0x003311, 0.6);
+    btnGfx.fillRoundedRect(-btnW / 2 + 3, -btnH / 2 + 5, btnW, btnH, btnR);
+
+    // Button body gradient
+    btnGfx.fillGradientStyle(0x00e676, 0x00e676, 0x00b050, 0x00b050, 1, 1, 1, 1);
+    btnGfx.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, btnR);
+
+    // Top highlight
+    btnGfx.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.3, 0.3, 0, 0);
+    btnGfx.fillRoundedRect(-btnW / 2 + 4, -btnH / 2 + 2, btnW - 8, btnH * 0.4, { tl: btnR - 2, tr: btnR - 2, bl: 0, br: 0 });
+
+    // White border
+    btnGfx.lineStyle(3, 0xffffff, 0.9);
+    btnGfx.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, btnR);
 
     const btnTxt = this.container.getData('btnTxt') as Phaser.GameObjects.Text;
     btnTxt.setPosition(cx, btnY);
     btnTxt.setFontSize(btnTxtFS);
 
     const btnHit = this.container.getData('btnHit') as Phaser.GameObjects.Rectangle;
-    btnHit.setPosition(cx, btnY).setSize(btnW, btnH);
+    btnHit.setPosition(cx, btnY).setSize(btnW + 20, btnH + 10);
   }
 }
