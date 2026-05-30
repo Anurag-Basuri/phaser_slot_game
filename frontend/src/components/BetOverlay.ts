@@ -127,20 +127,20 @@ export class BetOverlay {
 
     const panel = this.scene.add.graphics();
     // Comic drop shadow
-    panel.fillStyle(0x3a0055, 1);
-    panel.fillRoundedRect(pX + 12, pY + 12, pW, pH, rad);
+    panel.fillStyle(0x0a0015, 0.7);
+    panel.fillRoundedRect(pX + 8, pY + 8, pW, pH, rad);
     
-    // Creamy candy base
-    panel.fillGradientStyle(0xfff5f8, 0xfff5f8, 0xffe6f0, 0xffe6f0, 1);
+    // Deep purple candy base
+    panel.fillGradientStyle(0x3a1055, 0x1e0e40, 0x2a1455, 0x1a0533, 1);
     panel.fillRoundedRect(pX, pY, pW, pH, rad);
     
     // Hot pink thick border
-    panel.lineStyle(8, 0xff0070, 1);
+    panel.lineStyle(6, 0xff66aa, 1);
     panel.strokeRoundedRect(pX, pY, pW, pH, rad);
 
     // Inner rim
-    panel.lineStyle(4, 0xffffff, 1);
-    panel.strokeRoundedRect(pX + 6, pY + 6, pW - 12, pH - 12, 26);
+    panel.lineStyle(2, 0xffffff, 0.35);
+    panel.strokeRoundedRect(pX + 5, pY + 5, pW - 10, pH - 10, 26);
     
     // Prevent clicks passing through
     panel.setInteractive(new Phaser.Geom.Rectangle(pX, pY, pW, pH), Phaser.Geom.Rectangle.Contains);
@@ -150,9 +150,9 @@ export class BetOverlay {
     const closeBtnX = pX + pW - 10;
     const closeBtnY = pY + 10;
     const closeBtnGfx = this.scene.add.graphics();
-    closeBtnGfx.fillStyle(0x3a0055, 1);
-    closeBtnGfx.fillCircle(closeBtnX + 4, closeBtnY + 4, 26);
-    closeBtnGfx.fillStyle(0xff3333, 1);
+    closeBtnGfx.fillStyle(0x0a0015, 0.6);
+    closeBtnGfx.fillCircle(closeBtnX + 3, closeBtnY + 4, 26);
+    closeBtnGfx.fillGradientStyle(0xff3333, 0xee1111, 0xcc0000, 0xaa0000, 1);
     closeBtnGfx.fillCircle(closeBtnX, closeBtnY, 26);
     closeBtnGfx.lineStyle(4, 0xffffff, 1);
     closeBtnGfx.strokeCircle(closeBtnX, closeBtnY, 26);
@@ -161,7 +161,8 @@ export class BetOverlay {
     const closeBtn = this.scene.add.text(closeBtnX, closeBtnY, '✕', {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
       fontSize: '28px', color: '#ffffff',
-    }).setOrigin(0.5).setShadow(0, 2, '#000000', 0, false, true).setInteractive({ useHandCursor: true });
+      resolution: 2
+    }).setOrigin(0.5).setShadow(0, 2, '#660000', 0, false, true).setInteractive({ useHandCursor: true });
     
     closeBtn.on('pointerdown', () => {
       this.scene.audio.playSound('button');
@@ -177,11 +178,11 @@ export class BetOverlay {
     const headerX = pX + pW / 2 - headerW / 2;
     const headerY = pY - 15;
     const header = this.scene.add.graphics();
-    header.fillStyle(0x3a0055, 1);
+    header.fillStyle(0x0a0015, 0.6);
     header.fillRoundedRect(headerX + 4, headerY + 4, headerW, headerH, 25);
-    header.fillGradientStyle(0xff0070, 0xff0070, 0xcc0055, 0xcc0055, 1);
+    header.fillGradientStyle(0xff66aa, 0xff0070, 0xcc0055, 0xaa0044, 1);
     header.fillRoundedRect(headerX, headerY, headerW, headerH, 25);
-    header.lineStyle(3, 0xffffff, 1);
+    header.lineStyle(3, 0xffffff, 0.9);
     header.strokeRoundedRect(headerX, headerY, headerW, headerH, 25);
     this.container.add(header);
 
@@ -190,12 +191,13 @@ export class BetOverlay {
     this.txtMultiplier = this.scene.add.text(pX + pW / 2, headerY + headerH / 2, `BET MULTIPLIER ${level}x`, {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
       fontSize: '18px', color: '#ffffff',
-    }).setOrigin(0.5).setShadow(0, 2, '#000000', 0, false, true);
+      stroke: '#441177', strokeThickness: 5, resolution: 2
+    }).setOrigin(0.5).setShadow(0, 3, '#1a0033', 0, false, true);
     this.container.add(this.txtMultiplier);
 
     // ── Thin separator under title ──
     const sep1 = this.scene.add.graphics();
-    sep1.lineStyle(2, 0xffb3cc, 1);
+    sep1.lineStyle(2, 0xff66aa, 0.4);
     sep1.lineBetween(pX + 20, pY + 50, pX + pW - 20, pY + 50);
     this.container.add(sep1);
 
@@ -229,10 +231,10 @@ export class BetOverlay {
     const maxGfx = this.scene.add.graphics();
     
     // Massive Green Candy Button
-    maxGfx.fillStyle(0x3a0055, 0.4);
-    maxGfx.fillRoundedRect(maxX + 4, maxY + 6, maxW, maxH, 20); // Shadow
+    maxGfx.fillStyle(0x0a0015, 0.6);
+    maxGfx.fillRoundedRect(maxX + 4, maxY + 4, maxW, maxH, 20); // Shadow
     
-    maxGfx.fillGradientStyle(0x00e676, 0x00e676, 0x00b359, 0x00b359, 1);
+    maxGfx.fillGradientStyle(0x33ff99, 0x00e676, 0x00cc66, 0x00994d, 1);
     maxGfx.fillRoundedRect(maxX, maxY, maxW, maxH, 20); // Body
     
     maxGfx.lineStyle(4, 0xffffff, 1);
@@ -242,8 +244,8 @@ export class BetOverlay {
 
     const maxTxt = this.scene.add.text(maxX + maxW / 2, maxY + maxH / 2, 'BET MAX', {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      fontSize: '24px', color: '#ffffff',
-    }).setOrigin(0.5).setShadow(0, 3, '#004422', 0, false, true);
+      fontSize: '24px', color: '#ffffff', stroke: '#004422', strokeThickness: 5, resolution: 2
+    }).setOrigin(0.5).setShadow(0, 4, '#1a0033', 0, false, true);
     this.container.add(maxTxt);
 
     const maxHit = this.scene.add.rectangle(maxX + maxW / 2, maxY + maxH / 2, maxW, maxH, 0x000000, 0)
@@ -271,8 +273,8 @@ export class BetOverlay {
   private buildLabel(cx: number, cy: number, text: string) {
     this.container.add(this.scene.add.text(cx, cy, text, {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      fontSize: '20px', color: '#ff0070',
-    }).setOrigin(0.5));
+      fontSize: '20px', color: '#ffc844', resolution: 2
+    }).setOrigin(0.5).setShadow(0, 2, '#3a0055', 0, false, true));
   }
 
   // ── Build a value row: [−] [ value ] [+] ──
@@ -285,16 +287,16 @@ export class BetOverlay {
 
     // Value field — pill shape
     const field = this.scene.add.graphics();
-    field.fillStyle(0xffffff, 1);
+    field.fillStyle(0x2a1455, 1);
     field.fillRoundedRect(fieldX, rowY, fieldW, rowH, 16);
-    field.lineStyle(3, 0xffb3cc, 1);
+    field.lineStyle(2, 0xff66aa, 0.6);
     field.strokeRoundedRect(fieldX, rowY, fieldW, rowH, 16);
     this.container.add(field);
 
     const txt = this.scene.add.text(fieldX + fieldW / 2, rowY + rowH / 2, '', {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
-      fontSize: '28px', color: '#3a0055',
-    }).setOrigin(0.5);
+      fontSize: '28px', color: '#00ff88', stroke: '#003311', strokeThickness: 4, resolution: 2
+    }).setOrigin(0.5).setShadow(0, 3, '#000000', 0, false, true);
     this.container.add(txt);
 
     // ── Minus button ──
@@ -335,18 +337,18 @@ export class BetOverlay {
     const gfx = this.scene.add.graphics();
 
     if (isPlus) {
-      // Green circle bouncy
-      gfx.fillStyle(0x3a0055, 0.4);
-      gfx.fillCircle(cx + 2, cy + 3, r); // shadow
-      gfx.fillGradientStyle(0x00e676, 0x00e676, 0x00b359, 0x00b359, 1);
+      // Cyan Blue circle bouncy
+      gfx.fillStyle(0x0a0015, 0.6);
+      gfx.fillCircle(cx + 2, cy + 4, r); // shadow
+      gfx.fillGradientStyle(0x33ddff, 0x00ccff, 0x0099ee, 0x0077cc, 1);
       gfx.fillCircle(cx, cy, r);
       gfx.lineStyle(3, 0xffffff, 1);
       gfx.strokeCircle(cx, cy, r);
     } else {
-      // Pink circle bouncy
-      gfx.fillStyle(0x3a0055, 0.4);
-      gfx.fillCircle(cx + 2, cy + 3, r);
-      gfx.fillGradientStyle(0xff0070, 0xff0070, 0xcc0055, 0xcc0055, 1);
+      // Golden Orange circle bouncy
+      gfx.fillStyle(0x0a0015, 0.6);
+      gfx.fillCircle(cx + 2, cy + 4, r);
+      gfx.fillGradientStyle(0xffcc33, 0xffaa00, 0xee8800, 0xcc6600, 1);
       gfx.fillCircle(cx, cy, r);
       gfx.lineStyle(3, 0xffffff, 1);
       gfx.strokeCircle(cx, cy, r);
