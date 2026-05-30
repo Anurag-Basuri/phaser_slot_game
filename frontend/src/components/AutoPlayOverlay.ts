@@ -6,14 +6,15 @@ export class AutoPlayOverlay {
   private container!: Phaser.GameObjects.Container;
   private visible = false;
 
-  private onStartCallback: ((spins: number, turbo: boolean, quick: boolean, skip: boolean) => void) | null = null;
+  private onStartCallback: ((spins: number, turbo: boolean, quick: boolean, skip: boolean, stopOnFeature: boolean) => void) | null = null;
   
   private turboSpin = false;
   private quickSpin = false;
   private skipScreens = false;
+  private stopOnFeature = true;
   private _isTurboDisabled = false;
   private spins = 50;
-  private allowedSpins = [10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 150, 300, 500, 1000];
+  private allowedSpins = [10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 150, 300, 500, 1000, 0];
 
   private txtSpinsCount!: Phaser.GameObjects.Text;
   private btnStartTxt!: Phaser.GameObjects.Text;
@@ -58,7 +59,7 @@ export class AutoPlayOverlay {
     });
   }
 
-  public setCallbacks(onStart: (spins: number, turbo: boolean, quick: boolean, skip: boolean) => void) {
+  public setCallbacks(onStart: (spins: number, turbo: boolean, quick: boolean, skip: boolean, stopOnFeature: boolean) => void) {
     this.onStartCallback = onStart;
   }
 
@@ -132,20 +133,20 @@ export class AutoPlayOverlay {
 
     const panelBg = this.scene.add.graphics();
     // Hard comic-book drop shadow
-    panelBg.fillStyle(0x3a0055, 1);
-    panelBg.fillRoundedRect(pX + 12, pY + 12, pW, pH, 32);
+    panelBg.fillStyle(0x0a0015, 0.7);
+    panelBg.fillRoundedRect(pX + 8, pY + 8, pW, pH, 32);
 
-    // Main panel (Creamy off-white base)
-    panelBg.fillGradientStyle(0xfff5f8, 0xfff5f8, 0xffe6f0, 0xffe6f0, 1);
+    // Main panel (Deep purple candy gradient)
+    panelBg.fillGradientStyle(0x3a1055, 0x1e0e40, 0x2a1455, 0x1a0533, 1);
     panelBg.fillRoundedRect(pX, pY, pW, pH, 32);
 
     // Thick Hot-Pink Border
-    panelBg.lineStyle(8, 0xff0070, 1);
+    panelBg.lineStyle(6, 0xff66aa, 1);
     panelBg.strokeRoundedRect(pX, pY, pW, pH, 32);
     
     // Inner rim (bright white)
-    panelBg.lineStyle(4, 0xffffff, 1);
-    panelBg.strokeRoundedRect(pX + 6, pY + 6, pW - 12, pH - 12, 26);
+    panelBg.lineStyle(2, 0xffffff, 0.35);
+    panelBg.strokeRoundedRect(pX + 5, pY + 5, pW - 10, pH - 10, 26);
 
     panelBg.setInteractive(new Phaser.Geom.Rectangle(pX, pY, pW, pH), Phaser.Geom.Rectangle.Contains);
     this.container.add(panelBg);
@@ -156,11 +157,11 @@ export class AutoPlayOverlay {
     const headerX = w / 2 - headerW / 2;
     const headerY = pY - 20;
     const header = this.scene.add.graphics();
-    header.fillStyle(0x3a0055, 1);
-    header.fillRoundedRect(headerX + 6, headerY + 6, headerW, headerH, 32);
-    header.fillGradientStyle(0xff0070, 0xff0070, 0xcc0055, 0xcc0055, 1);
+    header.fillStyle(0x0a0015, 0.6);
+    header.fillRoundedRect(headerX + 4, headerY + 6, headerW, headerH, 32);
+    header.fillGradientStyle(0xff66aa, 0xff0070, 0xcc0055, 0xaa0044, 1);
     header.fillRoundedRect(headerX, headerY, headerW, headerH, 32);
-    header.lineStyle(3, 0xffffff, 0.8);
+    header.lineStyle(3, 0xffffff, 0.9);
     header.strokeRoundedRect(headerX + 3, headerY + 3, headerW - 6, headerH - 6, 29);
     this.container.add(header);
 
@@ -168,9 +169,9 @@ export class AutoPlayOverlay {
     const closeBtnX = pX + pW - 10;
     const closeBtnY = pY + 10;
     const closeBtnGfx = this.scene.add.graphics();
-    closeBtnGfx.fillStyle(0x3a0055, 1);
-    closeBtnGfx.fillCircle(closeBtnX + 4, closeBtnY + 4, 26);
-    closeBtnGfx.fillStyle(0xff3333, 1);
+    closeBtnGfx.fillStyle(0x0a0015, 0.6);
+    closeBtnGfx.fillCircle(closeBtnX + 3, closeBtnY + 4, 26);
+    closeBtnGfx.fillGradientStyle(0xff3333, 0xee1111, 0xcc0000, 0xaa0000, 1);
     closeBtnGfx.fillCircle(closeBtnX, closeBtnY, 26);
     closeBtnGfx.lineStyle(4, 0xffffff, 1);
     closeBtnGfx.strokeCircle(closeBtnX, closeBtnY, 26);
@@ -180,7 +181,8 @@ export class AutoPlayOverlay {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
       fontSize: '28px',
       color: '#ffffff',
-    }).setOrigin(0.5).setShadow(0, 2, '#000000', 0, false, true).setInteractive({ useHandCursor: true });
+      resolution: 2
+    }).setOrigin(0.5).setShadow(0, 2, '#660000', 0, false, true).setInteractive({ useHandCursor: true });
     
     closeBtn.on('pointerdown', () => {
       this.scene.audio.playSound('button');
@@ -195,12 +197,15 @@ export class AutoPlayOverlay {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
       fontSize: '32px',
       color: '#ffffff',
-    }).setOrigin(0.5).setShadow(0, 3, '#000000', 0, false, true);
+      stroke: '#441177',
+      strokeThickness: 6,
+      resolution: 2
+    }).setOrigin(0.5).setShadow(0, 4, '#1a0033', 0, false, true);
     this.container.add(title);
     
     // Separator line
     const sep = this.scene.add.graphics();
-    sep.lineStyle(2, 0xffb3cc, 1);
+    sep.lineStyle(2, 0xff66aa, 0.4);
     sep.lineBetween(pX + 40, pY + 90, pX + pW - 40, pY + 90);
     this.container.add(sep);
 
@@ -240,26 +245,65 @@ export class AutoPlayOverlay {
     }
 
     const cb3 = this.createCheckbox(currentX, currentY, 'SKIP\nSCREENS', this.skipScreens, (val) => this.skipScreens = val);
+    currentX += boxW;
+    const cb4 = this.createCheckbox(currentX, currentY, 'STOP ON\nFEATURE', this.stopOnFeature, (val) => this.stopOnFeature = val);
 
     // Slider section
-    const slideY = pY + 280;
-    const slideTitle = this.scene.add.text(pX + pW / 2, slideY - 50, 'NUMBER OF SPINS', {
+    const slideY = pY + 330;
+    const slideTitle = this.scene.add.text(pX + pW / 2, slideY - 80, 'NUMBER OF SPINS', {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
       fontSize: '22px',
-      color: '#ff0070',
-    }).setOrigin(0.5);
+      color: '#ffc844',
+      resolution: 2
+    }).setOrigin(0.5).setShadow(0, 2, '#3a0055', 0, false, true);
     this.container.add(slideTitle);
+
+    // Quick Picks
+    const presets = [10, 50, 100, 250, 1000, 0];
+    const qpW = (pW - 40) / presets.length;
+    let qpX = pX + 20;
+    presets.forEach((val) => {
+      const qpBtn = this.scene.add.graphics();
+      qpBtn.fillStyle(0x2a1455, 1);
+      qpBtn.fillRoundedRect(qpX, slideY - 50, qpW - 6, 32, 8);
+      qpBtn.lineStyle(2, 0xff66aa, 0.6);
+      qpBtn.strokeRoundedRect(qpX, slideY - 50, qpW - 6, 32, 8);
+      
+      const qpTxt = this.scene.add.text(qpX + (qpW - 6) / 2, slideY - 34, val === 0 ? '∞' : `${val}`, {
+        fontFamily: '"Luckiest Guy", cursive, sans-serif',
+        fontSize: '18px',
+        color: '#ffffff',
+        resolution: 2
+      }).setOrigin(0.5).setShadow(0, 2, '#1a0033', 0, false, true);
+      
+      const qpHit = this.scene.add.rectangle(qpX + (qpW - 6)/2, slideY - 34, qpW - 6, 32, 0xffffff, 0)
+        .setInteractive({ useHandCursor: true });
+        
+      qpHit.on('pointerdown', () => {
+        this.scene.audio.playSound('button');
+        this.spins = val;
+        this.txtSpinsCount.setText(val === 0 ? '∞' : `${val}`);
+        this.btnStartTxt.setText(`START AUTOPLAY (${val === 0 ? '∞' : val})`);
+        this.drawSlider();
+      });
+      
+      this.container.add([qpBtn, qpTxt, qpHit]);
+      qpX += qpW;
+    });
 
     this.sliderX = pX + 50;
     this.sliderWidth = pW - 180;
     this.sliderTrackGfx = this.scene.add.graphics();
     this.container.add(this.sliderTrackGfx);
 
-    this.txtSpinsCount = this.scene.add.text(pX + pW - 30, slideY, `${this.spins}`, {
+    this.txtSpinsCount = this.scene.add.text(pX + pW - 30, slideY, this.spins === 0 ? '∞' : `${this.spins}`, {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
       fontSize: '48px',
-      color: '#00e676',
-    }).setOrigin(1, 0.5).setShadow(0, 3, '#000000', 0, false, true);
+      color: '#00ff88',
+      stroke: '#003311',
+      strokeThickness: 6,
+      resolution: 2
+    }).setOrigin(1, 0.5).setShadow(0, 4, '#000000', 0, false, true);
     this.container.add(this.txtSpinsCount);
 
     this.sliderThumbGfx = this.scene.add.graphics();
@@ -278,17 +322,20 @@ export class AutoPlayOverlay {
     // Start Button
     const startY = pY + pH - 30;
     const startBtnGfx = this.scene.add.graphics();
+    const btnW = pW - 60;
+    const btnH = 60;
     
-    // Massive Green Candy Button
-    startBtnGfx.fillStyle(0x3a0055, 0.4);
-    startBtnGfx.fillRoundedRect(pX + 34, startY - 76, pW - 60, 60, 20); // Shadow
+    // Draw relative to 0,0 for proper scaling origin
+    startBtnGfx.fillStyle(0x0a0015, 0.6);
+    startBtnGfx.fillRoundedRect(-btnW/2 + 4, -btnH/2 + 4, btnW, btnH, 20); // Shadow
     
-    startBtnGfx.fillGradientStyle(0x00e676, 0x00e676, 0x00b359, 0x00b359, 1);
-    startBtnGfx.fillRoundedRect(pX + 30, startY - 80, pW - 60, 60, 20); // Body
+    startBtnGfx.fillGradientStyle(0x33ff99, 0x00e676, 0x00cc66, 0x00994d, 1);
+    startBtnGfx.fillRoundedRect(-btnW/2, -btnH/2, btnW, btnH, 20); // Body
     
     startBtnGfx.lineStyle(4, 0xffffff, 1);
-    startBtnGfx.strokeRoundedRect(pX + 30, startY - 80, pW - 60, 60, 20); // Border
+    startBtnGfx.strokeRoundedRect(-btnW/2, -btnH/2, btnW, btnH, 20); // Border
 
+    startBtnGfx.setPosition(pX + pW/2, startY - 50);
     this.container.add(startBtnGfx);
 
     const startHit = this.scene.add.rectangle(pX + pW/2, startY - 50, pW - 60, 60, 0xffffff, 0)
@@ -298,7 +345,7 @@ export class AutoPlayOverlay {
       this.scene.audio.playSound('button');
       this.hide();
       if (this.onStartCallback) {
-        this.onStartCallback(this.spins, this.turboSpin, this.quickSpin, this.skipScreens);
+        this.onStartCallback(this.spins, this.turboSpin, this.quickSpin, this.skipScreens, this.stopOnFeature);
       }
     });
     
@@ -314,11 +361,14 @@ export class AutoPlayOverlay {
     
     this.container.add(startHit);
 
-    this.btnStartTxt = this.scene.add.text(pX + pW / 2, startY - 50, `START AUTOPLAY (${this.spins})`, {
+    this.btnStartTxt = this.scene.add.text(pX + pW / 2, startY - 50, `START AUTOPLAY (${this.spins === 0 ? '∞' : this.spins})`, {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
       fontSize: '26px',
       color: '#ffffff',
-    }).setOrigin(0.5).setShadow(0, 3, '#004422', 0, false, true);
+      stroke: '#004422',
+      strokeThickness: 5,
+      resolution: 2
+    }).setOrigin(0.5).setShadow(0, 4, '#1a0033', 0, false, true);
     this.container.add(this.btnStartTxt);
 
     this.drawSlider();
@@ -333,28 +383,28 @@ export class AutoPlayOverlay {
       gfx.clear();
       
       // Box shadow
-      gfx.fillStyle(0x3a0055, 0.3);
-      gfx.fillRoundedRect(x + 2, y + 2, size, size, 10);
+      gfx.fillStyle(0x0a0015, 0.4);
+      gfx.fillRoundedRect(x + 2, y + 4, size, size, 10);
 
       // Box body
-      gfx.fillStyle(0xffffff, 1);
+      gfx.fillStyle(0x2a1455, 1);
       gfx.fillRoundedRect(x, y, size, size, 10);
       
       if (state) {
         // Active border
-        gfx.lineStyle(3, 0x00e676, 1);
+        gfx.lineStyle(3, 0x00ff88, 1);
         gfx.strokeRoundedRect(x, y, size, size, 10);
         
         // Massive Cartoon Checkmark
-        gfx.lineStyle(6, 0x00e676, 1);
+        gfx.lineStyle(5, 0x00ff88, 1);
         gfx.beginPath();
         gfx.moveTo(x + 8, y + size/2 + 2);
         gfx.lineTo(x + size/2 - 2, y + size - 8);
-        gfx.lineTo(x + size + 4, y - 4); // Pops out of the box!
+        gfx.lineTo(x + size + 6, y - 6); // Pops out of the box!
         gfx.strokePath();
       } else {
         // Inactive border
-        gfx.lineStyle(3, 0xffaadd, 1);
+        gfx.lineStyle(2, 0xff66aa, 0.5);
         gfx.strokeRoundedRect(x, y, size, size, 10);
       }
     };
@@ -364,8 +414,9 @@ export class AutoPlayOverlay {
     const txt = this.scene.add.text(x + size + 15, y + size/2, label, {
       fontFamily: '"Luckiest Guy", cursive, sans-serif',
       fontSize: '16px',
-      color: '#ff0070',
-    }).setOrigin(0, 0.5).setLineSpacing(2);
+      color: '#ffffff',
+      resolution: 2
+    }).setOrigin(0, 0.5).setLineSpacing(2).setShadow(0, 2, '#3a0055', 0, false, true);
     this.container.add(txt);
 
     const hit = this.scene.add.rectangle(x + size, y + size/2, size*3, size+10, 0xffffff, 0)
@@ -400,8 +451,8 @@ export class AutoPlayOverlay {
     this.spins = this.allowedSpins[closestIndex];
     this.drawSlider();
     
-    this.txtSpinsCount.setText(`${this.spins}`);
-    this.btnStartTxt.setText(`START AUTOPLAY (${this.spins})`);
+    this.txtSpinsCount.setText(this.spins === 0 ? '∞' : `${this.spins}`);
+    this.btnStartTxt.setText(`START AUTOPLAY (${this.spins === 0 ? '∞' : this.spins})`);
   }
 
   private drawSlider() {
@@ -413,16 +464,16 @@ export class AutoPlayOverlay {
 
     this.sliderTrackGfx.clear();
     // Background track (dark pill)
-    this.sliderTrackGfx.fillStyle(0xffb3cc, 1);
+    this.sliderTrackGfx.fillStyle(0x2a1455, 1);
     this.sliderTrackGfx.fillRoundedRect(this.sliderX, y - 8, this.sliderWidth, 16, 8);
-    this.sliderTrackGfx.lineStyle(3, 0xff0070, 1);
+    this.sliderTrackGfx.lineStyle(3, 0xff66aa, 0.6);
     this.sliderTrackGfx.strokeRoundedRect(this.sliderX, y - 8, this.sliderWidth, 16, 8);
     
     // Filled track (neon gradient effect using multiple fills)
-    this.sliderTrackGfx.fillStyle(0x00b359, 1);
-    this.sliderTrackGfx.fillRoundedRect(this.sliderX, y - 8, fillW, 16, { tl: 8, bl: 8, tr: 0, br: 0 });
-    this.sliderTrackGfx.fillStyle(0x00e676, 1);
-    this.sliderTrackGfx.fillRoundedRect(this.sliderX, y - 5, fillW, 10, { tl: 5, bl: 5, tr: 0, br: 0 });
+    this.sliderTrackGfx.fillGradientStyle(0xff3388, 0xff0055, 0xee0044, 0xcc0033, 1);
+    this.sliderTrackGfx.fillRoundedRect(this.sliderX, y - 8, fillW, 16, { tl: 8, bl: 8, tr: 0, br: 0 } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
+    this.sliderTrackGfx.fillStyle(0xff66aa, 1);
+    this.sliderTrackGfx.fillRoundedRect(this.sliderX, y - 5, fillW, 10, { tl: 5, bl: 5, tr: 0, br: 0 } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
 
     const thumbX = this.sliderX + fillW;
     this.sliderThumbHit.setX(thumbX);
@@ -430,15 +481,15 @@ export class AutoPlayOverlay {
     this.sliderThumbGfx.clear();
     
     // Thumb shadow
-    this.sliderThumbGfx.fillStyle(0x3a0055, 0.3);
+    this.sliderThumbGfx.fillStyle(0x0a0015, 0.5);
     this.sliderThumbGfx.fillCircle(thumbX + 2, y + 4, 22);
     
     // Thumb body
-    this.sliderThumbGfx.fillStyle(0x00e676, 1);
+    this.sliderThumbGfx.fillGradientStyle(0xffc844, 0xffbb33, 0xee9900, 0xcc7700, 1);
     this.sliderThumbGfx.fillCircle(thumbX, y, 22);
     
     // Thumb inner
-    this.sliderThumbGfx.fillStyle(0xffffff, 1);
+    this.sliderThumbGfx.fillStyle(0xfff5dd, 1);
     this.sliderThumbGfx.fillCircle(thumbX, y, 14);
     
     // Inner white highlight

@@ -63,6 +63,7 @@ export class Grid {
 
   // Callbacks
   public onWinCallback: ((winAmount: number, symbolId?: number) => void) | null = null;
+  public onFreeSpinsTriggered: ((count: number, resume: () => void) => void) | null = null;
   public onFreeSpinsStart: ((count: number) => void) | null = null;
   public onFreeSpinsEnd: ((totalWin: number) => void) | null = null;
   public onCompleteCallback: (() => void) | null = null;
@@ -1394,16 +1395,32 @@ export class Grid {
         if (this.isSuperFreeSpins && this.superMultiplier > 1) {
           this.seedMultipliers(this.superMultiplier);
         }
-        if (this.onFreeSpinsStart) this.onFreeSpinsStart(this.freeSpinsRemaining);
-        this.processNextEvent();
+        
+        if (this.onFreeSpinsTriggered) {
+          this.onFreeSpinsTriggered(event.totalSpins, () => {
+            if (this.onFreeSpinsStart) this.onFreeSpinsStart(this.freeSpinsRemaining);
+            this.processNextEvent();
+          });
+        } else {
+          if (this.onFreeSpinsStart) this.onFreeSpinsStart(this.freeSpinsRemaining);
+          this.processNextEvent();
+        }
       });
     } else {
       this.freeSpinsRemaining += event.totalSpins;
       if (this.isSuperFreeSpins && this.superMultiplier > 1) {
         this.seedMultipliers(this.superMultiplier);
       }
-      if (this.onFreeSpinsStart) this.onFreeSpinsStart(this.freeSpinsRemaining);
-      this.processNextEvent();
+      
+      if (this.onFreeSpinsTriggered) {
+        this.onFreeSpinsTriggered(event.totalSpins, () => {
+          if (this.onFreeSpinsStart) this.onFreeSpinsStart(this.freeSpinsRemaining);
+          this.processNextEvent();
+        });
+      } else {
+        if (this.onFreeSpinsStart) this.onFreeSpinsStart(this.freeSpinsRemaining);
+        this.processNextEvent();
+      }
     }
   }
 
