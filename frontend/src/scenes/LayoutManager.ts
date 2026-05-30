@@ -633,12 +633,12 @@ import { DisplayBalance } from '../helpers/Currency';
       .setText(title)
       .setPosition(x, y - yOffset1)
       .setFontSize(fsTitle)
-      .setFontFamily('"Inter", "Outfit", sans-serif')
-      .setFontStyle('800')
+      .setFontFamily('"Luckiest Guy", cursive, sans-serif')
+      .setFontStyle('normal')
       .setLineSpacing(0)
       .setColor('#ffffff')
       .setStroke(strokeCol, strokeThick)
-      .setShadow(0, 1, '#000000', isSmall ? 1 : 3, true, true)
+      .setShadow(0, 2, '#000000', 0, false, true)
       .setAlpha(alpha)
       .setAlign('center')
       .setOrigin(0.5); // Ensure origin is 0.5 explicitly
@@ -647,8 +647,10 @@ import { DisplayBalance } from '../helpers/Currency';
       .setText(subText)
       .setPosition(x, y + yOffset2)
       .setFontSize(fsSub)
-      .setFontFamily('"Inter", "Outfit", sans-serif')
-.setAlign('center')
+      .setFontFamily('"Luckiest Guy", cursive, sans-serif')
+      .setFontStyle('normal')
+      .setAlign('center')
+      .setShadow(0, 2, '#000000', 0, false, true)
       .setOrigin(0.5);
   }
 
@@ -747,12 +749,12 @@ import { DisplayBalance } from '../helpers/Currency';
 
       this.anteBetTxt
         .setText('ANTE BET ON\nDouble Chance')
-        .setFontFamily('"Inter", "Outfit", sans-serif')
-        .setFontStyle('900')
+        .setFontFamily('"Luckiest Guy", cursive, sans-serif')
+        .setFontStyle('normal')
         .setColor('#ffffff')
         .setLineSpacing(isSmall ? -4 : -2)
         .setStroke('#004422', isSmall ? 0 : 3)
-        .setShadow(0, 0, '#00ff88', 8, true, true);
+        .setShadow(0, 2, '#000000', 0, false, true);
         
       this.anteBetIcon
         .setText('\u25CF')
@@ -790,12 +792,12 @@ import { DisplayBalance } from '../helpers/Currency';
 
       this.anteBetTxt
         .setText('ANTE BET OFF\nDouble Chance')
-        .setFontFamily('"Inter", "Outfit", sans-serif')
-        .setFontStyle('700')
+        .setFontFamily('"Luckiest Guy", cursive, sans-serif')
+        .setFontStyle('normal')
         .setColor('#8877aa')
         .setLineSpacing(isSmall ? -4 : -2)
         .setStroke('#000000', 0)
-        .setShadow(0, 2, '#000000', 2, true, true);
+        .setShadow(0, 2, '#000000', 0, false, true);
         
       this.anteBetIcon
         .setText('\u25CF')

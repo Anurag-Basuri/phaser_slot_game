@@ -391,10 +391,11 @@ import { T } from '../helpers/I18n';
       this.audio.playSound('button');
     });
 
-    this.autoPlayOverlay.setCallbacks((spins, turbo, quick, skip) => {
+    this.autoPlayOverlay.setCallbacks((spins, turbo, quick, skip, stopOnFeature) => {
       this.grid.turboMode = turbo;
       this.grid.quickMode = quick && !turbo;
       this.skipScreensActive = skip;
+      this.autoSpinStopOnFeature = stopOnFeature;
       this.autoSpinActive = true;
       this.autoSpinRemaining = spins;
       this.updateAutoSpinDisplay();

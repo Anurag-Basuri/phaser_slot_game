@@ -64,15 +64,25 @@ import options from '../options';
       });
     };
 
+    this.grid.onFreeSpinsTriggered = (count, resume) => {
+      this.freeSpinsIntro.play(count, () => {
+        // Stop on Feature toggle logic
+        if (this.autoSpinStopOnFeature && this.autoSpinActive) {
+          this.stopAutoSpin();
+        }
+        
+        // P0 Fix: Trigger intense visual mode for free spins
+        this.backgroundManager.setFreeSpinsMode(true);
+        // Switch to FS music
+        this.audio.playMusic('musicFreeSpins', 800);
+        
+        resume();
+      });
+    };
+
     this.grid.onFreeSpinsStart = (count) => {
       this.fsActive = true;
       this.txtFSRemaining.setText(`${count} FREE SPINS`).setVisible(true);
-
-      // P0 Fix: Trigger intense visual mode for free spins
-      this.backgroundManager.setFreeSpinsMode(true);
-
-      // Switch to FS music
-      this.audio.playMusic('musicFreeSpins', 800);
 
       this.tweens.add({
         targets: this.txtFSRemaining,
@@ -157,6 +167,10 @@ import options from '../options';
                 this.stopAutoSpin();
                 this.errorManager.showToast('INSUFFICIENT FUNDS', '#ff4466');
                 return;
+              }
+              if (this.autoSpinTimer) {
+                this.autoSpinTimer.remove();
+                this.autoSpinTimer = null;
               }
               this.autoSpinTimer = this.time.delayedCall(600, () => {
                 if (this.autoSpinActive && !this.fsActive) attemptSpin.call(this, 0);
@@ -262,6 +276,10 @@ import options from '../options';
             return;
           }
           const delay = this.grid.turboMode ? 50 : 600;
+          if (this.autoSpinTimer) {
+            this.autoSpinTimer.remove();
+            this.autoSpinTimer = null;
+          }
           this.autoSpinTimer = this.time.delayedCall(delay, () => {
             if (this.autoSpinActive && !this.fsActive) attemptSpin.call(this, 0);
           });
@@ -317,31 +335,19 @@ import options from '../options';
         this.updateMoneyDisplay();
       }
 
-      // Read free spins count from server's fsTrigger event (authoritative)
-      const fsEvent = stateEvents.find((e: any) => e.type === 'fsTrigger');
-      const fsAwarded =
-        fsEvent?.totalSpins || options.freeSpinsByScatter[3] || 10;
-
-      this.freeSpinsIntro.play(fsAwarded, () => {
-        // Set up free spins state AFTER the intro finishes
-        // NOTE: Do NOT pre-set grid.freeSpinsRemaining here!
-        if (triggerType === 1) {
-          this.grid.isSuperFreeSpins = true;
-          this.grid.superMultiplier = 4;
-          this.grid.seedMultipliers(4);
-        } else if (triggerType === 2) {
-          this.grid.isSuperFreeSpins = true;
-          this.grid.superMultiplier = 2;
-          this.grid.seedMultipliers(2);
-        }
-        this.fsActive = true;
-        this.backgroundManager.setFreeSpinsMode(true);
-        this.txtFSRemaining
-          .setText(`${this.grid.freeSpinsRemaining} FREE SPINS`)
-          .setVisible(true);
-        this.audio.playMusic('musicFreeSpins', 800);
-        this.grid.processServerEvents(stateEvents);
-      });
+      // Set up super free spins parameters if needed
+      // (The actual multiplier seeding will happen organically during the fsTrigger event in Grid.ts)
+      if (triggerType === 1) {
+        this.grid.isSuperFreeSpins = true;
+        this.grid.superMultiplier = 4;
+      } else if (triggerType === 2) {
+        this.grid.isSuperFreeSpins = true;
+        this.grid.superMultiplier = 2;
+      }
+      
+      // Process the base spin (which lands the scatters)
+      // This will naturally hit fsTrigger, show the Intro, and transition to Free Spins.
+      this.grid.processServerEvents(stateEvents);
     } catch (err) {
       console.error('[Game] Buy feature error:', err);
       this.grid.abortSpin();
