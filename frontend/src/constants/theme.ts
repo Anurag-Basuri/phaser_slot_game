@@ -62,21 +62,21 @@ export const Theme = {
     brand: '"Luckiest Guy", cursive, sans-serif', // Legacy brand font
 
     // Text styles
-    h1: { size: 48, weight: 800, family: '"Montserrat"' },
-    h2: { size: 36, weight: 700, family: '"Montserrat"' },
-    h3: { size: 28, weight: 600, family: '"Outfit"' },
-    h4: { size: 22, weight: 600, family: '"Outfit"' },
-    h5: { size: 18, weight: 600, family: '"Outfit"' },
+    h1: { size: 48, weight: 800, family: '"Luckiest Guy", cursive, sans-serif' },
+    h2: { size: 36, weight: 700, family: '"Luckiest Guy", cursive, sans-serif' },
+    h3: { size: 28, weight: 600, family: '"Luckiest Guy", cursive, sans-serif' },
+    h4: { size: 22, weight: 600, family: '"Luckiest Guy", cursive, sans-serif' },
+    h5: { size: 18, weight: 600, family: '"Luckiest Guy", cursive, sans-serif' },
 
-    body: { size: 16, weight: 400, family: '"Outfit"' },
-    bodySmall: { size: 14, weight: 400, family: '"Outfit"' },
-    bodyTiny: { size: 12, weight: 400, family: '"Outfit"' },
+    body: { size: 16, weight: 400, family: '"Luckiest Guy", cursive, sans-serif' },
+    bodySmall: { size: 14, weight: 400, family: '"Luckiest Guy", cursive, sans-serif' },
+    bodyTiny: { size: 12, weight: 400, family: '"Luckiest Guy", cursive, sans-serif' },
 
-    label: { size: 13, weight: 500, family: '"Outfit"' },
-    button: { size: 14, weight: 600, family: '"Outfit"' },
-    buttonLarge: { size: 16, weight: 700, family: '"Outfit"' },
+    label: { size: 13, weight: 500, family: '"Luckiest Guy", cursive, sans-serif' },
+    button: { size: 14, weight: 600, family: '"Luckiest Guy", cursive, sans-serif' },
+    buttonLarge: { size: 16, weight: 700, family: '"Luckiest Guy", cursive, sans-serif' },
 
-    numeric: { size: 24, weight: 700, family: '"Montserrat"' },
+    numeric: { size: 24, weight: 700, family: '"Luckiest Guy", cursive, sans-serif' },
   },
 
   // ═════════════════════ SHADOWS (Hard, Comic-Book Style) ═════════════════════

@@ -102,6 +102,7 @@ export class Game extends Phaser.Scene {
   currency = 'USD';
   betPresetIndex = options.defaultBetIndex;
   autoSpinActive = false;
+  autoSpinStopOnFeature = false;
   autoSpinRemaining = 0; // 0 = infinite when autoSpinActive
   autoSpinTimer: Phaser.Time.TimerEvent | null = null;
   fsActive = false;
@@ -339,9 +340,14 @@ export class Game extends Phaser.Scene {
   stopAutoSpin() {
     this.autoSpinActive = false;
     this.autoSpinRemaining = 0;
+    this.autoSpinStopOnFeature = false;
+    this.skipScreensActive = false;
     this.updateAutoSpinDisplay();
     this.updateSpinButtonState();
-    if (this.autoSpinTimer) this.autoSpinTimer.remove();
+    if (this.autoSpinTimer) {
+      this.autoSpinTimer.remove();
+      this.autoSpinTimer = null;
+    }
   }
 
   // ==========================================

@@ -211,20 +211,20 @@ export class SpinControls {
     const r = size / 2;
 
     // ── Pulsing Inner Glow ──
-    this.spinInnerPulse.fillGradientStyle(0xff006a, 0xff006a, 0xff006a, 0xff006a, 0.8, 0.8, 0, 0);
+    this.spinInnerPulse.fillGradientStyle(0x00e676, 0x00e676, 0x00cc66, 0x00cc66, 0.8, 0.8, 0, 0);
     this.spinInnerPulse.fillCircle(x, y, r + 18);
 
     // ── Massive Gummy Spin Button ──
     // 1. Drop shadow (thick, comic style)
-    g.fillStyle(0x3a0055, 0.7);
+    g.fillStyle(0x003311, 0.7);
     g.fillCircle(x + 4, y + 6, r + 2);
 
-    // 2. Thick bright border (hot pink)
-    g.lineStyle(6, 0xff0070, 1);
+    // 2. Thick bright border (mint green)
+    g.lineStyle(6, 0x00ff88, 1);
     g.strokeCircle(x, y, r);
 
-    // 3. Candy Gradient Body
-    g.fillGradientStyle(0xff3388, 0xff0055, 0xee0044, 0xcc0033, 1);
+    // 3. Candy Gradient Body (Green)
+    g.fillGradientStyle(0x33ff99, 0x00e676, 0x00cc66, 0x00994d, 1);
     g.fillCircle(x, y, r);
 
     // 4. Glass highlight (top crescent)
@@ -317,11 +317,11 @@ export class SpinControls {
 
     // 3. Candy Gradient Body
     if (isPlus) {
-      // Green bouncy gummy
-      gfx.fillGradientStyle(0x00e676, 0x00e676, 0x00b359, 0x00b359, 1);
+      // Cyan bouncy gummy for Plus
+      gfx.fillGradientStyle(0x33ddff, 0x00ccff, 0x0099ee, 0x0077cc, 1);
     } else {
-      // Pink bouncy gummy
-      gfx.fillGradientStyle(0xff0070, 0xff0070, 0xcc0055, 0xcc0055, 1);
+      // Golden Orange bouncy gummy for Minus
+      gfx.fillGradientStyle(0xffcc33, 0xffaa00, 0xee8800, 0xcc6600, 1);
     }
     gfx.fillCircle(cx, cy, r);
 
@@ -393,8 +393,8 @@ export class SpinControls {
                   .setColor('#ffffff')
                   .setShadow(0, 2, '#661100', 0, false, true);
     } else {
-      // Inactive AUTOPLAY state: Pink gummy pill
-      this.autoGfx.fillGradientStyle(0xff0070, 0xff0070, 0xcc0055, 0xcc0055, 1);
+      // Inactive AUTOPLAY state: Violet gummy pill
+      this.autoGfx.fillGradientStyle(0x9944ff, 0x8833ff, 0x6611cc, 0x5500aa, 1);
       this.autoGfx.fillRoundedRect(x, y, bw, bh, rad);
 
       // Inner border glow
@@ -407,7 +407,7 @@ export class SpinControls {
 
       this.autoTxt.setText('AUTOPLAY')
                   .setColor('#ffffff')
-                  .setShadow(0, 2, '#3a0055', 0, false, true);
+                  .setShadow(0, 2, '#330066', 0, false, true);
     }
   }
 
