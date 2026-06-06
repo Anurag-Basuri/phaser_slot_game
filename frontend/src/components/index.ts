@@ -13,3 +13,4 @@ export { WinCelebration } from './WinCelebration';
 export { AutoPlayOverlay } from './AutoPlayOverlay';
 export { BackgroundManager } from './BackgroundManager';
 export { IntroSplash } from './IntroSplash';
+export { Mascot } from './Mascot';

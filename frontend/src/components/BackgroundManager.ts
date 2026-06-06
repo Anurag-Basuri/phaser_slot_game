@@ -21,6 +21,7 @@ export class BackgroundManager {
     this.createBase();
     this.createGodRays();
     this.createSugarDust();
+    this.createFloatingProps();
   }
 
   private createBase() {
@@ -49,8 +50,15 @@ export class BackgroundManager {
     this.raysGraphics = this.scene.add.graphics();
     this.raysContainer.add(this.raysGraphics);
     
-    // Rays are disabled to give a more static, clean cartoonish look.
-    this.raysContainer.setVisible(false);
+    // Rays slowly rotate for a magical casino vibe
+    this.raysContainer.setVisible(true);
+    this.scene.tweens.add({
+      targets: this.raysContainer,
+      angle: 360,
+      duration: 120000,
+      repeat: -1,
+      ease: 'Linear'
+    });
   }
 
   /** Draw the god ray triangles at the specified alpha */
@@ -104,6 +112,47 @@ export class BackgroundManager {
       blendMode: 'ADD',
       advance: 10000 // Pre-warm the emitter so screen is already full
     }).setDepth(0);
+  }
+
+  private createFloatingProps() {
+    const w = this.scene.cameras.main.width;
+    const h = this.scene.cameras.main.height;
+    
+    // Create large, out-of-focus, translucent candy props that slowly drift
+    for (let i = 0; i < 6; i++) {
+      const symId = Phaser.Math.Between(0, 6);
+      const prop = this.scene.add.sprite(
+        Phaser.Math.Between(0, w),
+        Phaser.Math.Between(0, h),
+        `candy_${symId}`
+      );
+      
+      // Extreme depth of field effect
+      prop.setAlpha(Phaser.Math.FloatBetween(0.1, 0.25));
+      prop.setScale(Phaser.Math.FloatBetween(1.5, 3.5));
+      prop.setBlendMode(Phaser.BlendModes.SCREEN);
+      prop.setDepth(1); // Behind the grid
+
+      // Continuous slow drift and rotation
+      this.scene.tweens.add({
+        targets: prop,
+        y: `-=${Phaser.Math.Between(300, 600)}`,
+        angle: Phaser.Math.Between(-360, 360),
+        duration: Phaser.Math.Between(40000, 80000),
+        repeat: -1,
+        yoyo: true,
+        ease: 'Sine.easeInOut'
+      });
+      
+      this.scene.tweens.add({
+        targets: prop,
+        x: `+=${Phaser.Math.Between(-200, 200)}`,
+        duration: Phaser.Math.Between(30000, 60000),
+        repeat: -1,
+        yoyo: true,
+        ease: 'Sine.easeInOut'
+      });
+    }
   }
 
 
