@@ -20,7 +20,6 @@ import {
   SpinControls,
   BackgroundManager,
   IntroSplash,
-  Mascot,
 } from '../components';
 import { getStakeEngine } from '../engine';
 import { SpinEventData, StakeEngineClient } from '../engine/StakeEngineClient';
@@ -47,7 +46,6 @@ export class Game extends Phaser.Scene {
   bottomBarHUD!: BottomBarHUD;
   spinControls!: SpinControls;
   introSplash!: IntroSplash;
-  public mascot!: Mascot;
 
   public stakeEngine!: StakeEngineClient;
   public skipScreensActive = false;
