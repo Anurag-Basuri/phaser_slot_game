@@ -56,27 +56,27 @@ export const Theme = {
   // ═════════════════════ TYPOGRAPHY ═════════════════════
   fonts: {
     // Font families - full cartoon override
-    sans: '"Luckiest Guy", cursive, sans-serif',
-    display: '"Luckiest Guy", cursive, sans-serif',
-    mono: '"Luckiest Guy", cursive, sans-serif',
-    brand: '"Luckiest Guy", cursive, sans-serif', // Legacy brand font
+    sans: '"Poppins", sans-serif',
+    display: '"Poppins", sans-serif',
+    mono: '"Poppins", sans-serif',
+    brand: '"Poppins", sans-serif', // Legacy brand font
 
     // Text styles
-    h1: { size: 48, weight: 800, family: '"Luckiest Guy", cursive, sans-serif' },
-    h2: { size: 36, weight: 700, family: '"Luckiest Guy", cursive, sans-serif' },
-    h3: { size: 28, weight: 600, family: '"Luckiest Guy", cursive, sans-serif' },
-    h4: { size: 22, weight: 600, family: '"Luckiest Guy", cursive, sans-serif' },
-    h5: { size: 18, weight: 600, family: '"Luckiest Guy", cursive, sans-serif' },
+    h1: { size: 48, weight: 800, family: '"Poppins", sans-serif' },
+    h2: { size: 36, weight: 700, family: '"Poppins", sans-serif' },
+    h3: { size: 28, weight: 600, family: '"Poppins", sans-serif' },
+    h4: { size: 22, weight: 600, family: '"Poppins", sans-serif' },
+    h5: { size: 18, weight: 600, family: '"Poppins", sans-serif' },
 
-    body: { size: 16, weight: 400, family: '"Luckiest Guy", cursive, sans-serif' },
-    bodySmall: { size: 14, weight: 400, family: '"Luckiest Guy", cursive, sans-serif' },
-    bodyTiny: { size: 12, weight: 400, family: '"Luckiest Guy", cursive, sans-serif' },
+    body: { size: 16, weight: 400, family: '"Poppins", sans-serif' },
+    bodySmall: { size: 14, weight: 400, family: '"Poppins", sans-serif' },
+    bodyTiny: { size: 12, weight: 400, family: '"Poppins", sans-serif' },
 
-    label: { size: 13, weight: 500, family: '"Luckiest Guy", cursive, sans-serif' },
-    button: { size: 14, weight: 600, family: '"Luckiest Guy", cursive, sans-serif' },
-    buttonLarge: { size: 16, weight: 700, family: '"Luckiest Guy", cursive, sans-serif' },
+    label: { size: 13, weight: 600, family: '"Poppins", sans-serif' },
+    button: { size: 14, weight: 600, family: '"Poppins", sans-serif' },
+    buttonLarge: { size: 16, weight: 700, family: '"Poppins", sans-serif' },
 
-    numeric: { size: 24, weight: 700, family: '"Luckiest Guy", cursive, sans-serif' },
+    numeric: { size: 24, weight: 700, family: '"Poppins", sans-serif' },
   },
 
   // ═════════════════════ SHADOWS (Hard, Comic-Book Style) ═════════════════════

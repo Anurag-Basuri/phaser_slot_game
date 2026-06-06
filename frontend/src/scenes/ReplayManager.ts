@@ -9,7 +9,7 @@ import { StakeEngineClient } from '../engine/StakeEngineClient';
 
     const replayScale = Math.min(1.5, Math.max(0.4, this.scale.width / 800));
     const loadTxt = this.add.text(this.scale.width / 2, this.scale.height / 2, 'LOADING REPLAY...', {
-      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontFamily: '"Poppins", sans-serif',
       fontSize: `${32 * replayScale}px`,
       color: '#ffffff'
     }).setOrigin(0.5).setDepth(60);

@@ -69,66 +69,65 @@ export class SettingsOverlay {
 
     const panel = this.scene.add.graphics();
     
-    // Comic shadow
-    panel.fillStyle(0x0a0015, 0.7);
-    panel.fillRoundedRect(panelX + 8, panelY + 8, panelW, panelH, 16);
+    // Subtle drop shadow
+    panel.fillStyle(0x000000, 0.6);
+    panel.fillRoundedRect(panelX + 6, panelY + 8, panelW, panelH, 12);
 
-    // Main panel (Deep Purple Candy)
-    panel.fillGradientStyle(0x3a1055, 0x1e0e40, 0x2a1455, 0x1a0533, 1);
-    panel.fillRoundedRect(panelX, panelY, panelW, panelH, 16);
+    // Main panel (Deep Berry / Plum)
+    panel.fillStyle(0x380036, 1);
+    panel.fillRoundedRect(panelX, panelY, panelW, panelH, 24);
 
-    // Thick Pink Border
-    panel.lineStyle(6, 0xff66aa, 1);
-    panel.strokeRoundedRect(panelX, panelY, panelW, panelH, 16);
-    
-    // Inner rim
-    panel.lineStyle(2, 0xffffff, 0.35);
-    panel.strokeRoundedRect(panelX + 5, panelY + 5, panelW - 10, panelH - 10, 12);
+    // Creamy White Border
+    panel.lineStyle(3, 0xfff0f5, 1);
+    panel.strokeRoundedRect(panelX, panelY, panelW, panelH, 24);
 
     panel.setInteractive(new Phaser.Geom.Rectangle(panelX, panelY, panelW, panelH), Phaser.Geom.Rectangle.Contains);
     this.container.add(panel);
 
     // Title text inside panel
-    const titleText = this.scene.add.text(panelX + 30, panelY + 20, 'SETTINGS', { 
-      fontSize: '28px', color: '#ffc844', fontFamily: '"Luckiest Guy", cursive, sans-serif', resolution: 2
-    }).setOrigin(0, 0).setShadow(0, 2, '#3a0055', 0, false, true);
+    const titleText = this.scene.add.text(panelX + panelW / 2, panelY + 25, 'SETTINGS', { 
+      fontSize: '32px', color: '#ffffff', fontFamily: '"Fredoka One", "Comic Sans MS", sans-serif', fontStyle: '900', resolution: 2, stroke: '#9b1b6c', strokeThickness: 4
+    }).setOrigin(0.5, 0.5);
+    // Add shadow to title
+    titleText.setShadow(0, 3, '#1a001a', 0, true, false);
     this.container.add(titleText);
 
     // Divider under title
     const titleGfx = this.scene.add.graphics();
-    titleGfx.lineStyle(2, 0xff66aa, 0.6);
-    titleGfx.lineBetween(panelX + 30, panelY + 55, panelX + panelW - 30, panelY + 55);
+    titleGfx.lineStyle(2, 0x9b1b6c, 0.8);
+    titleGfx.lineBetween(panelX + 40, panelY + 55, panelX + panelW - 40, panelY + 55);
     this.container.add(titleGfx);
 
-    // Sleek Close button
-    const closeBtnX = panelX + panelW - 30;
-    const closeBtnY = panelY + 35;
+    // Bubbly Close button
+    const closeBtnX = panelX + panelW - 12;
+    const closeBtnY = panelY + 12;
     
     const closeBtnGfx = this.scene.add.graphics();
-    closeBtnGfx.fillStyle(0x0a0015, 0.6);
-    closeBtnGfx.fillCircle(closeBtnX + 3, closeBtnY + 4, 22);
-    closeBtnGfx.fillGradientStyle(0xff3333, 0xee1111, 0xcc0000, 0xaa0000, 1);
-    closeBtnGfx.fillCircle(closeBtnX, closeBtnY, 22);
-    closeBtnGfx.lineStyle(4, 0xffffff, 1);
-    closeBtnGfx.strokeCircle(closeBtnX, closeBtnY, 22);
+    closeBtnGfx.fillStyle(0xff3333, 1);
+    closeBtnGfx.fillCircle(closeBtnX, closeBtnY, 20);
+    closeBtnGfx.lineStyle(3, 0xffffff, 1);
+    closeBtnGfx.strokeCircle(closeBtnX, closeBtnY, 20);
     this.container.add(closeBtnGfx);
 
-    const closeBtn = this.scene.add.text(closeBtnX, closeBtnY, '✕', { 
-      fontSize: '24px', color: '#ffffff', fontFamily: '"Luckiest Guy", cursive, sans-serif', resolution: 2
-    }).setOrigin(0.5).setShadow(0, 2, '#660000', 0, false, true).setInteractive({ useHandCursor: true });
+    const closeBtn = this.scene.add.text(closeBtnX, closeBtnY + 1, '✖', { 
+      fontSize: '20px', color: '#ffffff', fontFamily: '"Fredoka One", sans-serif', resolution: 2
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
     closeBtn.on('pointerdown', () => {
       this.scene.audio.playSound('button');
       this.hide();
     });
-    closeBtn.on('pointerover', () => closeBtn.setScale(1.1));
+    closeBtn.on('pointerover', () => closeBtn.setScale(1.2));
     closeBtn.on('pointerout', () => closeBtn.setScale(1));
     this.container.add(closeBtn);
 
     const labelStyle: Phaser.Types.GameObjects.Text.TextStyle = {
       fontSize: isShort ? '16px' : '20px',
       color: '#ffffff',
-      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontFamily: '"Fredoka One", "Comic Sans MS", sans-serif',
+      fontStyle: '800',
+      stroke: '#1a001a',
+      strokeThickness: 3,
       resolution: 2
     };
 
@@ -140,7 +139,7 @@ export class SettingsOverlay {
       
       let rowY = panelY + 65;
       const availableH = panelH - (rowY - panelY) - 90;
-      const rowH = Math.min(55, availableH / 2.5);
+      const rowH = Math.min(60, availableH / 2.5);
       const rowGap = rowH * 0.2;
 
       this.addToggleRow(col1X, rowY, colW, rowH, '🎵 MUSIC', labelStyle, this.musicEnabled, (isOn) => {
@@ -165,18 +164,21 @@ export class SettingsOverlay {
       // Bottom Info
       const infoY = panelY + panelH - 45;
       const infoBox = this.scene.add.graphics();
-      infoBox.fillStyle(0x1e0e40, 1);
+      infoBox.fillStyle(0x000000, 0.3);
       infoBox.fillRoundedRect(panelX + 20, infoY, panelW - 40, 30, 15);
-      infoBox.lineStyle(2, 0xff66aa, 0.4);
+      infoBox.lineStyle(2, 0xffffff, 0.4);
       infoBox.strokeRoundedRect(panelX + 20, infoY, panelW - 40, 30, 15);
       this.container.add(infoBox);
 
       const infoText = this.scene.add.text(w / 2, infoY + 15, 'Sugar Blast 1000  •  RTP: 96.53%  •  High Volatility', { 
-        fontSize: '12px',
-        color: '#ffc844',
-        fontFamily: '"Luckiest Guy", cursive, sans-serif',
+        fontSize: '13px',
+        color: '#ffdd22',
+        fontFamily: '"Fredoka One", sans-serif',
+        fontStyle: '600',
+        stroke: '#000000',
+        strokeThickness: 2,
         resolution: 2
-      }).setOrigin(0.5).setShadow(0, 2, '#1a0033', 0, false, true);
+      }).setOrigin(0.5);
       this.container.add(infoText);
 
     } else {
@@ -189,48 +191,54 @@ export class SettingsOverlay {
       const rowH = Math.min(65, availableH / 4.5);
       const rowGap = rowH * 0.2;
 
-      this.addToggleRow(rowX, rowY, rowW, rowH, '🎵 GAME MUSIC', labelStyle, this.musicEnabled, (isOn) => {
+      this.addToggleRow(rowX, rowY, rowW, rowH, '🎵 MUSIC', labelStyle, this.musicEnabled, (isOn) => {
         this.musicEnabled = isOn;
         if (this.onMusicToggle) this.onMusicToggle(isOn);
       });
       rowY += rowH + rowGap;
 
-      this.addToggleRow(rowX, rowY, rowW, rowH, '🔊 GAME SOUNDS', labelStyle, this.sfxEnabled, (isOn) => {
+      this.addToggleRow(rowX, rowY, rowW, rowH, '🔊 SOUNDS', labelStyle, this.sfxEnabled, (isOn) => {
         this.sfxEnabled = isOn;
         if (this.onSfxToggle) this.onSfxToggle(isOn);
       });
       rowY += rowH + rowGap;
 
-      this.addToggleRow(rowX, rowY, rowW, rowH, '⚡ TURBO SPINS', labelStyle, this.turboMode, (isOn) => {
+      this.addToggleRow(rowX, rowY, rowW, rowH, '⚡ TURBO', labelStyle, this.turboMode, (isOn) => {
         this.turboMode = isOn;
         if (this.onTurboToggle) this.onTurboToggle(isOn);
       });
       rowY += rowH + rowGap;
 
-      this.addQualitySelector(rowX, rowY, rowW, rowH, '✨ GRAPHICS QUALITY', labelStyle, false);
+      this.addQualitySelector(rowX, rowY, rowW, rowH, '✨ QUALITY', labelStyle, false);
       rowY += rowH + rowGap + 10;
 
       // Bottom Info Box
       const infoBox = this.scene.add.graphics();
-      infoBox.fillStyle(0x1e0e40, 1);
-      infoBox.fillRoundedRect(panelX + 30, rowY, panelW - 60, 80, 20);
-      infoBox.lineStyle(3, 0xff66aa, 0.8);
-      infoBox.strokeRoundedRect(panelX + 30, rowY, panelW - 60, 80, 20);
+      infoBox.fillStyle(0x000000, 0.3);
+      infoBox.fillRoundedRect(panelX + 30, rowY, panelW - 60, 80, 15);
+      infoBox.lineStyle(2, 0xffffff, 0.4);
+      infoBox.strokeRoundedRect(panelX + 30, rowY, panelW - 60, 80, 15);
       this.container.add(infoBox);
 
       this.container.add(this.scene.add.text(w / 2, rowY + 25, 'SUGAR BLAST 1000', { 
-        fontSize: '22px',
-        color: '#ffc844',
-        fontFamily: '"Luckiest Guy", cursive, sans-serif',
+        fontSize: '24px',
+        color: '#ffffff',
+        fontStyle: '900',
+        fontFamily: '"Fredoka One", "Comic Sans MS", sans-serif',
+        stroke: '#ff0066',
+        strokeThickness: 4,
         resolution: 2
-      }).setOrigin(0.5).setShadow(0, 2, '#3a0055', 0, false, true));
+      }).setOrigin(0.5));
 
       this.container.add(this.scene.add.text(w / 2, rowY + 55, 'RTP: 96.53%   •   Max Win: 25,000×', { 
         fontSize: '14px',
-        color: '#ff66aa',
-        fontFamily: '"Luckiest Guy", cursive, sans-serif',
+        color: '#ffdd22',
+        fontFamily: '"Fredoka One", sans-serif',
+        fontStyle: '600',
+        stroke: '#000000',
+        strokeThickness: 2,
         resolution: 2
-      }).setOrigin(0.5).setShadow(0, 2, '#3a0055', 0, false, true));
+      }).setOrigin(0.5));
     }
   }
 
@@ -243,21 +251,28 @@ export class SettingsOverlay {
 
     // Row backplate
     const backplate = this.scene.add.graphics();
-    backplate.fillStyle(0x2a1455, 1);
-    backplate.fillRoundedRect(tileX, tileY, tileW, tileH, 12);
-    backplate.lineStyle(2, 0xff66aa, 0.4);
-    backplate.strokeRoundedRect(tileX, tileY, tileW, tileH, 12);
+    backplate.fillStyle(0x9b1b6c, 0.7);
+    backplate.fillRoundedRect(tileX, tileY, tileW, tileH, 15);
+    backplate.lineStyle(2, 0xfff0f5, 0.5);
+    backplate.strokeRoundedRect(tileX, tileY, tileW, tileH, 15);
     this.container.add(backplate);
 
     // Label text
-    const labelTxt = this.scene.add.text(tileX + 20, tileY + tileH / 2 + 2, label, labelStyle).setOrigin(0, 0.5).setShadow(0, 2, '#1a0033', 0, false, true);
-    this.container.add(labelTxt);
+    const labelTxt = this.scene.add.text(tileX + 20, tileY + tileH / 2 + 2, label, labelStyle).setOrigin(0, 0.5);
 
-    // Toggle switch parameters (chunky jelly bean switch)
-    const toggleW = 70;
-    const toggleH = 36;
+    // Toggle switch parameters
+    const toggleW = 55;
+    const toggleH = 26;
     const toggleX = tileX + tileW - toggleW - 15;
-    const toggleY = tileY + (tileH - toggleH) / 2;
+    const toggleY = tileY + tileH / 2 - toggleH / 2;
+
+    // Shrink text if it collides with the toggle
+    const maxLabelW = tileW - toggleW - 40;
+    if (labelTxt.width > maxLabelW) {
+      labelTxt.setFontSize(Math.max(10, parseInt(labelStyle.fontSize as string) * (maxLabelW / labelTxt.width)));
+    }
+
+    this.container.add(labelTxt);
 
     const toggleGfx = this.scene.add.graphics();
     this.container.add(toggleGfx);
@@ -269,33 +284,21 @@ export class SettingsOverlay {
     const drawToggle = (p: number) => {
       toggleGfx.clear();
       
-      // Shadow
-      toggleGfx.fillStyle(0x3a0055, 0.3);
-      toggleGfx.fillRoundedRect(toggleX + 3, toggleY + 3, toggleW, toggleH, toggleH / 2);
-
-      // Interpolate backgrounds (Red to Green)
-      toggleGfx.fillStyle(0xff3366, (1 - p));
+      // Background (Candy Red to Candy Green)
+      toggleGfx.fillStyle(0xd92550, (1 - p));
       toggleGfx.fillRoundedRect(toggleX, toggleY, toggleW, toggleH, toggleH / 2);
       
-      toggleGfx.fillStyle(0x00e676, p);
+      toggleGfx.fillStyle(0x33ff66, p);
       toggleGfx.fillRoundedRect(toggleX, toggleY, toggleW, toggleH, toggleH / 2);
-
-      // Thick border
-      toggleGfx.lineStyle(3, 0xffffff, 1);
-      toggleGfx.strokeRoundedRect(toggleX, toggleY, toggleW, toggleH, toggleH / 2);
 
       // Smooth slide knob calculation
       const knobMinX = toggleX + toggleH / 2;
       const knobMaxX = toggleX + toggleW - toggleH / 2;
       const knobX = knobMinX + p * (knobMaxX - knobMinX);
 
-      // Knob Shadow
-      toggleGfx.fillStyle(0x000000, 0.3);
-      toggleGfx.fillCircle(knobX, toggleY + toggleH / 2 + 3, toggleH / 2);
-
-      // Massive white knob body
+      // Clean white knob body
       toggleGfx.fillStyle(0xffffff, 1);
-      toggleGfx.fillCircle(knobX, toggleY + toggleH / 2, toggleH / 2 + 2);
+      toggleGfx.fillCircle(knobX, toggleY + toggleH / 2, toggleH / 2 - 2);
     };
 
     drawToggle(progress);
@@ -314,8 +317,8 @@ export class SettingsOverlay {
       this.scene.tweens.add({
         targets: targetObj,
         val: isOn ? 1 : 0,
-        duration: 250,
-        ease: 'Back.easeOut',
+        duration: 350,
+        ease: 'Elastic.easeOut',
         onUpdate: () => {
           drawToggle(targetObj.val);
         }
@@ -332,27 +335,33 @@ export class SettingsOverlay {
 
     // Row backplate
     const backplate = this.scene.add.graphics();
-    backplate.fillStyle(0x2a1455, 1);
-    backplate.fillRoundedRect(tileX, tileY, tileW, tileH, 12);
-    backplate.lineStyle(2, 0xff66aa, 0.4);
-    backplate.strokeRoundedRect(tileX, tileY, tileW, tileH, 12);
+    backplate.fillStyle(0x9b1b6c, 0.7);
+    backplate.fillRoundedRect(tileX, tileY, tileW, tileH, 15);
+    backplate.lineStyle(2, 0xfff0f5, 0.5);
+    backplate.strokeRoundedRect(tileX, tileY, tileW, tileH, 15);
     this.container.add(backplate);
 
     // Label text
-    const labelTxt = this.scene.add.text(tileX + 20, tileY + tileH / 2 + 2, label, labelStyle).setOrigin(0, 0.5).setShadow(0, 2, '#1a0033', 0, false, true);
-    this.container.add(labelTxt);
+    const labelY = isShort ? tileY + 15 : tileY + 20;
+    const labelTxt = this.scene.add.text(tileX + 15, labelY, label, labelStyle).setOrigin(0, 0.5);
 
     // Segmented pill controller sizing
-    const trackW = isShort ? 140 : 180;
-    const trackH = 40;
+    const trackW = isShort ? 140 : Math.min(180, tileW * 0.55);
+    const trackH = Math.min(32, tileH * 0.8);
     const trackX = tileX + tileW - trackW - 15;
     const trackY = tileY + (tileH - trackH) / 2;
 
+    // Shrink text if it collides with the track
+    const maxLabelW = tileW - trackW - 40;
+    if (labelTxt.width > maxLabelW) {
+      labelTxt.setFontSize(Math.max(10, parseInt(labelStyle.fontSize as string) * (maxLabelW / labelTxt.width)));
+    }
+
+    this.container.add(labelTxt);
+
     const trackBg = this.scene.add.graphics();
-    trackBg.fillStyle(0x1a0533, 1);
-    trackBg.fillRoundedRect(trackX, trackY, trackW, trackH, trackH / 2);
-    trackBg.lineStyle(3, 0xff66aa, 1);
-    trackBg.strokeRoundedRect(trackX, trackY, trackW, trackH, trackH / 2);
+    trackBg.fillStyle(0x333333, 1);
+    trackBg.fillRoundedRect(trackX, trackY, trackW, trackH, 6);
     this.container.add(trackBg);
 
     const capsuleGfx = this.scene.add.graphics();
@@ -371,19 +380,9 @@ export class SettingsOverlay {
       const capY = trackY + 2;
       const capW = segW - 4;
       const capH = trackH - 4;
-      const capR = capH / 2;
 
-      // Drop shadow
-      capsuleGfx.fillStyle(0x3a0055, 0.3);
-      capsuleGfx.fillRoundedRect(capX + 2, capY + 2, capW, capH, capR);
-
-      // Vibrant fill
-      capsuleGfx.fillGradientStyle(0x00e5ff, 0x00e5ff, 0x00aacc, 0x00aacc, 1);
-      capsuleGfx.fillRoundedRect(capX, capY, capW, capH, capR);
-      
-      // White border
-      capsuleGfx.lineStyle(3, 0xffffff, 1);
-      capsuleGfx.strokeRoundedRect(capX, capY, capW, capH, capR);
+      capsuleGfx.fillStyle(0xff33cc, 1);
+      capsuleGfx.fillRoundedRect(capX, capY, capW, capH, 4);
     };
 
     drawCapsule(selectedIdx);
@@ -392,17 +391,16 @@ export class SettingsOverlay {
     optionsList.forEach((opt, i) => {
       const displayOpt = opt;
       const optX = trackX + i * segW + segW / 2;
-      const optY = trackY + trackH / 2 + 2;
+      const optY = trackY + trackH / 2 + 1;
 
       const txt = this.scene.add.text(optX, optY, displayOpt, { 
-        fontFamily: '"Luckiest Guy", cursive, sans-serif',
-        fontSize: isShort ? '14px' : '16px',
-        color: i === selectedIdx ? '#ffffff' : '#ff0070'
+        fontFamily: '"Fredoka One", sans-serif',
+        fontSize: isShort ? '13px' : '15px',
+        fontStyle: '800',
+        color: i === selectedIdx ? '#ffffff' : '#ffccdd',
+        stroke: i === selectedIdx ? '#1a001a' : '',
+        strokeThickness: i === selectedIdx ? 2 : 0
       }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-
-      if (i === selectedIdx) {
-        txt.setShadow(0, 2, '#000000', 0, false, true);
-      }
 
       txt.on('pointerdown', () => {
         if (selectedIdx === i) return;
@@ -418,16 +416,14 @@ export class SettingsOverlay {
         this.scene.tweens.add({
           targets: targetObj,
           val: i,
-          duration: 200,
-          ease: 'Back.easeOut',
+          duration: 150,
+          ease: 'Power2',
           onUpdate: () => {
             drawCapsule(targetObj.val);
           },
           onComplete: () => {
             labels.forEach((lbl, index) => {
-              lbl.setColor(index === selectedIdx ? '#ffffff' : '#ff0070');
-              if (index === selectedIdx) lbl.setShadow(0, 2, '#000000', 0, false, true);
-              else lbl.setShadow(0,0,'',0,false,false);
+              lbl.setColor(index === selectedIdx ? '#ffffff' : '#aaaaaa');
             });
           }
         });
@@ -485,8 +481,8 @@ export class SettingsOverlay {
       targets: this.container, 
       alpha: 1, 
       y: 0,
-      duration: 300,
-      ease: 'Back.easeOut'
+      duration: 500,
+      ease: 'Elastic.easeOut'
     });
   }
 
@@ -495,9 +491,14 @@ export class SettingsOverlay {
       targets: this.container, 
       alpha: 0, 
       y: 30,
+      scale: 0.9,
       duration: 200,
-      ease: 'Cubic.easeIn',
-      onComplete: () => { this.container.setVisible(false); this.visible = false; },
+      ease: 'Back.easeIn',
+      onComplete: () => { 
+        this.container.setVisible(false); 
+        this.container.setScale(1); 
+        this.visible = false; 
+      },
     });
   }
 
