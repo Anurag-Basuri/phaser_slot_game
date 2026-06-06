@@ -345,32 +345,50 @@ export class BottomBarHUD {
     this.txtLastWin.setScale(1);
 
     // ── Pre-calculate text sizing to prevent overlap ──
-    const zoneLimit = (w - sidePad * 2) / 3 - (isSmall ? 2 : 10);
+    // Get natural dimensions for the center Bet pill first
+    this.txtBetLabel.setFontSize(labelFS);
+    this.txtBet.setFontSize(valFS);
+    const betGap = isSmall ? 6 : 10;
+    let betLblW = this.txtBetLabel.width * this.txtBetLabel.scaleX;
+    let betValW = this.txtBet.width * this.txtBet.scaleX;
+    let betTotalW = betLblW + betGap + betValW;
+    const betPillW = Math.max(120, betTotalW + 40);
+
+    const centerX = w / 2;
+    // Calculate maximum available space for the side zones (Balance and Last Win)
+    const sideZoneLimit = centerX - (betPillW / 2) - sidePad - (isSmall ? 4 : 16);
     
-    const applyFit = (lbl: Phaser.GameObjects.Text, val: Phaser.GameObjects.Text, lblFS: number, vFS: number, gap: number, extraW: number = 0) => {
+    const applyFit = (lbl: Phaser.GameObjects.Text, val: Phaser.GameObjects.Text, lblFS: number, vFS: number, gap: number, extraW: number = 0, limit: number) => {
       // First set the intended font sizes
       lbl.setFontSize(lblFS);
       val.setFontSize(vFS);
       const total = lbl.width + gap + val.width + extraW;
-      if (total > zoneLimit) {
-        const shrink = zoneLimit / total;
-        lbl.setFontSize(Math.max(7, Math.round(lblFS * shrink)));
-        val.setFontSize(Math.max(9, Math.round(vFS * shrink)));
+      if (total > limit) {
+        const shrink = limit / total;
+        lbl.setFontSize(Math.max(9, Math.round(lblFS * shrink)));
+        val.setFontSize(Math.max(10, Math.round(vFS * shrink)));
       }
     };
 
     const balGap = isSmall ? 6 : 12;
-    applyFit(this.txtMoneyLabel, this.txtMoney, labelFS, valFS, balGap);
+    applyFit(this.txtMoneyLabel, this.txtMoney, labelFS, valFS, balGap, 0, sideZoneLimit);
 
-    const betGap = isSmall ? 6 : 10;
-    applyFit(this.txtBetLabel, this.txtBet, labelFS, valFS, betGap);
+    // If bet itself is too wide, restrict it
+    const maxBetW = w * 0.4;
+    if (betTotalW > maxBetW) {
+      applyFit(this.txtBetLabel, this.txtBet, labelFS, valFS, betGap, 0, maxBetW);
+      // Recalculate
+      betLblW = this.txtBetLabel.width * this.txtBetLabel.scaleX;
+      betValW = this.txtBet.width * this.txtBet.scaleX;
+      betTotalW = betLblW + betGap + betValW;
+    }
 
     const targetIconHeight = Math.max(14, barH * 0.45);
     const baseHeight = this.winSymbolIcon.height > 0 ? this.winSymbolIcon.height : 256;
     this._iconTargetScale = targetIconHeight / baseHeight;
     const iconOffset = this.winSymbolIcon.visible ? targetIconHeight + 8 : 0;
     const winGap = isSmall ? 8 : 16;
-    applyFit(this.txtLastWinLabel, this.txtLastWin, labelFS, valFS, winGap, iconOffset);
+    applyFit(this.txtLastWinLabel, this.txtLastWin, labelFS, valFS, winGap, iconOffset, sideZoneLimit);
 
     // ── Zone 1: BALANCE (Far Left) ──
     this.txtMoneyLabel.setPosition(sidePad, txtY).setOrigin(0, 0.5);
@@ -392,13 +410,8 @@ export class BottomBarHUD {
       .setOrigin(1, 0.5);
 
     // ── Zone 2: BET (Center) ──
-    const centerX = w / 2;
     this.txtBetLabel.setOrigin(1, 0.5);
     this.txtBet.setOrigin(0, 0.5);
-    
-    const betLblW = this.txtBetLabel.width * this.txtBetLabel.scaleX;
-    const betValW = this.txtBet.width * this.txtBet.scaleX;
-    const betTotalW = betLblW + betGap + betValW;
     
     this.txtBetLabel.setPosition(centerX - betTotalW / 2 + betLblW, txtY);
     this.txtBet.setPosition(centerX - betTotalW / 2 + betLblW + betGap, txtY);
@@ -411,17 +424,20 @@ export class BottomBarHUD {
     const pillR = Math.min(pillH / 2, 10);
     
     const drawRigidPill = (px: number, py: number, pw: number, ph: number) => {
-      // Hard drop shadow
-      this.pillsGfx.fillStyle(0x000000, 0.6);
-      this.pillsGfx.fillRoundedRect(px + 3, py + 3, pw, ph, pillR);
-      // Solid dark purple body
-      this.pillsGfx.fillStyle(0x1a0033, 0.9);
+      // Dark smooth shadow underneath
+      this.pillsGfx.fillStyle(0x000000, 0.5);
+      this.pillsGfx.fillRoundedRect(px + 2, py + 4, pw, ph, pillR);
+      
+      // Premium dark gradient body
+      this.pillsGfx.fillGradientStyle(0x1a0033, 0x1a0033, 0x0a0f1a, 0x0a0f1a, 0.95);
       this.pillsGfx.fillRoundedRect(px, py, pw, ph, pillR);
-      // Thick colored border
-      this.pillsGfx.lineStyle(2, 0x7744cc, 0.8);
+      
+      // Crisp outer stroke (border)
+      this.pillsGfx.lineStyle(2, 0x5533aa, 1);
       this.pillsGfx.strokeRoundedRect(px, py, pw, ph, pillR);
-      // Top glossy highlight (rigid, not fading)
-      this.pillsGfx.fillStyle(0xffffff, 0.1);
+      
+      // Gloss highlight
+      this.pillsGfx.fillStyle(0xffffff, 0.08);
       this.pillsGfx.fillRoundedRect(px + 2, py + 1, pw - 4, ph * 0.35, { tl: pillR - 1, tr: pillR - 1, bl: 0, br: 0 } as Phaser.Types.GameObjects.Graphics.RoundedRectRadius);
     };
 

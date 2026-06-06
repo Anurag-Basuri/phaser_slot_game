@@ -159,7 +159,7 @@ export class BetOverlay {
     this.container.add(closeBtnGfx);
 
     const closeBtn = this.scene.add.text(closeBtnX, closeBtnY, '✕', {
-      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontFamily: '"Poppins", sans-serif',
       fontSize: '28px', color: '#ffffff',
       resolution: 2
     }).setOrigin(0.5).setShadow(0, 2, '#660000', 0, false, true).setInteractive({ useHandCursor: true });
@@ -189,7 +189,7 @@ export class BetOverlay {
     // ── Title: BET MULTIPLIER Nx ──
     const level = this.betIndex + 1;
     this.txtMultiplier = this.scene.add.text(pX + pW / 2, headerY + headerH / 2, `BET MULTIPLIER ${level}x`, {
-      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontFamily: '"Poppins", sans-serif',
       fontSize: '18px', color: '#ffffff',
       stroke: '#441177', strokeThickness: 5, resolution: 2
     }).setOrigin(0.5).setShadow(0, 3, '#1a0033', 0, false, true);
@@ -243,7 +243,7 @@ export class BetOverlay {
     this.container.add(maxGfx);
 
     const maxTxt = this.scene.add.text(maxX + maxW / 2, maxY + maxH / 2, 'BET MAX', {
-      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontFamily: '"Poppins", sans-serif',
       fontSize: '24px', color: '#ffffff', stroke: '#004422', strokeThickness: 5, resolution: 2
     }).setOrigin(0.5).setShadow(0, 4, '#1a0033', 0, false, true);
     this.container.add(maxTxt);
@@ -272,7 +272,7 @@ export class BetOverlay {
   // ── Build a section label ──
   private buildLabel(cx: number, cy: number, text: string) {
     this.container.add(this.scene.add.text(cx, cy, text, {
-      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontFamily: '"Poppins", sans-serif',
       fontSize: '20px', color: '#ffc844', resolution: 2
     }).setOrigin(0.5).setShadow(0, 2, '#3a0055', 0, false, true));
   }
@@ -294,7 +294,7 @@ export class BetOverlay {
     this.container.add(field);
 
     const txt = this.scene.add.text(fieldX + fieldW / 2, rowY + rowH / 2, '', {
-      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontFamily: '"Poppins", sans-serif',
       fontSize: '28px', color: '#00ff88', stroke: '#003311', strokeThickness: 4, resolution: 2
     }).setOrigin(0.5).setShadow(0, 3, '#000000', 0, false, true);
     this.container.add(txt);

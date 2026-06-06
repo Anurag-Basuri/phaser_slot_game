@@ -178,7 +178,7 @@ export class AutoPlayOverlay {
     this.container.add(closeBtnGfx);
 
     const closeBtn = this.scene.add.text(closeBtnX, closeBtnY, '✕', {
-      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontFamily: '"Poppins", sans-serif',
       fontSize: '28px',
       color: '#ffffff',
       resolution: 2
@@ -194,7 +194,7 @@ export class AutoPlayOverlay {
 
     // Title
     const title = this.scene.add.text(w / 2, headerY + headerH / 2, 'AUTOPLAY', {
-      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontFamily: '"Poppins", sans-serif',
       fontSize: '32px',
       color: '#ffffff',
       stroke: '#441177',
@@ -251,7 +251,7 @@ export class AutoPlayOverlay {
     // Slider section
     const slideY = pY + 330;
     const slideTitle = this.scene.add.text(pX + pW / 2, slideY - 80, 'NUMBER OF SPINS', {
-      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontFamily: '"Poppins", sans-serif',
       fontSize: '22px',
       color: '#ffc844',
       resolution: 2
@@ -270,7 +270,7 @@ export class AutoPlayOverlay {
       qpBtn.strokeRoundedRect(qpX, slideY - 50, qpW - 6, 32, 8);
       
       const qpTxt = this.scene.add.text(qpX + (qpW - 6) / 2, slideY - 34, val === 0 ? '∞' : `${val}`, {
-        fontFamily: '"Luckiest Guy", cursive, sans-serif',
+        fontFamily: '"Poppins", sans-serif',
         fontSize: '18px',
         color: '#ffffff',
         resolution: 2
@@ -297,7 +297,7 @@ export class AutoPlayOverlay {
     this.container.add(this.sliderTrackGfx);
 
     this.txtSpinsCount = this.scene.add.text(pX + pW - 30, slideY, this.spins === 0 ? '∞' : `${this.spins}`, {
-      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontFamily: '"Poppins", sans-serif',
       fontSize: '48px',
       color: '#00ff88',
       stroke: '#003311',
@@ -362,7 +362,7 @@ export class AutoPlayOverlay {
     this.container.add(startHit);
 
     this.btnStartTxt = this.scene.add.text(pX + pW / 2, startY - 50, `START AUTOPLAY (${this.spins === 0 ? '∞' : this.spins})`, {
-      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontFamily: '"Poppins", sans-serif',
       fontSize: '26px',
       color: '#ffffff',
       stroke: '#004422',
@@ -412,7 +412,7 @@ export class AutoPlayOverlay {
     this.container.add(gfx);
 
     const txt = this.scene.add.text(x + size + 15, y + size/2, label, {
-      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontFamily: '"Poppins", sans-serif',
       fontSize: '16px',
       color: '#ffffff',
       resolution: 2
