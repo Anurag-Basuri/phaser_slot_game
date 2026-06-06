@@ -508,6 +508,21 @@ import { DisplayBalance } from '../helpers/Currency';
       .setOrigin(0.5, 1) // anchor to bottom so text sits above gridY
       .setFontSize(fsFS);
 
+    // ==========================================
+    // 7. MASCOT
+    // ==========================================
+    if (this.mascot) {
+      if (isStacked) {
+        // Mobile: right of logo
+        this.mascot.setPosition(w - 70, m.logoY + 20);
+        this.mascot.setScale(0.8);
+      } else {
+        // Desktop: bottom-left of the grid
+        this.mascot.setPosition(gridX - 120, gridY + gridH - 60);
+        this.mascot.setScale(1.2);
+      }
+    }
+
     if (this.stakeEngine.isReplayMode()) {
       const replayScale = Math.min(1.5, Math.max(0.4, w / 800));
       // Position at spinY so it replaces the spin button rather than overlapping the grid
