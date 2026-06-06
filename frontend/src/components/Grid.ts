@@ -90,6 +90,19 @@ export class Grid {
   private get sweepDuration() { return this.turboMode ? 80 : this.quickMode ? 100 : 140; }
   private cellBackgrounds!: Phaser.GameObjects.Graphics;
 
+  private get scatterCount(): number {
+    let count = 0;
+    const size = options.gridSize;
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (this.sprites[r][c] && this.sprites[r][c]?.getData('symId') === 7) {
+          count++;
+        }
+      }
+    }
+    return count;
+  }
+
 
 
   constructor(scene: GameScene) {
@@ -425,6 +438,13 @@ export class Grid {
       }
     }
 
+    const isAnticipation = this.scatterCount === 2 && !this.turboMode && !this.isDemoMode;
+    const dropMultiplier = isAnticipation ? 2.8 : 1;
+
+    if (isAnticipation && this.scene.mascot) {
+      this.scene.mascot.anticipate();
+    }
+
     // Waterfall stagger: columns drop from center outward
     const centerCol = Math.floor(size / 2);
 
@@ -462,7 +482,11 @@ export class Grid {
             sprite.preFX.addColorMatrix().brightness(1.1);
           }
 
-          // Apply circular crop to scatter to remove square background
+          // Apply SCREEN blend mode to cut out the pure black background from 3D AI renders
+          if (symId >= 0 && symId <= 6) {
+            sprite.setBlendMode(Phaser.BlendModes.SCREEN);
+          }
+
           if (symId === 7) {
             const cropRadius = Math.min(sprite.width, sprite.height) / 2;
             sprite.setCrop(
@@ -476,8 +500,8 @@ export class Grid {
           this.sprites[r][c] = sprite;
 
           // Waterfall-staggered drop with jelly physics
-          const delay = colStagger + (size - 1 - r) * 10;
-          const dropDur = this.dropDuration + (dropCounts[c] - currentDropIndex) * 18;
+          const delay = (colStagger + (size - 1 - r) * 10) * dropMultiplier;
+          const dropDur = (this.dropDuration + (dropCounts[c] - currentDropIndex) * 18) * dropMultiplier;
           const targetY = this.getY(r);
 
           // Instant visibility
@@ -1068,6 +1092,14 @@ export class Grid {
           this.onWinCallback(clusterWin, cluster.kind !== undefined ? cluster.kind : this.sprites[Math.round(avgR)]?.[Math.round(avgC)]?.getData('symId'));
         }
 
+        // Mascot Celebration (Juice)
+        if (this.scene.mascot && !this.turboMode) {
+          let tier = 1;
+          if (cluster.positions.length > 8) tier = 2;
+          if (cluster.positions.length > 12) tier = 3;
+          this.scene.mascot.celebrate(tier);
+        }
+
         const winPopFS = Math.max(14, Math.min(28, this.cellW * 0.38));
         const winPop = this.scene.add.text(popX, popY, `+${clusterWin.toFixed(2)}`, {
           
@@ -1267,6 +1299,13 @@ export class Grid {
       }
     }
 
+    const isAnticipation = this.scatterCount === 2 && !this.turboMode && !this.isDemoMode;
+    const dropMultiplier = isAnticipation ? 2.8 : 1;
+
+    if (isAnticipation && this.scene.mascot) {
+      this.scene.mascot.anticipate();
+    }
+
     const centerCol = Math.floor(size / 2);
     for (let c = 0; c < size; c++) {
       let currentDropIndex = 0;
@@ -1292,14 +1331,19 @@ export class Grid {
             sprite.preFX.addColorMatrix().brightness(1.1);
           }
 
+          // Apply SCREEN blend mode to cut out the pure black background from 3D AI renders
+          if (symId >= 0 && symId <= 6) {
+            sprite.setBlendMode(Phaser.BlendModes.SCREEN);
+          }
+
           if (symId === 7) {
             const cropRadius = Math.min(sprite.width, sprite.height) / 2;
             sprite.setCrop(sprite.width / 2 - cropRadius, sprite.height / 2 - cropRadius, cropRadius * 2, cropRadius * 2);
           }
 
           this.sprites[r][c] = sprite;
-          const delay = colStagger + (size - 1 - r) * 10;
-          const dropDur = this.dropDuration + (dropCounts[c] - currentDropIndex) * 18;
+          const delay = (colStagger + (size - 1 - r) * 10) * dropMultiplier;
+          const dropDur = (this.dropDuration + (dropCounts[c] - currentDropIndex) * 18) * dropMultiplier;
           const targetY = this.getY(r);
 
           this.scene.tweens.add({ targets: sprite, alpha: 1, duration: 25, delay });
