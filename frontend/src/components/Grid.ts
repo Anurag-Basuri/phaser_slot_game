@@ -120,7 +120,7 @@ export class Grid {
     // Phase 6: Cascade depth counter text — font scales with grid
     this.cascadeCounterTxt = this.scene.add.text(0, 0, '', {
       
-      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontFamily: '"Poppins", sans-serif',
       fontSize: '22px', // Will be overridden dynamically on each display
       color: '#ffffff',
       stroke: '#cc0055',
@@ -804,7 +804,7 @@ export class Grid {
       
       if (!this.multiplierTexts[r][c]) {
         const txt = this.scene.add.text(badgeCX, badgeCY, `×${mult}`, {
-          fontFamily: '"Luckiest Guy", cursive, sans-serif',
+          fontFamily: '"Poppins", sans-serif',
           fontSize: `${Math.round(fontSize)}px`,
           color: '#ffffff',
           stroke: '#000000',
@@ -1039,7 +1039,7 @@ export class Grid {
         const winPopFS = Math.max(14, Math.min(28, this.cellW * 0.38));
         const winPop = this.scene.add.text(popX, popY, `+${clusterWin.toFixed(2)}`, {
           
-          fontFamily: '"Luckiest Guy", cursive, sans-serif',
+          fontFamily: '"Poppins", sans-serif',
           fontSize: `${Math.round(winPopFS)}px`,
           color: '#ffee00',
           stroke: '#cc4400',

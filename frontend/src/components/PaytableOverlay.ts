@@ -24,21 +24,32 @@ export class PaytableOverlay {
   private visible = false;
   private txtPageNum!: Phaser.GameObjects.Text;
   private dotIndicators: Phaser.GameObjects.Graphics[] = [];
+  private scrollThumb!: Phaser.GameObjects.Graphics;
+  private scrollTrackH = 0;
+  private scrollTrackY = 0;
+  private velocityY = 0;
+  private lastPointerY = 0;
+  private scrollTween: Phaser.Tweens.Tween | null = null;
+  private logicalW = 0;
+  private logicalH = 0;
 
-  // ── Premium Candy Typography ──
-  private readonly FONT_TITLE = '"Luckiest Guy", cursive, sans-serif';
-  private readonly FONT_BODY = '"Inter", "Roboto", "Arial", sans-serif';
-  private readonly COL_BODY = '#e0ddf0';
-  private readonly COL_MUTED = '#ffaa33';
+  // ── Candy Theme Typography ──
+  private readonly FONT_TITLE = '"Fredoka One", "Comic Sans MS", sans-serif';
+  private readonly FONT_BODY = '"Fredoka One", sans-serif';
+  private readonly COL_BODY = '#ffffff';
+  private readonly COL_MUTED = '#ffccdd';
   private readonly COL_ACCENT = '#ffffff';
-  private readonly COL_GOLD = '#ffc844';
-  private readonly COL_PINK = '#ff66aa';
+  private readonly COL_GOLD = '#ffdd22';
+  private readonly COL_PINK = '#ff0066';
+
+  /** Resolution multiplier for crisp text on HiDPI displays */
+  private readonly RES = 2;
 
   // ── Panel colors ──
-  private readonly PANEL_BG = 0x1a0e35;
-  private readonly PANEL_BORDER = 0xff66aa;
-  private readonly CARD_BG = 0x221445;
-  private readonly CARD_BORDER = 0x9944cc;
+  private readonly PANEL_BG = 0x380036; // Plum
+  private readonly PANEL_BORDER = 0xfff0f5; // Creamy white
+  private readonly CARD_BG = 0x9b1b6c; // Translucent magenta
+  private readonly CARD_BORDER = 0xfff0f5;
 
   private symbolNames = [
     'Red Cherry Candy', 'Blue Sapphire Candy', 'Pink Rose Candy',
@@ -82,43 +93,53 @@ export class PaytableOverlay {
     return t;
   }
 
-  /** Draw a candy-tinted card rectangle */
-  private drawCard(page: Phaser.GameObjects.Container, x: number, y: number, cw: number, ch: number, accent = false) {
+  /** Draw a translucent dark card rectangle */
+  private drawCard(page: Phaser.GameObjects.Container, x: number, y: number, cw: number, ch: number, accent = false, accentColor?: number) {
     const g = this.scene.add.graphics();
     // Card body
-    g.fillStyle(this.CARD_BG, 0.85);
-    g.fillRoundedRect(x, y, cw, ch, 12);
+    g.fillStyle(this.CARD_BG, 0.7);
+    g.fillRoundedRect(x, y, cw, ch, 15);
     // Border
-    g.lineStyle(1.5, accent ? this.COL_PINK_HEX : this.CARD_BORDER, accent ? 0.6 : 0.35);
-    g.strokeRoundedRect(x, y, cw, ch, 12);
-    // Subtle inner glow at top
-    g.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.04, 0.04, 0, 0);
-    g.fillRoundedRect(x + 2, y + 2, cw - 4, ch * 0.2, { tl: 10, tr: 10, bl: 0, br: 0 });
+    const bColor = accentColor ? accentColor : (accent ? this.PANEL_BORDER : this.CARD_BORDER);
+    const bAlpha = accentColor ? 1 : (accent ? 0.9 : 0.6);
+    g.lineStyle(2, bColor, bAlpha);
+    g.strokeRoundedRect(x, y, cw, ch, 15);
     page.add(g);
   }
 
-  private get COL_PINK_HEX(): number { return 0xff66aa; }
+  private get COL_PINK_HEX(): number { return 0xff0066; }
 
-  /** Add a section title with candy underline */
-  private addSectionTitle(page: Phaser.GameObjects.Container, _x: number, y: number, text: string): number {
-    const txt = this.scene.add.text(35, y, this.Tr(text), {
-      fontSize: '30px', fontFamily: this.FONT_TITLE, color: '#ffffff',
-      stroke: '#441177', strokeThickness: 4,
-      shadow: { offsetX: 0, offsetY: 4, color: '#1a0033', blur: 0, stroke: false, fill: true },
-      resolution: 2
+  /** Add a flat, crisp section title with orange divider */
+  private addSectionTitle(page: Phaser.GameObjects.Container, w: number, y: number, text: string): number {
+    const isMob = w < 700;
+    const pad = isMob ? 15 : 35;
+    const fontSize = isMob ? '22px' : '28px';
+    const txt = this.scene.add.text(pad, y, this.Tr(text), {
+      fontSize, fontFamily: this.FONT_TITLE, color: '#ffffff',
+      fontStyle: '900', stroke: '#1a001a', strokeThickness: 3,
+      resolution: this.RES
     }).setOrigin(0, 0.5);
+    txt.setShadow(0, 2, '#1a001a', 0, true, false);
     page.add(txt);
 
-    // Candy pink underline
-    const lw = txt.width + 14;
+    // Flat thin orange divider spanning the width
     const g = this.scene.add.graphics();
-    g.lineStyle(3, 0xff66aa, 0.7);
-    g.lineBetween(35, y + 20, 35 + lw, y + 20);
-    // Little diamond ornament at end
-    g.fillStyle(0xff66aa, 0.6);
-    g.fillRect(35 + lw - 2, y + 17, 6, 6);
+    g.lineStyle(2, this.PANEL_BORDER, 0.6);
+    g.lineBetween(pad, y + (isMob ? 18 : 24), w - pad, y + (isMob ? 18 : 24));
     page.add(g);
-    return y + 40;
+    
+    return y + (isMob ? 36 : 46);
+  }
+
+  /** Add a visual divider between sections in mobile scroll mode */
+  private addMobileDivider(parent: Phaser.GameObjects.Container, w: number, y: number): number {
+    if (!this.isMobileScroll) return y;
+    const pad = 30;
+    const g = this.scene.add.graphics();
+    g.lineStyle(1, 0xffffff, 0.06);
+    g.lineBetween(pad, y, w - pad, y);
+    parent.add(g);
+    return y + 20;
   }
 
 
@@ -148,6 +169,7 @@ export class PaytableOverlay {
   private isMobileScroll = false;
   private scrollY = 0;
   private maxScrollY = 0;
+  private pageWrapperRef!: Phaser.GameObjects.Container;
 
   private build(w?: number, h?: number) {
     w = w || this.scene.scale.width;
@@ -156,10 +178,12 @@ export class PaytableOverlay {
     this.isMobileScroll = h > w || h < 600;
     const logicalW = this.isMobileScroll ? Math.min(600, w * 0.95) : Math.min(880, w * 0.9);
     const logicalH = this.isMobileScroll ? Math.min(1000, h * 0.95) : Math.min(740, h * 0.9);
+    this.logicalW = logicalW;
+    this.logicalH = logicalH;
 
     // ── Dark translucent backdrop ──
     const bg = this.scene.add.graphics();
-    bg.fillStyle(0x0a0015, 0.78);
+    bg.fillStyle(0x0a0015, 0.82);
     bg.fillRect(-w, -h, w * 3, h * 3);
     bg.setInteractive(new Phaser.Geom.Rectangle(-w, -h, w * 3, h * 3), Phaser.Geom.Rectangle.Contains);
     bg.on('pointerdown', () => { this.scene.audio?.playSound('button'); this.hide(); });
@@ -167,29 +191,22 @@ export class PaytableOverlay {
 
     const pageWrapper = this.scene.add.container(0, 0);
     this.container.add(pageWrapper);
+    this.pageWrapperRef = pageWrapper;
 
-    // ── Premium Candy Panel ──
+    // ── Premium Dark Panel ──
     const panel = this.scene.add.graphics();
 
-    // Shadow
-    panel.fillStyle(0x0a0015, 0.5);
-    panel.fillRoundedRect(6, 8, logicalW, logicalH, 20);
+    // Subtle drop shadow
+    panel.fillStyle(0x000000, 0.5);
+    panel.fillRoundedRect(4, 6, logicalW, logicalH, 14);
 
-    // Main panel body — deep candy purple
-    panel.fillGradientStyle(0x1e0e40, 0x2a1455, 0x140a30, 0x1a0e38, 1, 1, 1, 1);
-    panel.fillRoundedRect(0, 0, logicalW, logicalH, 20);
+    // Main panel body — candy purple
+    panel.fillStyle(this.PANEL_BG, 1);
+    panel.fillRoundedRect(0, 0, logicalW, logicalH, 24);
 
-    // Glossy top reflection
-    panel.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.06, 0.06, 0, 0);
-    panel.fillRoundedRect(3, 3, logicalW - 6, logicalH * 0.12, { tl: 18, tr: 18, bl: 0, br: 0 });
-
-    // Thick candy pink border
-    panel.lineStyle(4, this.PANEL_BORDER, 0.85);
-    panel.strokeRoundedRect(0, 0, logicalW, logicalH, 20);
-
-    // Inner white rim
-    panel.lineStyle(1.5, 0xffffff, 0.15);
-    panel.strokeRoundedRect(4, 4, logicalW - 8, logicalH - 8, 16);
+    // Thick soft pink border
+    panel.lineStyle(4, this.PANEL_BORDER, 1);
+    panel.strokeRoundedRect(0, 0, logicalW, logicalH, 24);
 
     panel.setInteractive(new Phaser.Geom.Rectangle(0, 0, logicalW, logicalH), Phaser.Geom.Rectangle.Contains);
     pageWrapper.add(panel);
@@ -202,99 +219,144 @@ export class PaytableOverlay {
     pageWrapper.add(this.scrollContainer);
 
     if (this.isMobileScroll) {
+      // Mask to clip content within the panel (leave header space)
       const maskGraphics = this.scene.make.graphics({});
       maskGraphics.fillStyle(0x000000);
-      maskGraphics.fillRect(wrapperX + 10, wrapperY + 10, logicalW - 20, logicalH - 20);
+      maskGraphics.fillRect(wrapperX + 5, wrapperY + 55, logicalW - 10, logicalH - 60);
       this.scrollContainer.mask = new Phaser.Display.Masks.GeometryMask(this.scene, maskGraphics);
 
       this.scrollY = 0;
       this.maxScrollY = 0;
+      this.velocityY = 0;
 
       const hitZone = this.scene.add.zone(logicalW / 2, logicalH / 2, logicalW, logicalH)
         .setInteractive({ draggable: true });
       pageWrapper.add(hitZone);
 
-      hitZone.on('drag', (pointer: Phaser.Input.Pointer, _dragX: number, _dragY: number) => {
-        this.scrollY += (pointer.position.y - pointer.prevPosition.y);
+      // Inertia-based scrolling with momentum
+      hitZone.on('dragstart', (pointer: Phaser.Input.Pointer) => {
+        this.velocityY = 0;
+        this.lastPointerY = pointer.position.y;
+        if (this.scrollTween) { this.scrollTween.stop(); this.scrollTween = null; }
+      });
+
+      hitZone.on('drag', (pointer: Phaser.Input.Pointer) => {
+        const dy = pointer.position.y - this.lastPointerY;
+        this.velocityY = dy;
+        this.lastPointerY = pointer.position.y;
+        this.scrollY += dy;
         this.scrollY = Phaser.Math.Clamp(this.scrollY, -this.maxScrollY, 0);
         this.scrollContainer.y = this.scrollY;
+        this.updateScrollThumb();
+      });
+
+      hitZone.on('dragend', () => {
+        // Momentum coast
+        if (Math.abs(this.velocityY) > 1) {
+          const targetY = Phaser.Math.Clamp(this.scrollY + this.velocityY * 12, -this.maxScrollY, 0);
+          this.scrollTween = this.scene.tweens.add({
+            targets: this.scrollContainer,
+            y: targetY,
+            duration: 600,
+            ease: 'Cubic.easeOut',
+            onUpdate: () => {
+              this.scrollY = this.scrollContainer.y;
+              this.updateScrollThumb();
+            }
+          });
+        }
       });
 
       hitZone.on('wheel', (_pointer: Phaser.Input.Pointer, _deltaX: number, deltaY: number) => {
-        this.scrollY -= deltaY;
+        if (this.scrollTween) { this.scrollTween.stop(); this.scrollTween = null; }
+        this.scrollY -= deltaY * 1.2;
         this.scrollY = Phaser.Math.Clamp(this.scrollY, -this.maxScrollY, 0);
         this.scrollContainer.y = this.scrollY;
+        this.updateScrollThumb();
       });
 
-      // Scroll indicator track on the right
+      // Scroll track (background rail)
+      this.scrollTrackY = 60;
+      this.scrollTrackH = logicalH - 80;
       const scrollTrack = this.scene.add.graphics();
-      scrollTrack.fillStyle(0xffffff, 0.08);
-      scrollTrack.fillRoundedRect(logicalW - 10, 60, 4, logicalH - 120, 2);
+      scrollTrack.fillStyle(0xffffff, 0.06);
+      scrollTrack.fillRoundedRect(logicalW - 10, this.scrollTrackY, 4, this.scrollTrackH, 2);
       pageWrapper.add(scrollTrack);
+
+      // Scroll thumb (moves with scroll position)
+      this.scrollThumb = this.scene.add.graphics();
+      pageWrapper.add(this.scrollThumb);
     }
 
     // ── Header Title ──
     const isSocial = getStakeEngine().isSocialMode();
-    pageWrapper.add(this.scene.add.text(35, 22, this.Tr(T('FEATURE EXPLANATION', isSocial)), {
-      fontSize: '26px', fontFamily: this.FONT_TITLE, color: '#ffffff',
-      stroke: '#441177', strokeThickness: 3,
-      shadow: { offsetX: 0, offsetY: 3, color: '#1a0033', blur: 0, stroke: false, fill: true },
-      resolution: 2
-    }).setOrigin(0, 0));
+    const isMob = w < 700 || this.isMobileScroll;
+    const headerPad = isMob ? 15 : 35;
+    const titleText = this.scene.add.text(headerPad, isMob ? 16 : 28, this.Tr(T('FEATURE EXPLANATION', isSocial)), {
+      fontSize: isMob ? '20px' : '32px', fontFamily: this.FONT_TITLE, fontStyle: '900', color: '#ffffff',
+      stroke: '#9b1b6c', strokeThickness: isMob ? 3 : 4,
+      resolution: this.RES
+    }).setOrigin(0, 0);
+    titleText.setShadow(0, 3, '#1a001a', 0, true, false);
+    pageWrapper.add(titleText);
 
-    // Golden divider under main title
-    const titleGfx = this.scene.add.graphics();
-    titleGfx.lineStyle(2, 0xffc844, 0.5);
-    titleGfx.lineBetween(35, 58, logicalW - 35, 58);
-    pageWrapper.add(titleGfx);
+    // Header divider
+    const headerDiv = this.scene.add.graphics();
+    headerDiv.lineStyle(3, this.PANEL_BORDER, 0.6);
+    headerDiv.lineBetween(headerPad, isMob ? 44 : 64, logicalW - headerPad, isMob ? 44 : 64);
+    pageWrapper.add(headerDiv);
 
-    // ── Close button — candy red circle ──
-    const closeBtnX = logicalW - 12;
-    const closeBtnY = 12;
+    // ── Close button — Bubbly style ──
+    const closeBtnR = isMob ? 16 : 20;
+    const closeBtnX = logicalW - closeBtnR - 8;
+    const closeBtnY = isMob ? 24 : 20;
     const closeBtnGfx = this.scene.add.graphics();
-    // Shadow
-    closeBtnGfx.fillStyle(0x220011, 0.6);
-    closeBtnGfx.fillCircle(closeBtnX + 3, closeBtnY + 3, 22);
-    // Body
-    closeBtnGfx.fillStyle(0xff3355, 1);
-    closeBtnGfx.fillCircle(closeBtnX, closeBtnY, 22);
-    // Highlight
-    closeBtnGfx.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.3, 0.3, 0, 0);
-    closeBtnGfx.fillCircle(closeBtnX - 3, closeBtnY - 5, 10);
-    // Border
-    closeBtnGfx.lineStyle(3, 0xffffff, 0.9);
-    closeBtnGfx.strokeCircle(closeBtnX, closeBtnY, 22);
+    closeBtnGfx.fillStyle(0xff3333, 1);
+    closeBtnGfx.fillCircle(closeBtnX, closeBtnY, closeBtnR);
+    closeBtnGfx.lineStyle(3, 0xffffff, 1);
+    closeBtnGfx.strokeCircle(closeBtnX, closeBtnY, closeBtnR);
     pageWrapper.add(closeBtnGfx);
 
-    const closeBtn = this.scene.add.text(closeBtnX, closeBtnY + 1, '✕', {
-      fontSize: '22px', color: '#ffffff', fontFamily: this.FONT_TITLE,
-      stroke: '#880022', strokeThickness: 2
+    const closeBtn = this.scene.add.text(closeBtnX, closeBtnY + 1, '✖', {
+      fontSize: isMob ? '16px' : '20px', color: '#ffffff', fontFamily: this.FONT_TITLE,
+      resolution: this.RES
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     closeBtn.on('pointerdown', () => { this.scene.audio.playSound('button'); this.hide(); });
-    closeBtn.on('pointerover', () => closeBtn.setScale(1.15));
+    closeBtn.on('pointerover', () => closeBtn.setScale(1.2));
     closeBtn.on('pointerout', () => closeBtn.setScale(1));
     pageWrapper.add(closeBtn);
 
     // ── Build all 8 pages ──
     const parentContainer = this.isMobileScroll ? this.scrollContainer : pageWrapper;
-    let currentY = 80;
-    const getStartY = () => this.isMobileScroll ? currentY : 80;
+    const contentStartY = isMob ? 55 : 80;
+    let currentY = contentStartY;
+    const getStartY = () => this.isMobileScroll ? currentY : contentStartY;
 
     currentY = this.buildPage1_Symbols(parentContainer, logicalW, logicalH, getStartY());
-    currentY = this.buildPage2_Tumble(parentContainer, logicalW, logicalH, getStartY());
-    currentY = this.buildPage3_Multipliers(parentContainer, logicalW, logicalH, getStartY());
-    currentY = this.buildPage4_FreeSpins(parentContainer, logicalW, logicalH, getStartY());
-    currentY = this.buildPage5_BuyFeatures(parentContainer, logicalW, logicalH, getStartY());
-    currentY = this.buildPage6_GameRules(parentContainer, logicalW, logicalH, getStartY());
-    currentY = this.buildPage7_HowToPlay(parentContainer, logicalW, logicalH, getStartY());
-    currentY = this.buildPage8_Settings(parentContainer, logicalW, logicalH, getStartY());
+    currentY = this.addMobileDivider(parentContainer, logicalW, currentY);
+    currentY = this.buildPage2_ScatterAndFreeSpins(parentContainer, logicalW, logicalH, getStartY());
+    currentY = this.addMobileDivider(parentContainer, logicalW, currentY);
+    currentY = this.buildPage3_TumbleAndMultipliers(parentContainer, logicalW, logicalH, getStartY());
+    currentY = this.addMobileDivider(parentContainer, logicalW, currentY);
+    currentY = this.buildPage4_BuyFeatures(parentContainer, logicalW, logicalH, getStartY());
+    currentY = this.addMobileDivider(parentContainer, logicalW, currentY);
+    currentY = this.buildPage5_GameRulesAndStats(parentContainer, logicalW, logicalH, getStartY());
+    currentY = this.addMobileDivider(parentContainer, logicalW, currentY);
+    currentY = this.buildPage6_HowToPlay(parentContainer, logicalW, logicalH, getStartY());
+    currentY = this.addMobileDivider(parentContainer, logicalW, currentY);
+    currentY = this.buildPage7_MenusAndNav(parentContainer, logicalW, logicalH, getStartY());
+    currentY = this.addMobileDivider(parentContainer, logicalW, currentY);
+    currentY = this.buildPage8_Terms(parentContainer, logicalW, logicalH, getStartY());
 
     if (this.isMobileScroll) {
-      this.maxScrollY = Math.max(0, currentY - logicalH + 60);
+      // Add bottom padding so last section isn't flush with panel edge
+      currentY += 40;
+      this.maxScrollY = Math.max(0, currentY - logicalH + 20);
+      this.updateScrollThumb();
     }
 
     if (!this.isMobileScroll) {
-      // ── Navigation — candy-styled PREV / NEXT buttons ──
+      // ── Navigation — sleek PREV / NEXT buttons ──
       const navY = logicalH - 40;
       const navCenter = logicalW / 2;
 
@@ -302,40 +364,34 @@ export class PaytableOverlay {
         const btnGroup = this.scene.add.container(x, navY);
 
         const nbg = this.scene.add.graphics();
-        // Shadow
-        nbg.fillStyle(0x1a0033, 0.5);
-        nbg.fillRoundedRect(-65, -18, 130, 38, 12);
-        // Body
-        nbg.fillGradientStyle(0x3a1866, 0x3a1866, 0x2a1050, 0x2a1050, 1, 1, 1, 1);
-        nbg.fillRoundedRect(-65, -20, 130, 38, 12);
-        // Border
-        nbg.lineStyle(2, 0xff66aa, 0.7);
-        nbg.strokeRoundedRect(-65, -20, 130, 38, 12);
-        // Top highlight
-        nbg.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.1, 0.1, 0, 0);
-        nbg.fillRoundedRect(-63, -19, 126, 10, { tl: 10, tr: 10, bl: 0, br: 0 });
+        nbg.fillStyle(0x000000, 0.3);
+        nbg.fillRoundedRect(-55, -18, 110, 36, 8);
+        nbg.lineStyle(1.5, this.PANEL_BORDER, 0.8);
+        nbg.strokeRoundedRect(-55, -18, 110, 36, 8);
         btnGroup.add(nbg);
 
         const txt = this.scene.add.text(0, -2, label, {
-          fontSize: '16px', color: '#ffc844', fontFamily: this.FONT_TITLE,
-          stroke: '#441177', strokeThickness: 2
+          fontSize: '14px', color: this.COL_GOLD, fontFamily: this.FONT_TITLE, fontStyle: '800',
+          resolution: this.RES
         }).setOrigin(0.5);
         btnGroup.add(txt);
 
-        const hit = this.scene.add.rectangle(0, 0, 130, 40).setInteractive({ useHandCursor: true }).setAlpha(0.001);
+        const hit = this.scene.add.rectangle(0, 0, 110, 36).setInteractive({ useHandCursor: true }).setAlpha(0.001);
         hit.on('pointerdown', () => {
           this.scene.audio.playSound('button');
           this.changePage(dir);
-          this.scene.tweens.add({ targets: btnGroup, scale: 0.9, yoyo: true, duration: 100 });
+          this.scene.tweens.add({ targets: btnGroup, scale: 0.95, yoyo: true, duration: 100 });
         });
-        hit.on('pointerover', () => this.scene.tweens.add({ targets: btnGroup, scale: 1.06, duration: 100, ease: 'Back.easeOut' }));
+        hit.on('pointerover', () => {
+          this.scene.tweens.add({ targets: btnGroup, scale: 1.05, duration: 100, ease: 'Back.easeOut' });
+        });
         hit.on('pointerout', () => this.scene.tweens.add({ targets: btnGroup, scale: 1, duration: 100 }));
         btnGroup.add(hit);
         pageWrapper.add(btnGroup);
       };
 
-      createNavBtn(navCenter - 200, this.Tr('◀ PREV'), -1);
-      createNavBtn(navCenter + 200, this.Tr('NEXT ▶'), 1);
+      createNavBtn(navCenter - 180, this.Tr('◀ PREV'), -1);
+      createNavBtn(navCenter + 180, this.Tr('NEXT ▶'), 1);
 
       // ── Dot indicators ──
       this.dotIndicators = [];
@@ -347,8 +403,8 @@ export class PaytableOverlay {
 
       // ── Page label ──
       this.txtPageNum = this.scene.add.text(logicalW - 35, navY, this.Tr('1 / 8'), {
-        fontSize: '16px', color: this.COL_PINK, fontFamily: this.FONT_TITLE,
-        stroke: '#441177', strokeThickness: 2
+        fontSize: '16px', color: this.COL_PINK, fontFamily: this.FONT_TITLE, fontStyle: '600',
+        resolution: this.RES
       }).setOrigin(1, 0.5);
       pageWrapper.add(this.txtPageNum);
 
@@ -359,6 +415,17 @@ export class PaytableOverlay {
     }
   }
 
+  /** Update the scroll thumb position based on scroll progress */
+  private updateScrollThumb() {
+    if (!this.scrollThumb || this.maxScrollY <= 0) return;
+    this.scrollThumb.clear();
+    const progress = Math.abs(this.scrollY) / this.maxScrollY;
+    const thumbH = Math.max(30, (this.logicalH / (this.maxScrollY + this.logicalH)) * this.scrollTrackH);
+    const thumbY = this.scrollTrackY + progress * (this.scrollTrackH - thumbH);
+    this.scrollThumb.fillStyle(0xff9900, 0.5);
+    this.scrollThumb.fillRoundedRect(this.logicalW - 11, thumbY, 6, thumbH, 3);
+  }
+
   // ─────────────────────────────────────────────
   // PAGE 1: SYMBOL PAYOUTS
   // ─────────────────────────────────────────────
@@ -367,18 +434,18 @@ export class PaytableOverlay {
     const pad = w < 700 ? 15 : 30;
     let yPos = startY;
 
-    yPos = this.addSectionTitle(page, w / 2, yPos, 'SYMBOL PAYOUTS');
+    yPos = this.addSectionTitle(page, w, yPos, 'SYMBOL PAYOUTS');
 
     // Card background for the payout table
-    const tableH = (w < 700) ? 460 : 390;
+    const tableH = (w < 700) ? 460 : 380;
     this.drawCard(page, pad - 5, yPos - 5, w - pad * 2 + 10, tableH);
 
     // Intro text
-    page.add(this.scene.add.text(pad + 10, yPos + 8, this.Tr('Cluster Pays: Min 5 connected symbols (horizontal/vertical) on a 7×7 grid.'), {
-      fontSize: (w < 700) ? '12px' : '13px', color: this.COL_BODY, fontFamily: this.FONT_BODY,
-      wordWrap: { width: w - pad * 2 - 20 }, lineSpacing: 2
+    page.add(this.scene.add.text(pad + 15, yPos + 10, this.Tr('Cluster Pays: Min 5 connected symbols (horizontal/vertical) on a 7×7 grid.'), {
+      fontSize: (w < 700) ? '12px' : '14px', color: this.COL_BODY, fontFamily: this.FONT_BODY, fontStyle: '500', resolution: this.RES,
+      wordWrap: { width: w - pad * 2 - 30 }, lineSpacing: 8
     }).setOrigin(0, 0));
-    yPos += 48;
+    yPos += 50;
 
     const order = [6, 5, 4, 3, 2, 1, 0];
     const colCount = 7;
@@ -396,7 +463,7 @@ export class PaytableOverlay {
 
     // Payout rows
     const tiers = [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5];
-    const rowH = 26;
+    const rowH = 25;
     tiers.forEach((tier, rowIdx) => {
       const rowY = yPos + rowIdx * rowH;
       if (rowIdx % 2 === 0) {
@@ -407,7 +474,8 @@ export class PaytableOverlay {
       }
       const tierLabel = tier >= 15 ? '15+' : `${tier}`;
       page.add(this.scene.add.text(startX - 10, rowY + 2, this.Tr(tierLabel), {
-        fontSize: (w < 700) ? '11px' : '12px', color: this.COL_GOLD, fontStyle: '700', fontFamily: this.FONT_BODY
+        fontSize: (w < 700) ? '11px' : '12px', color: this.COL_GOLD, fontStyle: '700', fontFamily: this.FONT_BODY,
+        resolution: this.RES
       }).setOrigin(1, 0));
       order.forEach((symId, col) => {
         const cx = startX + col * colW + colW / 2;
@@ -415,171 +483,65 @@ export class PaytableOverlay {
         const val = options.payvalues[symId][payIdx];
         const color = rowIdx < 2 ? this.COL_GOLD : rowIdx < 5 ? '#eebb66' : this.COL_BODY;
         page.add(this.scene.add.text(cx, rowY + 2, this.Tr(val.toFixed(2)), {
-          fontSize: (w < 700) ? '9px' : '11px', color, fontFamily: this.FONT_BODY, fontStyle: '600'
+          fontSize: (w < 700) ? '9px' : '11px', color, fontFamily: this.FONT_BODY, resolution: this.RES, fontStyle: '600'
         }).setOrigin(0.5, 0));
       });
     });
 
-    yPos += tiers.length * rowH + 22;
+    yPos += tiers.length * rowH + 20;
+
+    parent.add(page);
+    this.pages.push(page);
+    return yPos + 20;
+  }
+
+  // ─────────────────────────────────────────────
+  // PAGE 2: SCATTER & FREE SPINS
+  // ─────────────────────────────────────────────
+  private buildPage2_ScatterAndFreeSpins(parent: Phaser.GameObjects.Container, w: number, _h: number, startY: number = 80): number {
+    const page = this.scene.add.container(0, 0).setVisible(false);
+    const pad = w < 700 ? 15 : 40;
+    let yPos = startY;
+
+    yPos = this.addSectionTitle(page, w, yPos, 'SCATTER & FREE SPINS');
 
     // Scatter info card
-    this.drawCard(page, pad - 5, yPos - 5, w - pad * 2 + 10, 60, true);
-    const scatterIcon = this.scene.add.sprite(pad + 35, yPos + 24, 'scatter');
-    scatterIcon.setScale(Math.min(0.28, 42 / Math.max(scatterIcon.width, 1)));
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 70, true);
+    const scatterIcon = this.scene.add.sprite(pad + 35, yPos + 28, 'scatter');
+    scatterIcon.setScale(Math.min(0.3, 45 / Math.max(scatterIcon.width, 1)));
     page.add(scatterIcon);
     page.add(this.scene.add.text(pad + 75, yPos + 10, this.Tr('SCATTER — Appears on all reels. Triggers Free Spins.'), {
-      fontSize: (w < 700) ? '12px' : '13px', color: this.COL_ACCENT, fontFamily: this.FONT_BODY, fontStyle: '600',
+      fontSize: (w < 700) ? '12px' : '13px', color: this.COL_ACCENT, fontFamily: this.FONT_BODY, resolution: this.RES, fontStyle: '600',
       wordWrap: { width: w - pad * 2 - 80 }
     }));
-    page.add(this.scene.add.text(pad + 75, yPos + (w < 700 ? 42 : 32), this.Tr('3 or more Scatters award 10-30 Free Spins.'), {
-      fontSize: (w < 700) ? '11px' : '12px', color: this.COL_GOLD, fontFamily: this.FONT_BODY,
+    page.add(this.scene.add.text(pad + 75, yPos + 38, this.Tr('3 or more Scatters award 10-30 Free Spins.'), {
+      fontSize: (w < 700) ? '11px' : '12px', color: this.COL_GOLD, fontFamily: this.FONT_BODY, fontStyle: '500', resolution: this.RES,
       wordWrap: { width: w - pad * 2 - 80 }
     }));
+    yPos += 80;
 
-    parent.add(page);
-    this.pages.push(page);
-    return yPos + 65;
-  }
-
-  // ─────────────────────────────────────────────
-  // PAGE 2: TUMBLE FEATURE
-  // ─────────────────────────────────────────────
-  private buildPage2_Tumble(parent: Phaser.GameObjects.Container, w: number, _h: number, startY: number = 80): number {
-    const page = this.scene.add.container(0, 0).setVisible(false);
-    const pad = w < 700 ? 15 : 40;
-    let yPos = startY;
-
-    yPos = this.addSectionTitle(page, w / 2, yPos, 'TUMBLE FEATURE');
-
-    this.drawCard(page, pad, yPos - 5, w - pad * 2, 230);
-    const tumbleRules = [
-      '•  After every winning spin, winning symbols are removed.',
-      '•  Remaining symbols drop to the bottom of the grid.',
-      '•  Empty positions are filled with new symbols from above.',
-      '•  Tumbling continues until no new wins appear.',
-      '•  All wins are added to your balance after the full sequence.',
-    ];
-    page.add(this.scene.add.text(pad + 20, yPos + 12, this.Tr(tumbleRules.join('\n')), {
-      fontSize: '15px', color: this.COL_BODY, fontFamily: this.FONT_BODY, lineSpacing: 12, align: 'left',
-      wordWrap: { width: w - pad * 2 - 40 }
-    }).setOrigin(0, 0));
-    yPos += 248;
-
-    // Flow diagram
-    this.drawCard(page, pad, yPos, w - pad * 2, 75, true);
-    const steps = ['SPIN', 'WIN', 'REMOVE', 'DROP', 'REPEAT'];
-    const stepW = (w - pad * 2) / steps.length;
-    steps.forEach((s, i) => {
-      const sx = pad + i * stepW + stepW / 2;
-      page.add(this.scene.add.text(sx, yPos + 20, this.Tr(s), {
-        fontSize: (w < 700) ? '10px' : '14px', color: i === 4 ? this.COL_GOLD : this.COL_ACCENT,
-        fontStyle: '800', fontFamily: this.FONT_TITLE
-      }).setOrigin(0.5));
-      if (i < steps.length - 1) {
-        page.add(this.scene.add.text(sx + stepW / 2, yPos + 20, this.Tr('→'), {
-          fontSize: '14px', color: this.COL_PINK, fontFamily: this.FONT_BODY, fontStyle: 'bold'
-        }).setOrigin(0.5));
-      }
-      page.add(this.scene.add.text(sx, yPos + 46, this.Tr(['Start', 'Cluster pays', 'Symbols vanish', 'Fill gaps', 'Until no wins'][i]), {
-        fontSize: (w < 700) ? '8px' : '10px', color: this.COL_MUTED, fontFamily: this.FONT_BODY,
-        align: 'center', wordWrap: { width: stepW - 4 }
-      }).setOrigin(0.5, 0));
-    });
-
-    parent.add(page);
-    this.pages.push(page);
-    return yPos + 85;
-  }
-
-  // ─────────────────────────────────────────────
-  // PAGE 3: MULTIPLIER SPOTS
-  // ─────────────────────────────────────────────
-  private buildPage3_Multipliers(parent: Phaser.GameObjects.Container, w: number, _h: number, startY: number = 80): number {
-    const page = this.scene.add.container(0, 0).setVisible(false);
-    const pad = w < 700 ? 15 : 40;
-    let yPos = startY;
-
-    yPos = this.addSectionTitle(page, w / 2, yPos, 'MULTIPLIER SPOTS');
-
-    this.drawCard(page, pad, yPos - 5, w - pad * 2, 195);
-    const rules = [
-      '•  Winning symbols mark their grid spot.',
-      '•  Second explosion on same spot → ×2 multiplier.',
-      '•  Each further explosion doubles it (up to ×1024).',
-      '•  Multiple multipliers in one cluster are summed.',
-      '•  Base game: multipliers reset after tumble sequence.',
-    ];
-    page.add(this.scene.add.text(pad + 20, yPos + 12, this.Tr(rules.join('\n')), {
-      fontSize: '15px', color: this.COL_BODY, fontFamily: this.FONT_BODY, lineSpacing: 12, align: 'left',
-      wordWrap: { width: w - pad * 2 - 40 }
-    }).setOrigin(0, 0));
-    yPos += 210;
-
-    // Multiplier progression
-    this.drawCard(page, pad, yPos, w - pad * 2, 95, true);
-    page.add(this.scene.add.text(pad + 18, yPos + 16, this.Tr('MULTIPLIER PROGRESSION'), {
-      fontSize: '13px', color: this.COL_GOLD, fontStyle: '800', fontFamily: this.FONT_TITLE
-    }).setOrigin(0, 0.5));
-    const mults = ['×2', '×4', '×8', '×16', '×32', '×64', '...', '×1024'];
-    const mw = (w - pad * 2 - (w < 700 ? 10 : 40)) / mults.length;
-    mults.forEach((m, i) => {
-      const mx = pad + (w < 700 ? 5 : 20) + i * mw + mw / 2;
-      const isMax = i === mults.length - 1;
-      page.add(this.scene.add.text(mx, yPos + 52, this.Tr(m), {
-        fontSize: isMax ? (w < 700 ? '13px' : '18px') : (w < 700 ? '11px' : '15px'), color: isMax ? this.COL_GOLD : this.COL_BODY,
-        fontStyle: '900', fontFamily: this.FONT_TITLE
-      }).setOrigin(0.5));
-      if (i < mults.length - 1 && m !== '...') {
-        page.add(this.scene.add.text(mx + mw / 2, yPos + 52, this.Tr('→'), {
-          fontSize: (w < 700) ? '10px' : '14px', color: this.COL_PINK, fontFamily: this.FONT_BODY
-        }).setOrigin(0.5));
-      }
-    });
-    yPos += 115;
-
-    // Free spins note
-    this.drawCard(page, pad, yPos, w - pad * 2, 60);
-    page.add(this.scene.add.text(pad + 18, yPos + 16, this.Tr('⚡ During Free Spins, multipliers persist across all spins!'), {
-      fontSize: (w < 700) ? '15px' : '14px', color: this.COL_GOLD, fontFamily: this.FONT_TITLE, fontStyle: 'normal'
-    }).setOrigin(0, 0.5));
-    page.add(this.scene.add.text(pad + 18, yPos + 40, this.Tr('They are only cleared when the bonus round ends.'), {
-      fontSize: (w < 700) ? '13px' : '12px', color: this.COL_BODY, fontFamily: this.FONT_BODY
-    }).setOrigin(0, 0.5));
-
-    parent.add(page);
-    this.pages.push(page);
-    return yPos + 70;
-  }
-
-  // ─────────────────────────────────────────────
-  // PAGE 4: FREE SPINS
-  // ─────────────────────────────────────────────
-  private buildPage4_FreeSpins(parent: Phaser.GameObjects.Container, w: number, _h: number, startY: number = 80): number {
-    const page = this.scene.add.container(0, 0).setVisible(false);
-    const pad = w < 700 ? 15 : 40;
-    let yPos = startY;
-
-    yPos = this.addSectionTitle(page, w / 2, yPos, 'FREE SPINS');
-
-    this.drawCard(page, pad, yPos - 5, w - pad * 2, 155);
+    // Free spins rules
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 110);
     const fsRules = [
-      '•  3-7 Scatter symbols trigger 10-30 free spins.',
       '•  Multiplier spots persist across the entire bonus round.',
+      '•  Multipliers only clear when the free spins sequence ends.',
       '•  Re-trigger: 3+ Scatters during free spins award extra spins.',
       '•  Additional free spins are added to the remaining count.',
     ];
-    page.add(this.scene.add.text(pad + 20, yPos + 12, this.Tr(fsRules.join('\n')), {
-      fontSize: (w < 700) ? '15px' : '14px', color: this.COL_BODY, fontFamily: this.FONT_BODY, lineSpacing: 12, align: 'left',
-      wordWrap: { width: w - pad * 2 - 40 }
+    page.add(this.scene.add.text(pad + 15, yPos + 10, this.Tr(fsRules.join('\n')), {
+      fontSize: (w < 700) ? '12px' : '14px', color: this.COL_BODY, fontFamily: this.FONT_BODY, fontStyle: '500', resolution: this.RES, lineSpacing: 8, align: 'left',
+      wordWrap: { width: w - pad * 2 - 30 }
     }).setOrigin(0, 0));
-    yPos += 168;
+    yPos += 125;
 
     // Scatter awards table
-    this.drawCard(page, pad, yPos - 5, w - pad * 2, 190, true);
-    page.add(this.scene.add.text(pad + 18, yPos + 8, this.Tr('SCATTER AWARDS'), {
-      fontSize: '15px', color: this.COL_GOLD, fontStyle: 'normal', fontFamily: this.FONT_TITLE
+    const tableH = 180;
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, tableH, true);
+    page.add(this.scene.add.text(pad + 20, yPos + 12, this.Tr('SCATTER AWARDS'), {
+      fontSize: '15px', color: this.COL_GOLD, fontStyle: '700', fontFamily: this.FONT_TITLE,
+      resolution: this.RES
     }).setOrigin(0, 0.5));
-    yPos += 30;
+    yPos += 35;
 
     const scatterTable = [
       { count: '3 Scatters', spins: '10 Free Spins' },
@@ -589,48 +551,114 @@ export class PaytableOverlay {
       { count: '7 Scatters', spins: '30 Free Spins' },
     ];
     scatterTable.forEach((row, i) => {
-      const rowY = yPos + i * 28;
+      const rowY = yPos + i * 26;
       if (i % 2 === 0) {
         const rbg = this.scene.add.graphics();
         rbg.fillStyle(0xffffff, 0.05);
-        rbg.fillRoundedRect(pad + 10, rowY - 2, w - pad * 2 - 20, 26, 4);
+        rbg.fillRoundedRect(pad + 10, rowY - 2, w - pad * 2 - 20, 24, 4);
         page.add(rbg);
       }
       page.add(this.scene.add.text(w / 2 - (w < 700 ? 30 : 60), rowY + 2, this.Tr(row.count), {
-        fontSize: (w < 700) ? '12px' : '13px', color: this.COL_BODY, fontStyle: '600', fontFamily: this.FONT_BODY
+        fontSize: (w < 700) ? '12px' : '13px', color: this.COL_BODY, fontStyle: '600', fontFamily: this.FONT_BODY,
+        resolution: this.RES
       }).setOrigin(1, 0));
       page.add(this.scene.add.text(w / 2 + (w < 700 ? 10 : -20), rowY + 2, '→', {
-        fontSize: '14px', color: this.COL_PINK, fontFamily: this.FONT_BODY
+        fontSize: '14px', color: this.COL_PINK, fontFamily: this.FONT_BODY,
+        resolution: this.RES
       }).setOrigin(0.5, 0));
       page.add(this.scene.add.text(w / 2 + (w < 700 ? 40 : 20), rowY + 2, this.Tr(row.spins), {
-        fontSize: (w < 700) ? '12px' : '13px', color: this.COL_GOLD, fontStyle: '700', fontFamily: this.FONT_BODY
+        fontSize: (w < 700) ? '12px' : '13px', color: this.COL_GOLD, fontStyle: '700', fontFamily: this.FONT_BODY,
+        resolution: this.RES
       }));
     });
-    yPos += scatterTable.length * 28 + 18;
-
-    // Note
-    this.drawCard(page, pad, yPos, w - pad * 2, 48);
-    page.add(this.scene.add.text(pad + 18, yPos + 14, this.Tr('➡ See next page for Buy Free Spins options (1,000× and 500×)'), {
-      fontSize: (w < 700) ? '13px' : '12px', color: this.COL_GOLD, fontFamily: this.FONT_BODY, fontStyle: '600'
-    }).setOrigin(0, 0.5));
+    yPos += scatterTable.length * 26 + 20;
 
     parent.add(page);
     this.pages.push(page);
-    return yPos + 55;
+    return yPos + 20;
   }
 
   // ─────────────────────────────────────────────
-  // PAGE 5: BUY FEATURES
+  // PAGE 3: TUMBLE & MULTIPLIER SPOTS
   // ─────────────────────────────────────────────
-  private buildPage5_BuyFeatures(parent: Phaser.GameObjects.Container, w: number, _h: number, startY: number = 80): number {
+  private buildPage3_TumbleAndMultipliers(parent: Phaser.GameObjects.Container, w: number, _h: number, startY: number = 80): number {
+    const page = this.scene.add.container(0, 0).setVisible(false);
+    const pad = w < 700 ? 15 : 40;
+    let yPos = startY;
+
+    // TUMBLE FEATURE
+    yPos = this.addSectionTitle(page, w, yPos, 'TUMBLE FEATURE');
+
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 95);
+    const tumbleRules = [
+      '•  After every win, winning symbols are removed.',
+      '•  Remaining symbols drop, and empty positions are filled from above.',
+      '•  Tumbling continues until no new wins appear.',
+    ];
+    page.add(this.scene.add.text(pad + 15, yPos + 10, this.Tr(tumbleRules.join('\n')), {
+      fontSize: (w < 700) ? '12px' : '14px', color: this.COL_BODY, fontFamily: this.FONT_BODY, fontStyle: '500', resolution: this.RES, lineSpacing: 8, align: 'left',
+      wordWrap: { width: w - pad * 2 - 30 }
+    }).setOrigin(0, 0));
+    yPos += 110;
+
+    // Multiplier spots
+    yPos = this.addSectionTitle(page, w, yPos, 'MULTIPLIER SPOTS');
+
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 115);
+    const multRules = [
+      '•  Winning symbols mark their grid spot.',
+      '•  Second explosion on same spot → ×2 multiplier.',
+      '•  Each further explosion doubles it (up to ×1024).',
+      '•  Multiple multipliers in one cluster are summed.',
+      '•  Base game: multipliers reset after tumble sequence.',
+    ];
+    page.add(this.scene.add.text(pad + 22, yPos + 10, this.Tr(multRules.join('\n')), {
+      fontSize: (w < 700) ? '12px' : '14px', color: this.COL_BODY, fontFamily: this.FONT_BODY, fontStyle: '500', resolution: this.RES, lineSpacing: 4, align: 'left',
+      wordWrap: { width: w - pad * 2 - 44 }
+    }).setOrigin(0, 0));
+    yPos += 125;
+
+    // Multiplier progression
+    this.drawCard(page, pad, yPos, w - pad * 2, 85, true);
+    page.add(this.scene.add.text(pad + 18, yPos + 16, this.Tr('MULTIPLIER PROGRESSION'), {
+      fontSize: '13px', color: this.COL_GOLD, fontStyle: '800', fontFamily: this.FONT_TITLE,
+      resolution: this.RES
+    }).setOrigin(0, 0.5));
+    const mults = ['×2', '×4', '×8', '×16', '...', '×1024'];
+    const mw = (w - pad * 2 - (w < 700 ? 10 : 40)) / mults.length;
+    mults.forEach((m, i) => {
+      const mx = pad + (w < 700 ? 5 : 20) + i * mw + mw / 2;
+      const isMax = i === mults.length - 1;
+      page.add(this.scene.add.text(mx, yPos + 50, this.Tr(m), {
+        fontSize: isMax ? (w < 700 ? '13px' : '16px') : (w < 700 ? '11px' : '14px'), color: isMax ? this.COL_GOLD : this.COL_BODY,
+        fontStyle: '900', fontFamily: this.FONT_TITLE, resolution: this.RES
+      }).setOrigin(0.5));
+      if (i < mults.length - 1 && m !== '...') {
+        page.add(this.scene.add.text(mx + mw / 2, yPos + 50, this.Tr('→'), {
+          fontSize: (w < 700) ? '10px' : '14px', color: this.COL_PINK, fontFamily: this.FONT_BODY,
+          resolution: this.RES
+        }).setOrigin(0.5));
+      }
+    });
+    yPos += 105;
+
+    parent.add(page);
+    this.pages.push(page);
+    return yPos + 20;
+  }
+
+  // ─────────────────────────────────────────────
+  // PAGE 4: BUY FEATURES
+  // ─────────────────────────────────────────────
+  private buildPage4_BuyFeatures(parent: Phaser.GameObjects.Container, w: number, _h: number, startY: number = 80): number {
     const page = this.scene.add.container(0, 0).setVisible(false);
     const pad = w < 700 ? 15 : 30;
     let yPos = startY;
 
-    yPos = this.addSectionTitle(page, w / 2, yPos, 'BUY FREE SPINS');
+    yPos = this.addSectionTitle(page, w, yPos, 'BUY FREE SPINS');
 
     page.add(this.scene.add.text(pad + 8, yPos, this.Tr('Instantly trigger the Free Spins bonus round.'), {
-      fontSize: '13px', color: this.COL_MUTED, fontFamily: this.FONT_BODY, fontStyle: 'italic',
+      fontSize: '13px', color: this.COL_MUTED, fontFamily: this.FONT_BODY, resolution: this.RES, fontStyle: 'italic',
       wordWrap: { width: w - pad * 2 }
     }).setOrigin(0, 0));
     yPos += 25;
@@ -642,13 +670,13 @@ export class PaytableOverlay {
       const cardW = (w - pad * 2 - cardGap) / 2;
       const cardH = 310;
       this.drawBuyCard(page, pad, yPos, cardW, cardH,
-        '💎', 'ULTRA', '1,000×', 0xff66aa, 0x2a0830,
-        '×4', '×4 → ×8 → ×16 → ... → ×1024',
+        '💎', 'ULTRA FREE SPINS', '1,000× BET', this.COL_PINK_HEX,
+        'Starting Multiplier: ×4', '×4 → ×8 → ×16 → ... → ×1024',
         ['3–7 Scatters land on board', '10–30 Free Spins awarded', 'All 49 spots pre-loaded ×4', 'Multipliers double each hit', 'Persist across all spins', 'Best shot at 25,000× MAX WIN']
       );
       this.drawBuyCard(page, pad + cardW + cardGap, yPos, cardW, cardH,
-        '⭐', 'SUPER', '500×', 0xffc844, 0x2a1a00,
-        '×2', '×2 → ×4 → ×8 → ... → ×1024',
+        '⭐', 'SUPER FREE SPINS', '500× BET', 0xff9900,
+        'Starting Multiplier: ×2', '×2 → ×4 → ×8 → ... → ×1024',
         ['3–7 Scatters land on board', '10–30 Free Spins awarded', 'All 49 spots pre-loaded ×2', 'Multipliers double each hit', 'Persist across all spins', 'Great value bonus option']
       );
       yPos += cardH + 12;
@@ -656,14 +684,14 @@ export class PaytableOverlay {
       const cardW = w - pad * 2;
       const cardH = 200;
       this.drawBuyCard(page, pad, yPos, cardW, cardH,
-        '💎', 'ULTRA', '1,000×', 0xff66aa, 0x2a0830,
-        '×4', '×4 → ×8 → ×16 → ... → ×1024',
+        '💎', 'ULTRA FREE SPINS', '1,000× BET', this.COL_PINK_HEX,
+        'Starting Multiplier: ×4', '×4 → ×8 → ×16 → ... → ×1024',
         ['3–7 Scatters → 10–30 Free Spins', 'All 49 spots pre-loaded with ×4', 'Multipliers double each hit', 'Best shot at 25,000× MAX WIN']
       );
       yPos += cardH + 12;
       this.drawBuyCard(page, pad, yPos, cardW, cardH,
-        '⭐', 'SUPER', '500×', 0xffc844, 0x2a1a00,
-        '×2', '×2 → ×4 → ×8 → ... → ×1024',
+        '⭐', 'SUPER FREE SPINS', '500× BET', 0xff9900,
+        'Starting Multiplier: ×2', '×2 → ×4 → ×8 → ... → ×1024',
         ['3–7 Scatters → 10–30 Free Spins', 'All 49 spots pre-loaded with ×2', 'Multipliers double each hit', 'Great value bonus option']
       );
       yPos += cardH + 12;
@@ -671,16 +699,11 @@ export class PaytableOverlay {
 
     // Footer
     const footerH = 45;
-    const footG = this.scene.add.graphics();
-    footG.fillStyle(this.CARD_BG, 0.9);
-    footG.fillRoundedRect(pad, yPos, w - pad * 2, footerH, 10);
-    footG.lineStyle(1, this.CARD_BORDER, 0.3);
-    footG.strokeRoundedRect(pad, yPos, w - pad * 2, footerH, 10);
-    page.add(footG);
+    this.drawCard(page, pad, yPos, w - pad * 2, footerH);
 
-    page.add(this.scene.add.text(pad + 14, yPos + 12, '⚠', { fontSize: '14px', color: this.COL_GOLD }).setOrigin(0, 0));
+    page.add(this.scene.add.text(pad + 14, yPos + 12, '⚠', { fontSize: '14px', color: this.COL_GOLD, resolution: this.RES }).setOrigin(0, 0));
     page.add(this.scene.add.text(pad + 34, yPos + 10, this.Tr('Cost deducted on confirmation  •  Ante Bet doesn\'t affect Buy cost  •  Max win 25,000×'), {
-      fontSize: '11px', color: this.COL_MUTED, fontFamily: this.FONT_BODY, lineSpacing: 3,
+      fontSize: '11px', color: this.COL_MUTED, fontFamily: this.FONT_BODY, fontStyle: '500', resolution: this.RES, lineSpacing: 3,
       wordWrap: { width: w - pad * 2 - 55 }
     }).setOrigin(0, 0));
 
@@ -690,108 +713,90 @@ export class PaytableOverlay {
   }
 
   /** Draws a premium Buy Feature card */
-  private drawBuyCard(
-    page: Phaser.GameObjects.Container,
-    x: number, y: number, cw: number, ch: number,
-    icon: string, tierName: string, costLabel: string,
-    accentColor: number, bgTint: number,
-    startMult: string, multChain: string,
-    features: string[]
-  ) {
-    const g = this.scene.add.graphics();
-    // Outer glow
-    g.fillStyle(accentColor, 0.1);
-    g.fillRoundedRect(x - 3, y - 3, cw + 6, ch + 6, 14);
-    // Card body
-    g.fillStyle(bgTint, 0.5);
-    g.fillRoundedRect(x, y, cw, ch, 12);
-    g.fillStyle(this.CARD_BG, 0.85);
-    g.fillRoundedRect(x, y, cw, ch, 12);
-    // Top highlight
-    g.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.05, 0.05, 0, 0);
-    g.fillRoundedRect(x + 3, y + 3, cw - 6, ch * 0.15, { tl: 10, tr: 10, bl: 0, br: 0 });
-    // Border
-    g.lineStyle(2, accentColor, 0.65);
-    g.strokeRoundedRect(x, y, cw, ch, 12);
-    page.add(g);
+  /** Draw specific complex cards for the Buy Free Spins page */
+  private drawBuyCard(page: Phaser.GameObjects.Container, x: number, y: number, cw: number, ch: number,
+    emoji: string, title: string, costLabel: string, accentColor: number,
+    startMult: string, multProgression: string, features: string[]) {
 
-    const cx = x + cw / 2;
-    const innerPad = 18;
-    let ty = y + 16;
+    this.drawCard(page, x, y, cw, ch, true, accentColor);
 
-    // Icon
-    page.add(this.scene.add.text(cx, ty, icon, { fontSize: '26px' }).setOrigin(0.5, 0));
+    const innerPad = 15;
+    let ty = y + innerPad;
+
+    // Header layout: Title and pill
+    page.add(this.scene.add.text(x + cw / 2, ty, emoji, { fontSize: '24px' }).setOrigin(0.5, 0));
     ty += 30;
 
-    // Tier name
-    page.add(this.scene.add.text(cx, ty, this.Tr(`${tierName} FREE SPINS`), {
-      fontSize: '15px', color: '#ffffff', fontStyle: 'normal', fontFamily: this.FONT_TITLE,
-      stroke: '#441177', strokeThickness: 2
+    page.add(this.scene.add.text(x + cw / 2, ty, this.Tr(title), {
+      fontSize: '18px', color: '#ffffff', fontFamily: this.FONT_TITLE, fontStyle: '900', resolution: this.RES
     }).setOrigin(0.5, 0));
-    ty += 24;
+    ty += 28;
 
-    // Cost badge
-    const badgeW = Math.min(cw - 30, 155);
-    const badgeH = 30;
-    const badgeX = cx - badgeW / 2;
-    const badgeG = this.scene.add.graphics();
-    badgeG.fillStyle(accentColor, 0.2);
-    badgeG.fillRoundedRect(badgeX, ty, badgeW, badgeH, 15);
-    badgeG.lineStyle(1.5, accentColor, 0.7);
-    badgeG.strokeRoundedRect(badgeX, ty, badgeW, badgeH, 15);
-    page.add(badgeG);
-    page.add(this.scene.add.text(cx, ty + badgeH / 2, this.Tr(`${costLabel} BET`), {
-      fontSize: '14px', color: this.COL_GOLD, fontStyle: 'normal', fontFamily: this.FONT_TITLE
-    }).setOrigin(0.5));
-    ty += badgeH + 14;
+    // Pill for the cost
+    const pillW = 140;
+    const pillH = 34;
+    const px = x + cw / 2 - pillW / 2;
+    const pillG = this.scene.add.graphics();
+    pillG.fillStyle(0x000000, 0.4);
+    pillG.fillRoundedRect(px, ty, pillW, pillH, 17);
+    pillG.lineStyle(3, accentColor, 1);
+    pillG.strokeRoundedRect(px, ty, pillW, pillH, 17);
+    page.add(pillG);
 
-    // Divider
-    const divG = this.scene.add.graphics();
-    divG.lineStyle(1, accentColor, 0.2);
-    divG.lineBetween(x + innerPad, ty, x + cw - innerPad, ty);
-    page.add(divG);
-    ty += 12;
+    page.add(this.scene.add.text(x + cw / 2, ty + pillH / 2, this.Tr(costLabel), {
+      fontSize: '16px', color: `#${accentColor.toString(16).padStart(6, '0')}`, fontStyle: '800', fontFamily: this.FONT_TITLE, resolution: this.RES, stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5, 0.5));
+    ty += pillH + 20;
 
-    // Starting multiplier
-    page.add(this.scene.add.text(x + innerPad, ty, this.Tr(`Starting Multiplier: ${startMult}`), {
-      fontSize: '12px', color: this.COL_GOLD, fontStyle: '700', fontFamily: this.FONT_BODY
-    }).setOrigin(0, 0));
-    ty += 18;
+    // Separator
+    const sep = this.scene.add.graphics();
+    sep.lineStyle(1, 0xffffff, 0.1);
+    sep.lineBetween(x + 20, ty, x + cw - 20, ty);
+    page.add(sep);
+    ty += 15;
 
-    page.add(this.scene.add.text(x + innerPad, ty, this.Tr(multChain), {
-      fontSize: '11px', color: this.COL_ACCENT, fontFamily: this.FONT_BODY
-    }).setOrigin(0, 0));
+    // Start multiplier
+    const smLabel = this.scene.add.text(x + innerPad, ty, this.Tr(startMult), {
+      fontSize: '13px', color: this.COL_GOLD, fontFamily: this.FONT_TITLE, fontStyle: '700', resolution: this.RES
+    }).setOrigin(0, 0);
+    page.add(smLabel);
     ty += 20;
+
+    page.add(this.scene.add.text(x + innerPad, ty, this.Tr(multProgression), {
+      fontSize: '12px', color: this.COL_ACCENT, fontFamily: this.FONT_TITLE, fontStyle: '800', resolution: this.RES
+    }).setOrigin(0, 0));
+    ty += 25;
 
     // Features list
     features.forEach(f => {
-      page.add(this.scene.add.text(x + innerPad + 4, ty, this.Tr(`▸ ${f}`), {
-        fontSize: '11px', color: this.COL_BODY, fontFamily: this.FONT_BODY,
-        wordWrap: { width: cw - innerPad * 2 - 10 }, lineSpacing: 2
+      page.add(this.scene.add.text(x + innerPad, ty, this.Tr(`• ${f}`), {
+        fontSize: '11px', color: this.COL_BODY, fontFamily: this.FONT_BODY, fontStyle: '500', resolution: this.RES,
+        wordWrap: { width: cw - innerPad * 2 }
       }).setOrigin(0, 0));
-      ty += 17;
+      ty += 16;
     });
   }
 
   // ─────────────────────────────────────────────
-  // PAGE 6: GAME RULES
+  // PAGE 5: GAME RULES & STATS
   // ─────────────────────────────────────────────
-  private buildPage6_GameRules(parent: Phaser.GameObjects.Container, w: number, _h: number, startY: number = 80): number {
+  private buildPage5_GameRulesAndStats(parent: Phaser.GameObjects.Container, w: number, _h: number, startY: number = 80): number {
     const page = this.scene.add.container(0, 0).setVisible(false);
     const pad = w < 700 ? 15 : 40;
     let yPos = startY;
 
-    yPos = this.addSectionTitle(page, w / 2, yPos, 'GAME RULES');
+    yPos = this.addSectionTitle(page, w, yPos, 'GAME RULES & STATS');
 
     // Volatility card
-    this.drawCard(page, pad, yPos - 5, w - pad * 2, 52, true);
-    page.add(this.scene.add.text(pad + 20, yPos + 20, this.Tr('VOLATILITY'), {
-      fontSize: '14px', color: this.COL_ACCENT, fontStyle: '700', fontFamily: this.FONT_BODY
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 55, true);
+    page.add(this.scene.add.text(pad + 22, yPos + 22, this.Tr('VOLATILITY'), {
+      fontSize: '14px', color: this.COL_ACCENT, fontStyle: '700', fontFamily: this.FONT_BODY,
+      resolution: this.RES
     }).setOrigin(0, 0.5));
-    page.add(this.scene.add.text(w - pad - 20, yPos + 20, '⚡⚡⚡⚡⚡', {
-      fontSize: '16px', color: this.COL_GOLD
+    page.add(this.scene.add.text(w - pad - 22, yPos + 22, '⚡⚡⚡⚡⚡', {
+      fontSize: '16px', color: this.COL_GOLD, resolution: this.RES
     }).setOrigin(1, 0.5));
-    yPos += 62;
+    yPos += 68;
 
     // Rules card
     this.drawCard(page, pad, yPos - 5, w - pad * 2, 230);
@@ -803,28 +808,24 @@ export class PaytableOverlay {
       '•  Free spins total win is awarded when the round ends.',
       '•  Ante Bet: costs 25% more, doubles scatter chance.',
     ];
-    page.add(this.scene.add.text(pad + 20, yPos + 10, this.Tr(rules.join('\n')), {
-      fontSize: (w < 700) ? '14px' : '13px', color: this.COL_BODY, fontFamily: this.FONT_BODY, lineSpacing: 12, align: 'left',
-      wordWrap: { width: w - pad * 2 - 50 }
+    page.add(this.scene.add.text(pad + 15, yPos + 14, this.Tr(rules.join('\n')), {
+      fontSize: (w < 700) ? '12px' : '14px', color: this.COL_BODY, fontFamily: this.FONT_BODY, fontStyle: '500', resolution: this.RES, lineSpacing: 8, align: 'left',
+      wordWrap: { width: w - pad * 2 - 30 }
     }).setOrigin(0, 0));
-    yPos += 240;
+    yPos += 245;
 
-    // RTP card
-    this.drawCard(page, pad, yPos - 5, w - pad * 2, 105);
-    page.add(this.scene.add.text(pad + 20, yPos + 10, this.Tr('RTP (Return to Player)'), {
-      fontSize: '13px', color: this.COL_GOLD, fontStyle: '700', fontFamily: this.FONT_BODY
+    // RTP & Stats card
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 110);
+    page.add(this.scene.add.text(pad + 22, yPos + 14, this.Tr('RTP (Return to Player)'), {
+      fontSize: '13px', color: this.COL_GOLD, fontStyle: '700', fontFamily: this.FONT_BODY,
+      resolution: this.RES
     }).setOrigin(0, 0));
-    page.add(this.scene.add.text(pad + 20, yPos + 34, this.Tr('Base: 96.53%  |  Ultra FS: 96.50%  |  Super: 96.44%'), {
-      fontSize: (w < 700) ? '13px' : '13px', color: this.COL_BODY, fontFamily: this.FONT_BODY
+    page.add(this.scene.add.text(pad + 22, yPos + 38, this.Tr('Base: 96.53%  |  Ultra FS: 96.50%  |  Super: 96.44%'), {
+      fontSize: '12px', color: this.COL_BODY, fontFamily: this.FONT_BODY, fontStyle: '500',
+      resolution: this.RES
     }).setOrigin(0, 0));
-    page.add(this.scene.add.text(pad + 20, yPos + 60, this.Tr(`Bet: ${BET_PRESETS[0].toFixed(2)} – ${BET_PRESETS[BET_PRESETS.length - 1].toFixed(2)}  |  Max Win: ${options.maxWinMultiplier.toLocaleString()}×`), {
-      fontSize: '13px', color: this.COL_GOLD, fontFamily: this.FONT_BODY, fontStyle: '700'
-    }).setOrigin(0, 0));
-    yPos += 115;
-
-    // Disclaimer
-    page.add(this.scene.add.text(pad, yPos + 5, this.Tr('Malfunction voids all wins and plays. A consistent internet connection is required. In the event of a disconnection, reload the game to finish any uncompleted rounds. The expected return is calculated over many plays. Winnings are settled according to the amount received from the Remote Game Server.'), {
-      fontSize: '10px', color: '#8877aa', fontStyle: 'italic', fontFamily: this.FONT_BODY, align: 'left', lineSpacing: 3, wordWrap: { width: w - pad * 2 }
+    page.add(this.scene.add.text(pad + 22, yPos + 66, this.Tr(`Bet Range: ${BET_PRESETS[0].toFixed(2)} – ${BET_PRESETS[BET_PRESETS.length - 1].toFixed(2)}  |  Max Win: ${options.maxWinMultiplier.toLocaleString()}×`), {
+      fontSize: (w < 700) ? '11px' : '13px', color: this.COL_GOLD, fontFamily: this.FONT_BODY, resolution: this.RES, fontStyle: '700'
     }).setOrigin(0, 0));
 
     parent.add(page);
@@ -833,28 +834,28 @@ export class PaytableOverlay {
   }
 
   // ─────────────────────────────────────────────
-  // PAGE 7: HOW TO PLAY
+  // PAGE 6: HOW TO PLAY & INTERFACE
   // ─────────────────────────────────────────────
-  private buildPage7_HowToPlay(parent: Phaser.GameObjects.Container, w: number, _h: number, startY: number = 80): number {
+  private buildPage6_HowToPlay(parent: Phaser.GameObjects.Container, w: number, _h: number, startY: number = 80): number {
     const page = this.scene.add.container(0, 0).setVisible(false);
     const pad = w < 700 ? 15 : 40;
     let yPos = startY;
 
-    yPos = this.addSectionTitle(page, w / 2, yPos, 'HOW TO PLAY');
+    yPos = this.addSectionTitle(page, w, yPos, 'HOW TO PLAY');
 
-    this.drawCard(page, pad, yPos - 5, w - pad * 2, 90);
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 110);
     const howTo = [
       '•  Click the  ⊕  or  ⊖  buttons to change the bet value.',
       '•  Select the bet you want to use in the game.',
       '•  Press the SPIN button to play.',
     ];
-    page.add(this.scene.add.text(pad + 20, yPos + 10, this.Tr(howTo.join('\n')), {
-      fontSize: '14px', color: this.COL_BODY, align: 'left', fontFamily: this.FONT_BODY, lineSpacing: 10, wordWrap: { width: w - pad * 2 - 40 }
+    page.add(this.scene.add.text(pad + 15, yPos + 14, this.Tr(howTo.join('\n')), {
+      fontSize: (w < 700) ? '12px' : '14px', color: this.COL_BODY, align: 'left', fontFamily: this.FONT_BODY, fontStyle: '500', resolution: this.RES, lineSpacing: 8, wordWrap: { width: w - pad * 2 - 30 }
     }).setOrigin(0, 0));
-    yPos += 100;
+    yPos += 125;
 
     // UI Guide section
-    yPos = this.addSectionTitle(page, w / 2, yPos, 'MAIN GAME INTERFACE');
+    yPos = this.addSectionTitle(page, w, yPos, 'MAIN GAME INTERFACE');
 
     const uiItems = [
       '[SETTINGS] – opens the settings menu.',
@@ -865,12 +866,12 @@ export class PaytableOverlay {
       '[SPIN] – starts the game.',
       'AUTOPLAY – opens auto play menu. Click again to stop.',
     ];
-    const uiCardH = uiItems.length * 26 + 24;
+    const uiCardH = uiItems.length * 30 + 28;
     this.drawCard(page, pad, yPos - 5, w - pad * 2, uiCardH);
     uiItems.forEach((item, i) => {
-      page.add(this.scene.add.text(pad + 20, yPos + 10 + i * 26, this.Tr(`•  ${item}`), {
-        fontSize: '13px', color: this.COL_BODY, fontFamily: this.FONT_BODY,
-        wordWrap: { width: w - pad * 2 - 50 }
+      page.add(this.scene.add.text(pad + 15, yPos + 14 + i * 30, this.Tr(`•  ${item}`), {
+        fontSize: (w < 700) ? '11px' : '13px', color: this.COL_BODY, fontFamily: this.FONT_BODY, fontStyle: '500', resolution: this.RES,
+        wordWrap: { width: w - pad * 2 - 30 }
       }).setOrigin(0, 0));
     });
 
@@ -880,71 +881,80 @@ export class PaytableOverlay {
   }
 
   // ─────────────────────────────────────────────
-  // PAGE 8: SETTINGS / INFO / BET MENU / MAX WIN
+  // PAGE 7: MENUS & NAVIGATION
   // ─────────────────────────────────────────────
-  private buildPage8_Settings(parent: Phaser.GameObjects.Container, w: number, _h: number, startY: number = 80): number {
+  private buildPage7_MenusAndNav(parent: Phaser.GameObjects.Container, w: number, _h: number, startY: number = 80): number {
     const page = this.scene.add.container(0, 0).setVisible(false);
     const pad = w < 700 ? 15 : 40;
     let yPos = startY;
-    const fs = '12px';
-    const ls = 6;
+    const fs = (w < 700) ? '12px' : '13px';
+    const ls = 8;
 
-    yPos = this.addSectionTitle(page, w / 2, yPos, 'SETTINGS MENU');
+    yPos = this.addSectionTitle(page, w, yPos, 'SETTINGS MENU');
 
-    this.drawCard(page, pad, yPos - 5, w - pad * 2, 105);
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 118);
     const settingsInfo = [
       '•  INTRO SCREEN – toggles the introductory screen on/off',
       '•  AMBIENT – toggles ambient sound and music on/off',
       '•  SOUND FX – toggles sound effects on/off',
       '•  GAME HISTORY – opens game history page',
     ];
-    page.add(this.scene.add.text(pad + 20, yPos + 10, this.Tr(settingsInfo.join('\n')), {
-      fontSize: fs, color: this.COL_BODY, align: 'left', fontFamily: this.FONT_BODY, lineSpacing: ls, wordWrap: { width: w - pad * 2 - 40 }
+    page.add(this.scene.add.text(pad + 15, yPos + 14, this.Tr(settingsInfo.join('\n')), {
+      fontSize: fs, color: this.COL_BODY, align: 'left', fontFamily: this.FONT_BODY, fontStyle: '500', resolution: this.RES, lineSpacing: ls, wordWrap: { width: w - pad * 2 - 30 }
     }).setOrigin(0, 0));
-    yPos += 115;
+    yPos += 130;
 
     // Information Screen
-    yPos = this.addSectionTitle(page, w / 2, yPos, 'INFORMATION SCREEN');
-
-    this.drawCard(page, pad, yPos - 5, w - pad * 2, 52);
-    page.add(this.scene.add.text(pad + 20, yPos + 8, this.Tr('•  ◀ and ▶ scroll between information pages   •  ✕ closes the screen'), {
-      fontSize: fs, color: this.COL_BODY, fontFamily: this.FONT_BODY, wordWrap: { width: w - pad * 2 - 40 }
-    }).setOrigin(0, 0));
-    yPos += 60;
-
-    // Bet Menu
-    yPos = this.addSectionTitle(page, w / 2, yPos, 'BET MENU');
-
-    this.drawCard(page, pad, yPos - 5, w - pad * 2, 62);
-    page.add(this.scene.add.text(pad + 20, yPos + 8, this.Tr('•  The bet menu shows available bet multipliers and current total bet.\n•  Use ⊕ and ⊖ to change BET and COIN VALUE.'), {
-      fontSize: fs, color: this.COL_BODY, align: 'left', lineSpacing: ls, fontFamily: this.FONT_BODY, wordWrap: { width: w - pad * 2 - 40 }
-    }).setOrigin(0, 0));
-    yPos += 72;
-
-    // Max Win
-    yPos = this.addSectionTitle(page, w / 2, yPos, 'MAX WIN');
-
-    this.drawCard(page, pad, yPos - 5, w - pad * 2, 62);
-    page.add(this.scene.add.text(pad + 20, yPos + 8, this.Tr(`•  Maximum win: ${options.maxWinMultiplier.toLocaleString()}× bet. If reached, the round ends immediately.\n•  Win is awarded and remaining free spins are forfeited.`), {
-      fontSize: fs, color: this.COL_BODY, align: 'left', lineSpacing: ls, fontFamily: this.FONT_BODY, wordWrap: { width: w - pad * 2 - 40 }
-    }).setOrigin(0, 0));
-    yPos += 72;
-
-    // Buy Free Spins footer
-    const sep = this.scene.add.graphics();
-    sep.lineStyle(1, 0xff66aa, 0.3);
-    sep.lineBetween(pad + 40, yPos, w - pad - 40, yPos);
-    page.add(sep);
-    yPos += 10;
+    yPos = this.addSectionTitle(page, w, yPos, 'INFORMATION SCREEN');
 
     this.drawCard(page, pad, yPos - 5, w - pad * 2, 50);
-    page.add(this.scene.add.text(pad + 18, yPos + 6, this.Tr('BUY ULTRA FREE SPINS: 1,000× total bet with ×4 starting multipliers.\nBUY SUPER FREE SPINS: 500× total bet with ×2 starting multipliers.'), {
-      fontSize: '11px', color: this.COL_GOLD, align: 'left', lineSpacing: 5, fontFamily: this.FONT_BODY, fontStyle: '600', wordWrap: { width: w - pad * 2 - 30 }
+    page.add(this.scene.add.text(pad + 15, yPos + 14, this.Tr('•  ◀ and ▶ scroll between information pages   •  ✖ closes the screen'), {
+      fontSize: fs, color: this.COL_BODY, fontFamily: this.FONT_BODY, fontStyle: '500', resolution: this.RES, wordWrap: { width: w - pad * 2 - 30 }
     }).setOrigin(0, 0));
+    yPos += 62;
 
+    // Bet Menu
+    yPos = this.addSectionTitle(page, w, yPos, 'BET MENU');
+
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 68);
+    page.add(this.scene.add.text(pad + 15, yPos + 14, this.Tr('•  The bet menu shows available bet multipliers and current total bet.\n•  Use ⊕ and ⊖ to change BET and COIN VALUE.'), {
+      fontSize: fs, color: this.COL_BODY, align: 'left', lineSpacing: ls, fontFamily: this.FONT_BODY, fontStyle: '500', resolution: this.RES, wordWrap: { width: w - pad * 2 - 30 }
+    }).setOrigin(0, 0));
+    yPos += 80;
+
+    // Max Win info
+    yPos = this.addSectionTitle(page, w, yPos, 'MAX WIN EXPLANATION');
+
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 68);
+    page.add(this.scene.add.text(pad + 15, yPos + 14, this.Tr(`•  Maximum win: ${options.maxWinMultiplier.toLocaleString()}× bet. If reached, the round ends immediately.\n•  Win is awarded and remaining free spins are forfeited.`), {
+      fontSize: fs, color: this.COL_BODY, align: 'left', lineSpacing: ls, fontFamily: this.FONT_BODY, fontStyle: '500', resolution: this.RES, wordWrap: { width: w - pad * 2 - 30 }
+    }).setOrigin(0, 0));
+    
     parent.add(page);
     this.pages.push(page);
-    return yPos + 70;
+    return yPos + 85;
+  }
+
+  // ─────────────────────────────────────────────
+  // PAGE 8: TERMS & DISCLAIMER
+  // ─────────────────────────────────────────────
+  private buildPage8_Terms(parent: Phaser.GameObjects.Container, w: number, _h: number, startY: number = 80): number {
+    const page = this.scene.add.container(0, 0).setVisible(false);
+    const pad = w < 700 ? 15 : 40;
+    let yPos = startY;
+
+    yPos = this.addSectionTitle(page, w, yPos, 'TERMS & DISCLAIMER');
+
+    this.drawCard(page, pad, yPos - 5, w - pad * 2, 160);
+    const text = 'Malfunction voids all wins and plays.\n\nA consistent internet connection is required. In the event of a disconnection, reload the game to finish any uncompleted rounds.\n\nThe expected return is calculated over many plays. Winnings are settled according to the amount received from the Remote Game Server.\n\nAll game rules and payouts are subject to change according to the terms of service.';
+    
+    page.add(this.scene.add.text(pad + 20, yPos + 14, this.Tr(text), {
+      fontSize: '12px', color: '#9988bb', fontStyle: 'italic', fontFamily: this.FONT_BODY, resolution: this.RES, align: 'left', lineSpacing: 10, wordWrap: { width: w - pad * 2 - 40 }
+    }).setOrigin(0, 0));
+    
+    parent.add(page);
+    this.pages.push(page);
+    return yPos + 180;
   }
 
   // ─────────────────────────────────────────────
@@ -984,22 +994,22 @@ export class PaytableOverlay {
     if (this.txtPageNum) {
       this.txtPageNum.setText(`${index + 1} / ${this.pages.length}`);
     }
-    // Update dot indicators
+    // Update dot indicators using stored logicalW/logicalH
     if (this.dotIndicators.length > 0) {
-      const logicalW = Math.min(880, this.scene.scale.width * 0.9);
-      const navCenter = logicalW / 2;
-      const navY = Math.min(740, this.scene.scale.height * 0.9) - 40;
+      const navCenter = this.logicalW / 2;
+      const navY = this.logicalH - 40;
+      const totalDotsW = this.pages.length * 18;
+      const dotsStartX = navCenter - totalDotsW / 2;
       this.dotIndicators.forEach((dot, i) => {
         dot.clear();
-        const dx = navCenter - 60 + i * 16;
-        if (i === index) {
-          dot.fillStyle(0xff66aa, 1);
-          dot.fillCircle(dx, navY, 6);
-          dot.lineStyle(2, 0xffffff, 0.5);
-          dot.strokeCircle(dx, navY, 8);
+        const dx = dotsStartX + i * 18;
+        const dy = navY;
+        if (i === this.currentPage) {
+          dot.fillStyle(0xff9900, 1);
+          dot.fillCircle(dx, dy, 5);
         } else {
-          dot.fillStyle(0x6644aa, 0.6);
-          dot.fillCircle(dx, navY, 4);
+          dot.fillStyle(0xffffff, 0.25);
+          dot.fillCircle(dx, dy, 3);
         }
       });
     }
@@ -1014,18 +1024,22 @@ export class PaytableOverlay {
     this.scene.tweens.add({
       targets: this.container,
       alpha: 1, y: 0,
-      duration: 300,
-      ease: 'Back.easeOut'
+      duration: 500,
+      ease: 'Elastic.easeOut'
     });
   }
 
   public hide() {
     this.scene.tweens.add({
       targets: this.container,
-      alpha: 0, y: 20,
+      alpha: 0, y: 30, scale: 0.9,
       duration: 200,
-      ease: 'Cubic.easeIn',
-      onComplete: () => { this.container.setVisible(false); this.visible = false; },
+      ease: 'Back.easeIn',
+      onComplete: () => { 
+        this.container.setVisible(false); 
+        this.container.setScale(1);
+        this.visible = false; 
+      },
     });
   }
 
