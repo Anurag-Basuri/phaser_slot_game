@@ -77,6 +77,10 @@ export class SettingsOverlay {
     panel.fillStyle(0x380036, 1);
     panel.fillRoundedRect(panelX, panelY, panelW, panelH, 24);
 
+    // Glossy Candy Highlight (Glassmorphism top edge)
+    panel.fillStyle(0xffffff, 0.1);
+    panel.fillRoundedRect(panelX + 4, panelY + 4, panelW - 8, panelH * 0.25, 20);
+
     // Creamy White Border
     panel.lineStyle(3, 0xfff0f5, 1);
     panel.strokeRoundedRect(panelX, panelY, panelW, panelH, 24);
@@ -111,15 +115,18 @@ export class SettingsOverlay {
 
     const closeBtn = this.scene.add.text(closeBtnX, closeBtnY + 1, '✖', { 
       fontSize: '20px', color: '#ffffff', fontFamily: '"Fredoka One", sans-serif', resolution: 2
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    }).setOrigin(0.5);
+    this.container.add(closeBtn);
 
-    closeBtn.on('pointerdown', () => {
+    // Oversized mobile hit zone (48x48 min)
+    const closeHit = this.scene.add.rectangle(closeBtnX, closeBtnY, 48, 48).setInteractive({ useHandCursor: true }).setAlpha(0.001);
+    closeHit.on('pointerdown', () => {
       this.scene.audio.playSound('button');
       this.hide();
     });
-    closeBtn.on('pointerover', () => closeBtn.setScale(1.2));
-    closeBtn.on('pointerout', () => closeBtn.setScale(1));
-    this.container.add(closeBtn);
+    closeHit.on('pointerover', () => closeBtn.setScale(1.2));
+    closeHit.on('pointerout', () => closeBtn.setScale(1));
+    this.container.add(closeHit);
 
     const labelStyle: Phaser.Types.GameObjects.Text.TextStyle = {
       fontSize: isShort ? '16px' : '20px',
@@ -484,6 +491,23 @@ export class SettingsOverlay {
       duration: 500,
       ease: 'Elastic.easeOut'
     });
+
+    // 5. UI Panel Starbursts (Juice)
+    if (this.scene.textures.exists('gold_star')) {
+      const w = this.scene.scale.width;
+      const h = this.scene.scale.height;
+      const stars = this.scene.add.particles(w/2, h/2, 'gold_star', {
+        speed: { min: 200, max: 800 },
+        angle: { min: 0, max: 360 },
+        scale: { start: 0.6, end: 0 },
+        lifespan: 800,
+        blendMode: 'ADD',
+        rotate: { min: -180, max: 180 },
+      });
+      stars.setDepth(this.container.depth - 1);
+      stars.explode(20);
+      this.scene.time.delayedCall(900, () => stars.destroy());
+    }
   }
 
   public hide() {

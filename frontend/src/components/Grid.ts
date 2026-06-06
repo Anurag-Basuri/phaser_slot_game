@@ -171,6 +171,20 @@ export class Grid {
       g.generateTexture('sugar_dust', 6, 6);
       g.destroy();
     }
+    if (!this.scene.textures.exists('gold_star')) {
+      const g = this.scene.add.graphics();
+      g.fillStyle(0xffee44, 1);
+      g.beginPath();
+      // Draw simple 5-point star
+      for (let j = 0; j < 5; j++) {
+        g.lineTo(10 + 10 * Math.cos(18 + j * 72 * Math.PI / 180), 10 - 10 * Math.sin(18 + j * 72 * Math.PI / 180));
+        g.lineTo(10 + 4 * Math.cos(54 + j * 72 * Math.PI / 180), 10 - 4 * Math.sin(54 + j * 72 * Math.PI / 180));
+      }
+      g.closePath();
+      g.fillPath();
+      g.generateTexture('gold_star', 20, 20);
+      g.destroy();
+    }
   }
 
   /**
@@ -225,13 +239,24 @@ export class Grid {
       this.cellBackgrounds.fillRect(x - lineThick / 2, gy, lineThick, totalH);
     }
 
-    // ═══ Layer 4: Glossy top highlight per cell ═══
+    // ═══ Layer 4: Recessed 3D Inner Shadow per cell ═══
     for (let r = 0; r < size; r++) {
       for (let c = 0; c < size; c++) {
         const cx = gx + c * cs;
         const cy = gy + r * cs;
-        this.cellBackgrounds.fillStyle(0xffffff, 0.04);
-        this.cellBackgrounds.fillRect(cx + 2, cy + 1, cs - 4, cs * 0.3);
+        // Inner shadow top-left
+        this.cellBackgrounds.fillStyle(0x000000, 0.35);
+        this.cellBackgrounds.fillRect(cx, cy, cs, 6);
+        this.cellBackgrounds.fillRect(cx, cy, 6, cs);
+        // Inner shadow blend
+        this.cellBackgrounds.fillStyle(0x000000, 0.15);
+        this.cellBackgrounds.fillRect(cx + 6, cy + 6, cs - 12, 4);
+        this.cellBackgrounds.fillRect(cx + 6, cy + 6, 4, cs - 12);
+
+        // Bottom-right rim highlight
+        this.cellBackgrounds.fillStyle(0xffffff, 0.1);
+        this.cellBackgrounds.fillRect(cx, cy + cs - 4, cs, 4);
+        this.cellBackgrounds.fillRect(cx + cs - 4, cy, 4, cs);
       }
     }
 
@@ -429,6 +454,13 @@ export class Grid {
           sprite.setScale(Math.min(scale, 1.2));
           sprite.setDepth(10);
           sprite.setAlpha(0);
+
+          // 3D FX Overrides (Simulate 3D Depth & Gloss on 2D Sprites)
+          if (sprite.preFX) {
+            sprite.preFX.addShadow(0, 5, 0.05, 1, 0x000000, 6, 1);
+            (sprite.preFX as any).addShine?.(1, 0.2, 5);
+            sprite.preFX.addColorMatrix().brightness(1.1);
+          }
 
           // Apply circular crop to scatter to remove square background
           if (symId === 7) {
@@ -1112,20 +1144,34 @@ export class Grid {
             const pScale = Math.max(0.5, this.cellW / 100);
             const pQty = this.cellW < 60 ? 4 : 8;
             if (this._activeEmitterCount < Grid.MAX_EMITTERS) {
-              const emitter = this.scene.add.particles(this.getX(c), this.getY(r), this.symbolKeys[cluster.kind !== undefined ? cluster.kind : symId], {
-                speed: { min: 100 * pScale, max: 400 * pScale },
-                angle: { min: 220, max: 320 },
-                scale: { start: 0.25 * pScale, end: 0 },
-                lifespan: 550,
-                quantity: pQty,
-                gravityY: 500 * pScale,
-                blendMode: 'ADD',
+              // 1. Candies fragment explosion
+              const shardEmitter = this.scene.add.particles(this.getX(c), this.getY(r), `shard_${symId % 7}`, {
+                speed: { min: 200 * pScale, max: 600 * pScale },
+                angle: { min: 0, max: 360 },
+                scale: { start: 0.8 * pScale, end: 0 },
+                lifespan: 600,
+                quantity: pQty * 2,
+                gravityY: 800 * pScale,
+                blendMode: 'NORMAL',
                 alpha: { start: 1, end: 0 },
+                rotate: { min: -360, max: 360 },
+              });
+              shardEmitter.explode(pQty * 2);
+
+              // 2. Sugar Dust / Confetti Starburst (Juice)
+              const starEmitter = this.scene.add.particles(this.getX(c), this.getY(r), 'gold_star', {
+                speed: { min: 150 * pScale, max: 500 * pScale },
+                angle: { min: 0, max: 360 },
+                scale: { start: 0.6 * pScale, end: 0 },
+                lifespan: 500,
+                quantity: pQty,
+                blendMode: 'ADD',
                 rotate: { min: -180, max: 180 },
               });
-              emitter.explode(pQty);
+              starEmitter.explode(pQty);
+
               this._activeEmitterCount++;
-              this.scene.time.delayedCall(650, () => { emitter.destroy(); this._activeEmitterCount--; });
+              this.scene.time.delayedCall(650, () => { shardEmitter.destroy(); starEmitter.destroy(); this._activeEmitterCount--; });
             }
 
             const origSX = sprite.scaleX;
@@ -1143,6 +1189,11 @@ export class Grid {
             });
           }
         });
+
+        // 3. Camera Shake for massive clusters (Juice)
+        if (cluster.positions.length >= 10 && !this.turboMode) {
+          this.scene.cameras.main.shake(120, 0.015);
+        }
       });
 
       if (!this.turboMode && totalWin > 0) {
@@ -1234,6 +1285,13 @@ export class Grid {
           sprite.setDepth(10);
           sprite.setAlpha(0);
 
+          // 3D FX Overrides (Simulate 3D Depth & Gloss on 2D Sprites)
+          if (sprite.preFX) {
+            sprite.preFX.addShadow(0, 5, 0.05, 1, 0x000000, 6, 1);
+            (sprite.preFX as any).addShine?.(1, 0.2, 5);
+            sprite.preFX.addColorMatrix().brightness(1.1);
+          }
+
           if (symId === 7) {
             const cropRadius = Math.min(sprite.width, sprite.height) / 2;
             sprite.setCrop(sprite.width / 2 - cropRadius, sprite.height / 2 - cropRadius, cropRadius * 2, cropRadius * 2);
@@ -1256,6 +1314,24 @@ export class Grid {
             targets: sprite, y: targetY, duration: dropDur, ease: 'Cubic.easeIn', delay,
             onComplete: () => {
               if (!sprite || !sprite.scene) return;
+              
+              // Emit Impact Dust (Juice)
+              if (!this.turboMode && this._activeEmitterCount < Grid.MAX_EMITTERS) {
+                const pScale = Math.max(0.4, this.cellW / 100);
+                const dust = this.scene.add.particles(this.getX(c), targetY + this.cellW * 0.4, 'sugar_dust', {
+                  speed: { min: 30 * pScale, max: 120 * pScale },
+                  angle: { min: 200, max: 340 },
+                  scale: { start: 0.8 * pScale, end: 0 },
+                  alpha: { start: 0.6, end: 0 },
+                  lifespan: 350,
+                  gravityY: -50,
+                  blendMode: 'ADD'
+                });
+                dust.explode(4);
+                this._activeEmitterCount++;
+                this.scene.time.delayedCall(400, () => { dust.destroy(); this._activeEmitterCount--; });
+              }
+
               const cs = this.cellW;
               this.scene.tweens.chain({
                 targets: sprite,
@@ -1293,9 +1369,24 @@ export class Grid {
     for (let r = 0; r < size; r++) {
       for (let c = 0; c < size; c++) {
         if (event.grid[r][c] !== this.multipliers[r][c]) {
+          const oldMult = this.multipliers[r][c];
           this.multipliers[r][c] = event.grid[r][c];
           if (this.multipliers[r][c] > 0) {
             this.drawMultiplierUI(r, c);
+            // 4. Multiplier Pop Tween (Juice)
+            if (oldMult > 0 && !this.turboMode) {
+              const txt = this.multiplierTexts[r][c];
+              const gfx = this.multiplierGraphics[r][c];
+              if (txt && txt.scene && gfx && gfx.scene) {
+                this.scene.tweens.add({
+                  targets: [txt, gfx],
+                  scale: 1.4,
+                  yoyo: true,
+                  duration: 250,
+                  ease: 'Elastic.easeOut'
+                });
+              }
+            }
           }
         }
       }
