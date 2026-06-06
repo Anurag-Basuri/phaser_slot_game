@@ -81,7 +81,7 @@ import { T } from '../helpers/I18n';
     const titleShadow = this.add
       .text(0, -22, 'SUGAR BLAST', {
         
-        fontFamily: '"Luckiest Guy", cursive, sans-serif',
+        fontFamily: '"Poppins", sans-serif',
         fontSize: '46px',
         fontStyle: 'bold',
         color: '#ff006a',
@@ -102,7 +102,7 @@ import { T } from '../helpers/I18n';
     this.logoText1 = this.add
       .text(0, -24, 'SUGAR BLAST', {
         
-        fontFamily: '"Luckiest Guy", cursive, sans-serif',
+        fontFamily: '"Poppins", sans-serif',
         fontSize: '46px',
         fontStyle: 'bold',
         color: '#ffffff',
@@ -164,7 +164,7 @@ import { T } from '../helpers/I18n';
     // Buy buttons setup
     const btnStyle = {
       
-      fontFamily: '"Luckiest Guy", cursive, sans-serif',
+      fontFamily: '"Poppins", sans-serif',
       fontStyle: 'normal',
       align: 'center',
       strokeThickness: 0,
@@ -293,7 +293,7 @@ import { T } from '../helpers/I18n';
         fontSize: '20px',
         color: '#ffe600',
         fontStyle: 'bold',
-        fontFamily: '"Luckiest Guy", cursive, sans-serif',
+        fontFamily: '"Poppins", sans-serif',
         stroke: '#000000',
         strokeThickness: 3,
         align: 'center',
@@ -464,7 +464,7 @@ import { T } from '../helpers/I18n';
         .text(0, 0, 'Γû╢ START REPLAY', {
           
           fontSize: '24px',
-          fontFamily: '"Luckiest Guy", cursive, sans-serif',
+          fontFamily: '"Poppins", sans-serif',
           color: '#fff',
         })
         .setOrigin(0.5)

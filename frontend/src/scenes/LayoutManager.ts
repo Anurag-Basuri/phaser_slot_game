@@ -384,6 +384,9 @@ import { DisplayBalance } from '../helpers/Currency';
 
     const showFeatures = !useFeaturesMenu || this.isFeaturesMenuOpen;
     const featuresDepthBase = this.isFeaturesMenuOpen ? 1501 : 20;
+    
+    // Ante bet only elevates to popup depth if it is physically located INSIDE the popup
+    const anteDepthBase = (this.isFeaturesMenuOpen && !isStacked) ? 1501 : 20;
 
     this.panelSuperGraphics
       .setVisible(showFeatures)
@@ -403,10 +406,10 @@ import { DisplayBalance } from '../helpers/Currency';
       .setVisible(showFeatures)
       .setDepth(featuresDepthBase + 1);
 
-    this.anteBetBtn.setVisible(showFeatures).setDepth(featuresDepthBase);
-    this.anteBetHit.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
-    this.anteBetTxt.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
-    this.anteBetIcon.setVisible(showFeatures).setDepth(featuresDepthBase + 1);
+    this.anteBetBtn.setVisible(showFeatures).setDepth(anteDepthBase);
+    this.anteBetHit.setVisible(showFeatures).setDepth(anteDepthBase + 1);
+    this.anteBetTxt.setVisible(showFeatures).setDepth(anteDepthBase + 1);
+    this.anteBetIcon.setVisible(showFeatures).setDepth(anteDepthBase + 1);
 
     if (showFeatures) {
       // Regular Buy
@@ -633,7 +636,7 @@ import { DisplayBalance } from '../helpers/Currency';
       .setText(title)
       .setPosition(x, y - yOffset1)
       .setFontSize(fsTitle)
-      .setFontFamily('"Luckiest Guy", cursive, sans-serif')
+      .setFontFamily('"Poppins", sans-serif')
       .setFontStyle('normal')
       .setLineSpacing(0)
       .setColor('#ffffff')
@@ -647,7 +650,7 @@ import { DisplayBalance } from '../helpers/Currency';
       .setText(subText)
       .setPosition(x, y + yOffset2)
       .setFontSize(fsSub)
-      .setFontFamily('"Luckiest Guy", cursive, sans-serif')
+      .setFontFamily('"Poppins", sans-serif')
       .setFontStyle('normal')
       .setAlign('center')
       .setShadow(0, 2, '#000000', 0, false, true)
@@ -749,7 +752,7 @@ import { DisplayBalance } from '../helpers/Currency';
 
       this.anteBetTxt
         .setText('ANTE BET ON\nDouble Chance')
-        .setFontFamily('"Luckiest Guy", cursive, sans-serif')
+        .setFontFamily('"Poppins", sans-serif')
         .setFontStyle('normal')
         .setColor('#ffffff')
         .setLineSpacing(isSmall ? -4 : -2)
@@ -792,7 +795,7 @@ import { DisplayBalance } from '../helpers/Currency';
 
       this.anteBetTxt
         .setText('ANTE BET OFF\nDouble Chance')
-        .setFontFamily('"Luckiest Guy", cursive, sans-serif')
+        .setFontFamily('"Poppins", sans-serif')
         .setFontStyle('normal')
         .setColor('#8877aa')
         .setLineSpacing(isSmall ? -4 : -2)

@@ -68,7 +68,7 @@ export class Boot extends Phaser.Scene {
     const titleShadowSettings = { offsetX: 0, offsetY: 4, color: '#000000', blur: 6, stroke: true, fill: true };
     this.titleShadow = this.add.text(0, 0, 'SUGAR BLAST', {
         resolution: 2,
-        fontFamily: '"Luckiest Guy", cursive, sans-serif',
+        fontFamily: '"Poppins", sans-serif',
         fontStyle: 'bold',
         color: '#ff006a',
         stroke: '#ff006a',
@@ -78,7 +78,7 @@ export class Boot extends Phaser.Scene {
 
     this.titleMain = this.add.text(0, 0, 'SUGAR BLAST', {
         resolution: 2,
-        fontFamily: '"Luckiest Guy", cursive, sans-serif',
+        fontFamily: '"Poppins", sans-serif',
         fontStyle: 'bold',
         color: '#ffffff',
         stroke: '#ff006a',
