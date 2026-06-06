@@ -441,10 +441,6 @@ export class Grid {
     const isAnticipation = this.scatterCount === 2 && !this.turboMode && !this.isDemoMode;
     const dropMultiplier = isAnticipation ? 2.8 : 1;
 
-    if (isAnticipation && this.scene.mascot) {
-      this.scene.mascot.anticipate();
-    }
-
     // Waterfall stagger: columns drop from center outward
     const centerCol = Math.floor(size / 2);
 
@@ -1092,12 +1088,32 @@ export class Grid {
           this.onWinCallback(clusterWin, cluster.kind !== undefined ? cluster.kind : this.sprites[Math.round(avgR)]?.[Math.round(avgC)]?.getData('symId'));
         }
 
-        // Mascot Celebration (Juice)
-        if (this.scene.mascot && !this.turboMode) {
-          let tier = 1;
-          if (cluster.positions.length > 8) tier = 2;
-          if (cluster.positions.length > 12) tier = 3;
-          this.scene.mascot.celebrate(tier);
+        // Premium Shockwave & Hotspot FX
+        if (!this.turboMode) {
+          const shockwave = this.scene.add.graphics().setDepth(15);
+          shockwave.lineStyle(6, 0xffaa00, 1);
+          shockwave.strokeCircle(popX, popY, this.cellW * 0.4);
+          
+          this.scene.tweens.add({
+            targets: shockwave,
+            scale: 2.5,
+            alpha: 0,
+            duration: 500,
+            ease: 'Quad.easeOut',
+            onComplete: () => shockwave.destroy()
+          });
+
+          // Hotspot glow left on the board
+          const hotspot = this.scene.add.graphics().setDepth(5);
+          hotspot.fillStyle(0xff0066, 0.4);
+          hotspot.fillRoundedRect(popX - this.cellW/2, popY - this.cellW/2, this.cellW, this.cellW, 16);
+          this.scene.tweens.add({
+            targets: hotspot,
+            alpha: 0,
+            duration: 3000,
+            ease: 'Sine.easeOut',
+            onComplete: () => hotspot.destroy()
+          });
         }
 
         const winPopFS = Math.max(14, Math.min(28, this.cellW * 0.38));
@@ -1301,10 +1317,6 @@ export class Grid {
 
     const isAnticipation = this.scatterCount === 2 && !this.turboMode && !this.isDemoMode;
     const dropMultiplier = isAnticipation ? 2.8 : 1;
-
-    if (isAnticipation && this.scene.mascot) {
-      this.scene.mascot.anticipate();
-    }
 
     const centerCol = Math.floor(size / 2);
     for (let c = 0; c < size; c++) {

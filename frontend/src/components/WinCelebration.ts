@@ -186,8 +186,36 @@ export class WinCelebration {
     this.container.add(overlay);
 
     // ═══════════════════════════════════════════════════
-    // NO EPIC LIGHT RAYS (BACKGROUND SPINNING DISABLED)
+    // EPIC LIGHT RAYS (BACKGROUND SPINNING)
     // ═══════════════════════════════════════════════════
+    const raysGraphics = this.scene.add.graphics();
+    const rayCount = 16;
+    const rayLength = Math.max(w, h) * 1.5;
+    const tierColor = parseInt(tier.glowColor.replace('#', '0x'));
+    raysGraphics.fillStyle(tierColor, 0.15);
+    for (let i = 0; i < rayCount; i++) {
+      const angle = (i / rayCount) * Math.PI * 2;
+      const angleNext = ((i + 0.4) / rayCount) * Math.PI * 2;
+      raysGraphics.beginPath();
+      raysGraphics.moveTo(0, 0);
+      raysGraphics.lineTo(Math.cos(angle) * rayLength, Math.sin(angle) * rayLength);
+      raysGraphics.lineTo(Math.cos(angleNext) * rayLength, Math.sin(angleNext) * rayLength);
+      raysGraphics.closePath();
+      raysGraphics.fillPath();
+    }
+    raysGraphics.setPosition(w / 2, h * 0.45);
+    raysGraphics.setBlendMode(Phaser.BlendModes.ADD);
+    this.container.add(raysGraphics);
+
+    activeTweens.push(
+      this.scene.tweens.add({
+        targets: raysGraphics,
+        angle: 360,
+        duration: 25000,
+        repeat: -1,
+        ease: 'Linear'
+      })
+    );
 
     // Glow effect behind win text
     const glowCircle = this.scene.add.graphics();
