@@ -12,11 +12,11 @@
 export const Theme = {
   // ═════════════════════ COLORS ═════════════════════
   colors: {
-    // Primary Palette — Hyper vivid candy pink
-    primary: '#ff0070',
+    // Primary Palette — Vibrant Candy Pink
+    primary: '#ff3388',
     primaryDark: '#dd0060',
-    primaryLight: '#ff55a0',
-    primaryLighter: '#ffaadd',
+    primaryLight: '#ff66aa',
+    primaryLighter: '#ffbbdd',
 
     // Secondary & Accents — Saturated candy tones
     secondary: '#ffe800',
@@ -31,23 +31,23 @@ export const Theme = {
     warning: '#ffbb00',
     error: '#ff3333',
 
-    // Backgrounds — Rich saturated darks (not flat gray)
-    bgDarkest: '#1a0030',
-    bgDark: '#220044',
-    bgCard: '#2a0055',
-    bgPanel: '#330066',
-    bgOverlay: '#180030',
+    // Backgrounds — Deep Berry / Plum (Synced with Phaser UI)
+    bgDarkest: '#1a001a',
+    bgDark: '#380036',
+    bgCard: '#9b1b6c',
+    bgPanel: '#550055',
+    bgOverlay: '#220022',
 
-    // Text — Crisp white with vivid accents
+    // Text — Crisp white with vibrant highlights
     textPrimary: '#ffffff',
-    textSecondary: '#eeddff',
-    textMuted: '#aa88cc',
-    textDark: '#6644aa',
+    textSecondary: '#ffccdd',
+    textMuted: '#ffaadd',
+    textDark: '#550055',
 
-    // Borders & Dividers — Visible, saturated
-    border: '#5533aa',
-    borderLight: '#7744cc',
-    borderDim: '#3322aa',
+    // Borders & Dividers — Creamy White/Pink Icing
+    border: '#fff0f5',
+    borderLight: '#ffffff',
+    borderDim: '#ffccdd',
 
     // Special
     transparent: 'rgba(0,0,0,0)',
@@ -55,37 +55,37 @@ export const Theme = {
 
   // ═════════════════════ TYPOGRAPHY ═════════════════════
   fonts: {
-    // Font families - full cartoon override
-    sans: '"Poppins", sans-serif',
-    display: '"Poppins", sans-serif',
-    mono: '"Poppins", sans-serif',
-    brand: '"Poppins", sans-serif', // Legacy brand font
+    // Font families - full cartoon bubbly override
+    sans: '"Fredoka One", "Comic Sans MS", cursive, sans-serif',
+    display: '"Fredoka One", "Comic Sans MS", cursive, sans-serif',
+    mono: '"Fredoka One", "Comic Sans MS", cursive, sans-serif',
+    brand: '"Fredoka One", "Comic Sans MS", cursive, sans-serif',
 
     // Text styles
-    h1: { size: 48, weight: 800, family: '"Poppins", sans-serif' },
-    h2: { size: 36, weight: 700, family: '"Poppins", sans-serif' },
-    h3: { size: 28, weight: 600, family: '"Poppins", sans-serif' },
-    h4: { size: 22, weight: 600, family: '"Poppins", sans-serif' },
-    h5: { size: 18, weight: 600, family: '"Poppins", sans-serif' },
+    h1: { size: 48, weight: 800, family: '"Fredoka One", "Comic Sans MS", cursive, sans-serif' },
+    h2: { size: 36, weight: 700, family: '"Fredoka One", "Comic Sans MS", cursive, sans-serif' },
+    h3: { size: 28, weight: 600, family: '"Fredoka One", "Comic Sans MS", cursive, sans-serif' },
+    h4: { size: 22, weight: 600, family: '"Fredoka One", "Comic Sans MS", cursive, sans-serif' },
+    h5: { size: 18, weight: 600, family: '"Fredoka One", "Comic Sans MS", cursive, sans-serif' },
 
-    body: { size: 16, weight: 400, family: '"Poppins", sans-serif' },
-    bodySmall: { size: 14, weight: 400, family: '"Poppins", sans-serif' },
-    bodyTiny: { size: 12, weight: 400, family: '"Poppins", sans-serif' },
+    body: { size: 16, weight: 400, family: '"Fredoka One", "Comic Sans MS", cursive, sans-serif' },
+    bodySmall: { size: 14, weight: 400, family: '"Fredoka One", "Comic Sans MS", cursive, sans-serif' },
+    bodyTiny: { size: 12, weight: 400, family: '"Fredoka One", "Comic Sans MS", cursive, sans-serif' },
 
-    label: { size: 13, weight: 600, family: '"Poppins", sans-serif' },
-    button: { size: 14, weight: 600, family: '"Poppins", sans-serif' },
-    buttonLarge: { size: 16, weight: 700, family: '"Poppins", sans-serif' },
+    label: { size: 13, weight: 600, family: '"Fredoka One", "Comic Sans MS", cursive, sans-serif' },
+    button: { size: 14, weight: 600, family: '"Fredoka One", "Comic Sans MS", cursive, sans-serif' },
+    buttonLarge: { size: 16, weight: 700, family: '"Fredoka One", "Comic Sans MS", cursive, sans-serif' },
 
-    numeric: { size: 24, weight: 700, family: '"Poppins", sans-serif' },
+    numeric: { size: 24, weight: 700, family: '"Fredoka One", "Comic Sans MS", cursive, sans-serif' },
   },
 
-  // ═════════════════════ SHADOWS (Hard, Comic-Book Style) ═════════════════════
+  // ═════════════════════ SHADOWS (Soft Glossy Candy Style) ═════════════════════
   shadows: {
     none: 'none',
-    sm: '2px 2px 0px rgba(0, 0, 0, 0.5)',
-    md: '3px 3px 0px rgba(0, 0, 0, 0.6)',
-    lg: '4px 4px 0px rgba(0, 0, 0, 0.7)',
-    xl: '6px 6px 0px rgba(0, 0, 0, 0.8)',
+    sm: '0px 2px 0px rgba(0,0,0,0.2), inset 0px 2px 0px rgba(255,255,255,0.4)',
+    md: '0px 4px 0px rgba(0,0,0,0.3), inset 0px 2px 0px rgba(255,255,255,0.4)',
+    lg: '0px 6px 0px rgba(0,0,0,0.3), inset 0px 3px 0px rgba(255,255,255,0.4)',
+    xl: '0px 8px 0px rgba(0,0,0,0.4), inset 0px 4px 0px rgba(255,255,255,0.5)',
     glow: '0 0 12px rgba(255, 0, 112, 0.6)',
     glowAlt: '0 0 12px rgba(0, 229, 255, 0.5)',
   },
@@ -115,9 +115,9 @@ export const Theme = {
     primaryAlt: 'linear-gradient(180deg, #ff4d94 0%, #ff006a 100%)',
     accent: 'linear-gradient(135deg, #00d9ff 0%, #00a3cc 100%)',
     gold: 'linear-gradient(135deg, #ffe600 0%, #ffcc00 100%)',
-    darkBg: 'linear-gradient(135deg, #0a0f1a 0%, #1a0f2e 100%)',
+    darkBg: 'linear-gradient(135deg, #380036 0%, #1a001a 100%)',
     cardBg:
-      'linear-gradient(135deg, rgba(21, 19, 31, 0.8) 0%, rgba(18, 19, 31, 0.9) 100%)',
+      'linear-gradient(135deg, rgba(155, 27, 108, 0.8) 0%, rgba(85, 0, 85, 0.9) 100%)',
   },
 
   // ═════════════════════ ANIMATION ═════════════════════

@@ -204,6 +204,10 @@ export class PaytableOverlay {
     panel.fillStyle(this.PANEL_BG, 1);
     panel.fillRoundedRect(0, 0, logicalW, logicalH, 24);
 
+    // Glossy Highlight
+    panel.fillStyle(0xffffff, 0.08);
+    panel.fillRoundedRect(4, 4, logicalW - 8, logicalH * 0.2, 20);
+
     // Thick soft pink border
     panel.lineStyle(4, this.PANEL_BORDER, 1);
     panel.strokeRoundedRect(0, 0, logicalW, logicalH, 24);
@@ -320,11 +324,14 @@ export class PaytableOverlay {
     const closeBtn = this.scene.add.text(closeBtnX, closeBtnY + 1, '✖', {
       fontSize: isMob ? '16px' : '20px', color: '#ffffff', fontFamily: this.FONT_TITLE,
       resolution: this.RES
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    closeBtn.on('pointerdown', () => { this.scene.audio.playSound('button'); this.hide(); });
-    closeBtn.on('pointerover', () => closeBtn.setScale(1.2));
-    closeBtn.on('pointerout', () => closeBtn.setScale(1));
+    }).setOrigin(0.5);
     pageWrapper.add(closeBtn);
+
+    const closeHit = this.scene.add.rectangle(closeBtnX, closeBtnY, 48, 48).setInteractive({ useHandCursor: true }).setAlpha(0.001);
+    closeHit.on('pointerdown', () => { this.scene.audio.playSound('button'); this.hide(); });
+    closeHit.on('pointerover', () => closeBtn.setScale(1.2));
+    closeHit.on('pointerout', () => closeBtn.setScale(1));
+    pageWrapper.add(closeHit);
 
     // ── Build all 8 pages ──
     const parentContainer = this.isMobileScroll ? this.scrollContainer : pageWrapper;
@@ -376,7 +383,7 @@ export class PaytableOverlay {
         }).setOrigin(0.5);
         btnGroup.add(txt);
 
-        const hit = this.scene.add.rectangle(0, 0, 110, 36).setInteractive({ useHandCursor: true }).setAlpha(0.001);
+        const hit = this.scene.add.rectangle(0, 0, 120, 48).setInteractive({ useHandCursor: true }).setAlpha(0.001);
         hit.on('pointerdown', () => {
           this.scene.audio.playSound('button');
           this.changePage(dir);
@@ -1027,6 +1034,23 @@ export class PaytableOverlay {
       duration: 500,
       ease: 'Elastic.easeOut'
     });
+
+    // 6. UI Panel Starbursts (Juice)
+    if (this.scene.textures.exists('gold_star')) {
+      const w = this.scene.scale.width;
+      const h = this.scene.scale.height;
+      const stars = this.scene.add.particles(w/2, h/2, 'gold_star', {
+        speed: { min: 200, max: 800 },
+        angle: { min: 0, max: 360 },
+        scale: { start: 0.6, end: 0 },
+        lifespan: 800,
+        blendMode: 'ADD',
+        rotate: { min: -180, max: 180 },
+      });
+      stars.setDepth(this.container.depth - 1);
+      stars.explode(20);
+      this.scene.time.delayedCall(900, () => stars.destroy());
+    }
   }
 
   public hide() {
