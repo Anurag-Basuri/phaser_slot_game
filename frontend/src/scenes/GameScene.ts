@@ -10,5 +10,4 @@ import { Audio } from '../components/Audio';
  */
 export interface GameScene extends Phaser.Scene {
   audio: Audio;
-  mascot?: any; // Mascot type is optional to avoid circular dependency
 }
